@@ -6,7 +6,7 @@ from pathlib import Path
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from utils import apply_global_styles, load_csv_safe, render_status_cards, show_table_or_missing, status_badge
+from utils import inject_global_styles, load_csv_safe, metric_card, page_header, presentation_table, section_header, show_table_or_missing, sidebar_status, warning_banner
 
 
 READINESS_PATH = "outputs/google_sheets/live_readiness_export.csv"
@@ -15,8 +15,8 @@ BLOCKERS_PATH = "outputs/google_sheets/forward_projection_blockers.csv"
 
 
 st.set_page_config(page_title="Live Readiness", layout="wide")
-apply_global_styles()
-st.title("Live Readiness")
+inject_global_styles()
+sidebar_status()
 
 readiness = load_csv_safe(READINESS_PATH)
 status = load_csv_safe(STATUS_PATH)
@@ -33,21 +33,27 @@ else:
     leakage_row = status[status.get("check_name", "").astype(str).eq("leakage_status")] if not status.empty else status
     leakage_status = leakage_row["value"].iloc[0] if not leakage_row.empty and "value" in leakage_row.columns else "UNKNOWN"
 
-render_status_cards([("Overall status", str(final_status)), ("Leakage", str(leakage_status))])
+page_header("Live Readiness", "The control-room status board for projection and betting readiness.", final_status)
+
+cards = st.columns(3)
+with cards[0]:
+    metric_card("Overall Status", final_status, final_status)
+with cards[1]:
+    metric_card("Leakage", leakage_status, leakage_status)
+with cards[2]:
+    metric_card("Blocked Gates", len(blockers) if not blockers.empty else 0, "NO-GO" if str(final_status) != "GO" else "GO")
+
 if str(final_status) != "GO":
-    st.markdown(
-        "<div class='warning-band'>HISTORICAL TEST ONLY - NOT LIVE BETTING READY</div>",
-        unsafe_allow_html=True,
-    )
+    warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "Resolve every blocker and validate forward mode before treating this as live.")
 
-st.subheader("Gate Table")
-show_table_or_missing(readiness, READINESS_PATH)
+section_header("Gate Table", "Action needed, current values, sources, and notes.")
+show_table_or_missing(presentation_table(readiness), READINESS_PATH)
 
-st.subheader("Blocking Gates")
-show_table_or_missing(blockers, BLOCKERS_PATH)
+section_header("Blocking Gates")
+show_table_or_missing(presentation_table(blockers), BLOCKERS_PATH)
 
 if not readiness.empty:
     cols = [col for col in ["Gate", "Action Needed", "Current Value", "Source", "Notes"] if col in readiness.columns]
     if cols:
-        st.subheader("Action Needed")
-        st.dataframe(readiness[cols], use_container_width=True, hide_index=True)
+        section_header("Action Needed")
+        st.dataframe(presentation_table(readiness[cols]), use_container_width=True, hide_index=True)

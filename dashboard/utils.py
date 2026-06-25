@@ -4,14 +4,33 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
 
-READY_STATUSES = {"GO", "READY", "PASS", "HIGH"}
+READY_STATUSES = {"GO", "READY", "PASS", "HIGH", "TRUE"}
 WARN_STATUSES = {"NEEDS DATA", "REVIEW", "CHECK", "WARNING", "MEDIUM", "HISTORICAL TEST ONLY"}
-BAD_STATUSES = {"NO-GO", "BLOCKED", "NOT READY", "FAIL", "LOW", "DO NOT USE", "TEAM_VERIFY"}
+BAD_STATUSES = {"NO-GO", "BLOCKED", "NOT READY", "FAIL", "LOW", "DO NOT USE", "TEAM_VERIFY", "FALSE"}
+
+DISPLAY_NAMES = {
+    "player": "Player",
+    "player_name": "Player",
+    "team": "Team",
+    "opponent": "Opponent",
+    "position": "Pos",
+    "line": "Line",
+    "raw_projection": "Raw Projection",
+    "projected_receptions_raw": "Raw Projection",
+    "calibrated_projection": "Calibrated Projection",
+    "projected_receptions_calibrated": "Calibrated Projection",
+    "model_over_probability": "Model Over Probability",
+    "model_under_probability": "Model Under Probability",
+    "usage_status": "Usage Status",
+    "confidence_tier": "Confidence",
+    "confidence_bucket": "Confidence",
+    "quality_flags": "Flags",
+    "flags": "Flags",
+}
 
 
 def find_repo_root() -> Path:
@@ -66,20 +85,14 @@ def status_level(status: object) -> str:
     return "neutral"
 
 
-def status_badge(status: object) -> str:
+def status_pill(status: object) -> str:
     text = "UNKNOWN" if pd.isna(status) else str(status)
     level = status_level(text)
-    colors = {
-        "good": ("#113b26", "#3ddc84"),
-        "warn": ("#433509", "#ffd166"),
-        "bad": ("#4a1515", "#ff6b6b"),
-        "neutral": ("#263241", "#b7c0cc"),
-    }
-    bg, fg = colors[level]
-    return (
-        f"<span style='display:inline-block;padding:0.2rem 0.55rem;border-radius:999px;"
-        f"background:{bg};color:{fg};font-weight:700;font-size:0.82rem'>{text}</span>"
-    )
+    return f"<span class='status-pill {level}'>{text}</span>"
+
+
+def status_badge(status: object) -> str:
+    return status_pill(status)
 
 
 def format_percent(value: object) -> str:
@@ -158,58 +171,272 @@ def filter_by_search(df: pd.DataFrame, column: str, label: str = "Player search"
     return df[df[column].astype(str).str.lower().str.contains(query, na=False)]
 
 
+def metric_card(label: str, value: object, status: object | None = None, help_text: str | None = None) -> None:
+    status_html = status_pill(status) if status is not None else ""
+    helper = f"<div class='metric-help'>{help_text}</div>" if help_text else ""
+    st.markdown(
+        f"""
+        <div class="metric-card">
+          <div class="metric-label">{label}</div>
+          <div class="metric-value">{value}</div>
+          {status_html}
+          {helper}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def warning_banner(title: str, body: str) -> None:
+    st.markdown(
+        f"""
+        <div class="warning-banner">
+          <div class="warning-title">{title}</div>
+          <div class="warning-body">{body}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_header(title: str, subtitle: str | None = None) -> None:
+    sub = f"<p>{subtitle}</p>" if subtitle else ""
+    st.markdown(
+        f"""
+        <div class="section-header">
+          <h2>{title}</h2>
+          {sub}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def page_header(title: str, subtitle: str, status: object | None = None) -> None:
+    status_html = status_pill(status) if status is not None else ""
+    st.markdown(
+        f"""
+        <div class="page-hero">
+          <div>
+            <div class="eyebrow">NFL Prop War Room</div>
+            <h1>{title}</h1>
+            <p>{subtitle}</p>
+          </div>
+          <div>{status_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def player_card(player: str, team: str, position: str, projection: object, status: object = "") -> None:
+    st.markdown(
+        f"""
+        <div class="player-card">
+          <div class="player-name">{player}</div>
+          <div class="player-meta">{team} / {position}</div>
+          <div class="player-proj">{projection}</div>
+          <div>{status_pill(status) if status else ""}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    return df.rename(columns={col: DISPLAY_NAMES.get(col, col.replace("_", " ").title()) for col in df.columns})
+
+
+def safe_percent_columns(df: pd.DataFrame) -> pd.DataFrame:
+    result = df.copy()
+    for col in result.columns:
+        lower = col.lower()
+        if "probability" in lower or "rate" in lower or "share" in lower:
+            result[col] = pd.to_numeric(result[col], errors="coerce").map(
+                lambda value: "" if pd.isna(value) else f"{value:.1%}"
+            )
+    return result
+
+
+def safe_numeric_rounding(df: pd.DataFrame) -> pd.DataFrame:
+    result = df.copy()
+    for col in result.columns:
+        lower = col.lower()
+        if any(token in lower for token in ["projection", "routes", "attempts", "line", "edge"]):
+            result[col] = pd.to_numeric(result[col], errors="ignore")
+            if pd.api.types.is_numeric_dtype(result[col]):
+                result[col] = result[col].round(2)
+    return result
+
+
+def presentation_table(df: pd.DataFrame) -> pd.DataFrame:
+    return clean_column_names(safe_percent_columns(safe_numeric_rounding(df)))
+
+
 def render_status_cards(items: list[tuple[str, str]]) -> None:
     cols = st.columns(len(items))
     for col, (label, value) in zip(cols, items):
         with col:
-            st.markdown(
-                f"""
-                <div class="status-card">
-                  <div class="status-label">{label}</div>
-                  <div>{status_badge(value)}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            metric_card(label, value, value)
 
 
-def apply_global_styles() -> None:
+def sidebar_status() -> None:
+    mode = value_from_status("projection_mode")
+    readiness = value_from_status("final_live_readiness")
+    leakage = value_from_status("leakage_status")
+    live_output = value_from_status("live_betting_output_created")
+    st.sidebar.markdown(
+        f"""
+        <div class="sidebar-brand">
+          <div class="brand-title">NFL Prop War Room</div>
+          <div class="brand-subtitle">Receptions V1</div>
+          <div class="brand-chip">Historical Test Build</div>
+        </div>
+        <div class="sidebar-status">
+          <div><span>Mode</span><strong>{mode}</strong></div>
+          <div><span>Readiness</span><strong>{readiness}</strong></div>
+          <div><span>Leakage</span><strong>{leakage}</strong></div>
+          <div><span>Live betting</span><strong>{live_output}</strong></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def inject_global_styles() -> None:
     st.markdown(
         """
         <style>
-        .main .block-container { padding-top: 1.5rem; max-width: 1400px; }
-        .war-header {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 1rem 1.2rem;
-            margin-bottom: 1rem;
+        :root {
+          --bg: #07111f;
+          --panel: #0f1b2d;
+          --panel2: #101827;
+          --border: #243247;
+          --text: #e5edf7;
+          --muted: #95a3b8;
+          --red: #ff5d5d;
+          --yellow: #ffd166;
+          --green: #46e08c;
+          --blue: #5ea0ff;
         }
-        .war-header h1 { color: #f0f6fc; margin: 0; letter-spacing: 0; }
-        .war-header p { color: #b7c0cc; margin: 0.35rem 0 0; }
-        .status-card {
-            background: #111827;
-            border: 1px solid #263241;
-            border-radius: 8px;
-            padding: 0.8rem;
-            min-height: 88px;
+        .stApp { background: radial-gradient(circle at top left, #13243a 0, #07111f 34%, #050914 100%); }
+        .main .block-container { padding-top: 1.25rem; padding-bottom: 3rem; max-width: 1440px; }
+        [data-testid="stSidebar"] { background: #060b14; border-right: 1px solid #1d2a3d; }
+        [data-testid="stSidebar"] a { color: #cbd5e1; }
+        [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p { color: #aab6c8; }
+        .sidebar-brand {
+          border: 1px solid #263247;
+          background: linear-gradient(180deg, #132235, #0a1220);
+          border-radius: 10px;
+          padding: 1rem;
+          margin-bottom: 1rem;
+          box-shadow: 0 12px 32px rgba(0,0,0,.24);
         }
-        .status-label {
-            color: #9ca3af;
-            font-size: 0.82rem;
-            text-transform: uppercase;
-            margin-bottom: 0.45rem;
+        .brand-title { color: #f8fafc; font-weight: 900; font-size: 1.05rem; }
+        .brand-subtitle { color: #9fb3cc; font-weight: 700; margin-top: .15rem; }
+        .brand-chip {
+          margin-top: .7rem;
+          display: inline-block;
+          color: #ffd166;
+          background: #30270d;
+          border: 1px solid #6b5517;
+          border-radius: 999px;
+          padding: .22rem .55rem;
+          font-size: .74rem;
+          font-weight: 800;
         }
-        .warning-band {
-            background: #4a1515;
-            color: #ffd6d6;
-            border: 1px solid #ff6b6b;
-            border-radius: 8px;
-            padding: 0.85rem 1rem;
-            font-weight: 800;
-            margin: 1rem 0;
+        .sidebar-status {
+          border: 1px solid #1d2a3d;
+          background: #0b1321;
+          border-radius: 10px;
+          padding: .8rem;
+          margin-bottom: 1rem;
         }
+        .sidebar-status div {
+          display: flex;
+          justify-content: space-between;
+          gap: .75rem;
+          padding: .35rem 0;
+          border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .sidebar-status div:last-child { border-bottom: 0; }
+        .sidebar-status span { color: #8ea0b8; font-size: .78rem; }
+        .sidebar-status strong { color: #edf2f7; font-size: .78rem; }
+        .page-hero {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: 1.25rem 1.35rem;
+          border: 1px solid #29364a;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(17, 30, 48, .98), rgba(9, 15, 27, .98));
+          box-shadow: 0 16px 40px rgba(0,0,0,.25);
+          margin-bottom: 1rem;
+        }
+        .page-hero h1 { margin: .1rem 0 .35rem; color: #f8fafc; letter-spacing: 0; font-size: 2.1rem; }
+        .page-hero p { margin: 0; color: #aab6c8; max-width: 820px; }
+        .eyebrow { color: #5ea0ff; font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+        .metric-card, .player-card, .info-card {
+          background: linear-gradient(180deg, rgba(16, 28, 45, .98), rgba(9, 16, 29, .98));
+          border: 1px solid #263247;
+          border-radius: 10px;
+          padding: .95rem;
+          box-shadow: 0 10px 24px rgba(0,0,0,.2);
+          min-height: 112px;
+        }
+        .metric-label { color: #8fa0b6; font-size: .78rem; text-transform: uppercase; font-weight: 800; margin-bottom: .45rem; }
+        .metric-value { color: #f8fafc; font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin-bottom: .35rem; }
+        .metric-help { color: #8795aa; font-size: .8rem; margin-top: .35rem; }
+        .status-pill {
+          display: inline-block;
+          padding: .22rem .6rem;
+          border-radius: 999px;
+          font-weight: 900;
+          font-size: .76rem;
+          border: 1px solid transparent;
+          white-space: nowrap;
+        }
+        .status-pill.good { color: #8ff0b8; background: #0f3524; border-color: #246c47; }
+        .status-pill.warn { color: #ffe199; background: #3d310d; border-color: #7a6017; }
+        .status-pill.bad { color: #ffb4b4; background: #451717; border-color: #7a2a2a; }
+        .status-pill.neutral { color: #cbd5e1; background: #1d293b; border-color: #334155; }
+        .warning-banner {
+          background: linear-gradient(135deg, #4a1515, #2a1116);
+          border: 1px solid #923232;
+          color: #ffe1e1;
+          border-radius: 10px;
+          padding: .95rem 1rem;
+          margin: 1rem 0;
+          box-shadow: 0 10px 26px rgba(0,0,0,.22);
+        }
+        .warning-title { color: #fff3f3; font-weight: 950; font-size: 1rem; margin-bottom: .25rem; }
+        .warning-body { color: #ffc9c9; }
+        .section-header { margin: 1.3rem 0 .65rem; }
+        .section-header h2 { color: #f8fafc; font-size: 1.25rem; margin-bottom: .15rem; letter-spacing: 0; }
+        .section-header p { color: #9aa9bd; margin: 0; }
+        .player-name { color: #f8fafc; font-weight: 950; font-size: 1rem; }
+        .player-meta { color: #9aa9bd; font-size: .82rem; margin: .25rem 0 .55rem; }
+        .player-proj { color: #5ea0ff; font-size: 1.55rem; font-weight: 950; margin-bottom: .45rem; }
+        div[data-testid="stDataFrame"] {
+          border: 1px solid #263247;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 8px 20px rgba(0,0,0,.18);
+        }
+        .stTabs [data-baseweb="tab-list"] { gap: .35rem; }
+        .stTabs [data-baseweb="tab"] {
+          background: #111827;
+          border-radius: 8px;
+          border: 1px solid #263247;
+          padding: .45rem .75rem;
+        }
+        hr { border-color: #263247; }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def apply_global_styles() -> None:
+    inject_global_styles()
