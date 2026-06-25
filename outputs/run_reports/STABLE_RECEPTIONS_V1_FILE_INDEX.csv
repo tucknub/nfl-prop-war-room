@@ -1,0 +1,55 @@
+category,file_path,purpose,required,notes
+config,config.yaml,Projection mode and history/target window configuration,Yes,Current snapshot is historical_test for 2025 Week 1 using 2023-2024 history.
+model script,src/features/build_receptions_feature_table.py,Build leakage-safe receptions feature table,Yes,Feeds model/backtest/export pipeline.
+model script,src/models/receptions_model.py,Build raw and calibrated receptions projections,Yes,Keeps raw and calibrated projection columns visible.
+model script,src/models/receptions_probability.py,Build sportsbook-odds probability inputs when odds exist,Yes,Currently writes zero rows because no odds are loaded.
+backtest script,src/backtest/backtest_receptions.py,Walk-forward receptions backtest,Yes,Week N uses only data through Week N-1.
+backtest script,src/backtest/calibrate_receptions.py,Candidate-only calibration report and multipliers,Yes,Calibrated RMSE is used as probability SD.
+exporter,src/export/export_receptions_projection_csv.py,Google Sheets-ready historical-test model board export,Yes,Historical-test rows remain HISTORICAL TEST ONLY.
+exporter,src/export/export_sheet_gates.py,Gate import/template/readiness exports,Yes,Creates control-room gate CSVs.
+exporter,src/export/export_receptions_market_edges.py,Market probability/edge outputs,Yes,Does not create betting edges without odds.
+exporter,src/export/export_receptions_line_ladder.py,Odds-free common-line probability ladder,Yes,Research only; not betting edge output.
+exporter,src/export/build_google_sheets_import_pack.py,Build local Google Sheets import pack and manifest,Yes,No Google API upload.
+pipeline runner,src/run_receptions_pipeline.py,One-command full rebuild and report generation,Yes,Safest command before importing to Google Sheets.
+validator,src/validate_receptions_safety.py,Safety regression validator,Yes,Prevents leakage/live-output/gate bypass regressions.
+validator,src/validate_forward_projection_dry_run.py,Forward-mode dry-run and synthetic fixture gate validation,Yes,Does not modify production config permanently.
+identity resolver,src/load/build_identity_crosswalk.py,Build player/team identity crosswalks,Yes,Prevents wrong-player and stale-team matching.
+identity resolver,src/load/validate_gate_identity_matches.py,Validate normalized gate rows against identity crosswalk,Yes,Blocks unmatched duplicate or team-mismatch gate readiness.
+gate loader,src/load/load_gate_inputs.py,Load and normalize real gate input files if present,Yes,Template files do not count as real data.
+gate template,outputs/google_sheets/roster_gate_import_template.csv,Roster gate template for current-team verification,Yes before live,Currently template only.
+gate template,outputs/google_sheets/role_gate_import_template.csv,Role gate template for route/snap and confidence context,Yes before live,Currently template only.
+gate template,outputs/google_sheets/injury_gate_import_template.csv,Injury gate template for availability/practice status,Yes before live,Currently template only.
+gate template,outputs/google_sheets/market_odds_gate_import_template.csv,Market odds gate template for sportsbook line/odds matching,Yes before betting-edge mode,Currently template only.
+gate output,outputs/google_sheets/schedule_gate_import.csv,Schedule gate import for target week,Yes,Historical-test schedule gate is READY for 2025 Week 1.
+normalized gate output,outputs/gate_inputs_normalized/schedule_gate_normalized.csv,Normalized schedule gate input,Yes,No real future schedule data fabricated.
+normalized gate output,outputs/gate_inputs_normalized/roster_gate_normalized.csv,Normalized roster gate input,Yes before live,Currently no real rows.
+normalized gate output,outputs/gate_inputs_normalized/role_gate_normalized.csv,Normalized role gate input,Yes before live,Currently no real rows.
+normalized gate output,outputs/gate_inputs_normalized/injury_gate_normalized.csv,Normalized injury gate input,Yes before live,Currently no real rows.
+normalized gate output,outputs/gate_inputs_normalized/market_odds_gate_normalized.csv,Normalized market odds gate input,Yes before betting-edge mode,Currently no real rows.
+identity output,outputs/identity/player_identity_crosswalk.csv,Player identity crosswalk,Yes,Contains 10548 rows in current run.
+identity output,outputs/identity/team_abbreviation_crosswalk.csv,Team abbreviation crosswalk,Yes,Contains 45 rows in current run.
+identity output,outputs/identity/gate_identity_match_report.csv,Gate identity validation summary,Yes,Gate statuses are NEEDS DATA until real rows are loaded.
+identity output,outputs/identity/unmatched_gate_rows.csv,Unmatched gate row detail,Yes,Current row count is 0.
+identity output,outputs/identity/duplicate_name_warnings.csv,Duplicate player-name warning list,Yes,Current row count is 243.
+projection output,outputs/google_sheets_receptions_historical_test.csv,Google Sheets-ready historical-test Receptions board,Yes,640 candidate rows.
+projection output,outputs/receptions_projection_week_01_all.csv,All eligible projection rows,Yes,641 rows.
+projection output,outputs/receptions_projection_week_01_candidates.csv,Candidate projection rows,Yes,640 rows.
+feature output,outputs/receptions_feature_table.csv,Leakage-safe model feature table,Yes,40061 rows.
+audit output,outputs/history_window_audit.csv,History/leakage window audit,Yes,Leakage status PASS.
+market output,outputs/market_edges/receptions_market_probability.csv,Odds-based market probability output,Yes,0 rows until odds are loaded.
+market output,outputs/market_edges/receptions_market_edges.csv,Market edge output,Yes,0 rows until odds are loaded.
+market output,outputs/market_edges/receptions_market_edge_blockers.csv,Market edge blocker detail,Yes,5 blocker rows.
+line ladder output,outputs/market_edges/receptions_line_ladder.csv,Odds-free common-line probability ladder,Yes,6400 rows.
+line ladder output,outputs/market_edges/receptions_line_ladder_top_by_line.csv,Top 25 players per common line by over probability,Yes,250 rows.
+google sheets pack,outputs/google_sheets/import_manifest.csv,Maps CSVs to Google Sheet tabs and start cells,Yes,10 manifest rows.
+google sheets pack,outputs/google_sheets/IMPORT_INSTRUCTIONS.md,Manual import instructions,Yes,Includes optional line ladder tab specs.
+google sheets pack,outputs/google_sheets/latest_import_pack.zip,Local import pack zip,Yes,Safe local import bundle; no upload.
+run report,outputs/run_reports/latest_receptions_pipeline_report.md,Latest pipeline report,Yes,Shows final readiness NO-GO.
+run report,outputs/run_reports/latest_receptions_pipeline_status.csv,Machine-readable latest pipeline status,Yes,Used by validators and summaries.
+run report,outputs/run_reports/latest_receptions_pipeline_errors.csv,Pipeline errors file,Yes,Contains NONE row when clean.
+run report,outputs/run_reports/latest_receptions_safety_validation.md,Safety validation report,Yes,Current status PASS.
+run report,outputs/run_reports/latest_forward_projection_dry_run.md,Forward dry-run report,Yes,Current status PASS.
+run report,outputs/run_reports/latest_line_ladder_report.md,Line ladder report,Yes,Current status PASS.
+stable snapshot,outputs/run_reports/STABLE_RECEPTIONS_V1_HISTORICAL_TEST_SNAPSHOT.md,Stable milestone summary,Yes,Rollback point before real 2026 data integration.
+stable snapshot,outputs/run_reports/STABLE_RECEPTIONS_V1_FILE_INDEX.csv,Stable milestone file index,Yes,Lists important files and their purpose.
+stable snapshot,outputs/run_reports/STABLE_RECEPTIONS_V1_NEXT_STEPS.md,Stable milestone next-step plan,Yes,Separates safe now live prerequisites and do-not-do items.

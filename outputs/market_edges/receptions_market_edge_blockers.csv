@@ -1,0 +1,6 @@
+blocker,severity,why_it_matters,required_before_projection,required_before_betting,next_action
+Final readiness is not GO,HIGH,Live betting edges cannot be created while the control room is NO-GO.,No,Yes,Resolve Live Readiness blockers.
+Market odds missing,HIGH,No betting edge can be produced without sportsbook lines and odds.,No,Yes,Load real odds into data/gates/odds and rerun pipeline.
+Roster Gate,HIGH,Roster Gate status is NEEDS DATA.,Yes,Yes,Complete Roster Gate validation.
+Role Gate,HIGH,Role Gate status is NEEDS DATA.,Yes,Yes,Complete Role Gate validation.
+Injury Gate,HIGH,Injury Gate status is NEEDS DATA.,Yes,Yes,Complete Injury Gate validation.

@@ -1,0 +1,2 @@
+seasons_loaded,seasons_used_for_features,target_season,target_week,max_training_season,max_training_week,leakage_exists,leakage_status,rows_3_plus_seasons,rows_2_seasons,rows_1_season,rows_no_player_history
+"2023,2024,2025","2023,2024",2025,1,2024,22,False,PASS,0,33465,6596,0

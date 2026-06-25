@@ -1,0 +1,244 @@
+normalized_player_name,players,teams,positions,player_ids,warning
+a anderson,A.Anderson,BUF|WAS,DT|OT,00-0034587|00-0037428,Duplicate normalized player name. Do not auto-match by name only.
+a brewer,A.Brewer,ARI|MIA|TEN,C|LS,00-0028946|00-0036171,Duplicate normalized player name. Do not auto-match by name only.
+a carter,A.Carter,LV|MIN|NYG,LB,00-0038801|00-0040677,Duplicate normalized player name. Do not auto-match by name only.
+a green,A.Green,CLE|DET|MIA|NYG,CB|WR,00-0036114|00-0038627|00-0038788,Duplicate normalized player name. Do not auto-match by name only.
+a jackson,A.Jackson,LAR|MIA|NYG|PHI,CB|OT,00-0033878|00-0036248|00-0036603,Duplicate normalized player name. Do not auto-match by name only.
+a johnson,A.Johnson,BUF|GB|JAX|LAC|NYG,NT|RB|SAF,00-0032763|00-0038411|00-0038596|00-0040039,Duplicate normalized player name. Do not auto-match by name only.
+a jones,A.Jones,BUF|GB|MIN|WAS,DE|RB,00-0033293|00-0038635,Duplicate normalized player name. Do not auto-match by name only.
+a phillips,A.Phillips,NE|NYG,CB|DB,00-0031404|00-0039821,Duplicate normalized player name. Do not auto-match by name only.
+a robinson,A.Robinson,CAR|DET|PIT,DE|WR,00-0031428|00-0032889,Duplicate normalized player name. Do not auto-match by name only.
+a rodgers,A.Rodgers,IND|NYJ|PIT,QB|WR,00-0023459|00-0036991,Duplicate normalized player name. Do not auto-match by name only.
+a smith,A.Smith,ATL|NYJ|PHI,LB|WR,00-0034430|00-0039747|00-0040582,Duplicate normalized player name. Do not auto-match by name only.
+a thomas,A.Thomas,NYG|NYJ|SF,CB|OT,00-0036386|00-0037008|00-0040133,Duplicate normalized player name. Do not auto-match by name only.
+aaron brewer,Aaron Brewer,ARI|MIA|TEN,LS|OL,00-0028946|00-0036171,Duplicate normalized player name. Do not auto-match by name only.
+andre carter,Andre Carter|Andre Carter II,CIN|LV|MIA|MIN,DL|LB,00-0038801|00-0039551,Duplicate normalized player name. Do not auto-match by name only.
+anthony brown,Anthony Brown,BAL|BUF|CAR|NYJ,DB|QB,00-0033047|00-0037175,Duplicate normalized player name. Do not auto-match by name only.
+anthony johnson,Anthony Johnson|Anthony Johnson Jr.,ATL|GB|NYG,DB,00-0038411|00-0038907,Duplicate normalized player name. Do not auto-match by name only.
+b allen,B.Allen,NYJ|SF|TEN,QB|RB,00-0032434|00-0039794,Duplicate normalized player name. Do not auto-match by name only.
+b brown,B.Brown,CAR|CHI|LAR|NE,C|DT|RB,00-0036903|00-0037329|00-0037413,Duplicate normalized player name. Do not auto-match by name only.
+b cook,B.Cook,KC|NYJ,QB|SAF,00-0037193|00-0040398,Duplicate normalized player name. Do not auto-match by name only.
+b johnson,B.Johnson,DAL|DEN|IND|PHI|PIT,CB|LB|WR,00-0036870|00-0037382|00-0040027,Duplicate normalized player name. Do not auto-match by name only.
+b jones,B.Jones,CHI|DEN|DET|MIA|PIT,DT|OT|SAF,00-0035841|00-0036221|00-0037081|00-0039109,Duplicate normalized player name. Do not auto-match by name only.
+b murphy,B.Murphy,MIN|SEA,CB|DT,00-0035236|00-0039309,Duplicate normalized player name. Do not auto-match by name only.
+b robinson,B.Robinson,ATL|SF|WAS,RB,00-0037746|00-0038542,Duplicate normalized player name. Do not auto-match by name only.
+b smith,B.Smith,IND|KC|PHI,LB|OT|RB,00-0034836|00-0038113|00-0040078,Duplicate normalized player name. Do not auto-match by name only.
+b young,B.Young,CAR|LAR|LV|PHI,DT|LB|QB,00-0038978|00-0039137|00-0039150,Duplicate normalized player name. Do not auto-match by name only.
+brandon johnson,Brandon Johnson,DEN|PHI|PIT,DB|WR,00-0037382|00-0040027,Duplicate normalized player name. Do not auto-match by name only.
+brandon smith,Brandon Smith,ARI|LV|NE|NYJ|PHI,LB|WR,00-0036775|00-0038113,Duplicate normalized player name. Do not auto-match by name only.
+byron murphy,Byron Murphy|Byron Murphy II,MIN|SEA,DB|DL,00-0035236|00-0039309,Duplicate normalized player name. Do not auto-match by name only.
+byron young,Byron Young,LAR|LV|PHI,DL|LB,00-0038978|00-0039137,Duplicate normalized player name. Do not auto-match by name only.
+c braswell,C.Braswell,JAX|TB,CB|LB,00-0038616|00-0039902,Duplicate normalized player name. Do not auto-match by name only.
+c brown,C.Brown,CIN|NYG,LB|RB,00-0036400|00-0038597,Duplicate normalized player name. Do not auto-match by name only.
+c bryant,C.Bryant,ATL|SEA,CB|SAF,00-0038136|00-0040546,Duplicate normalized player name. Do not auto-match by name only.
+c campbell,C.Campbell,ARI|ATL|MIA|TEN,DE|LB,00-0026190|00-0037312,Duplicate normalized player name. Do not auto-match by name only.
+c davis,C.Davis,DAL|DET|NE|TB|WAS,CB|DB|DT,00-0029764|00-0031938|00-0034778,Duplicate normalized player name. Do not auto-match by name only.
+c edmonds,C.Edmonds,CLE|TB|WAS,RB|SAF,00-0034681|00-0039513,Duplicate normalized player name. Do not auto-match by name only.
+c harris,C.Harris,CAR|DET|HOU|PHI,LB,00-0033880|00-0037823,Duplicate normalized player name. Do not auto-match by name only.
+c hubbard,C.Hubbard,CAR|DET|NYG,OT|RB,00-0029963|00-0036555,Duplicate normalized player name. Do not auto-match by name only.
+c johnson,C.Johnson,CHI|CIN|JAX|MIA,DE|LB|WR,00-0036254|00-0036704|00-0039752,Duplicate normalized player name. Do not auto-match by name only.
+c jones,C.Jones,BAL|CHI|CIN|KC|NYJ,DE|LB|WR,00-0032762|00-0038513|00-0038576|00-0039460,Duplicate normalized player name. Do not auto-match by name only.
+c lucas,C.Lucas,CLE|DET|SF|WAS,CB|OT,00-0030725|00-0037321,Duplicate normalized player name. Do not auto-match by name only.
+c mcgovern,C.McGovern,BUF|NO|NYJ,C|G,00-0033011|00-0035679,Duplicate normalized player name. Do not auto-match by name only.
+c robinson,C.Robinson,CLE|HOU|JAX|MIA|MIN|SF,LB|OT,00-0033889|00-0036728|00-0039911,Duplicate normalized player name. Do not auto-match by name only.
+c rogers,C.Rogers,LV|NYG,DE|G,00-0039510|00-0040150,Duplicate normalized player name. Do not auto-match by name only.
+c smith,C.Smith,DET|LV|MIA,CB|DT|S,00-0038602|00-0038661|00-0039133,Duplicate normalized player name. Do not auto-match by name only.
+c sutton,C.Sutton,DEN|DET|PIT,CB|WR,00-0033930|00-0034348,Duplicate normalized player name. Do not auto-match by name only.
+c thomas,C.Thomas,ARI|CLE,DE|LB,00-0037815|00-0038719,Duplicate normalized player name. Do not auto-match by name only.
+c ward,C.Ward,IND|SF|TEN,CB|QB,00-0034573|00-0040676,Duplicate normalized player name. Do not auto-match by name only.
+c williams,C.Williams,CHI|MIA|SEA,C|QB,00-0034352|00-0039918,Duplicate normalized player name. Do not auto-match by name only.
+caleb johnson,Caleb Johnson,ARI|CLE|JAX|MIA,LB,00-0036704|00-0038499,Duplicate normalized player name. Do not auto-match by name only.
+cameron brown,Cameron Brown,LAC|MIA,DB|LB,00-0036400|00-0038859,Duplicate normalized player name. Do not auto-match by name only.
+chris smith,Chris Smith|Chris Smith II,DET|LV|NYJ,DB|DL,00-0038602|00-0038661,Duplicate normalized player name. Do not auto-match by name only.
+connor mcgovern,Connor McGovern,BUF|NYJ,OL,00-0033011|00-0035679,Duplicate normalized player name. Do not auto-match by name only.
+d allen,D.Allen,LAR|PHI,TE|WR,00-0037039|00-0039074,Duplicate normalized player name. Do not auto-match by name only.
+d bell,D.Bell,CLE|SEA,SAF|WR,00-0037257|00-0037332,Duplicate normalized player name. Do not auto-match by name only.
+d brown,D.Brown,CAR|JAX|NYJ|WAS,DE|OT|WR,00-0026166|00-0036220|00-0036626,Duplicate normalized player name. Do not auto-match by name only.
+d bush,D.Bush,CLE|KC|SEA,LB|SAF,00-0032774|00-0035525,Duplicate normalized player name. Do not auto-match by name only.
+d campbell,D.Campbell,CAR|GB|SF,OLB|WR,00-0032401|00-0040629,Duplicate normalized player name. Do not auto-match by name only.
+d carter,D.Carter,BUF|CHI|CLE|LV,DT|WR,00-0031763|00-0039873,Duplicate normalized player name. Do not auto-match by name only.
+d clark,D.Clark,DAL|HOU|NYJ,LB|SAF,00-0037281|00-0040396,Duplicate normalized player name. Do not auto-match by name only.
+d cook,D.Cook,BAL|DAL|NYJ|PIT,OT|RB,00-0033893|00-0037480,Duplicate normalized player name. Do not auto-match by name only.
+d davis,D.Davis,LAC|NO,OLB|WR,00-0029607|00-0038573,Duplicate normalized player name. Do not auto-match by name only.
+d hall,D.Hall,ARI|SEA,CB|LB,00-0036956|00-0039047,Duplicate normalized player name. Do not auto-match by name only.
+d harmon,D.Harmon,CHI|CLE|PIT,DT|S,00-0030383|00-0040678,Duplicate normalized player name. Do not auto-match by name only.
+d harris,D.Harris,ATL|BUF|DAL|NE|WAS,DE|LB|RB,00-0034612|00-0035157|00-0035657|00-0036090,Duplicate normalized player name. Do not auto-match by name only.
+d hopkins,D.Hopkins,BAL|CLE|KC|TEN,K|WR,00-0030098|00-0030564,Duplicate normalized player name. Do not auto-match by name only.
+d j turner,D.J. Turner,CIN|LV,DB|WR,00-0036527|00-0038549,Duplicate normalized player name. Do not auto-match by name only.
+d jackson,D.Jackson,BUF|CAR|CHI|IND|LAC|MIN|NO|NYG|PIT|SF|WAS,CB|DE|G|LB|RB,00-0034356|00-0036166|00-0036493|00-0037271|00-0037826|00-0040661,Duplicate normalized player name. Do not auto-match by name only.
+d james,D.James,LAC|NE,CB|FS,00-0034790|00-0039800,Duplicate normalized player name. Do not auto-match by name only.
+d johnson,D.Johnson,ARI|BAL|CAR|HOU|JAX|LAR|NE|NYG|PIT|WAS,DB|DE|LB|RB|WR,00-0034071|00-0035216|00-0035628|00-0038479|00-0038535|00-0039061,Duplicate normalized player name. Do not auto-match by name only.
+d jones,D.Jones,BAL|BUF|CAR|CLE|DEN|IND|NYG|SEA|TB|TEN,CB|DE|DT|LB|OT|QB,00-0031054|00-0032388|00-0033297|00-0035678|00-0035710|00-0039014|00-0040258,Duplicate normalized player name. Do not auto-match by name only.
+d lawrence,D.Lawrence,DAL|NYG|SEA,DE|DT|LB,00-0031411|00-0035683,Duplicate normalized player name. Do not auto-match by name only.
+d long,D.Long,CAR|DET|LV|MIA,DB|ILB,00-0035292|00-0035665,Duplicate normalized player name. Do not auto-match by name only.
+d montgomery,D.Montgomery,DET|IND,RB|WR,00-0035045|00-0035685,Duplicate normalized player name. Do not auto-match by name only.
+d moore,D.Moore,CAR|CHI|PIT|TB|TEN,OT|WR,00-0033589|00-0034827|00-0036869,Duplicate normalized player name. Do not auto-match by name only.
+d parham,D.Parham,LAC|LV,G|TE,00-0035329|00-0037255,Duplicate normalized player name. Do not auto-match by name only.
+d richardson,D.Richardson,CAR|LV,CB|SAF,00-0039357|00-0039601,Duplicate normalized player name. Do not auto-match by name only.
+d robinson,D.Robinson,ARI|CHI|LAR|SF,DE|DL|WR,00-0032775|00-0037082|00-0039854,Duplicate normalized player name. Do not auto-match by name only.
+d smith,D.Smith,KC|PHI,OT|WR,00-0032217|00-0036912,Duplicate normalized player name. Do not auto-match by name only.
+d thomas,D.Thomas,DET|JAX|SEA,LB|SAF,00-0036306|00-0038922,Duplicate normalized player name. Do not auto-match by name only.
+d turner,D.Turner,CIN|LV|MIN,CB|LB|WR,00-0036527|00-0038549|00-0039924,Duplicate normalized player name. Do not auto-match by name only.
+d walker,D.Walker,BAL|BUF|CHI|WAS,DE|DT|WR,00-0033782|00-0039792|00-0040710,Duplicate normalized player name. Do not auto-match by name only.
+d washington,D.Washington,DEN|PIT,RB|TE,00-0032450|00-0038558,Duplicate normalized player name. Do not auto-match by name only.
+d williams,D.Williams,ARI|BAL|BUF|CAR|LAR|NYG|SEA|TB,CB|DE|LB|RB,00-0030874|00-0031795|00-0034203|00-0037984|00-0038557|00-0039306|00-0039595,Duplicate normalized player name. Do not auto-match by name only.
+d wilson,D.Wilson,ARI|DAL|NYG,CB|SAF,00-0035301|00-0038674,Duplicate normalized player name. Do not auto-match by name only.
+david long,David Long|David Long Jr.,CAR|GB|IND|MIA|TEN,DB|LB,00-0035292|00-0035665,Duplicate normalized player name. Do not auto-match by name only.
+dj turner,DJ Turner|DJ Turner II,CIN|LV,DB|WR,00-0036527|00-0038549,Duplicate normalized player name. Do not auto-match by name only.
+durell nchami,Durell Nchami,DEN|IND,DL|LB,|00-0039207,Duplicate normalized player name. Do not auto-match by name only.
+e brown,E.Brown,ARI|LAR|SEA,DE|G,00-0034495|00-0036855,Duplicate normalized player name. Do not auto-match by name only.
+e jenkins,E.Jenkins,GB|PHI,C|TE,00-0035526|00-0038498,Duplicate normalized player name. Do not auto-match by name only.
+e jones,E.Jones,ARI|BAL|LAR|SEA|TEN,CB|LB|OT,00-0036994|00-0039823|00-0040068,Duplicate normalized player name. Do not auto-match by name only.
+e neal,E.Neal,LAR|NYG,LB|OT,00-0037612|00-0039775,Duplicate normalized player name. Do not auto-match by name only.
+e roberts,E.Roberts,LV|PIT|TB,DE|OLB,00-0032442|00-0040183,Duplicate normalized player name. Do not auto-match by name only.
+e williams,E.Williams,GB|MIN,DE|SAF,00-0039813|00-0040624,Duplicate normalized player name. Do not auto-match by name only.
+e wilson,E.Wilson,GB|MIN,LB|RB,00-0033336|00-0038797,Duplicate normalized player name. Do not auto-match by name only.
+f moreau,F.Moreau,DEN|MIN|NO,CB|TE,00-0033918|00-0034981,Duplicate normalized player name. Do not auto-match by name only.
+i thomas,I.Thomas,CAR|DET|LV,DE|TE,00-0034365|00-0037314,Duplicate normalized player name. Do not auto-match by name only.
+j allen,J.Allen,BUF|JAX|MIN|WAS,DE|QB,00-0033523|00-0034857|00-0035642,Duplicate normalized player name. Do not auto-match by name only.
+j baker,J.Baker,CLE|MIA|NE|SEA|TEN,OLB|WR,00-0034797|00-0039853,Duplicate normalized player name. Do not auto-match by name only.
+j bates,J.Bates,ATL|DET|WAS,FS|K|TE,00-0034675|00-0036628|00-0039172,Duplicate normalized player name. Do not auto-match by name only.
+j brooks,J.Brooks,ARI|CAR|DAL|MIA|SEA,LB|RB|WR,00-0036409|00-0038640|00-0039344,Duplicate normalized player name. Do not auto-match by name only.
+j browning,J.Browning,CIN|TB,P|QB,00-0035100|00-0039477,Duplicate normalized player name. Do not auto-match by name only.
+j brownlee,J.Brownlee,KC|NYJ|TEN,CB|WR,00-0038492|00-0039372,Duplicate normalized player name. Do not auto-match by name only.
+j bullard,J.Bullard,GB|MIN|NO,DE|SAF,00-0033093|00-0039867,Duplicate normalized player name. Do not auto-match by name only.
+j campbell,J.Campbell,DET|PHI,LB,00-0039018|00-0040708,Duplicate normalized player name. Do not auto-match by name only.
+j carter,J.Carter,CHI|PHI,DT|G,00-0037089|00-0038386,Duplicate normalized player name. Do not auto-match by name only.
+j daniels,J.Daniels,PIT|WAS,G|QB,00-0034347|00-0039910,Duplicate normalized player name. Do not auto-match by name only.
+j davis,J.Davis,ARI|CIN|LV|MIN|PHI|WAS,CB|DB|DT|LB,00-0034446|00-0036614|00-0037073|00-0039416,Duplicate normalized player name. Do not auto-match by name only.
+j elliott,J.Elliott,CLE|PHI|PIT|SF,DB|DT|K,00-0033787|00-0036010|00-0036266,Duplicate normalized player name. Do not auto-match by name only.
+j ford,J.Ford,CHI|CLE|GB|NO,DT|LB|RB,00-0037094|00-0037267|00-0039388,Duplicate normalized player name. Do not auto-match by name only.
+j graham,J.Graham,NO|SF,LB|TE,00-0027696|00-0038648,Duplicate normalized player name. Do not auto-match by name only.
+j harris,J.Harris,CAR|DEN|LAC|WAS,DE|DT|LS,00-0028845|00-0035073|00-0038423,Duplicate normalized player name. Do not auto-match by name only.
+j hicks,J.Hicks,CLE|KC|MIN,MLB|SAF,00-0032129|00-0039825,Duplicate normalized player name. Do not auto-match by name only.
+j higgins,J.Higgins,BAL|HOU,LB|WR,00-0040100|00-0040130,Duplicate normalized player name. Do not auto-match by name only.
+j hill,J.Hill,BAL|HOU|MIA,LB|RB|TE,00-0034975|00-0038720|00-0039395,Duplicate normalized player name. Do not auto-match by name only.
+j houston,J.Houston,CAR|DAL|DET|MIA,DE|OLB,00-0028008|00-0037310,Duplicate normalized player name. Do not auto-match by name only.
+j jackson,J.Jackson,CHI|DEN|DET|LAC|NE|NO|TEN,DB|DT|G|WR,00-0034591|00-0036258|00-0037294|00-0039392|00-0039614,Duplicate normalized player name. Do not auto-match by name only.
+j jacobs,J.Jacobs,DET|GB|LV,CB|RB,00-0035700|00-0036748,Duplicate normalized player name. Do not auto-match by name only.
+j jefferson,J.Jefferson,CIN|DET|JAX|MIN,DT|RB|WR,00-0036322|00-0036670|00-0039743,Duplicate normalized player name. Do not auto-match by name only.
+j johnson,J.Johnson,BAL|CHI|GB|HOU|LAR|LV|NO|NYG|NYJ|TEN|WAS,CB|DB|DT|LB|QB|RB|TE,00-0026300|00-0033927|00-0033940|00-0035726|00-0036040|00-0036292|00-0037663|00-0040037,Duplicate normalized player name. Do not auto-match by name only.
+j jones,J.Jones,ARI|BAL|CHI|HOU|IND|JAX|LV|MIA|MIN|NE|PHI|TEN|WAS,CB|DB|DT|LB|OT|WR,00-0027944|00-0032580|00-0033659|00-0034677|00-0036363|00-0037106|00-0038039|00-0038407|00-0039353|00-0039710,Duplicate normalized player name. Do not auto-match by name only.
+j ledbetter,J.Ledbetter,ARI|JAX,DE|DT,00-0033582|00-0035343,Duplicate normalized player name. Do not auto-match by name only.
+j love,J.Love,GB|SEA,QB|SAF,00-0034974|00-0036264,Duplicate normalized player name. Do not auto-match by name only.
+j martin,J.Martin,CHI|IND|WAS,DE|SAF,00-0034163|00-0039149,Duplicate normalized player name. Do not auto-match by name only.
+j matthews,J.Matthews,ATL|CAR,OT|TE,00-0031279|00-0031299,Duplicate normalized player name. Do not auto-match by name only.
+j myers,J.Myers,GB|NYJ|SEA,C|K,00-0031492|00-0036622,Duplicate normalized player name. Do not auto-match by name only.
+j newton,J.Newton,CIN|WAS,CB|DT,00-0039375|00-0039906,Duplicate normalized player name. Do not auto-match by name only.
+j patterson,J.Patterson,HOU|LAC,C|RB,00-0036755|00-0038615,Duplicate normalized player name. Do not auto-match by name only.
+j phillips,J.Phillips,BUF|DAL|MIA|PHI,DT|LB,00-0031557|00-0036934|00-0040175,Duplicate normalized player name. Do not auto-match by name only.
+j reed,J.Reed,GB|HOU|SEA|TEN,DT|SAF|WR,00-0032387|00-0038613|00-0039146|00-0040204,Duplicate normalized player name. Do not auto-match by name only.
+j robinson,J.Robinson,ATL|CAR|GB|LV,DE|RB|SAF,00-0035831|00-0036878|00-0038587,Duplicate normalized player name. Do not auto-match by name only.
+j ross,J.Ross,BAL|KC|PHI|SEA,LB|WR,00-0033460|00-0037184|00-0037216,Duplicate normalized player name. Do not auto-match by name only.
+j sanders,J.Sanders,CAR|MIA,K|TE,00-0034794|00-0039356,Duplicate normalized player name. Do not auto-match by name only.
+j scott,J.Scott,LAC|PHI,CB|P,00-0034162|00-0036303,Duplicate normalized player name. Do not auto-match by name only.
+j simmons,J.Simmons,ATL|DEN|KC|TEN,DT|FS|OT,00-0032971|00-0035643|00-0040116,Duplicate normalized player name. Do not auto-match by name only.
+j simpson,J.Simpson,BAL|GB|NYJ,CB|G,00-0036369|00-0039383,Duplicate normalized player name. Do not auto-match by name only.
+j smith,J.Smith,ATL|HOU|LV|MIA|PIT,CB|MLB|TE,00-0033052|00-0033858|00-0040149,Duplicate normalized player name. Do not auto-match by name only.
+j taylor,J.Taylor,HOU|IND|KC|LAC|LAR|NYJ,CB|OT|RB|SAF,00-0035237|00-0036096|00-0036223|00-0037307|00-0039060,Duplicate normalized player name. Do not auto-match by name only.
+j walker,J.Walker,ATL|CHI,DE|WR,00-0040277|00-0040577,Duplicate normalized player name. Do not auto-match by name only.
+j ward,J.Ward,HOU|MIN|NYG|PIT|TEN,LB|RB|SAF,00-0031298|00-0033046|00-0035924|00-0038578,Duplicate normalized player name. Do not auto-match by name only.
+j watson,J.Watson,HOU|KC,CB|WR,00-0034386|00-0037195,Duplicate normalized player name. Do not auto-match by name only.
+j williams,J.Williams,ARI|CHI|CIN|DAL|DEN|DET|KC|LAR|MIN|NO|TB|TEN|WAS,CB|DB|DE|LB|OT|RB|WR,00-0032975|00-0033948|00-0035241|00-0035629|00-0035944|00-0036997|00-0037240|00-0038043|00-0038812|00-0039430|00-0040429,Duplicate normalized player name. Do not auto-match by name only.
+j wilson,J.Wilson,MIA|NE|PHI,G|RB|WR,00-0034115|00-0039236|00-0040147,Duplicate normalized player name. Do not auto-match by name only.
+j woods,J.Woods,ARI|ATL|LAC|NYJ,LB|SAF|TE,00-0034801|00-0037755|00-0038091,Duplicate normalized player name. Do not auto-match by name only.
+j wright,J.Wright,MIA|SEA,RB,00-0039874|00-0040067,Duplicate normalized player name. Do not auto-match by name only.
+ja jones,Ja.Jones,CHI|NE|WAS,CB|DB|WR,00-0037106|00-0038039|00-0040317,Duplicate normalized player name. Do not auto-match by name only.
+ja williams,Ja.Williams,DET|MIN|NO,DB|RB|WR,00-0033948|00-0037240|00-0038812,Duplicate normalized player name. Do not auto-match by name only.
+jaylon jones,Jaylon Jones,CHI|IND,DB,00-0037106|00-0038407,Duplicate normalized player name. Do not auto-match by name only.
+jaylon moore,Jaylon Moore,JAX|KC|SF,OL|WR,00-0036125|00-0036557,Duplicate normalized player name. Do not auto-match by name only.
+jo williams,Jo.Williams,DET|MIN,CB|DE,00-0035241|00-0035944,Duplicate normalized player name. Do not auto-match by name only.
+joe evans,Joe Evans,BAL|PHI,DL|LB,00-0039247|00-0040348,Duplicate normalized player name. Do not auto-match by name only.
+jonah williams,Jonah Williams,ARI|CIN|DET|LAR|NO,DL|OL,00-0035629|00-0035944,Duplicate normalized player name. Do not auto-match by name only.
+jones,V.Jones,CAR|CHI|NO|SEA|TB,LB|RB,00-0037153|00-0037745,Duplicate normalized player name. Do not auto-match by name only.
+jordan phillips,Jordan Phillips,BUF|MIA,DL,00-0031557|00-0040175,Duplicate normalized player name. Do not auto-match by name only.
+josh allen,Josh Allen,BUF|JAX,LB|QB,00-0034857|00-0035642,Duplicate normalized player name. Do not auto-match by name only.
+k allen,K.Allen,BUF|CHI|DET|LAC|PIT,QB|WR,00-0030279|00-0034577,Duplicate normalized player name. Do not auto-match by name only.
+k boyd,K.Boyd,ARI|HOU|NO,CB|DT,00-0035150|00-0039401,Duplicate normalized player name. Do not auto-match by name only.
+k brooks,K.Brooks,GB|TEN,DB|DT|SAF,00-0038398|00-0038703,Duplicate normalized player name. Do not auto-match by name only.
+k clark,K.Clark,ARI|DAL|GB,CB|NT,00-0033120|00-0038984,Duplicate normalized player name. Do not auto-match by name only.
+k davis,K.Davis,CLE|HOU|SF,DT|WR,00-0036430|00-0037380|00-0037832,Duplicate normalized player name. Do not auto-match by name only.
+k jackson,K.Jackson,BAL|BUF|DEN|HOU|TEN,S|SAF|WR,00-0027872|00-0038969|00-0040104,Duplicate normalized player name. Do not auto-match by name only.
+k jenkins,K.Jenkins,BUF|CIN,DT|LB,00-0039908|00-0040362,Duplicate normalized player name. Do not auto-match by name only.
+k johnson,K.Johnson,PIT|TB,RB|WR,00-0039589|00-0040142,Duplicate normalized player name. Do not auto-match by name only.
+k joseph,K.Joseph,DET|IND|MIA|SEA,CB|SAF,00-0036935|00-0037667,Duplicate normalized player name. Do not auto-match by name only.
+k king,K.King,ATL|MIN|NYJ,CB|LB,00-0033524|00-0040214,Duplicate normalized player name. Do not auto-match by name only.
+k lassiter,K.Lassiter,CIN|HOU,CB|WR,00-0037420|00-0039343,Duplicate normalized player name. Do not auto-match by name only.
+k miller,K.Miller,LV|NO,OT|RB,00-0034759|00-0038551,Duplicate normalized player name. Do not auto-match by name only.
+k murray,K.Murray,ARI|DAL|LAC|TEN,LB|QB,00-0035228|00-0036441,Duplicate normalized player name. Do not auto-match by name only.
+k smith,K.Smith,ATL|DEN|MIA|NYJ,DB|FB|OT,00-0030968|00-0036839|00-0038696,Duplicate normalized player name. Do not auto-match by name only.
+k thomas,K.Thomas,GB|LAR,CB|LB,00-0036688|00-0037057,Duplicate normalized player name. Do not auto-match by name only.
+k white,K.White,ARI|NE|SF|TEN,DE|OLB,00-0034375|00-0039148,Duplicate normalized player name. Do not auto-match by name only.
+k williams,K.Williams,CIN|LAR|NE|PIT,RB|WR,00-0037840|00-0040131|00-0040534,Duplicate normalized player name. Do not auto-match by name only.
+l johnson,L.Johnson,CAR|LV|NO|PHI,OT|SAF,00-0030561|00-0035244,Duplicate normalized player name. Do not auto-match by name only.
+lamar jackson,Lamar Jackson,ATL|BAL|CAR,DB|QB,00-0034796|00-0036152,Duplicate normalized player name. Do not auto-match by name only.
+leonard taylor,Leonard Taylor|Leonard Taylor III,JAX|NE|NYJ,DL|TE,00-0038673|00-0039289,Duplicate normalized player name. Do not auto-match by name only.
+m adams,M.Adams,CLE|DET|NYG|PIT|SEA,DT|OLB,00-0033929|00-0034424|00-0035946,Duplicate normalized player name. Do not auto-match by name only.
+m brown,M.Brown,ARI|JAX|KC|TEN,CB|SAF|WR,00-0035662|00-0037313|00-0037493,Duplicate normalized player name. Do not auto-match by name only.
+m carter,M.Carter,ARI|NYJ|PHI,CB|RB,00-0036501|00-0036924,Duplicate normalized player name. Do not auto-match by name only.
+m cole,M.Cole,JAX|PIT,C|DE,00-0034785|00-0039425,Duplicate normalized player name. Do not auto-match by name only.
+m crosby,M.Crosby,LV|NYG,DE|K,00-0025580|00-0034973,Duplicate normalized player name. Do not auto-match by name only.
+m davis,M.Davis,DAL|LAC|NO|WAS,CB|RB,00-0033697|00-0037563,Duplicate normalized player name. Do not auto-match by name only.
+m edwards,M.Edwards,BUF|HOU|KC|SEA|TB,DT|SAF,00-0032265|00-0035681,Duplicate normalized player name. Do not auto-match by name only.
+m evans,M.Evans,CAR|TB,TE|WR,00-0031408|00-0040187,Duplicate normalized player name. Do not auto-match by name only.
+m golden,M.Golden,GB|PIT,LB|WR,00-0032127|00-0040667,Duplicate normalized player name. Do not auto-match by name only.
+m harrison,M.Harrison,ARI|BAL|PIT,LB|WR,00-0036280|00-0039849,Duplicate normalized player name. Do not auto-match by name only.
+m jackson,M.Jackson,CAR|CIN|SEA|TEN,CB|DB|DT,00-0035277|00-0038845|00-0039354,Duplicate normalized player name. Do not auto-match by name only.
+m jones,M.Jones,DET|JAX|NE|SF,CB|QB|WR,00-0029293|00-0036972|00-0037253,Duplicate normalized player name. Do not auto-match by name only.
+m robinson,M.Robinson,NE|NYJ|PIT|TEN,CB|LB,00-0037316|00-0040020,Duplicate normalized player name. Do not auto-match by name only.
+m sanders,M.Sanders,CAR|DAL|HOU,LB|RB,00-0035243|00-0037751,Duplicate normalized player name. Do not auto-match by name only.
+m smith,M.Smith,DAL|JAX,DT,00-0038545|00-0039889,Duplicate normalized player name. Do not auto-match by name only.
+m taylor,M.Taylor,NYJ,TE|WR,00-0035480|00-0040736,Duplicate normalized player name. Do not auto-match by name only.
+m washington,M.Washington,KC|MIA,WR,00-0037272|00-0039880,Duplicate normalized player name. Do not auto-match by name only.
+m williams,M.Williams,BAL|LAC|NE|NYJ|PHI|PIT|SF,DE|FS|WR,00-0033536|00-0033894|00-0036916|00-0040660,Duplicate normalized player name. Do not auto-match by name only.
+m wilson,M.Wilson,ARI|CIN|NE,CB|LB|WR,00-0035144|00-0036884|00-0038559,Duplicate normalized player name. Do not auto-match by name only.
+ma wilson,Ma.Wilson,ARI,CB|LB,00-0035144|00-0036884,Duplicate normalized player name. Do not auto-match by name only.
+marcus harris,Marcus Harris,KC|NE|TEN,DB|DL,00-0039433|00-0040201,Duplicate normalized player name. Do not auto-match by name only.
+michael carter,Michael Carter|Michael Carter II,ARI|NYJ|PHI,DB|RB,00-0036501|00-0036924,Duplicate normalized player name. Do not auto-match by name only.
+michael thomas,Michael Thomas,CIN|NO,DB|WR,00-0028908|00-0032765,Duplicate normalized player name. Do not auto-match by name only.
+mike edwards,Mike Edwards,BUF|KC|TB,DB|OL,00-0035681|00-0039472,Duplicate normalized player name. Do not auto-match by name only.
+mike smith,Mike Smith Jr.,DAL|IND,DB|LB,00-0039951|00-0040051,Duplicate normalized player name. Do not auto-match by name only.
+miller,V.Miller,BUF|JAX|WAS,LB|OLB,00-0027940|00-0038570,Duplicate normalized player name. Do not auto-match by name only.
+myles murphy,Myles Murphy,ARI|CIN,DL,00-0038546|00-0039519,Duplicate normalized player name. Do not auto-match by name only.
+n harris,N.Harris,CLE|LAC|PIT,C|RB,00-0036236|00-0036893,Duplicate normalized player name. Do not auto-match by name only.
+n jones,N.Jones,ARI|HOU|KC|LAC|NYG|TEN,CB|DT,00-0036695|00-0038986,Duplicate normalized player name. Do not auto-match by name only.
+n sewell,N.Sewell,CHI|NO,LB,00-0037544|00-0038390,Duplicate normalized player name. Do not auto-match by name only.
+n williams,N.Williams,KC|LAC,CB|DT,00-0030500|00-0040670,Duplicate normalized player name. Do not auto-match by name only.
+nick williams,Nick Williams,DEN|SF,DL|WR,00-0030500|00-0039045,Duplicate normalized player name. Do not auto-match by name only.
+p johnson,P.Johnson,ARI|NYG|PHI,LB|OT,00-0036922|00-0038540,Duplicate normalized player name. Do not auto-match by name only.
+q williams,Q.Williams,DAL|NYJ,DT|LB,00-0035680|00-0035718,Duplicate normalized player name. Do not auto-match by name only.
+r davis,R.Davis,BUF|IND|MIA,DT|RB,00-0036213|00-0039875,Duplicate normalized player name. Do not auto-match by name only.
+r green,R.Green,CHI|SF,CB|DE,00-0034831|00-0039345,Duplicate normalized player name. Do not auto-match by name only.
+r wilson,R.Wilson,DEN|NYG|PIT,QB|WR,00-0029263|00-0039739,Duplicate normalized player name. Do not auto-match by name only.
+s anderson,S.Anderson,LAC|PIT,G|TE,00-0032725|00-0038645,Duplicate normalized player name. Do not auto-match by name only.
+s brown,S.Brown,BUF|PHI,OT|SAF,00-0036976|00-0039002,Duplicate normalized player name. Do not auto-match by name only.
+s jones,S.Jones,CIN|DEN,CB|DE,00-0033543|00-0040153,Duplicate normalized player name. Do not auto-match by name only.
+s thomas,S.Thomas,ARI|DAL|NYJ,CB|DE,00-0033870|00-0038663,Duplicate normalized player name. Do not auto-match by name only.
+s thompson,S.Thompson,BUF|CAR|MIA,OLB|QB,00-0031550|00-0037327,Duplicate normalized player name. Do not auto-match by name only.
+s williams,S.Williams,DAL|GB,DE|WR,00-0037665|00-0040009,Duplicate normalized player name. Do not auto-match by name only.
+spencer brown,Spencer Brown,ATL|BUF|CAR,OL|RB,00-0036543|00-0036976,Duplicate normalized player name. Do not auto-match by name only.
+steven jones,Steven Jones,JAX|PIT|TEN,DB|OL,00-0038846|00-0039555,Duplicate normalized player name. Do not auto-match by name only.
+t bass,T.Bass,BUF|DAL,G|K,00-0036162|00-0038731,Duplicate normalized player name. Do not auto-match by name only.
+t booker,T.Booker,DAL|LV|PHI,DT|G,00-0037262|00-0040007,Duplicate normalized player name. Do not auto-match by name only.
+t brown,T.Brown,CIN|CLE|HOU|IND|LAR|NE|NYJ|SEA,CB|DB|OT,00-0032071|00-0034540|00-0036885,Duplicate normalized player name. Do not auto-match by name only.
+t campbell,T.Campbell,CLE|JAX,CB|DB,00-0034903|00-0036974,Duplicate normalized player name. Do not auto-match by name only.
+t davis,T.Davis,ATL|CAR|LAR,DE|LB,00-0034500|00-0039749,Duplicate normalized player name. Do not auto-match by name only.
+t edmunds,T.Edmunds,CHI|PHI|PIT|TEN,MLB|S,00-0034673|00-0034858,Duplicate normalized player name. Do not auto-match by name only.
+t etienne,T.Etienne,CAR|JAX,RB,00-0036973|00-0040644,Duplicate normalized player name. Do not auto-match by name only.
+t gipson,T.Gipson,CAR|SEA|SF|TEN,DE|FS|LB,00-0028924|00-0036305,Duplicate normalized player name. Do not auto-match by name only.
+t hawkins,T.Hawkins,NYG|SF,CB|SAF,00-0037521|00-0038403,Duplicate normalized player name. Do not auto-match by name only.
+t hill,T.Hill,CAR|MIA|NO,CB|TE|WR,00-0031785|00-0033040|00-0033357,Duplicate normalized player name. Do not auto-match by name only.
+t jackson,T.Jackson,MIN,SAF|WR,00-0035934|00-0037301,Duplicate normalized player name. Do not auto-match by name only.
+t johnson,T.Johnson,BUF|LAR|NYG|NYJ|TB,RB|TE|WR,00-0035537|00-0036427|00-0039847|00-0040237,Duplicate normalized player name. Do not auto-match by name only.
+t jones,T.Jones,ARI|BAL|JAX|NE|NO|TEN,DE|DT|LB|RB|WR,00-0035860|00-0036497|00-0037756|00-0038514,Duplicate normalized player name. Do not auto-match by name only.
+t robinson,T.Robinson,BAL|PHI,DT|LB,00-0038505|00-0040662,Duplicate normalized player name. Do not auto-match by name only.
+t scott,T.Scott,CHI|WAS,OT|WR,00-0034571|00-0038941,Duplicate normalized player name. Do not auto-match by name only.
+t smith,T.Smith,CAR|CHI|DAL|DEN|HOU|KC|MIN|NYJ|SEA|TB,CB|DT|G|LB|OT|SAF,00-0027947|00-0034278|00-0035910|00-0036660|00-0037080|00-0037243|00-0038395|00-0039846,Duplicate normalized player name. Do not auto-match by name only.
+t taylor,T.Taylor,CHI|NYG|NYJ|SF,P|QB|WR,00-0028118|00-0033292|00-0039745,Duplicate normalized player name. Do not auto-match by name only.
+t thomas,T.Thomas,CAR|HOU|MIN|TB,SAF,00-0034488|00-0040295,Duplicate normalized player name. Do not auto-match by name only.
+t walker,T.Walker,DET|JAX,DB|DE,00-0034745|00-0037235,Duplicate normalized player name. Do not auto-match by name only.
+t wallace,T.Wallace,BAL|CAR,LB|WR,00-0036630|00-0039347,Duplicate normalized player name. Do not auto-match by name only.
+t washington,T.Washington,IND|MIA,SAF|WR,00-0039884|00-0040357,Duplicate normalized player name. Do not auto-match by name only.
+t williams,T.Williams,CIN|CLE|DET|LAC|SF,DT|OT|RB,00-0027857|00-0035291|00-0040672,Duplicate normalized player name. Do not auto-match by name only.
+tyler davis,Tyler Davis,GB|LAR,DL|TE,00-0036250|00-0039749,Duplicate normalized player name. Do not auto-match by name only.
+tyler smith,Tyler Smith,CAR|DAL,OL,00-0037243|00-0039673,Duplicate normalized player name. Do not auto-match by name only.

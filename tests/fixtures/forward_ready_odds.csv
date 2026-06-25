@@ -1,0 +1,2 @@
+Player Name,Player ID,Team,Opponent,Position,Market,Sportsbook,Line,Over Odds,Under Odds,Implied Over Prob,Model Over Prob,Edge %,Price Grade,Updated At,Validation Status,Notes,Fixture Label
+Synthetic Receiver,synthetic-player-1,CIN,CLE,WR,Receptions,SyntheticBook,4.5,-110,-110,0.5238,0.5800,0.0562,PASS,2026-06-24T00:00:00+00:00,READY,Synthetic odds fixture. Not production data.,SYNTHETIC TEST ONLY

@@ -1,0 +1,2 @@
+Player Name,Player ID,Team,Position,Expected Role,Starter Status,Projected Snap Share,Projected Route Share,Target Share Override,Role Confidence,Manual Override,Source,Updated At,Validation Status,Notes,Fixture Label
+Synthetic Receiver,synthetic-player-1,CIN,WR,WR1,Starter,0.86,0.91,,85,,SYNTHETIC TEST ONLY,2026-06-24T00:00:00+00:00,READY,Synthetic role fixture. Not production data.,SYNTHETIC TEST ONLY

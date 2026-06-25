@@ -1,0 +1,2 @@
+Player Name,Player ID,Team,Position,Injury Status,Practice Status,Game Status,Availability Risk,Confidence Penalty,Projection Action,Manual Override,Source,Updated At,Validation Status,Notes,Fixture Label
+Synthetic Receiver,synthetic-player-1,CIN,WR,Healthy,Full,Expected active,Low,0,Use,,SYNTHETIC TEST ONLY,2026-06-24T00:00:00+00:00,READY,Synthetic injury fixture. Not production data.,SYNTHETIC TEST ONLY

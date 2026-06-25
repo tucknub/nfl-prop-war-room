@@ -1,0 +1,13 @@
+projection_bucket,confidence_bucket,rows,avg_projected_receptions,avg_actual_receptions,mae,calibration_note
+0-1,High,231,0.7500824495376546,0.8441558441558441,0.8332915634446736,Skipped rows with thin input history and no prior baseline.
+0-1,Medium,289,0.674233491384374,0.4463667820069204,0.7319667452860275,Skipped rows with thin input history and no prior baseline.
+1-2,High,898,1.5294537036907891,1.27728285077951,1.1105500301468647,Skipped rows with thin input history and no prior baseline.
+1-2,Medium,527,1.5280927297225335,1.047438330170778,1.1130365848442216,Skipped rows with thin input history and no prior baseline.
+2-3,High,946,2.492404857292575,2.160676532769556,1.4683203777366536,Skipped rows with thin input history and no prior baseline.
+2-3,Medium,469,2.4494390299076754,2.0042643923240937,1.7207743105130922,Skipped rows with thin input history and no prior baseline.
+3-4,High,641,3.461738931708461,3.0436817472698907,1.774561245046595,Skipped rows with thin input history and no prior baseline.
+3-4,Medium,195,3.3892575266862033,3.2256410256410257,1.8986668691827504,Skipped rows with thin input history and no prior baseline.
+4-6,High,600,4.824748040980062,4.411666666666667,1.9883286016657473,Skipped rows with thin input history and no prior baseline.
+4-6,Medium,45,4.4145333355831635,4.511111111111111,2.076783208278109,Skipped rows with thin input history and no prior baseline.
+6+,High,214,7.115774542813928,6.0046728971962615,2.5233520072149513,Skipped rows with thin input history and no prior baseline.
+6+,Medium,2,6.13790670462864,4.5,1.63790670462864,Skipped rows with thin input history and no prior baseline.

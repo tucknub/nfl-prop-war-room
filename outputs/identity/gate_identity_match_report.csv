@@ -1,0 +1,5 @@
+gate,rows_checked,matched_rows,unmatched_rows,team_verify_rows,duplicate_name_rows,status,notes
+roster,0,0,0,0,0,NEEDS DATA,No real gate rows to validate.
+role,0,0,0,0,0,NEEDS DATA,No real gate rows to validate.
+injury,0,0,0,0,0,NEEDS DATA,No real gate rows to validate.
+market_odds,0,0,0,0,0,NEEDS DATA,No real gate rows to validate.

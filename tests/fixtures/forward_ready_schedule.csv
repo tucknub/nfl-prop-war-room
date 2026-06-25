@@ -1,0 +1,2 @@
+Season,Week,Game Date,Away Team,Home Team,Neutral Site,Venue,Game ID,Game Status,Source,Updated At,Validation Status,Notes,Fixture Label
+2026,1,2026-09-10,CIN,CLE,FALSE,Synthetic Stadium,SYNTH_2026_01_CIN_CLE,scheduled,SYNTHETIC TEST ONLY,2026-06-24T00:00:00+00:00,READY,Synthetic forward-mode schedule fixture. Not production data.,SYNTHETIC TEST ONLY

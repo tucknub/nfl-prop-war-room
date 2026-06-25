@@ -1,0 +1,6 @@
+pandas>=2.2.0
+numpy>=1.26.0
+streamlit>=1.57.0
+scikit-learn>=1.4.0
+PyYAML>=6.0.1
+nflreadpy>=0.1.0

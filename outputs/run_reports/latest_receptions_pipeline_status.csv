@@ -1,0 +1,18 @@
+check_name,value,status,severity,notes
+projection_mode,historical_test,HISTORICAL TEST ONLY,HIGH,Not live betting ready.
+target_season,2025,PASS,INFO,
+target_week,1,PASS,INFO,
+history_start_season,2023,PASS,INFO,
+history_end_season,2024,PASS,INFO,
+leakage_status,PASS,PASS,INFO,
+leakage_exists,False,PASS,INFO,
+final_live_readiness,NO-GO,NO-GO,HIGH,No live betting output should be used.
+blocked_gates,"Historical test mode, Roster Gate, Role Gate, Injury Gate, Market Odds Gate",PASS,INFO,
+live_betting_output_created,False,PASS,INFO,
+historical_test_rows,640,PASS,INFO,
+schedule_gate_status,READY,PASS,INFO,
+roster_gate_status,NEEDS DATA,NEEDS DATA,HIGH,Required gate blocks live readiness.
+role_gate_status,NEEDS DATA,NEEDS DATA,HIGH,Required gate blocks live readiness.
+injury_gate_status,NEEDS DATA,NEEDS DATA,HIGH,Required gate blocks live readiness.
+market_odds_gate_status,NEEDS DATA,NEEDS DATA,HIGH,Required gate blocks live readiness.
+import_pack_path,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\outputs\google_sheets\latest_import_pack.zip,PASS,INFO,

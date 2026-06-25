@@ -1,0 +1,46 @@
+project:
+  name: nfl_prop_projection_engine_v1
+  version: V1A_V1B
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  output_dir: outputs
+
+data:
+  seasons: [2023, 2024, 2025]
+  history_start_season: 2023
+  history_end_season: 2024
+  projection_mode: historical_test
+  target_season: 2025
+  target_week: 1
+  projection_season: 2025
+  projection_week: 1
+  cache_raw_csv: true
+
+features:
+  recent_games: 4
+  prior_games: 17
+  min_current_games: 3
+  strong_current_games: 6
+  low_current_sample_games: 3
+  low_player_sample_targets: 10
+  adot_adjustment_per_yard: -0.012
+  qb_adjustment_cap: 0.05
+  catch_rate_adjustment_cap: 0.15
+  route_proxy:
+    base_routes_per_team_attempt: 1.0
+    slot_wr_factor: 0.82
+    te_factor: 0.72
+    rb_factor: 0.38
+    other_factor: 0.45
+
+model:
+  target_share_floor: 0.005
+  target_share_ceiling: 0.45
+  catch_rate_floor: 0.25
+  catch_rate_ceiling: 0.95
+
+simulation:
+  iterations: 10000
+  random_seed: 42

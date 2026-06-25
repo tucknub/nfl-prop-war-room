@@ -1,0 +1,46 @@
+check_name,expected,actual,status,severity,notes
+projection_mode,historical_test or forward_projection,historical_test,PASS,INFO,
+target_season,configured integer,2025,PASS,INFO,
+target_week,configured integer,1,PASS,INFO,
+history_start_season,configured integer,2023,PASS,INFO,
+history_end_season,>= history_start_season,2024,PASS,INFO,
+leakage_status,PASS,PASS,PASS,INFO,Leakage audit must pass.
+leakage_exists,False,False,PASS,INFO,Future/target-week leakage must fail validation.
+historical_test_final_readiness,NO-GO,NO-GO,PASS,INFO,
+historical_test_usage_status,all rows HISTORICAL TEST ONLY,['HISTORICAL TEST ONLY'],PASS,INFO,
+blocking_gates_do_not_go_live,Final readiness not GO when a required gate blocks,"final=NO-GO; gates={'schedule_gate_status': 'READY', 'roster_gate_status': 'NEEDS DATA', 'role_gate_status': 'NEEDS DATA', 'injury_gate_status': 'NEEDS DATA', 'market_odds_gate_status': 'NEEDS DATA'}",PASS,INFO,
+roster_gate_status_not_silently_ready,missing gate data is not READY,NEEDS DATA,PASS,INFO,Missing roster/role/injury/odds data must not be silently treated as ready.
+role_gate_status_not_silently_ready,missing gate data is not READY,NEEDS DATA,PASS,INFO,Missing roster/role/injury/odds data must not be silently treated as ready.
+injury_gate_status_not_silently_ready,missing gate data is not READY,NEEDS DATA,PASS,INFO,Missing roster/role/injury/odds data must not be silently treated as ready.
+market_odds_gate_status_not_silently_ready,missing gate data is not READY,NEEDS DATA,PASS,INFO,Missing roster/role/injury/odds data must not be silently treated as ready.
+no_live_betting_output_when_no_go,False when final readiness is NO-GO,False,PASS,INFO,
+usage_status_column_exists,usage_status present,True,PASS,INFO,
+market_edges_empty_when_no_odds,empty allowed with no odds,0,PASS,INFO,
+line_ladder_exists,file exists,True,PASS,INFO,
+line_ladder_probabilities_between_zero_one,all probabilities 0..1,True,PASS,INFO,
+line_ladder_historical_rows_labeled,all HISTORICAL TEST ONLY in historical_test,True,PASS,INFO,
+line_ladder_has_no_edge_columns,no edge/recommendation columns,[],PASS,INFO,
+line_ladder_not_live_betting_when_no_go,no live betting output from ladder,NO-GO,PASS,INFO,
+gate_file_exists:google_sheets/schedule_gate_import.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/roster_gate_import_template.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/role_gate_import_template.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/injury_gate_import_template.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/market_odds_gate_import_template.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/live_readiness_export.csv,file exists,True,PASS,INFO,
+gate_file_exists:google_sheets/forward_projection_blockers.csv,file exists,True,PASS,INFO,
+gate_input_status_exists,file exists,True,PASS,INFO,
+templates_do_not_count_as_real_data,all template-only gates is_real_data=False,True,PASS,INFO,
+missing_real_gate_inputs_not_ready,template-only gates are not READY,True,PASS,INFO,Real gate inputs must pass validation before READY.
+roster_template_ignored_as_real_input,NEEDS DATA,NEEDS DATA,PASS,INFO,
+role_template_ignored_as_real_input,NEEDS DATA,NEEDS DATA,PASS,INFO,
+injury_template_ignored_as_real_input,NEEDS DATA,NEEDS DATA,PASS,INFO,
+market_odds_template_ignored_as_real_input,NEEDS DATA,NEEDS DATA,PASS,INFO,
+identity_report_exists,file exists,True,PASS,INFO,
+identity_issues_prevent_ready,no READY gate with unmatched/duplicate/team verify rows,False,PASS,INFO,
+team_verify_prevents_go,Final readiness not GO with TEAM_VERIFY rows,False,PASS,INFO,
+unmatched_identity_rows_file_exists,file exists,True,PASS,INFO,
+import_manifest_exists,file exists,True,PASS,INFO,
+latest_import_pack_exists,file exists,True,PASS,INFO,
+import_pack_contents,all expected CSVs and instructions,[],PASS,INFO,
+pipeline_errors_csv_exists,errors CSV exists with row,True,PASS,INFO,
+pipeline_errors_csv_has_content,error_type/message row exists,True,PASS,INFO,

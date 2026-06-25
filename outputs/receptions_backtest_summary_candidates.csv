@@ -1,0 +1,2 @@
+rows_scored,raw_mae,raw_rmse,raw_bias,calibrated_mae,calibrated_rmse,calibrated_bias,walk_forward_rule
+5057,1.487325790525689,1.9105875561545838,0.36205516759867756,1.4002772641113646,1.8656449478472408,5.058243719075263e-17,Week N uses features available through Week N-1

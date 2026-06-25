@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+.DS_Store
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+data/raw/
+*.zip
+NFL Prop Projection BACKUPS/
+outputs/receptions_simulation_distribution.csv

@@ -1,0 +1,2 @@
+Player Name,Player ID,Position,Current Team,Roster Status,Depth Chart Role,Source,Updated At,Current Team Verified,Team Verify Flag,Validation Status,Notes,Fixture Label
+Synthetic Receiver,synthetic-player-1,WR,CIN,Active,WR1,SYNTHETIC TEST ONLY,2026-06-24T00:00:00+00:00,TRUE,,READY,Synthetic roster fixture. Not production data.,SYNTHETIC TEST ONLY

@@ -1,0 +1,6 @@
+Blocker,Severity,Why It Matters,Required Before Projection,Required Before Betting,Next Action
+Historical test mode,HIGH,Historical tests are for validation and must not be treated as live betting boards.,Switch config projection_mode to forward_projection after gates are ready.,Yes,Keep usage_status as HISTORICAL TEST ONLY until forward gates pass.
+Roster Gate,HIGH,Roster Gate status is NEEDS DATA.,Yes,Yes,Complete Roster Gate import and validation.
+Role Gate,HIGH,Role Gate status is NEEDS DATA.,Yes,Yes,Complete Role Gate import and validation.
+Injury Gate,HIGH,Injury Gate status is NEEDS DATA.,Yes,Yes,Complete Injury Gate import and validation.
+Market Odds Gate,MEDIUM,Market Odds Gate status is NEEDS DATA.,No for pure projection,Yes,Complete Market Odds Gate import and validation.
