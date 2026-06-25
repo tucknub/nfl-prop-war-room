@@ -48,21 +48,21 @@ for category in ["Receiving", "Rushing", "Passing", "Touchdowns", "Long Plays"]:
                 f"{status}. {row.get('notes', '')}",
             )
 
-section_header("Current Active Market", "Receptions V1")
+section_header("Current Active Markets", "Receptions V1 and Receiving Yards V1")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    metric_card("Active Model", "Receptions V1", "built")
+    metric_card("Active Models", "2", "built_historical_test")
 with c2:
     metric_card("Mode", "Historical Test", "HISTORICAL TEST ONLY")
 with c3:
-    metric_card("Line Ladder", "Available", "PASS")
+    metric_card("Line Ladders", "Available", "PASS")
 with c4:
     metric_card("Edge Engine", "Blocked", "NO-GO", "Missing odds and live gates.")
 
 st.markdown(
     """
     <div class="info-card">
-    Dashboard pages available now: Receptions Projection Board, Reception Line Ladder, Market Edge Engine,
+    Dashboard pages available now: Receptions Projection Board, Receiving Yards V1, Reception Line Ladder, Market Edge Engine,
     Forward Readiness Gates, Identity & Team Matching, Run Reports, and Best Overall Board placeholder.
     </div>
     """,
@@ -71,15 +71,14 @@ st.markdown(
 
 section_header("Future Markets Roadmap")
 roadmap = [
-    "1. Receiving Yards - closest to receptions because it extends target/catch opportunity with yardage efficiency.",
-    "2. Rushing Yards - similar volume-efficiency structure using carries and yards per carry.",
-    "3. Passing Yards - uses team/QB pass-volume and passing efficiency logic.",
-    "4. Completions - tied to QB attempts and completion rate.",
-    "5. Pass Attempts - starts from team pass-volume and game environment.",
-    "6. Carries - rushing opportunity foundation for backs and mobile QBs.",
-    "7. Targets - receiving opportunity market adjacent to Receptions V1.",
-    "8. Anytime TD - needs different event probability modeling.",
-    "9. Longest Reception / Rush - needs long-play distribution modeling.",
+    "1. Rushing Yards - similar volume-efficiency structure using carries and yards per carry.",
+    "2. Passing Yards - uses team/QB pass-volume and passing efficiency logic.",
+    "3. Completions - tied to QB attempts and completion rate.",
+    "4. Pass Attempts - starts from team pass-volume and game environment.",
+    "5. Carries - rushing opportunity foundation for backs and mobile QBs.",
+    "6. Targets - receiving opportunity market adjacent to Receptions V1.",
+    "7. Anytime TD - needs different event probability modeling.",
+    "8. Longest Reception / Rush - needs long-play distribution modeling.",
 ]
 st.markdown("<div class='info-card'>" + "<br>".join(roadmap) + "</div>", unsafe_allow_html=True)
 

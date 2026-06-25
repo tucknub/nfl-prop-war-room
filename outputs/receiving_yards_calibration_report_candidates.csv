@@ -1,0 +1,11 @@
+calibration_bucket,confidence_bucket,rows,avg_projected_receiving_yards,avg_actual_receiving_yards,mae,calibration_note
+0-15,High,775,9.488107986741694,9.261935483870968,9.330051505642317,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+0-15,Medium,587,8.30188663109009,7.005110732538331,8.601339180870244,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+15-25,High,832,19.77947523886689,17.655048076923077,15.325660953073898,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+15-25,Medium,333,19.968062548686945,14.327327327327327,15.195120379489557,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+25-40,High,755,31.849570131163098,27.02251655629139,18.961274127478482,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+25-40,Medium,318,32.28608541706151,23.842767295597483,22.407818613542442,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+40-60,High,654,49.0742080518665,45.022935779816514,27.36367211508267,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+40-60,Medium,152,47.737687671356895,46.08552631578947,28.177534715367916,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+60+,High,480,76.89074746978376,64.95416666666667,30.987797862195713,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.
+60+,Medium,16,66.78875978218834,69.875,29.710306923806417,Uses candidate-only walk-forward RMSE/multipliers; historical-test only.

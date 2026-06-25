@@ -89,6 +89,10 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     market_edges = _read_csv(output_path("market_edges/receptions_market_edges.csv", cfg))
     line_ladder_path = output_path("market_edges/receptions_line_ladder.csv", cfg)
     line_ladder = _read_csv(line_ladder_path)
+    receiving_yards_board_path = output_path("google_sheets_receiving_yards_historical_test.csv", cfg)
+    receiving_yards_board = _read_csv(receiving_yards_board_path)
+    receiving_yards_ladder_path = output_path("market_edges/receiving_yards_line_ladder.csv", cfg)
+    receiving_yards_ladder = _read_csv(receiving_yards_ladder_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -212,6 +216,65 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
             "no live betting output from ladder",
             final_readiness,
             final_readiness != "NO-GO" or line_ladder["usage_status"].astype(str).ne("MODEL REVIEW").all(),
+        )
+    _add_check(
+        rows,
+        "receiving_yards_board_exists",
+        "file exists",
+        receiving_yards_board_path.exists(),
+        receiving_yards_board_path.exists(),
+    )
+    if not receiving_yards_board.empty:
+        receiving_yards_historical = (
+            projection_mode != "historical_test"
+            or receiving_yards_board["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all()
+        )
+        receiving_yards_live_created = bool(
+            receiving_yards_board["usage_status"].astype(str).eq("MODEL REVIEW").any() and final_readiness == "GO"
+        )
+        _add_check(
+            rows,
+            "receiving_yards_historical_rows_labeled",
+            "all HISTORICAL TEST ONLY in historical_test",
+            receiving_yards_historical,
+            receiving_yards_historical,
+        )
+        _add_check(
+            rows,
+            "receiving_yards_not_live_betting_when_no_go",
+            "no live betting output from receiving yards",
+            receiving_yards_live_created,
+            final_readiness != "NO-GO" or receiving_yards_live_created is False,
+        )
+    _add_check(
+        rows,
+        "receiving_yards_ladder_exists",
+        "file exists",
+        receiving_yards_ladder_path.exists(),
+        receiving_yards_ladder_path.exists(),
+    )
+    if not receiving_yards_ladder.empty:
+        receiving_ladder_probs_valid = (
+            pd.to_numeric(receiving_yards_ladder["model_over_probability"], errors="coerce").between(0, 1).all()
+            and pd.to_numeric(receiving_yards_ladder["model_under_probability"], errors="coerce").between(0, 1).all()
+        )
+        receiving_ladder_historical = (
+            projection_mode != "historical_test"
+            or receiving_yards_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all()
+        )
+        _add_check(
+            rows,
+            "receiving_yards_ladder_probabilities_between_zero_one",
+            "all probabilities 0..1",
+            receiving_ladder_probs_valid,
+            receiving_ladder_probs_valid,
+        )
+        _add_check(
+            rows,
+            "receiving_yards_ladder_historical_rows_labeled",
+            "all HISTORICAL TEST ONLY in historical_test",
+            receiving_ladder_historical,
+            receiving_ladder_historical,
         )
     for file_name in EXPECTED_GATE_FILES:
         path = output_path(file_name, cfg)

@@ -25,7 +25,7 @@ page_header(
 )
 warning_banner(
     "No bets here",
-    "Best Overall requires multiple active markets and Final Readiness GO. Current output is a Receptions watchlist only.",
+    "Best Overall requires odds, gates, and comparable active markets. Current output is research-only watchlists.",
 )
 
 markets = load_csv_safe(MARKET_STATUS_PATH)
@@ -34,21 +34,21 @@ cols = st.columns(3)
 with cols[0]:
     metric_card("Active Markets", len(active), "PASS" if len(active) == 1 else "REVIEW")
 with cols[1]:
-    metric_card("Current Available Market", "Receptions", "built")
+    metric_card("Available Markets", "Receptions + Receiving Yards", "built_historical_test")
 with cols[2]:
     metric_card("Best Overall Status", "Waiting", "NO-GO", "Needs multiple markets.")
 
 st.markdown(
     """
     <div class="info-card">
-    Current available market: Receptions only. The board below is a no-odds Receptions watchlist from the line ladder.
-    It is not a bet list and it is not an edge board.
+    Current available markets: Receptions and Receiving Yards. The boards below are no-odds watchlists from line ladders.
+    They are not bet lists and they are not edge boards.
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-section_header("Current Receptions Watchlist", "Top model over probabilities from the no-odds line ladder.")
+section_header("Current Receptions Watchlist", "Research Only - No Odds.")
 ladder_top = load_csv_safe(LADDER_TOP_PATH)
 if ladder_top.empty:
     st.warning(f"Missing file: `{LADDER_TOP_PATH}`.")
@@ -57,6 +57,17 @@ else:
     selected_line = st.selectbox("Reception line", sorted(pd.to_numeric(ladder_top["line"], errors="coerce").dropna().unique()), index=0)
     view = ladder_top[pd.to_numeric(ladder_top["line"], errors="coerce").eq(float(selected_line))].head(15)
     st.dataframe(presentation_table(view), use_container_width=True, hide_index=True)
+
+section_header("Current Receiving Yards Watchlist", "Research Only - No Odds.")
+receiving_top = load_csv_safe("outputs/market_edges/receiving_yards_line_ladder_top_by_line.csv")
+if receiving_top.empty:
+    st.warning("Receiving Yards line ladder not available yet.")
+else:
+    ry_lines = sorted(pd.to_numeric(receiving_top["line"], errors="coerce").dropna().unique())
+    ry_index = ry_lines.index(39.5) if 39.5 in ry_lines else 0
+    ry_line = st.selectbox("Receiving yards line", ry_lines, index=ry_index)
+    ry_view = receiving_top[pd.to_numeric(receiving_top["line"], errors="coerce").eq(float(ry_line))].head(15)
+    st.dataframe(presentation_table(ry_view), use_container_width=True, hide_index=True)
 
 section_header("Future Market Rankings")
 st.markdown(

@@ -13,4 +13,4 @@ Legacy-compatible path: `dashboard/app.py`.
 
 This deployment is research-only unless Live Readiness becomes `GO`. Do not commit secrets, do not upload `.env`, and do not add Streamlit secrets unless they are required later and stored outside git.
 
-Receptions V1 is the only active built market. The dashboard includes a multi-market framework and roadmap, but all other markets are planned and do not currently output projections.
+Receptions V1 and Receiving Yards V1 are the active built historical-test markets. The dashboard includes a multi-market framework and roadmap, but all other markets are planned and do not currently output projections.
