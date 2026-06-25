@@ -352,7 +352,7 @@ Run the safe pipeline and validators before opening the local dashboard:
 python -m src.run_receptions_pipeline
 python -m src.validate_receptions_safety
 python -m src.validate_forward_projection_dry_run
-streamlit run dashboard/app.py
+streamlit run dashboard/Home.py
 ```
 
 The dashboard reads the existing files under `outputs/` and is local only. It is for research and model review until `Live Readiness = GO`. In historical-test mode, dashboard rows must remain labeled `HISTORICAL TEST ONLY`, no live betting output should be created, and market edges remain blocked until real odds and gates are loaded.
@@ -365,9 +365,10 @@ Before deploying or redeploying, run:
 python -m src.run_receptions_pipeline
 python -m src.validate_receptions_safety
 python -m src.validate_forward_projection_dry_run
-python -m streamlit run dashboard/app.py
+python -m streamlit run dashboard/Home.py
 ```
 
-For Streamlit Community Cloud, set the main file path to `dashboard/app.py`.
+For Streamlit Community Cloud, set the preferred main file path to `dashboard/Home.py`.
+Legacy-compatible path: `dashboard/app.py`.
 
 This dashboard is research-only unless `Live Readiness = GO`. Do not use it for live betting while final readiness is `NO-GO`, do not commit secrets, and do not upload `.env`. Streamlit secrets belong in `.streamlit/secrets.toml`, which is ignored by git.

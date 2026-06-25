@@ -13,8 +13,11 @@ python -m src.validate_forward_projection_dry_run
 Start the dashboard:
 
 ```powershell
-streamlit run dashboard/app.py
+streamlit run dashboard/Home.py
 ```
+
+Preferred Streamlit Cloud main file path: `dashboard/Home.py`.
+Legacy-compatible path: `dashboard/app.py`.
 
 The dashboard reads files from `outputs/` and does not upload anything. It is research/model review only until `Live Readiness = GO`.
 

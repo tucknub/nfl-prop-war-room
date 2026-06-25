@@ -248,6 +248,8 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def safe_percent_columns(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
     result = df.copy()
     for col in result.columns:
         lower = col.lower()
@@ -258,19 +260,37 @@ def safe_percent_columns(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def safe_numeric_rounding(df: pd.DataFrame) -> pd.DataFrame:
+def safe_numeric_rounding(df: pd.DataFrame, digits: int = 4) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
+
     result = df.copy()
+
     for col in result.columns:
-        lower = col.lower()
-        if any(token in lower for token in ["projection", "routes", "attempts", "line", "edge"]):
-            result[col] = pd.to_numeric(result[col], errors="ignore")
-            if pd.api.types.is_numeric_dtype(result[col]):
-                result[col] = result[col].round(2)
+        series = result[col]
+
+        if pd.api.types.is_numeric_dtype(series):
+            result[col] = series.round(digits)
+            continue
+
+        converted = pd.to_numeric(series, errors="coerce")
+        non_null_count = series.notna().sum()
+        converted_count = converted.notna().sum()
+
+        if non_null_count > 0 and converted_count / non_null_count >= 0.85:
+            result[col] = converted.round(digits)
+        else:
+            result[col] = series
+
     return result
 
 
-def presentation_table(df: pd.DataFrame) -> pd.DataFrame:
-    return clean_column_names(safe_percent_columns(safe_numeric_rounding(df)))
+def presentation_table(df: pd.DataFrame | None) -> pd.DataFrame | None:
+    if df is None or df.empty:
+        return df
+    rounded = safe_numeric_rounding(df)
+    formatted = safe_percent_columns(rounded)
+    return clean_column_names(formatted)
 
 
 def render_status_cards(items: list[tuple[str, str]]) -> None:
