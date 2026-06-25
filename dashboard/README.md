@@ -21,6 +21,8 @@ Legacy-compatible path: `dashboard/app.py`.
 
 The dashboard reads files from `outputs/` and does not upload anything. It is research/model review only until `Live Readiness = GO`.
 
+This is the full NFL Prop War Room dashboard shell. Receptions V1 is the only active built market; the other markets are planned and clearly labeled as not built yet.
+
 Current expected state for the stable snapshot:
 
 - Final readiness: `NO-GO`

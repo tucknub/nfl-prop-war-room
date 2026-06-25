@@ -309,8 +309,9 @@ def sidebar_status() -> None:
         f"""
         <div class="sidebar-brand">
           <div class="brand-title">NFL Prop War Room</div>
-          <div class="brand-subtitle">Receptions V1</div>
+          <div class="brand-subtitle">Multi-Market Framework</div>
           <div class="brand-chip">Historical Test Build</div>
+          <div class="brand-subtitle" style="margin-top:.65rem;font-size:.82rem;">Active: Receptions V1</div>
         </div>
         <div class="sidebar-status">
           <div><span>Mode</span><strong>{mode}</strong></div>

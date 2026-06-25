@@ -23,7 +23,7 @@ ERRORS_PATH = "outputs/run_reports/latest_receptions_pipeline_errors.csv"
 
 
 def main() -> None:
-    st.set_page_config(page_title="NFL Prop War Room - Receptions V1", layout="wide")
+    st.set_page_config(page_title="NFL Prop War Room", layout="wide")
     inject_global_styles()
     sidebar_status()
 
@@ -44,7 +44,7 @@ def main() -> None:
 
     page_header(
         "NFL Prop War Room",
-        "Receptions V1 Dashboard. Historical-test control room for NFL player reception projections.",
+        "Multi-market NFL prop projection command center. Receptions V1 is active; every other market is planned.",
         readiness,
     )
 
@@ -66,12 +66,13 @@ def main() -> None:
     st.caption(f"Target: {target_season} Week {target_week}")
     st.caption(f"Last pipeline output update: {latest.strftime('%Y-%m-%d %I:%M:%S %p') if latest else 'Unknown'}")
 
-    section_header("What This Dashboard Is", "A polished read-only review layer for the stable Receptions V1 build.")
+    section_header("What This Dashboard Is", "A polished read-only review layer for the NFL Prop War Room framework.")
     st.markdown(
         """
         <div class="info-card">
-        This dashboard reviews model output, line-ladder probabilities, gate readiness, identity warnings, and run reports.
-        It is not betting-ready until all gates pass and Final Readiness becomes GO.
+        This dashboard reviews the active Receptions V1 model output, line-ladder probabilities, gate readiness,
+        identity warnings, market roadmap, and run reports. It is not betting-ready until all gates pass and
+        Final Readiness becomes GO.
         </div>
         """,
         unsafe_allow_html=True,

@@ -1,0 +1,12 @@
+market_key,display_name,category,status,active,projection_unit,requires_odds,notes
+receptions,Receptions,Receiving,built,True,receptions,True,"Receptions V1 is the active historical-test market with projections, line ladder, and blocked edge engine."
+receiving_yards,Receiving Yards,Receiving,planned - not built yet,False,yards,True,"Planned next because it can build from receiving opportunity, catch-rate, and efficiency extensions."
+rushing_yards,Rushing Yards,Rushing,planned - not built yet,False,yards,True,Planned volume-efficiency market for rush attempts and yards per carry.
+passing_yards,Passing Yards,Passing,planned - not built yet,False,yards,True,Planned QB/team pass-volume and efficiency market.
+completions,Completions,Passing,planned - not built yet,False,completions,True,Planned passing-volume market tied to QB attempts and completion rate.
+pass_attempts,Pass Attempts,Passing,planned - not built yet,False,attempts,True,Planned team/QB pass-volume market.
+carries,Carries,Rushing,planned - not built yet,False,carries,True,Planned rushing opportunity market.
+targets,Targets,Receiving,planned - not built yet,False,targets,True,Planned receiving opportunity market adjacent to Receptions V1.
+anytime_td,Anytime TD,Touchdowns,planned - not built yet,False,touchdown probability,True,Planned later because TD props need different event probability modeling.
+longest_reception,Longest Reception,Long Plays,planned - not built yet,False,yards,True,Planned long-play distribution market; not part of Receptions V1.
+longest_rush,Longest Rush,Long Plays,planned - not built yet,False,yards,True,Planned long-play rushing distribution market; not part of Receptions V1.

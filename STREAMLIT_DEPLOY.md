@@ -12,3 +12,5 @@ Preferred Streamlit Cloud main file path: `dashboard/Home.py`.
 Legacy-compatible path: `dashboard/app.py`.
 
 This deployment is research-only unless Live Readiness becomes `GO`. Do not commit secrets, do not upload `.env`, and do not add Streamlit secrets unless they are required later and stored outside git.
+
+Receptions V1 is the only active built market. The dashboard includes a multi-market framework and roadmap, but all other markets are planned and do not currently output projections.

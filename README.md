@@ -357,6 +357,8 @@ streamlit run dashboard/Home.py
 
 The dashboard reads the existing files under `outputs/` and is local only. It is for research and model review until `Live Readiness = GO`. In historical-test mode, dashboard rows must remain labeled `HISTORICAL TEST ONLY`, no live betting output should be created, and market edges remain blocked until real odds and gates are loaded.
 
+The dashboard is now organized as the NFL Prop War Room multi-market framework. Receptions V1 is the only active built market. Receiving yards, rushing yards, passing yards, completions, pass attempts, carries, targets, anytime TD, longest reception, and longest rush are planned markets only and do not currently output projections.
+
 ## Streamlit Cloud Deployment
 
 Before deploying or redeploying, run:
@@ -372,3 +374,5 @@ For Streamlit Community Cloud, set the preferred main file path to `dashboard/Ho
 Legacy-compatible path: `dashboard/app.py`.
 
 This dashboard is research-only unless `Live Readiness = GO`. Do not use it for live betting while final readiness is `NO-GO`, do not commit secrets, and do not upload `.env`. Streamlit secrets belong in `.streamlit/secrets.toml`, which is ignored by git.
+
+Receptions is the V1 active market. The multi-market framework and dashboard shell exist, but only Receptions currently outputs projections, line-ladder probabilities, and blocked market-edge files. Planned markets are clearly labeled `Planned / Not Built Yet`.

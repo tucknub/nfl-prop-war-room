@@ -12,6 +12,7 @@ from src.common import load_config, output_path
 
 
 PIPELINE_MODULES = [
+    "src.markets.market_registry",
     "src.features.build_receptions_feature_table",
     "src.models.receptions_model",
     "src.backtest.backtest_receptions",
