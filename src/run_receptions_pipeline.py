@@ -65,6 +65,8 @@ PIPELINE_MODULES = [
     "src.load.build_identity_crosswalk",
     "src.load.build_current_roster_map",
     "src.load.validate_current_roster_map",
+    "src.load.build_current_role_map",
+    "src.load.validate_current_role_map",
     "src.load.validate_gate_identity_matches",
     "src.export.export_sheet_gates",
     "src.models.receptions_probability",

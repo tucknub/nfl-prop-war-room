@@ -1,0 +1,2 @@
+status,real_role_files,override_files,role_rows_loaded,ready_rows,needs_review_rows,needs_data_rows,blocked_rows,manual_overrides,low_confidence_roles,templates_ignored,notes
+NEEDS DATA,0,0,0,0,0,0,0,0,0,True,No real current role input found; template files do not count as data.

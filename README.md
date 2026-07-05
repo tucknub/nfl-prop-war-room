@@ -389,3 +389,14 @@ python -m src.load.validate_current_roster_map
 ```
 
 Live forward mode remains blocked until `outputs/roster/current_roster_map_status.csv` is `READY` and every other required gate passes.
+
+## Role / Depth Chart Mapping
+
+Role mapping is a separate data and gate layer that verifies expected workload after current-team identity is established. Source-backed role inputs belong in `data/gates/roles/` using `current_role_input_template.csv`; template files never count as production data. Approved adjustments use `role_overrides_template.csv`, rather than hardcoded player exceptions in market models.
+
+```powershell
+python -m src.load.build_current_role_map
+python -m src.load.validate_current_role_map
+```
+
+Low-confidence roles, unknown starter status, identity/team conflicts, missing IDs, and unapproved overrides remain review or blocking conditions. Live forward mode remains blocked until both current roster and current role maps are verified.

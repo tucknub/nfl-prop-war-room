@@ -113,6 +113,10 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     roster_map_status_path = output_path("roster/current_roster_map_status.csv", cfg)
     roster_map = _read_csv(roster_map_path)
     roster_map_status = _read_csv(roster_map_status_path)
+    role_map_path = output_path("roles/current_role_map.csv", cfg)
+    role_map_status_path = output_path("roles/current_role_map_status.csv", cfg)
+    role_map = _read_csv(role_map_path)
+    role_map_status = _read_csv(role_map_status_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -133,6 +137,14 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     if not roster_map.empty:
         unsafe_change = roster_map[roster_map["notes"].astype(str).str.contains("TEAM_CHANGE:", na=False) & roster_map["team_mapping_status"].astype(str).eq("READY") & ~roster_map["manual_override"].astype(str).str.lower().isin({"true", "1", "yes"}) & ~roster_map["notes"].astype(str).str.contains("source-backed", case=False, na=False)]
         _add_check(rows, "changed_team_requires_confirmation", "0 silently-ready changed teams", len(unsafe_change), unsafe_change.empty)
+    _add_check(rows, "current_role_map_exists", "file exists", role_map_path.exists(), role_map_path.exists())
+    _add_check(rows, "current_role_map_status_exists", "file exists", role_map_status_path.exists(), role_map_status_path.exists())
+    if not role_map_status.empty:
+        role_status = str(role_map_status["status"].iloc[0]);real_files = int(pd.to_numeric(role_map_status["real_role_files"],errors="coerce").fillna(0).iloc[0]);templates_ignored = str(role_map_status["templates_ignored"].iloc[0]).lower()=="true"
+        _add_check(rows,"current_role_templates_ignored","True",templates_ignored,templates_ignored);_add_check(rows,"missing_current_role_not_ready","NEEDS DATA when no real files",f"files={real_files}; status={role_status}",real_files>0 or role_status=="NEEDS DATA")
+    if not role_map.empty:
+        unsafe_role=role_map[role_map["role_confidence"].astype(str).str.lower().isin({"low","unknown",""})&role_map["role_mapping_status"].astype(str).eq("READY")&~role_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})]
+        _add_check(rows,"low_unknown_roles_require_review","0 silently-ready low/unknown roles",len(unsafe_role),unsafe_role.empty)
     _add_check(rows, "projection_mode", "historical_test or forward_projection", projection_mode, projection_mode in {"historical_test", "forward_projection"})
     _add_check(rows, "target_season", "configured integer", target_season, target_season > 0)
     _add_check(rows, "target_week", "configured integer", target_week, target_week > 0)

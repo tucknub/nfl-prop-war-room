@@ -1,0 +1,2 @@
+player_id,player_name,team,position,override_projected_role,override_starter_status,override_depth_chart_rank,override_snap_share,override_route_share,override_carry_share,override_target_share,override_reason,source,source_url,updated_at,approved,notes
+TEST-003,Fixture Runner,PHI,RB,Lead running back,starter,1,0.70,0.35,0.60,0.12,Synthetic approved role test,SYNTHETIC TEST ONLY,fixture://override,2026-07-05T00:00:00Z,true,SYNTHETIC TEST ONLY

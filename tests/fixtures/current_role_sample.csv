@@ -1,0 +1,6 @@
+player_id,player_name,team,position,projected_role,starter_status,depth_chart_rank,projected_snap_share,projected_route_share,projected_carry_share,projected_target_share,role_confidence,source,source_url,updated_at,manual_override,notes
+TEST-001,Fixture Quarterback,IND,QB,Starting quarterback,starter,1,1.0,0,0.05,0,high,SYNTHETIC TEST ONLY,fixture://role,2026-07-05T00:00:00Z,false,clear starter
+TEST-002,Fixture Receiver,MIA,WR,Unknown,unknown,3,0.35,0.30,0,0.08,low,SYNTHETIC TEST ONLY,fixture://role,2026-07-05T00:00:00Z,false,unknown low-confidence role
+TEST-003,Fixture Runner,PHI,RB,Committee back,committee,2,0.45,0.20,0.35,0.08,low,SYNTHETIC TEST ONLY,fixture://role,2026-07-05T00:00:00Z,true,approved override test
+,Fixture Tight End,KC,TE,Starting tight end,starter,1,0.80,0.75,0,0.16,high,SYNTHETIC TEST ONLY,fixture://role,2026-07-05T00:00:00Z,false,missing id requires review
+TEST-999,Unmatched Fixture Player,SEA,WR,Rotational receiver,rotational,4,0.25,0.20,0,0.04,medium,SYNTHETIC TEST ONLY,fixture://role,2026-07-05T00:00:00Z,false,unmatched identity

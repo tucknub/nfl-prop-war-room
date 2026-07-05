@@ -11,6 +11,7 @@ from utils import inject_global_styles, load_csv_safe, metric_card, page_header,
 
 MARKET_STATUS_PATH = "outputs/markets/market_status.csv"
 ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
+ROLE_MAP_STATUS_PATH = "outputs/roles/current_role_map_status.csv"
 
 
 st.set_page_config(page_title="Market Hub", layout="wide")
@@ -29,6 +30,7 @@ warning_banner(
 
 markets = load_csv_safe(MARKET_STATUS_PATH)
 roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
+role_map_status = load_csv_safe(ROLE_MAP_STATUS_PATH)
 if markets.empty:
     st.warning(f"Missing file: `{MARKET_STATUS_PATH}`. Run `python -m src.run_receptions_pipeline`.")
     st.stop()
@@ -64,6 +66,8 @@ with c4:
 roster_status = str(roster_map_status["status"].iloc[0]) if not roster_map_status.empty and "status" in roster_map_status.columns else "NEEDS DATA"
 section_header("Forward Team Context")
 metric_card("Current Roster Map", roster_status, roster_status, "Current/projection teams must be verified independently from historical stat teams.")
+role_status = str(role_map_status["status"].iloc[0]) if not role_map_status.empty and "status" in role_map_status.columns else "NEEDS DATA"
+metric_card("Current Role Map", role_status, role_status, "Player workload and depth-chart roles must be verified independently from model math.")
 
 st.markdown(
     """

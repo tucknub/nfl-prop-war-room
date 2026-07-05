@@ -41,6 +41,10 @@ Pages:
 ## Current Roster / Team Mapping
 
 The roster-map page separates historical stat-team context from verified current/projection-team context. Team changes are resolved through source-backed roster inputs or approved override files, never hardcoded inside market models. Template-only inputs keep the roster map at `NEEDS DATA`, so forward live use remains blocked.
+
+## Role / Depth Chart Mapping
+
+The role-map page verifies projected role, starter status, depth-chart rank, workload shares, and confidence after current-team mapping. Role changes and overrides are supplied through source-backed gate files, never hardcoded in model math. Template-only inputs keep the Role Gate at `NEEDS DATA`; low or unknown roles cannot silently become live-ready.
 - Gate Status
 - Identity Warnings
 - Run Reports
