@@ -1,0 +1,11 @@
+calibration_bucket,confidence_bucket,rows,avg_projected_carries,avg_actual_carries,mae,calibration_note
+0-3,High,227,1.250658630266479,1.145374449339207,1.0781234725114224,Candidate-only walk-forward calibration; historical-test only.
+0-3,Medium,312,2.0185372674553057,2.0544871794871793,1.4992779403584575,Candidate-only walk-forward calibration; historical-test only.
+12-18,High,226,14.313219210896929,15.300884955752212,4.750834803528135,Candidate-only walk-forward calibration; historical-test only.
+12-18,Medium,70,13.937380954158424,14.785714285714286,4.942994314293038,Candidate-only walk-forward calibration; historical-test only.
+18+,High,64,20.22138021644673,19.765625,4.512018954207678,Candidate-only walk-forward calibration; historical-test only.
+18+,Medium,7,19.365211189237677,16.714285714285715,6.29246982186753,Candidate-only walk-forward calibration; historical-test only.
+3-7,High,277,4.907649929622071,4.537906137184115,2.958486879902834,Candidate-only walk-forward calibration; historical-test only.
+3-7,Medium,470,4.724492530514942,4.202127659574468,2.3289062729493257,Candidate-only walk-forward calibration; historical-test only.
+7-12,High,276,9.511205596814412,9.615942028985508,4.076381171292649,Candidate-only walk-forward calibration; historical-test only.
+7-12,Medium,158,9.072239829354313,9.018987341772151,4.2331059296088895,Candidate-only walk-forward calibration; historical-test only.

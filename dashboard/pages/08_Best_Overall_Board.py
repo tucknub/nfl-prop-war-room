@@ -34,7 +34,7 @@ cols = st.columns(3)
 with cols[0]:
     metric_card("Active Markets", len(active), "PASS" if len(active) == 1 else "REVIEW")
 with cols[1]:
-    metric_card("Available Markets", "Receptions + Receiving + Rushing", "built_historical_test")
+    metric_card("Available Markets", "Receptions + Receiving + Rushing + Carries", "built_historical_test")
 with cols[2]:
     metric_card("Best Overall Status", "Waiting", "NO-GO", "Needs multiple markets.")
 
@@ -79,6 +79,15 @@ else:
     rush_line = st.selectbox("Rushing yards line", rush_lines, index=rush_index)
     rush_view = rushing_top[pd.to_numeric(rushing_top["line"], errors="coerce").eq(float(rush_line))].head(15)
     st.dataframe(presentation_table(rush_view), use_container_width=True, hide_index=True)
+
+section_header("Current Carries Watchlist", "Research Only - No Odds. Historical Test Only.")
+carries_top=load_csv_safe("outputs/market_edges/carries_line_ladder_top_by_line.csv")
+if carries_top.empty: st.warning("Carries line ladder not available yet.")
+else:
+    carry_lines=sorted(pd.to_numeric(carries_top["line"],errors="coerce").dropna().unique()); carry_index=carry_lines.index(12.5) if 12.5 in carry_lines else 0
+    carry_line=st.selectbox("Carries line",carry_lines,index=carry_index)
+    carry_view=carries_top[pd.to_numeric(carries_top["line"],errors="coerce").eq(float(carry_line))].head(15)
+    st.dataframe(presentation_table(carry_view),use_container_width=True,hide_index=True)
 
 section_header("Future Market Rankings")
 st.markdown(

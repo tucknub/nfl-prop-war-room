@@ -13,4 +13,4 @@ Legacy-compatible path: `dashboard/app.py`.
 
 This deployment is research-only unless Live Readiness becomes `GO`. Do not commit secrets, do not upload `.env`, and do not add Streamlit secrets unless they are required later and stored outside git.
 
-Receptions V1, Receiving Yards V1, and Rushing Yards V1 are the active built historical-test markets. All remain NO-GO until real roster, role, injury, identity, and market odds gates pass; all other markets remain planned.
+Receptions V1, Receiving Yards V1, Rushing Yards V1, and Carries V1 are the active built historical-test markets. All remain NO-GO until real roster, role, injury, identity, and market odds gates pass; all other markets remain planned.

@@ -5,7 +5,7 @@ rushing_yards,Rushing Yards,Rushing,built_historical_test,True,rushing_yards,Tru
 passing_yards,Passing Yards,Passing,planned - not built yet,False,yards,True,Planned QB/team pass-volume and efficiency market.
 completions,Completions,Passing,planned - not built yet,False,completions,True,Planned passing-volume market tied to QB attempts and completion rate.
 pass_attempts,Pass Attempts,Passing,planned - not built yet,False,attempts,True,Planned team/QB pass-volume market.
-carries,Carries,Rushing,planned - not built yet,False,carries,True,Planned rushing opportunity market.
+carries,Carries,Rushing,built_historical_test,True,carries,True,Carries V1 historical-test market using team rush attempts and player rush-attempt share.
 targets,Targets,Receiving,planned - not built yet,False,targets,True,Planned receiving opportunity market adjacent to Receptions V1.
 anytime_td,Anytime TD,Touchdowns,planned - not built yet,False,touchdown probability,True,Planned later because TD props need different event probability modeling.
 longest_reception,Longest Reception,Long Plays,planned - not built yet,False,yards,True,Planned long-play distribution market; not part of Receptions V1.
