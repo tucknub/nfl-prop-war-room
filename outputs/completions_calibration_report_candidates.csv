@@ -1,0 +1,6 @@
+calibration_bucket,confidence_bucket,rows,avg_projected_completions,avg_actual_completions,mae,calibration_note
+0-15,Medium,130,10.945973151855558,10.292307692307693,6.962655807485836,Candidate-only walk-forward calibration; historical-test only.
+15-20,Medium,126,18.01417766048009,19.00793650793651,4.6626978685857035,Candidate-only walk-forward calibration; historical-test only.
+20-24,Medium,180,22.061519761932594,21.238888888888887,4.409089596334076,Candidate-only walk-forward calibration; historical-test only.
+24-28,Medium,123,25.417089848847112,22.056910569105693,4.599003101591827,Candidate-only walk-forward calibration; historical-test only.
+28+,Medium,33,30.10857388239885,24.757575757575758,4.189713614073259,Candidate-only walk-forward calibration; historical-test only.

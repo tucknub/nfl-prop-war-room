@@ -1,0 +1,13 @@
+import numpy as np,pandas as pd
+from src.common import load_config,output_path
+from src.features.build_pass_attempts_feature_table import build_pass_attempts_feature_table
+def div(a,b):return pd.to_numeric(a,errors="coerce")/pd.to_numeric(b,errors="coerce").replace(0,np.nan)
+def build_completions_feature_table(config=None):
+ cfg=config or load_config();p=output_path("pass_attempts_feature_table.csv",cfg);df=(pd.read_csv(p,low_memory=False) if p.exists() else build_pass_attempts_feature_table(cfg)).copy().sort_values(["player_id","season","week"]);g=df.groupby("player_id",group_keys=False)
+ df["career_completions_entering"]=g["completions"].cumsum()-df["completions"];df["career_completion_rate_entering"]=div(df["career_completions_entering"],df["career_attempts_entering"]);df["completions_last_4"]=g["completions"].transform(lambda s:s.shift().rolling(4,min_periods=1).sum());df["recent_completion_rate"]=div(df["completions_last_4"],df["attempts_last_4"])
+ prior=df.groupby(["player_id","season"],as_index=False).agg(prior_completions=("completions","sum"),prior_completion_attempts=("attempts","sum"));prior["season"]+=1;prior["prior_completion_rate"]=div(prior["prior_completions"],prior["prior_completion_attempts"]);df=df.merge(prior,on=["player_id","season"],how="left")
+ qb=df[df["position"].fillna("").astype(str).str.upper().eq("QB")];league=qb["completions"].sum()/max(qb["attempts"].sum(),1);games=pd.to_numeric(df.get("current_season_games_entering",0),errors="coerce").fillna(0);recent=df["recent_completion_rate"].fillna(league);prior_r=df["prior_completion_rate"].fillna(league);career=df["career_completion_rate_entering"].fillna(prior_r).fillna(league)
+ df["projected_completion_rate"]=np.select([games>=6,games>=3],[recent*.45+prior_r*.25+career*.20+league*.10,recent*.30+prior_r*.35+career*.20+league*.15],default=prior_r*.40+career*.30+league*.30);df["projected_completion_rate"]=pd.to_numeric(df["projected_completion_rate"],errors="coerce").fillna(league).clip(.35,.80)
+ low=pd.to_numeric(df["career_attempts_entering"],errors="coerce").fillna(0)<100;existing=df.get("quality_flags",pd.Series("",index=df.index)).fillna("").astype(str);needs=df["position"].fillna("").astype(str).str.upper().eq("QB")&low&~existing.str.contains("LOW_COMPLETION_SAMPLE",regex=False);df.loc[needs,"quality_flags"]=existing.loc[needs].where(existing.loc[needs]=="",existing.loc[needs]+"|")+"LOW_COMPLETION_SAMPLE";df.to_csv(output_path("completions_feature_table.csv",cfg),index=False);print(f"Built completions feature table: {len(df):,} rows");return df
+def main():build_completions_feature_table()
+if __name__=="__main__":main()

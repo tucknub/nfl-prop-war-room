@@ -105,6 +105,8 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     pass_attempts_board = _read_csv(pass_attempts_board_path)
     pass_attempts_ladder_path = output_path("market_edges/pass_attempts_line_ladder.csv", cfg)
     pass_attempts_ladder = _read_csv(pass_attempts_ladder_path)
+    completions_board_path=output_path("google_sheets_completions_historical_test.csv",cfg);completions_board=_read_csv(completions_board_path)
+    completions_ladder_path=output_path("market_edges/completions_line_ladder.csv",cfg);completions_ladder=_read_csv(completions_ladder_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -328,6 +330,13 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
         pass_labeled = projection_mode != "historical_test" or pass_attempts_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all()
         _add_check(rows, "pass_attempts_ladder_probabilities_between_zero_one", "all probabilities 0..1", pass_probs, pass_probs)
         _add_check(rows, "pass_attempts_ladder_historical_rows_labeled", "all HISTORICAL TEST ONLY in historical_test", pass_labeled, pass_labeled)
+    _add_check(rows,"completions_board_exists","file exists",completions_board_path.exists(),completions_board_path.exists())
+    if not completions_board.empty:
+        labeled=projection_mode!="historical_test" or completions_board["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all();live=bool(completions_board["usage_status"].astype(str).eq("MODEL REVIEW").any() and final_readiness=="GO")
+        _add_check(rows,"completions_historical_rows_labeled","all HISTORICAL TEST ONLY",labeled,labeled);_add_check(rows,"completions_not_live_betting_when_no_go","no live output",live,final_readiness!="NO-GO" or live is False)
+    _add_check(rows,"completions_ladder_exists","file exists",completions_ladder_path.exists(),completions_ladder_path.exists())
+    if not completions_ladder.empty:
+        probs=pd.to_numeric(completions_ladder["model_over_probability"],errors="coerce").between(0,1).all() and pd.to_numeric(completions_ladder["model_under_probability"],errors="coerce").between(0,1).all();labeled=projection_mode!="historical_test" or completions_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all();_add_check(rows,"completions_ladder_probabilities_between_zero_one","all probabilities 0..1",probs,probs);_add_check(rows,"completions_ladder_historical_rows_labeled","all HISTORICAL TEST ONLY",labeled,labeled)
     for file_name in EXPECTED_GATE_FILES:
         path = output_path(file_name, cfg)
         _add_check(rows, f"gate_file_exists:{file_name}", "file exists", path.exists(), path.exists())

@@ -18,12 +18,12 @@ sidebar_status()
 
 page_header(
     "NFL Prop War Room",
-    "Multi-market NFL prop projection framework. Receptions V1 is active; additional markets are planned.",
+    "Multi-market NFL prop projection framework. Six historical-test markets are active; additional markets are planned.",
     "HISTORICAL TEST ONLY",
 )
 warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
-    "Only Receptions V1 is built. Planned markets are metadata only and must not be treated as projections or betting edges.",
+    "Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, and Completions are historical-test models. They are not live betting outputs.",
 )
 
 markets = load_csv_safe(MARKET_STATUS_PATH)
@@ -48,10 +48,10 @@ for category in ["Receiving", "Rushing", "Passing", "Touchdowns", "Long Plays"]:
                 f"{status}. {row.get('notes', '')}",
             )
 
-section_header("Current Active Markets", "Receptions, Receiving Yards, Rushing Yards, Carries, and Pass Attempts V1")
+section_header("Current Active Markets", "Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, and Completions V1")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    metric_card("Active Models", "5", "built_historical_test")
+    metric_card("Active Models", "6", "built_historical_test")
 with c2:
     metric_card("Mode", "Historical Test", "HISTORICAL TEST ONLY")
 with c3:
@@ -62,7 +62,7 @@ with c4:
 st.markdown(
     """
     <div class="info-card">
-    Dashboard pages available now: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, line ladders, gates, and reports.
+    Dashboard pages available now: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, line ladders, gates, and reports.
     Forward Readiness Gates, Identity & Team Matching, Run Reports, and Best Overall Board placeholder.
     </div>
     """,
@@ -72,11 +72,9 @@ st.markdown(
 section_header("Future Markets Roadmap")
 roadmap = [
     "1. Passing Yards - uses team/QB pass-volume and passing efficiency logic.",
-    "2. Completions - tied to QB attempts and completion rate.",
-    "3. Pass Attempts - starts from team pass-volume and game environment.",
-    "4. Targets - receiving opportunity market adjacent to Receptions V1.",
-    "5. Anytime TD - needs different event probability modeling.",
-    "6. Longest Reception / Rush - needs long-play distribution modeling.",
+    "2. Targets - receiving opportunity market adjacent to Receptions V1.",
+    "3. Anytime TD - needs different event probability modeling.",
+    "4. Longest Reception / Rush - needs long-play distribution modeling.",
 ]
 st.markdown("<div class='info-card'>" + "<br>".join(roadmap) + "</div>", unsafe_allow_html=True)
 

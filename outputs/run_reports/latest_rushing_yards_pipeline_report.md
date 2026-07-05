@@ -1,6 +1,6 @@
 # Rushing Yards V1 Pipeline Report
 
-Run timestamp: `2026-07-05T15:24:53+00:00`
+Run timestamp: `2026-07-05T20:02:50+00:00`
 
 Formula: `projected_carries x projected_yards_per_carry = projected_rushing_yards`
 
