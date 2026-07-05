@@ -1,0 +1,6 @@
+calibration_bucket,confidence_bucket,rows,avg_projected_pass_attempts,avg_actual_pass_attempts,mae,calibration_note
+0-20,Medium,112,15.105124430315572,12.660714285714286,10.608985774582083,Candidate-only walk-forward calibration; historical-test only.
+20-28,Medium,86,24.21657379823315,26.558139534883722,7.296732417766736,Candidate-only walk-forward calibration; historical-test only.
+28-34,Medium,156,31.35875256577924,30.75,6.5139372004592175,Candidate-only walk-forward calibration; historical-test only.
+34-40,Medium,196,36.57691425780168,33.20918367346939,6.346133675229783,Candidate-only walk-forward calibration; historical-test only.
+40+,Medium,74,43.395270270270274,35.33783783783784,6.923895090107624,Candidate-only walk-forward calibration; historical-test only.

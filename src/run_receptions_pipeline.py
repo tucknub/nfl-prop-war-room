@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,13 @@ PIPELINE_MODULES = [
     "src.export.export_carries_projection_csv",
     "src.export.export_google_sheet_carries",
     "src.export.export_carries_line_ladder",
+    "src.features.build_pass_attempts_feature_table",
+    "src.backtest.backtest_pass_attempts",
+    "src.backtest.calibrate_pass_attempts",
+    "src.models.pass_attempts_model",
+    "src.export.export_pass_attempts_projection_csv",
+    "src.export.export_google_sheet_pass_attempts",
+    "src.export.export_pass_attempts_line_ladder",
     "src.load.load_gate_inputs",
     "src.load.build_identity_crosswalk",
     "src.load.validate_gate_identity_matches",
@@ -55,6 +63,12 @@ REQUIRED_GATE_BLOCK_STATUSES = {"NEEDS DATA", "BLOCKED", "CHECK", "NOT READY"}
 def run_module(module: str) -> tuple[bool, str, str, int]:
     command = [sys.executable, "-m", module]
     result = subprocess.run(command, capture_output=True, text=True)
+    for _ in range(2):
+        transient_write_error = "OSError: [Errno 22] Invalid argument" in result.stderr
+        if result.returncode == 0 or not transient_write_error:
+            break
+        time.sleep(1)
+        result = subprocess.run(command, capture_output=True, text=True)
     return result.returncode == 0, result.stdout, result.stderr, result.returncode
 
 

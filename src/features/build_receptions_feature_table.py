@@ -107,7 +107,10 @@ def build_receptions_feature_table(config: dict | None = None) -> pd.DataFrame:
 
     team.to_csv(output_path("team_week_features.csv", cfg), index=False)
     players.to_csv(output_path("player_week_features.csv", cfg), index=False)
-    features.to_csv(output_path("receptions_feature_table.csv", cfg), index=False)
+    feature_path = output_path("receptions_feature_table.csv", cfg)
+    feature_temp_path = feature_path.with_suffix(".tmp.csv")
+    features.to_csv(feature_temp_path, index=False)
+    feature_temp_path.replace(feature_path)
     quality_report.to_csv(output_path("feature_quality_report.csv", cfg), index=False)
     route_status.to_csv(output_path("route_proxy_status.csv", cfg), index=False)
     catch_report.to_csv(output_path("catch_rate_model_report.csv", cfg), index=False)

@@ -48,10 +48,10 @@ for category in ["Receiving", "Rushing", "Passing", "Touchdowns", "Long Plays"]:
                 f"{status}. {row.get('notes', '')}",
             )
 
-section_header("Current Active Markets", "Receptions V1, Receiving Yards V1, Rushing Yards V1, and Carries V1")
+section_header("Current Active Markets", "Receptions, Receiving Yards, Rushing Yards, Carries, and Pass Attempts V1")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    metric_card("Active Models", "4", "built_historical_test")
+    metric_card("Active Models", "5", "built_historical_test")
 with c2:
     metric_card("Mode", "Historical Test", "HISTORICAL TEST ONLY")
 with c3:
@@ -62,7 +62,7 @@ with c4:
 st.markdown(
     """
     <div class="info-card">
-    Dashboard pages available now: Receptions Projection Board, Receiving Yards V1, Rushing Yards V1, Carries V1, Reception Line Ladder, Market Edge Engine,
+    Dashboard pages available now: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, line ladders, gates, and reports.
     Forward Readiness Gates, Identity & Team Matching, Run Reports, and Best Overall Board placeholder.
     </div>
     """,
