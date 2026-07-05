@@ -376,3 +376,16 @@ Legacy-compatible path: `dashboard/app.py`.
 This dashboard is research-only unless `Live Readiness = GO`. Do not use it for live betting while final readiness is `NO-GO`, do not commit secrets, and do not upload `.env`. Streamlit secrets belong in `.streamlit/secrets.toml`, which is ignored by git.
 
 Receptions V1, Receiving Yards V1, Rushing Yards V1, Carries V1, Pass Attempts V1, and Completions V1 are active historical-test markets. All remain `NO-GO` until real roster, role, injury, identity, and market odds gates pass.
+
+## Current Roster / Team Mapping
+
+Current-team mapping is a separate data and gate layer. Historical team identifies where a stat row was earned; current team is the latest verified roster team; projection team is the team context permitted for a forward projection. Model math does not contain one-off team fixes.
+
+Place real source-backed roster CSVs in `data/gates/rosters/` using `current_roster_input_template.csv`. Template files are ignored as real data. Team changes require a source URL or an approved row based on `roster_team_overrides_template.csv`; missing IDs, ambiguous identities, and unsafe team conflicts remain review blockers.
+
+```powershell
+python -m src.load.build_current_roster_map
+python -m src.load.validate_current_roster_map
+```
+
+Live forward mode remains blocked until `outputs/roster/current_roster_map_status.csv` is `READY` and every other required gate passes.

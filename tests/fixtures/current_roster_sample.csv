@@ -1,0 +1,6 @@
+player_id,player_name,position,current_team,roster_status,depth_chart_role,source,source_url,updated_at,manual_override,notes
+TEST-001,Fixture Quarterback,QB,IND,Active,QB1,SYNTHETIC TEST ONLY,fixture://roster,2026-07-05T00:00:00Z,false,unchanged team
+TEST-002,Fixture Receiver,WR,BUF,Active,WR1,SYNTHETIC TEST ONLY,,2026-07-05T00:00:00Z,false,changed team without sufficient confirmation
+TEST-003,Fixture Runner,RB,DAL,Active,RB1,SYNTHETIC TEST ONLY,fixture://roster,2026-07-05T00:00:00Z,true,changed team with approved override
+,Fixture Tight End,TE,KC,Active,TE1,SYNTHETIC TEST ONLY,fixture://roster,2026-07-05T00:00:00Z,false,missing id requires review
+TEST-999,Unmatched Fixture Player,WR,SEA,Active,WR3,SYNTHETIC TEST ONLY,fixture://roster,2026-07-05T00:00:00Z,false,unmatched identity

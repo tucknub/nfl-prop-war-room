@@ -1,0 +1,2 @@
+status,real_roster_files,override_files,roster_rows_loaded,ready_rows,needs_review_rows,needs_data_rows,blocked_rows,changed_team_rows,manual_overrides,templates_ignored,notes
+NEEDS DATA,0,0,0,0,0,0,0,0,0,True,No real current roster input found; template files do not count as data.

@@ -1,0 +1,13 @@
+check_name,expected,actual,status,severity,notes
+current_roster_map_exists,True,True,PASS,INFO,
+current_roster_status_exists,True,True,PASS,INFO,
+current_roster_review_exists,True,True,PASS,INFO,
+templates_do_not_count_as_real_data,templates ignored,real_files=0; status=NEEDS DATA,PASS,INFO,
+missing_roster_data_stays_needs_data,NEEDS DATA when no real files,NEEDS DATA,PASS,INFO,
+unchanged_team_maps_ready,READY,READY,PASS,INFO,
+unverified_team_change_detected,NEEDS REVIEW,NEEDS REVIEW,PASS,INFO,
+approved_override_applied,READY / DAL,READY / DAL,PASS,INFO,
+missing_id_needs_review,NEEDS REVIEW,NEEDS REVIEW,PASS,INFO,
+unmatched_player_blocked,BLOCKED,BLOCKED,PASS,INFO,
+changed_teams_cannot_silently_pass,True,True,PASS,INFO,
+roster_validation_does_not_enable_live,NO-GO,NO-GO,PASS,INFO,

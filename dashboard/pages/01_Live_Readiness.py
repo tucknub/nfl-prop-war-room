@@ -12,6 +12,7 @@ from utils import inject_global_styles, load_csv_safe, metric_card, page_header,
 READINESS_PATH = "outputs/google_sheets/live_readiness_export.csv"
 STATUS_PATH = "outputs/run_reports/latest_receptions_pipeline_status.csv"
 BLOCKERS_PATH = "outputs/google_sheets/forward_projection_blockers.csv"
+ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 
 
 st.set_page_config(page_title="Live Readiness", layout="wide")
@@ -21,6 +22,7 @@ sidebar_status()
 readiness = load_csv_safe(READINESS_PATH)
 status = load_csv_safe(STATUS_PATH)
 blockers = load_csv_safe(BLOCKERS_PATH)
+roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 
 if not readiness.empty and {"Gate", "Status"}.issubset(readiness.columns):
     final = readiness.loc[readiness["Gate"].eq("Final Betting Use"), "Status"]
@@ -48,6 +50,10 @@ if str(final_status) != "GO":
 
 section_header("Gate Table", "Action needed, current values, sources, and notes.")
 show_table_or_missing(presentation_table(readiness), READINESS_PATH)
+
+section_header("Current Roster Map")
+roster_status = str(roster_map_status["status"].iloc[0]) if not roster_map_status.empty and "status" in roster_map_status.columns else "NEEDS DATA"
+metric_card("Current Roster Map", roster_status, roster_status, "Historical teams cannot be used as current forward-projection teams without verification.")
 
 section_header("Blocking Gates")
 show_table_or_missing(presentation_table(blockers), BLOCKERS_PATH)

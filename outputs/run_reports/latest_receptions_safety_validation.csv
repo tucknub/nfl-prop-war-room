@@ -1,4 +1,8 @@
 check_name,expected,actual,status,severity,notes
+current_roster_map_exists,file exists,True,PASS,INFO,
+current_roster_map_status_exists,file exists,True,PASS,INFO,
+current_roster_templates_ignored,True,True,PASS,INFO,
+missing_current_roster_not_ready,NEEDS DATA when no real files,files=0; status=NEEDS DATA,PASS,INFO,
 projection_mode,historical_test or forward_projection,historical_test,PASS,INFO,
 target_season,configured integer,2025,PASS,INFO,
 target_week,configured integer,1,PASS,INFO,

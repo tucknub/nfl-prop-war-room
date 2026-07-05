@@ -1,0 +1,2 @@
+player_id,player_name,old_team,override_current_team,override_reason,source,source_url,updated_at,approved,notes
+TEST-003,Fixture Runner,PHI,DAL,Synthetic approved team-change test,SYNTHETIC TEST ONLY,fixture://override,2026-07-05T00:00:00Z,true,SYNTHETIC TEST ONLY

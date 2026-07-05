@@ -163,8 +163,35 @@ def build_roster_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, st
     normalized, normalized_status = _normalized_gate(config, "roster", "roster_gate_normalized.csv")
     if normalized is not None:
         return normalized, normalized_status or "READY"
+    map_status_path = output_path("roster/current_roster_map_status.csv", config)
+    map_path = output_path("roster/current_roster_map.csv", config)
+    if map_status_path.exists():
+        map_status = pd.read_csv(map_status_path, low_memory=False)
+        status = str(map_status["status"].iloc[0]) if not map_status.empty else "NEEDS DATA"
+        real_rows = int(map_status["roster_rows_loaded"].iloc[0]) if not map_status.empty else 0
+        if status == "READY" and real_rows > 0 and map_path.exists():
+            mapped = pd.read_csv(map_path, low_memory=False)
+            out = pd.DataFrame({
+                "Player Name": mapped.get("player_name", ""),
+                "Player ID": mapped.get("player_id", ""),
+                "Position": mapped.get("position", ""),
+                "Current Team": mapped.get("current_team", ""),
+                "Roster Status": mapped.get("roster_status", ""),
+                "Depth Chart Role": mapped.get("depth_chart_role", ""),
+                "Source": mapped.get("source", ""),
+                "Updated At": mapped.get("updated_at", ""),
+                "Current Team Verified": True,
+                "Team Verify Flag": "",
+                "Validation Status": "READY",
+                "Notes": mapped.get("notes", ""),
+            })
+            return out, "READY"
     base = _candidate_template_base(config)
     status = "NEEDS DATA"
+    if map_status_path.exists():
+        map_status = pd.read_csv(map_status_path, low_memory=False)
+        if not map_status.empty:
+            status = str(map_status["status"].iloc[0])
     out = pd.DataFrame(
         {
             "Player Name": base.get("Player Name", pd.Series(dtype="object")),
@@ -178,7 +205,7 @@ def build_roster_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, st
             "Current Team Verified": False,
             "Team Verify Flag": "TEAM_VERIFY",
             "Validation Status": status,
-            "Notes": "Current roster source is not confirmed. Verify current team before live use.",
+            "Notes": "Current roster source is not confirmed. See outputs/roster/current_roster_map_status.csv and current_roster_needs_review.csv.",
         }
     )
     return out, status
@@ -323,7 +350,7 @@ def build_live_readiness(
             "Status": gate_statuses["Roster Gate"],
             "Current Value": "TEAM_VERIFY required until current roster import is confirmed.",
             "Action Needed": "Import and verify current roster/team data.",
-            "Source": "outputs/google_sheets/roster_gate_import_template.csv",
+            "Source": "outputs/roster/current_roster_map_status.csv | outputs/roster/current_roster_needs_review.csv",
             "Notes": "TEAM_VERIFY means DO NOT USE.",
         },
         {

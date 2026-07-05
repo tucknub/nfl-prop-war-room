@@ -107,6 +107,10 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     pass_attempts_ladder = _read_csv(pass_attempts_ladder_path)
     completions_board_path=output_path("google_sheets_completions_historical_test.csv",cfg);completions_board=_read_csv(completions_board_path)
     completions_ladder_path=output_path("market_edges/completions_line_ladder.csv",cfg);completions_ladder=_read_csv(completions_ladder_path)
+    roster_map_path = output_path("roster/current_roster_map.csv", cfg)
+    roster_map_status_path = output_path("roster/current_roster_map_status.csv", cfg)
+    roster_map = _read_csv(roster_map_path)
+    roster_map_status = _read_csv(roster_map_status_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -116,6 +120,17 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     live_betting_output_created = bool(any(status == "MODEL REVIEW" for status in usage_statuses) and final_readiness == "GO")
 
     rows: list[dict[str, str]] = []
+    _add_check(rows, "current_roster_map_exists", "file exists", roster_map_path.exists(), roster_map_path.exists())
+    _add_check(rows, "current_roster_map_status_exists", "file exists", roster_map_status_path.exists(), roster_map_status_path.exists())
+    if not roster_map_status.empty:
+        roster_status = str(roster_map_status["status"].iloc[0])
+        real_files = int(pd.to_numeric(roster_map_status["real_roster_files"], errors="coerce").fillna(0).iloc[0])
+        templates_ignored = bool(roster_map_status["templates_ignored"].iloc[0])
+        _add_check(rows, "current_roster_templates_ignored", "True", templates_ignored, templates_ignored)
+        _add_check(rows, "missing_current_roster_not_ready", "NEEDS DATA when no real files", f"files={real_files}; status={roster_status}", real_files > 0 or roster_status == "NEEDS DATA")
+    if not roster_map.empty:
+        unsafe_change = roster_map[roster_map["notes"].astype(str).str.contains("TEAM_CHANGE:", na=False) & roster_map["team_mapping_status"].astype(str).eq("READY") & ~roster_map["manual_override"].astype(str).str.lower().isin({"true", "1", "yes"}) & ~roster_map["notes"].astype(str).str.contains("source-backed", case=False, na=False)]
+        _add_check(rows, "changed_team_requires_confirmation", "0 silently-ready changed teams", len(unsafe_change), unsafe_change.empty)
     _add_check(rows, "projection_mode", "historical_test or forward_projection", projection_mode, projection_mode in {"historical_test", "forward_projection"})
     _add_check(rows, "target_season", "configured integer", target_season, target_season > 0)
     _add_check(rows, "target_week", "configured integer", target_week, target_week > 0)

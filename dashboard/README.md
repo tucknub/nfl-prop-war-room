@@ -33,9 +33,14 @@ Current expected state for the stable snapshot:
 Pages:
 
 - Live Readiness
+- Current Roster / Team Mapping
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
+
+## Current Roster / Team Mapping
+
+The roster-map page separates historical stat-team context from verified current/projection-team context. Team changes are resolved through source-backed roster inputs or approved override files, never hardcoded inside market models. Template-only inputs keep the roster map at `NEEDS DATA`, so forward live use remains blocked.
 - Gate Status
 - Identity Warnings
 - Run Reports

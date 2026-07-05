@@ -13,6 +13,7 @@ GATE_INPUT_PATH = "outputs/gate_inputs_normalized/gate_input_status.csv"
 IDENTITY_PATH = "outputs/identity/gate_identity_match_report.csv"
 SAFETY_PATH = "outputs/run_reports/latest_receptions_safety_validation.csv"
 DRY_RUN_PATH = "outputs/run_reports/latest_forward_projection_dry_run.csv"
+ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 
 
 st.set_page_config(page_title="Forward Readiness Gates", layout="wide")
@@ -24,6 +25,7 @@ gate_inputs = load_csv_safe(GATE_INPUT_PATH)
 identity = load_csv_safe(IDENTITY_PATH)
 safety = load_csv_safe(SAFETY_PATH)
 dry_run = load_csv_safe(DRY_RUN_PATH)
+roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 
 
 def gate_status(gate: str) -> str:
@@ -39,6 +41,7 @@ if not identity.empty and "status" in identity.columns:
     identity_status = "NEEDS DATA" if "NEEDS DATA" in values else ("FAIL" if "BLOCKED" in values else "PASS")
 safety_status = "PASS" if not safety.empty and not safety["status"].astype(str).eq("FAIL").any() else "FAIL"
 dry_status = "PASS" if not dry_run.empty and not dry_run["status"].astype(str).eq("FAIL").any() else "FAIL"
+current_roster_status = str(roster_map_status["status"].iloc[0]) if not roster_map_status.empty and "status" in roster_map_status.columns else "NEEDS DATA"
 
 section_header("Gate Cards")
 row1 = st.columns(4)
@@ -65,6 +68,9 @@ for col, (label, status) in zip(
 ):
     with col:
         metric_card(label, status, status)
+
+section_header("Current Team Verification")
+metric_card("Current Roster Map", current_roster_status, current_roster_status, "Forward projections remain blocked until all current teams are verified from real non-template roster data.")
 
 section_header("What Must Happen Before GO?")
 st.markdown(

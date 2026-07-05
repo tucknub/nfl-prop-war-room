@@ -10,6 +10,7 @@ from utils import inject_global_styles, load_csv_safe, metric_card, page_header,
 
 
 MARKET_STATUS_PATH = "outputs/markets/market_status.csv"
+ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 
 
 st.set_page_config(page_title="Market Hub", layout="wide")
@@ -27,6 +28,7 @@ warning_banner(
 )
 
 markets = load_csv_safe(MARKET_STATUS_PATH)
+roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 if markets.empty:
     st.warning(f"Missing file: `{MARKET_STATUS_PATH}`. Run `python -m src.run_receptions_pipeline`.")
     st.stop()
@@ -58,6 +60,10 @@ with c3:
     metric_card("Line Ladders", "Available", "PASS")
 with c4:
     metric_card("Edge Engine", "Blocked", "NO-GO", "Missing odds and live gates.")
+
+roster_status = str(roster_map_status["status"].iloc[0]) if not roster_map_status.empty and "status" in roster_map_status.columns else "NEEDS DATA"
+section_header("Forward Team Context")
+metric_card("Current Roster Map", roster_status, roster_status, "Current/projection teams must be verified independently from historical stat teams.")
 
 st.markdown(
     """
