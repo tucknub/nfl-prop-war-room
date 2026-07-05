@@ -1,6 +1,6 @@
 # Receiving Yards Line Ladder Report
 
-Run timestamp: `2026-06-25T16:44:49+00:00`
+Run timestamp: `2026-07-05T15:00:44+00:00`
 
 Formula: `projected_receptions_calibrated x projected_yards_per_reception = projected_receiving_yards`
 

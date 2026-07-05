@@ -34,7 +34,7 @@ cols = st.columns(3)
 with cols[0]:
     metric_card("Active Markets", len(active), "PASS" if len(active) == 1 else "REVIEW")
 with cols[1]:
-    metric_card("Available Markets", "Receptions + Receiving Yards", "built_historical_test")
+    metric_card("Available Markets", "Receptions + Receiving + Rushing", "built_historical_test")
 with cols[2]:
     metric_card("Best Overall Status", "Waiting", "NO-GO", "Needs multiple markets.")
 
@@ -68,6 +68,17 @@ else:
     ry_line = st.selectbox("Receiving yards line", ry_lines, index=ry_index)
     ry_view = receiving_top[pd.to_numeric(receiving_top["line"], errors="coerce").eq(float(ry_line))].head(15)
     st.dataframe(presentation_table(ry_view), use_container_width=True, hide_index=True)
+
+section_header("Current Rushing Yards Watchlist", "Research Only - No Odds. Historical Test Only.")
+rushing_top = load_csv_safe("outputs/market_edges/rushing_yards_line_ladder_top_by_line.csv")
+if rushing_top.empty:
+    st.warning("Rushing Yards line ladder not available yet.")
+else:
+    rush_lines = sorted(pd.to_numeric(rushing_top["line"], errors="coerce").dropna().unique())
+    rush_index = rush_lines.index(39.5) if 39.5 in rush_lines else 0
+    rush_line = st.selectbox("Rushing yards line", rush_lines, index=rush_index)
+    rush_view = rushing_top[pd.to_numeric(rushing_top["line"], errors="coerce").eq(float(rush_line))].head(15)
+    st.dataframe(presentation_table(rush_view), use_container_width=True, hide_index=True)
 
 section_header("Future Market Rankings")
 st.markdown(

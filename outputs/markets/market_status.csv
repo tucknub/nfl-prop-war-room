@@ -1,7 +1,7 @@
 market_key,display_name,category,status,active,projection_unit,requires_odds,notes
 receptions,Receptions,Receiving,built,True,receptions,True,"Receptions V1 is the active historical-test market with projections, line ladder, and blocked edge engine."
 receiving_yards,Receiving Yards,Receiving,built_historical_test,True,receiving_yards,True,Receiving Yards V1 historical-test market using projected receptions and yards-per-reception efficiency.
-rushing_yards,Rushing Yards,Rushing,planned - not built yet,False,yards,True,Planned volume-efficiency market for rush attempts and yards per carry.
+rushing_yards,Rushing Yards,Rushing,built_historical_test,True,rushing_yards,True,Rushing Yards V1 historical-test market using projected carries and yards-per-carry efficiency.
 passing_yards,Passing Yards,Passing,planned - not built yet,False,yards,True,Planned QB/team pass-volume and efficiency market.
 completions,Completions,Passing,planned - not built yet,False,completions,True,Planned passing-volume market tied to QB attempts and completion rate.
 pass_attempts,Pass Attempts,Passing,planned - not built yet,False,attempts,True,Planned team/QB pass-volume market.

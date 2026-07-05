@@ -93,6 +93,10 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     receiving_yards_board = _read_csv(receiving_yards_board_path)
     receiving_yards_ladder_path = output_path("market_edges/receiving_yards_line_ladder.csv", cfg)
     receiving_yards_ladder = _read_csv(receiving_yards_ladder_path)
+    rushing_yards_board_path = output_path("google_sheets_rushing_yards_historical_test.csv", cfg)
+    rushing_yards_board = _read_csv(rushing_yards_board_path)
+    rushing_yards_ladder_path = output_path("market_edges/rushing_yards_line_ladder.csv", cfg)
+    rushing_yards_ladder = _read_csv(rushing_yards_ladder_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -276,6 +280,20 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
             receiving_ladder_historical,
             receiving_ladder_historical,
         )
+    _add_check(rows, "rushing_yards_board_exists", "file exists", rushing_yards_board_path.exists(), rushing_yards_board_path.exists())
+    if not rushing_yards_board.empty:
+        rushing_historical = projection_mode != "historical_test" or rushing_yards_board["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all()
+        rushing_live = bool(rushing_yards_board["usage_status"].astype(str).eq("MODEL REVIEW").any() and final_readiness == "GO")
+        _add_check(rows, "rushing_yards_historical_rows_labeled", "all HISTORICAL TEST ONLY in historical_test", rushing_historical, rushing_historical)
+        _add_check(rows, "rushing_yards_not_live_betting_when_no_go", "no live betting output from rushing yards", rushing_live,
+                   final_readiness != "NO-GO" or rushing_live is False)
+    _add_check(rows, "rushing_yards_ladder_exists", "file exists", rushing_yards_ladder_path.exists(), rushing_yards_ladder_path.exists())
+    if not rushing_yards_ladder.empty:
+        rushing_probs = (pd.to_numeric(rushing_yards_ladder["model_over_probability"], errors="coerce").between(0, 1).all()
+                         and pd.to_numeric(rushing_yards_ladder["model_under_probability"], errors="coerce").between(0, 1).all())
+        rushing_labeled = projection_mode != "historical_test" or rushing_yards_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all()
+        _add_check(rows, "rushing_yards_ladder_probabilities_between_zero_one", "all probabilities 0..1", rushing_probs, rushing_probs)
+        _add_check(rows, "rushing_yards_ladder_historical_rows_labeled", "all HISTORICAL TEST ONLY in historical_test", rushing_labeled, rushing_labeled)
     for file_name in EXPECTED_GATE_FILES:
         path = output_path(file_name, cfg)
         _add_check(rows, f"gate_file_exists:{file_name}", "file exists", path.exists(), path.exists())

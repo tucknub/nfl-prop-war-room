@@ -1,0 +1,11 @@
+calibration_bucket,confidence_bucket,rows,avg_projected_rushing_yards,avg_actual_rushing_yards,mae,calibration_note
+0-15,High,270,7.095607532275331,6.725925925925926,7.893651459985383,Candidate-only walk-forward calibration; historical-test only.
+0-15,Medium,424,8.279060963447902,8.79245283018868,9.254091901584939,Candidate-only walk-forward calibration; historical-test only.
+15-25,High,163,20.222906786912482,21.84049079754601,18.079124196116645,Candidate-only walk-forward calibration; historical-test only.
+15-25,Medium,215,19.829562235852904,20.655813953488373,17.93485799864168,Candidate-only walk-forward calibration; historical-test only.
+25-40,High,194,31.463448692166466,26.75257731958763,18.954998186062262,Candidate-only walk-forward calibration; historical-test only.
+25-40,Medium,213,30.560356674594985,29.910798122065728,18.512914899698533,Candidate-only walk-forward calibration; historical-test only.
+40-60,High,232,50.344508484476755,51.62931034482759,27.330443003852608,Candidate-only walk-forward calibration; historical-test only.
+40-60,Medium,146,48.91079469073601,50.06849315068493,26.938698977457342,Candidate-only walk-forward calibration; historical-test only.
+60+,High,211,73.69003110050372,79.54976303317535,31.765533688960662,Candidate-only walk-forward calibration; historical-test only.
+60+,Medium,19,66.60347419377142,66.42105263157895,35.96040309819537,Candidate-only walk-forward calibration; historical-test only.
