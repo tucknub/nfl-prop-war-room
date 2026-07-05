@@ -1,0 +1,6 @@
+calibration_bucket,rows,avg_projected_passing_yards,avg_actual_passing_yards,mae,calibration_note
+0-150,116,107.54310344827586,107.54310344827586,82.27945160189428,Candidate-only walk-forward calibration; historical-test only.
+150-200,74,210.0810810810811,210.0810810810811,71.96249015542823,Candidate-only walk-forward calibration; historical-test only.
+200-250,185,223.88108108108108,223.88108108108108,53.58702140301868,Candidate-only walk-forward calibration; historical-test only.
+250-300,176,238.13636363636363,238.13636363636363,55.10710155880017,Candidate-only walk-forward calibration; historical-test only.
+300+,41,262.80487804878044,262.8048780487805,59.689462120017716,Candidate-only walk-forward calibration; historical-test only.

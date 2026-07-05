@@ -21,7 +21,7 @@ Legacy-compatible path: `dashboard/app.py`.
 
 The dashboard reads files from `outputs/` and does not upload anything. It is research/model review only until `Live Readiness = GO`.
 
-This is the full NFL Prop War Room dashboard shell. Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, and Completions V1 are active historical-test markets; the other markets remain planned. The Completions page includes QB projections, a passing-volume versus efficiency view, and a no-odds research ladder.
+This is the full NFL Prop War Room dashboard shell. Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, and Passing Yards V1 are active historical-test markets; the other markets remain planned. The Passing Yards page includes QB projections, a passing-volume versus efficiency view, and a no-odds research ladder. Current roster mapping is built but remains `NEEDS DATA` until real source-backed roster files are loaded.
 
 Current expected state for the stable snapshot:
 

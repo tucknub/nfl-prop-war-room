@@ -34,14 +34,14 @@ cols = st.columns(3)
 with cols[0]:
     metric_card("Active Markets", len(active), "PASS" if len(active) == 1 else "REVIEW")
 with cols[1]:
-    metric_card("Available Markets", "6 historical-test markets", "built_historical_test")
+    metric_card("Available Markets", "7 historical-test markets", "built_historical_test")
 with cols[2]:
     metric_card("Best Overall Status", "Waiting", "NO-GO", "Needs multiple markets.")
 
 st.markdown(
     """
     <div class="info-card">
-    Current available markets: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, and Completions.
+    Current available markets: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, and Passing Yards.
     The boards below are no-odds watchlists from line ladders.
     They are not bet lists and they are not edge boards.
     </div>
@@ -102,11 +102,17 @@ if completions_top.empty:st.warning("Completions line ladder not available yet."
 else:
     completion_lines=sorted(pd.to_numeric(completions_top["line"],errors="coerce").dropna().unique());completion_index=completion_lines.index(22.5) if 22.5 in completion_lines else 0;completion_line=st.selectbox("Completions line",completion_lines,index=completion_index);completion_view=completions_top[pd.to_numeric(completions_top["line"],errors="coerce").eq(float(completion_line))].head(15);st.dataframe(presentation_table(completion_view),use_container_width=True,hide_index=True)
 
+section_header("Current Passing Yards Watchlist", "Research Only - No Odds. Historical Test Only.")
+passing_yards_top=load_csv_safe("outputs/market_edges/passing_yards_line_ladder_top_by_line.csv")
+if passing_yards_top.empty:st.warning("Passing Yards line ladder not available yet.")
+else:
+    passing_yards_lines=sorted(pd.to_numeric(passing_yards_top["line"],errors="coerce").dropna().unique());passing_yards_index=passing_yards_lines.index(249.5) if 249.5 in passing_yards_lines else 0;passing_yards_line=st.selectbox("Passing yards line",passing_yards_lines,index=passing_yards_index);passing_yards_view=passing_yards_top[pd.to_numeric(passing_yards_top["line"],errors="coerce").eq(float(passing_yards_line))].head(15);st.dataframe(presentation_table(passing_yards_view),use_container_width=True,hide_index=True)
+
 section_header("Future Market Rankings")
 st.markdown(
     """
     <div class="info-card">
-    Placeholder sections: Passing Yards, Targets, Anytime TD, Longest Reception, and Longest Rush.
+    Placeholder sections: Targets, Anytime TD, Longest Reception, and Longest Rush.
     These remain Planned / Not Built Yet.
     </div>
     """,

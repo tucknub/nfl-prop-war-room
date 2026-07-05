@@ -107,6 +107,8 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     pass_attempts_ladder = _read_csv(pass_attempts_ladder_path)
     completions_board_path=output_path("google_sheets_completions_historical_test.csv",cfg);completions_board=_read_csv(completions_board_path)
     completions_ladder_path=output_path("market_edges/completions_line_ladder.csv",cfg);completions_ladder=_read_csv(completions_ladder_path)
+    passing_yards_board_path=output_path("google_sheets_passing_yards_historical_test.csv",cfg);passing_yards_board=_read_csv(passing_yards_board_path)
+    passing_yards_ladder_path=output_path("market_edges/passing_yards_line_ladder.csv",cfg);passing_yards_ladder=_read_csv(passing_yards_ladder_path)
     roster_map_path = output_path("roster/current_roster_map.csv", cfg)
     roster_map_status_path = output_path("roster/current_roster_map_status.csv", cfg)
     roster_map = _read_csv(roster_map_path)
@@ -352,6 +354,13 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     _add_check(rows,"completions_ladder_exists","file exists",completions_ladder_path.exists(),completions_ladder_path.exists())
     if not completions_ladder.empty:
         probs=pd.to_numeric(completions_ladder["model_over_probability"],errors="coerce").between(0,1).all() and pd.to_numeric(completions_ladder["model_under_probability"],errors="coerce").between(0,1).all();labeled=projection_mode!="historical_test" or completions_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all();_add_check(rows,"completions_ladder_probabilities_between_zero_one","all probabilities 0..1",probs,probs);_add_check(rows,"completions_ladder_historical_rows_labeled","all HISTORICAL TEST ONLY",labeled,labeled)
+    _add_check(rows,"passing_yards_board_exists","file exists",passing_yards_board_path.exists(),passing_yards_board_path.exists())
+    if not passing_yards_board.empty:
+        labeled=projection_mode!="historical_test" or passing_yards_board["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all();live=bool(passing_yards_board["usage_status"].astype(str).eq("MODEL REVIEW").any() and final_readiness=="GO")
+        _add_check(rows,"passing_yards_historical_rows_labeled","all HISTORICAL TEST ONLY",labeled,labeled);_add_check(rows,"passing_yards_not_live_betting_when_no_go","no live output",live,final_readiness!="NO-GO" or live is False)
+    _add_check(rows,"passing_yards_ladder_exists","file exists",passing_yards_ladder_path.exists(),passing_yards_ladder_path.exists())
+    if not passing_yards_ladder.empty:
+        probs=pd.to_numeric(passing_yards_ladder["model_over_probability"],errors="coerce").between(0,1).all() and pd.to_numeric(passing_yards_ladder["model_under_probability"],errors="coerce").between(0,1).all();labeled=projection_mode!="historical_test" or passing_yards_ladder["usage_status"].astype(str).eq("HISTORICAL TEST ONLY").all();_add_check(rows,"passing_yards_ladder_probabilities_between_zero_one","all probabilities 0..1",probs,probs);_add_check(rows,"passing_yards_ladder_historical_rows_labeled","all HISTORICAL TEST ONLY",labeled,labeled)
     for file_name in EXPECTED_GATE_FILES:
         path = output_path(file_name, cfg)
         _add_check(rows, f"gate_file_exists:{file_name}", "file exists", path.exists(), path.exists())

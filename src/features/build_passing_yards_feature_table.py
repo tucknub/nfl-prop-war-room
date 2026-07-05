@@ -1,0 +1,13 @@
+import numpy as np,pandas as pd
+from src.common import load_config,output_path
+from src.features.build_pass_attempts_feature_table import build_pass_attempts_feature_table
+def div(a,b):return pd.to_numeric(a,errors="coerce")/pd.to_numeric(b,errors="coerce").replace(0,np.nan)
+def build_passing_yards_feature_table(config=None):
+ cfg=config or load_config();p=output_path("pass_attempts_feature_table.csv",cfg);df=(pd.read_csv(p,low_memory=False) if p.exists() else build_pass_attempts_feature_table(cfg)).copy().sort_values(["player_id","season","week"]);g=df.groupby("player_id",group_keys=False)
+ df["career_passing_yards_entering"]=g["passing_yards"].cumsum()-df["passing_yards"];df["career_ypa_entering"]=div(df["career_passing_yards_entering"],df["career_attempts_entering"]);df["passing_yards_last_4"]=g["passing_yards"].transform(lambda s:s.shift().rolling(4,min_periods=1).sum());df["recent_ypa"]=div(df["passing_yards_last_4"],df["attempts_last_4"])
+ prior=df.groupby(["player_id","season"],as_index=False).agg(prior_passing_yards=("passing_yards","sum"),prior_ypa_attempts=("attempts","sum"));prior["season"]+=1;prior["prior_ypa"]=div(prior["prior_passing_yards"],prior["prior_ypa_attempts"]);df=df.merge(prior,on=["player_id","season"],how="left")
+ qb=df[df["position"].fillna("").astype(str).str.upper().eq("QB")];league=qb["passing_yards"].sum()/max(qb["attempts"].sum(),1);games=pd.to_numeric(df.get("current_season_games_entering",0),errors="coerce").fillna(0);recent=df["recent_ypa"].fillna(league);prior_y=df["prior_ypa"].fillna(league);career=df["career_ypa_entering"].fillna(prior_y).fillna(league)
+ df["projected_yards_per_attempt"]=np.select([games>=6,games>=3],[recent*.45+prior_y*.25+career*.20+league*.10,recent*.30+prior_y*.35+career*.20+league*.15],default=prior_y*.40+career*.30+league*.30);df["projected_yards_per_attempt"]=pd.to_numeric(df["projected_yards_per_attempt"],errors="coerce").fillna(league).clip(4.0,11.0)
+ low=pd.to_numeric(df["career_attempts_entering"],errors="coerce").fillna(0)<100;existing=df.get("quality_flags",pd.Series("",index=df.index)).fillna("").astype(str);needs=df["position"].fillna("").astype(str).str.upper().eq("QB")&low&~existing.str.contains("LOW_PASSING_YARDS_SAMPLE",regex=False);df.loc[needs,"quality_flags"]=existing.loc[needs].where(existing.loc[needs]=="",existing.loc[needs]+"|")+"LOW_PASSING_YARDS_SAMPLE";df.to_csv(output_path("passing_yards_feature_table.csv",cfg),index=False);print(f"Built passing yards feature table: {len(df):,} rows");return df
+def main():build_passing_yards_feature_table()
+if __name__=="__main__":main()
