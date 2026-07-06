@@ -38,6 +38,7 @@ Pages:
 - Market Odds Mapping
 - Edge Preview Board
 - End-to-End Edge Dry Run
+- Live Data Intake
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -65,6 +66,10 @@ The Edge Preview Board is a research-only decision preview. It combines line-lad
 ## End-to-End Edge Dry Run
 
 The Edge Dry Run page shows two validations: production missing live data remains blocked, and isolated synthetic all-gates-ready data can produce qualified edges inside dry-run outputs only. These rows are labeled `SYNTHETIC TEST ONLY`; they are not real betting data and do not make production live.
+
+## Live Data Intake
+
+The Live Data Intake page is the bridge between historical testing and future forward projection. It explains which real files must be filled, where to place them, which commands to run, and what still blocks GO. It does not make the app live; real data must be loaded and validated, and Final Readiness remains `NO-GO` until every required gate passes.
 - Gate Status
 - Identity Warnings
 - Run Reports

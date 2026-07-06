@@ -78,6 +78,8 @@ PIPELINE_MODULES = [
     "src.export.export_receptions_line_ladder",
     "src.export.export_edge_preview_board",
     "src.export.validate_edge_preview_board",
+    "src.export.export_live_data_intake_status",
+    "src.export.validate_live_data_intake_status",
     "src.export.build_google_sheets_import_pack",
 ]
 

@@ -447,3 +447,14 @@ python -m src.validate_edge_dry_run
 ```
 
 Dry-run outputs are labeled `SYNTHETIC TEST ONLY` and are written under `outputs/edge_preview_dry_run/`. They do not use real betting data, do not change production `projection_mode`, do not create live betting output, and do not make the app live. Production remains `NO-GO` until real live-context gates and safety checks pass.
+
+## Live Data Intake Workflow
+
+The Live Data Intake Workflow explains exactly which real roster, role, injury, and odds files must be filled before future forward projection can be considered. It is the bridge between historical testing and future live-readiness, but it does not itself make the app live.
+
+```powershell
+python -m src.export.export_live_data_intake_status
+python -m src.export.validate_live_data_intake_status
+```
+
+Use [LIVE_DATA_INTAKE.md](LIVE_DATA_INTAKE.md) for the plain-English intake guide. Real data must be placed in the appropriate `data/gates/` folders as non-template CSVs, then the full validation command block must pass. Final Readiness remains `NO-GO` until every required gate passes.

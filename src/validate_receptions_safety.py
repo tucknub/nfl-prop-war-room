@@ -92,11 +92,15 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     edge_preview_watchlist_path = output_path("edge_preview/no_odds_watchlist.csv", cfg)
     edge_dry_run_path = output_path("run_reports/latest_edge_dry_run.csv", cfg)
     edge_dry_run_board_path = output_path("edge_preview_dry_run/synthetic_edge_preview_board.csv", cfg)
+    intake_checklist_path = output_path("data_intake/live_data_intake_checklist.csv", cfg)
+    intake_status_path = output_path("data_intake/live_data_intake_status.csv", cfg)
+    intake_report_path = output_path("run_reports/latest_live_data_intake_report.md", cfg)
     edge_preview = _read_csv(edge_preview_path)
     edge_preview_blockers = _read_csv(edge_preview_blockers_path)
     edge_preview_watchlist = _read_csv(edge_preview_watchlist_path)
     edge_dry_run = _read_csv(edge_dry_run_path)
     edge_dry_run_board = _read_csv(edge_dry_run_board_path)
+    intake_status = _read_csv(intake_status_path)
     line_ladder_path = output_path("market_edges/receptions_line_ladder.csv", cfg)
     line_ladder = _read_csv(line_ladder_path)
     receiving_yards_board_path = output_path("google_sheets_receiving_yards_historical_test.csv", cfg)
@@ -285,6 +289,15 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
         dry_labeled = not dry_labels.empty and dry_labels.str.contains("SYNTHETIC TEST ONLY", na=False).all()
         _add_check(rows, "edge_dry_run_outputs_labeled_synthetic", "SYNTHETIC TEST ONLY", sorted(dry_labels.unique())[:5], dry_labeled)
         _add_check(rows, "edge_dry_run_does_not_change_production_readiness", "NO-GO", final_readiness, final_readiness == "NO-GO")
+    _add_check(rows, "live_data_intake_checklist_exists", "file exists", intake_checklist_path.exists(), intake_checklist_path.exists())
+    _add_check(rows, "live_data_intake_status_exists", "file exists", intake_status_path.exists(), intake_status_path.exists())
+    _add_check(rows, "live_data_intake_report_exists", "file exists", intake_report_path.exists(), intake_report_path.exists())
+    if not intake_status.empty:
+        live_gate_rows = intake_status[intake_status["gate"].astype(str).isin(["Current Roster Map", "Role / Depth Chart Map", "Injury / Availability Map", "Market Odds Map"])]
+        gate_ready = live_gate_rows["current_status"].astype(str).eq("READY").any()
+        _add_check(rows, "live_data_intake_templates_not_ready", "no live gate READY with templates only", gate_ready, not gate_ready)
+        report_text = intake_report_path.read_text(encoding="utf-8") if intake_report_path.exists() else ""
+        _add_check(rows, "live_data_intake_report_does_not_claim_go", "does not claim forward can be considered", "Can forward projection be considered? `Yes`" in report_text, "Can forward projection be considered? `Yes`" not in report_text)
     _add_check(rows, "line_ladder_exists", "file exists", line_ladder_path.exists(), line_ladder_path.exists())
     if not line_ladder.empty:
         ladder_probabilities_valid = (
