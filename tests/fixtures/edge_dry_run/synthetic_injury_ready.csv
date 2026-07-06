@@ -1,0 +1,4 @@
+player_id,player_name,team,position,injury_status,injury_detail,practice_status,game_status,availability_risk,projection_action,source,source_url,updated_at,manual_override,notes
+DRY-REC,J.Chase,CIN,WR,healthy,,full,active,low,allow,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY
+DRY-RUSH,S.Barkley,PHI,RB,healthy,,full,active,low,allow,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY
+DRY-QB,K.Murray,ARI,QB,healthy,,full,active,low,allow,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY

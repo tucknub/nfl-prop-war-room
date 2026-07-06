@@ -1,0 +1,2 @@
+blocker,status,severity,notes
+SYNTHETIC TEST ONLY,DRY RUN ONLY,INFO,All gates are synthetic and isolated from production outputs.

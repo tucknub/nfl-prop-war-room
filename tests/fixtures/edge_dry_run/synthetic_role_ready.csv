@@ -1,0 +1,4 @@
+player_id,player_name,team,position,projected_role,starter_status,depth_chart_rank,projected_snap_share,projected_route_share,projected_carry_share,projected_target_share,role_confidence,source,source_url,updated_at,manual_override,notes
+DRY-REC,J.Chase,CIN,WR,Starting receiver,starter,1,0.92,0.94,0.00,0.28,high,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY
+DRY-RUSH,S.Barkley,PHI,RB,Lead back,starter,1,0.78,0.28,0.62,0.08,high,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY
+DRY-QB,K.Murray,ARI,QB,Starting quarterback,starter,1,1.00,0.00,0.00,0.00,high,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,2026-07-06T12:00:00Z,False,SYNTHETIC TEST ONLY

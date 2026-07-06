@@ -437,3 +437,13 @@ python -m src.export.validate_edge_preview_board
 ```
 
 Future true edge is `model_probability - sportsbook_implied_probability`. A row can become a `Qualified Edge` only after real odds are matched, roster/role/injury/identity gates pass, leakage and safety validation pass, projection mode is live-ready, and `Final Readiness = GO`. Current historical-test output remains `Research Only`, `No Odds`, `Historical Test Only`, and `Not Betting Ready`.
+
+## End-to-End Edge Dry Run
+
+The Edge Dry Run validates the full edge decision pipeline without making production live. Scenario A confirms production remains blocked while live gate data is missing. Scenario B uses isolated synthetic fixtures to prove that roster, role, injury, odds, implied probability, and edge calculation can produce `Qualified Edge` rows only inside dry-run outputs.
+
+```powershell
+python -m src.validate_edge_dry_run
+```
+
+Dry-run outputs are labeled `SYNTHETIC TEST ONLY` and are written under `outputs/edge_preview_dry_run/`. They do not use real betting data, do not change production `projection_mode`, do not create live betting output, and do not make the app live. Production remains `NO-GO` until real live-context gates and safety checks pass.

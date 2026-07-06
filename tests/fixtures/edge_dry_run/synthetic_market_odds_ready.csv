@@ -1,0 +1,5 @@
+player_id,player_name,team,opponent,market_key,market_display_name,sportsbook,line,over_odds,under_odds,odds_timestamp,source,source_url,manual_override,notes
+DRY-REC,J.Chase,CIN,BAL,receptions,Receptions,SYNTHETIC BOOK,3.5,+150,-170,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,False,SYNTHETIC TEST ONLY
+DRY-REC,J.Chase,CIN,BAL,receiving_yards,Receiving Yards,SYNTHETIC BOOK,49.5,+130,-150,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,False,SYNTHETIC TEST ONLY
+DRY-RUSH,S.Barkley,PHI,DAL,rushing_yards,Rushing Yards,SYNTHETIC BOOK,49.5,+140,-160,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,False,SYNTHETIC TEST ONLY
+DRY-QB,K.Murray,ARI,SF,pass_attempts,Pass Attempts,SYNTHETIC BOOK,31.5,+120,-140,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,synthetic://edge-dry-run,False,SYNTHETIC TEST ONLY

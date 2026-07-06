@@ -37,6 +37,7 @@ Pages:
 - Injury / Availability Mapping
 - Market Odds Mapping
 - Edge Preview Board
+- End-to-End Edge Dry Run
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -60,6 +61,10 @@ The odds-map page normalizes sportsbook lines and American prices for active mar
 ## Edge Preview Board
 
 The Edge Preview Board is a research-only decision preview. It combines line-ladder model probabilities, odds-map status, and live-context blockers so the workflow is visible before real odds are loaded. It is not a betting board, and no row can become a qualified edge while Final Readiness is `NO-GO`.
+
+## End-to-End Edge Dry Run
+
+The Edge Dry Run page shows two validations: production missing live data remains blocked, and isolated synthetic all-gates-ready data can produce qualified edges inside dry-run outputs only. These rows are labeled `SYNTHETIC TEST ONLY`; they are not real betting data and do not make production live.
 - Gate Status
 - Identity Warnings
 - Run Reports

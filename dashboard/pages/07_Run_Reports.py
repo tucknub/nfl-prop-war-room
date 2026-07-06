@@ -17,6 +17,7 @@ REPORTS = [
     ("Market Odds Map Validation", "outputs/run_reports/latest_market_odds_map_validation.md", "Sportsbook odds mapping gate validation."),
     ("Edge Preview Board Report", "outputs/run_reports/latest_edge_preview_board_report.md", "Unified edge-preview board status."),
     ("Edge Preview Board Validation", "outputs/run_reports/latest_edge_preview_board_validation.md", "Safety validation for the edge preview board."),
+    ("Edge Dry Run", "outputs/run_reports/latest_edge_dry_run.md", "Synthetic end-to-end edge decision validation."),
     ("Line Ladder Report", "outputs/run_reports/latest_line_ladder_report.md", "Odds-free ladder summary."),
     ("Stable Snapshot", "outputs/run_reports/STABLE_RECEPTIONS_V1_HISTORICAL_TEST_SNAPSHOT.md", "Rollback point before live data integration."),
     ("Next Steps", "outputs/run_reports/STABLE_RECEPTIONS_V1_NEXT_STEPS.md", "Safe next actions and do-not-do list."),
