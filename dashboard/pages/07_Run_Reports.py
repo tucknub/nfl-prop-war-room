@@ -14,6 +14,7 @@ REPORTS = [
     ("Safety Validation", "outputs/run_reports/latest_receptions_safety_validation.md", "Safety assertions and failure count."),
     ("Forward Dry Run", "outputs/run_reports/latest_forward_projection_dry_run.md", "Forward-mode blocker and fixture validation."),
     ("Market Edge Report", "outputs/run_reports/latest_market_edge_report.md", "Odds/edge state and blockers."),
+    ("Market Odds Map Validation", "outputs/run_reports/latest_market_odds_map_validation.md", "Sportsbook odds mapping gate validation."),
     ("Line Ladder Report", "outputs/run_reports/latest_line_ladder_report.md", "Odds-free ladder summary."),
     ("Stable Snapshot", "outputs/run_reports/STABLE_RECEPTIONS_V1_HISTORICAL_TEST_SNAPSHOT.md", "Rollback point before live data integration."),
     ("Next Steps", "outputs/run_reports/STABLE_RECEPTIONS_V1_NEXT_STEPS.md", "Safe next actions and do-not-do list."),

@@ -1,0 +1,8 @@
+player_id,player_name,team,opponent,market_key,market_display_name,sportsbook,line,over_odds,under_odds,odds_timestamp,source,source_url,manual_override,notes
+TEST-001,Fixture Receiver,BUF,MIA,receptions,Receptions,DraftKings,4.5,-115,-105,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,False,valid odds row
+TEST-002,Fixture Runner,MIA,BUF,not_a_market,Bad Market,FanDuel,35.5,-110,-110,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,False,invalid market
+TEST-003,Fixture Tight End,KC,DEN,receiving_yards,Receiving Yards,BetMGM,42.5,0,-110,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,False,invalid price
+TEST-004,Fixture Quarterback,IND,HOU,passing_yards,Passing Yards,Caesars,225.5,-110,,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,False,missing side
+TEST-005,Fixture Slot,PHI,DAL,carries,Carries,ESPN BET,8.5,-130,-100,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,True,approved override should apply
+TEST-006,Fixture Unapproved,NYJ,NE,completions,Completions,Bet365,19.5,-125,-105,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,True,unapproved override should not apply
+TEST-999,Fixture Ghost,SEA,SF,receptions,Receptions,DraftKings,2.5,-110,-110,2026-07-06T12:00:00Z,SYNTHETIC TEST ONLY,,False,unmatched player

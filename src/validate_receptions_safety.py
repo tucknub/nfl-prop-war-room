@@ -118,6 +118,7 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     role_map = _read_csv(role_map_path)
     role_map_status = _read_csv(role_map_status_path)
     injury_map_path=output_path("injuries/current_injury_map.csv",cfg);injury_map_status_path=output_path("injuries/current_injury_map_status.csv",cfg);injury_map=_read_csv(injury_map_path);injury_map_status=_read_csv(injury_map_status_path)
+    odds_map_path=output_path("odds/current_market_odds_map.csv",cfg);odds_map_status_path=output_path("odds/current_market_odds_status.csv",cfg);odds_map=_read_csv(odds_map_path);odds_map_status=_read_csv(odds_map_status_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -151,6 +152,12 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
         injury_status=str(injury_map_status["status"].iloc[0]);real_files=int(pd.to_numeric(injury_map_status["real_injury_files"],errors="coerce").fillna(0).iloc[0]);templates_ignored=str(injury_map_status["templates_ignored"].iloc[0]).lower()=="true";_add_check(rows,"current_injury_templates_ignored","True",templates_ignored,templates_ignored);_add_check(rows,"missing_current_injury_not_ready","NEEDS DATA when no real files",f"files={real_files}; status={injury_status}",real_files>0 or injury_status=="NEEDS DATA")
     if not injury_map.empty:
         unavailable=injury_map[(injury_map["injury_status"].astype(str).str.lower().isin({"out","ir","pup","suspended"})|injury_map["game_status"].astype(str).str.lower().isin({"out","inactive"}))&injury_map["injury_mapping_status"].eq("READY")&~injury_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})];uncertain=injury_map[(injury_map["injury_status"].astype(str).str.lower().isin({"questionable","unknown"})|injury_map["practice_status"].astype(str).str.lower().isin({"limited","unknown"}))&injury_map["injury_mapping_status"].eq("READY")&~injury_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})];_add_check(rows,"unavailable_players_cannot_pass",0,len(unavailable),unavailable.empty);_add_check(rows,"uncertain_injuries_require_review",0,len(uncertain),uncertain.empty)
+    _add_check(rows,"current_market_odds_map_exists","file exists",odds_map_path.exists(),odds_map_path.exists());_add_check(rows,"current_market_odds_status_exists","file exists",odds_map_status_path.exists(),odds_map_status_path.exists())
+    if not odds_map_status.empty:
+        odds_status=str(odds_map_status["status"].iloc[0]);real_files=int(pd.to_numeric(odds_map_status["real_odds_files"],errors="coerce").fillna(0).iloc[0]);templates_ignored=str(odds_map_status["templates_ignored"].iloc[0]).lower()=="true";_add_check(rows,"current_market_odds_templates_ignored","True",templates_ignored,templates_ignored);_add_check(rows,"missing_current_market_odds_not_ready","NEEDS DATA when no real files",f"files={real_files}; status={odds_status}",real_files>0 or odds_status=="NEEDS DATA")
+    if not odds_map.empty:
+        invalid_ready=odds_map[(odds_map["validation_status"].astype(str).isin({"INVALID_MARKET_KEY","INVALID_ODDS","INVALID_LINE","UNMATCHED_PLAYER","DUPLICATE_PLAYER_NAME"}))&odds_map["odds_mapping_status"].astype(str).eq("READY")]
+        _add_check(rows,"invalid_odds_or_market_keys_cannot_pass",0,len(invalid_ready),invalid_ready.empty)
     _add_check(rows, "projection_mode", "historical_test or forward_projection", projection_mode, projection_mode in {"historical_test", "forward_projection"})
     _add_check(rows, "target_season", "configured integer", target_season, target_season > 0)
     _add_check(rows, "target_week", "configured integer", target_week, target_week > 0)

@@ -1,0 +1,3 @@
+player_id,player_name,team,market_key,sportsbook,override_line,override_over_odds,override_under_odds,override_reason,source,source_url,updated_at,approved,notes
+TEST-005,Fixture Slot,PHI,carries,ESPN BET,9.5,-115,-105,Corrected fixture line,SYNTHETIC TEST ONLY,,2026-07-06T12:05:00Z,True,approved
+TEST-006,Fixture Unapproved,NYJ,completions,Bet365,20.5,-110,-110,Unapproved fixture change,SYNTHETIC TEST ONLY,,2026-07-06T12:05:00Z,False,unapproved

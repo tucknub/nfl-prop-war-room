@@ -23,6 +23,7 @@ from utils import (
 
 EDGES_PATH = "outputs/market_edges/receptions_market_edges.csv"
 BLOCKERS_PATH = "outputs/market_edges/receptions_market_edge_blockers.csv"
+ODDS_STATUS_PATH = "outputs/odds/current_market_odds_status.csv"
 
 
 st.set_page_config(page_title="Market Edge Engine", layout="wide")
@@ -38,12 +39,14 @@ warning_banner(
 
 edges = load_csv_safe(EDGES_PATH)
 blockers = load_csv_safe(BLOCKERS_PATH)
+odds_status_df = load_csv_safe(ODDS_STATUS_PATH)
+odds_status = str(odds_status_df["status"].iloc[0]) if not odds_status_df.empty and "status" in odds_status_df.columns else "NEEDS DATA"
 
 cards = st.columns(5)
 with cards[0]:
     metric_card("Final Readiness", readiness, readiness)
 with cards[1]:
-    metric_card("Market Odds", "Missing", "NEEDS DATA")
+    metric_card("Market Odds Map", odds_status, odds_status)
 with cards[2]:
     metric_card("Roster Gate", "Missing", "NEEDS DATA")
 with cards[3]:

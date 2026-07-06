@@ -1,0 +1,2 @@
+status,real_odds_files,override_files,odds_rows_loaded,ready_rows,needs_review_rows,needs_data_rows,blocked_rows,active_markets_covered,sportsbooks_loaded,manual_overrides,templates_ignored,notes
+NEEDS DATA,0,0,0,0,0,0,0,0,0,0,True,No real current odds input found; template files do not count as data.

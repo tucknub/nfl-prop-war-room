@@ -290,11 +290,42 @@ def build_injury_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, st
 
 
 def build_market_odds_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, str]:
-    normalized, normalized_status = _normalized_gate(config, "market_odds", "market_odds_gate_normalized.csv")
-    if normalized is not None:
-        return normalized, normalized_status or "READY"
-    base = _candidate_template_base(config)
+    map_status_path = output_path("odds/current_market_odds_status.csv", config)
+    map_path = output_path("odds/current_market_odds_map.csv", config)
     status = "NEEDS DATA"
+    if map_status_path.exists():
+        map_status = pd.read_csv(map_status_path, low_memory=False)
+        status = str(map_status["status"].iloc[0]) if not map_status.empty else "NEEDS DATA"
+        real_rows = int(pd.to_numeric(map_status.get("odds_rows_loaded", pd.Series([0])), errors="coerce").fillna(0).iloc[0]) if not map_status.empty else 0
+        if status == "READY" and real_rows > 0 and map_path.exists():
+            mapped = pd.read_csv(map_path, low_memory=False)
+            out = pd.DataFrame(
+                {
+                    "Player Name": mapped.get("player_name", ""),
+                    "Player ID": mapped.get("player_id", ""),
+                    "Team": mapped.get("team", ""),
+                    "Opponent": mapped.get("opponent", ""),
+                    "Position": "",
+                    "Market": mapped.get("market_key", ""),
+                    "Sportsbook": mapped.get("sportsbook", ""),
+                    "Line": mapped.get("line", ""),
+                    "Over Odds": mapped.get("over_odds", ""),
+                    "Under Odds": mapped.get("under_odds", ""),
+                    "Implied Over Prob": mapped.get("implied_over_probability", ""),
+                    "Model Over Prob": mapped.get("model_over_probability", ""),
+                    "Edge %": mapped.get("edge_over", ""),
+                    "Price Grade": "",
+                    "Updated At": mapped.get("odds_timestamp", updated_at()),
+                    "Validation Status": "READY",
+                    "Notes": mapped.get("notes", ""),
+                }
+            )
+            return out, "READY"
+    else:
+        normalized, normalized_status = _normalized_gate(config, "market_odds", "market_odds_gate_normalized.csv")
+        if normalized is not None:
+            return normalized, normalized_status or "READY"
+    base = _candidate_template_base(config)
     out = pd.DataFrame(
         {
             "Player Name": base.get("Player Name", pd.Series(dtype="object")),
@@ -313,7 +344,7 @@ def build_market_odds_gate_template(config: dict[str, Any]) -> tuple[pd.DataFram
             "Price Grade": "",
             "Updated At": updated_at(),
             "Validation Status": status,
-            "Notes": "No odds source loaded. No betting edge is produced without market odds.",
+            "Notes": "No validated odds source loaded. No betting edge is produced without market odds. See outputs/odds/current_market_odds_status.csv and current_market_odds_needs_review.csv.",
         }
     )
     return out, status

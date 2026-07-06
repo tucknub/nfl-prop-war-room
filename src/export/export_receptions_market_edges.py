@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.common import output_path
 from src.models.receptions_probability import build_receptions_market_probability, calibration_error_sd
+from src.models.odds_utils import american_to_implied_probability
 
 
 EDGE_COLUMNS = [
@@ -40,11 +41,7 @@ def _read(path: Path) -> pd.DataFrame:
 
 
 def american_odds_implied_probability(value) -> float | None:
-    odds = pd.to_numeric(value, errors="coerce")
-    if pd.isna(odds) or odds == 0:
-        return None
-    odds = float(odds)
-    return abs(odds) / (abs(odds) + 100) if odds < 0 else 100 / (odds + 100)
+    return american_to_implied_probability(value)
 
 
 def _final_readiness() -> str:
@@ -134,7 +131,9 @@ def build_blockers(final_readiness: str, odds_rows: int, identity_clean: bool) -
 
 def export_receptions_market_edges() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     prob = build_receptions_market_probability()
-    odds = _read(output_path("gate_inputs_normalized/market_odds_gate_normalized.csv"))
+    odds = _read(output_path("odds/current_market_odds_map.csv"))
+    if not odds.empty:
+        odds = odds[odds.get("market_key", pd.Series(dtype=str)).astype(str).eq("receptions")].copy()
     final = _final_readiness()
     identity_clean = _identity_clean()
     blockers = build_blockers(final, len(odds), identity_clean)
@@ -145,24 +144,31 @@ def export_receptions_market_edges() -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         merged = prob.merge(
             odds,
             left_on=["player_id", "team", "line"],
-            right_on=["Player ID", "Team", "Line"],
+            right_on=["player_id", "team", "line"],
             how="left",
+            suffixes=("", "_odds"),
         )
         rows = []
         for _, row in merged.iterrows():
-            implied_over = american_odds_implied_probability(row.get("Over Odds"))
-            implied_under = american_odds_implied_probability(row.get("Under Odds"))
+            implied_over = row.get("implied_over_probability")
+            implied_under = row.get("implied_under_probability")
+            if pd.isna(pd.to_numeric(implied_over, errors="coerce")):
+                implied_over = american_odds_implied_probability(row.get("over_odds"))
+            if pd.isna(pd.to_numeric(implied_under, errors="coerce")):
+                implied_under = american_odds_implied_probability(row.get("under_odds"))
             model_over = pd.to_numeric(row.get("model_over_probability"), errors="coerce")
             model_under = pd.to_numeric(row.get("model_under_probability"), errors="coerce")
-            over_edge = pd.NA if implied_over is None or pd.isna(model_over) else float(model_over) - implied_over
-            under_edge = pd.NA if implied_under is None or pd.isna(model_under) else float(model_under) - implied_under
+            implied_over_num = pd.to_numeric(implied_over, errors="coerce")
+            implied_under_num = pd.to_numeric(implied_under, errors="coerce")
+            over_edge = pd.NA if pd.isna(implied_over_num) or pd.isna(model_over) else float(model_over) - float(implied_over_num)
+            under_edge = pd.NA if pd.isna(implied_under_num) or pd.isna(model_under) else float(model_under) - float(implied_under_num)
             best_side = ""
             best_edge = pd.NA
             if not pd.isna(over_edge) and (pd.isna(under_edge) or over_edge >= under_edge):
                 best_side, best_edge = "Over", over_edge
             elif not pd.isna(under_edge):
                 best_side, best_edge = "Under", under_edge
-            odds_valid = implied_over is not None and implied_under is not None
+            odds_valid = not pd.isna(implied_over_num) and not pd.isna(implied_under_num)
             usage = "HISTORICAL TEST ONLY" if row.get("usage_status") == "HISTORICAL TEST ONLY" else ("DO NOT USE" if final != "GO" else "MODEL REVIEW")
             rows.append(
                 {
@@ -171,13 +177,13 @@ def export_receptions_market_edges() -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
                     "team": row.get("team"),
                     "opponent": row.get("opponent"),
                     "position": row.get("position"),
-                    "market": row.get("Market", "Receptions"),
-                    "sportsbook": row.get("Sportsbook", ""),
+                    "market": row.get("market_key", "receptions"),
+                    "sportsbook": row.get("sportsbook", ""),
                     "line": row.get("line"),
-                    "over_odds": row.get("Over Odds"),
-                    "under_odds": row.get("Under Odds"),
-                    "implied_over_probability": implied_over,
-                    "implied_under_probability": implied_under,
+                    "over_odds": row.get("over_odds"),
+                    "under_odds": row.get("under_odds"),
+                    "implied_over_probability": implied_over_num,
+                    "implied_under_probability": implied_under_num,
                     "model_over_probability": model_over,
                     "model_under_probability": model_under,
                     "over_edge": over_edge,
@@ -185,7 +191,7 @@ def export_receptions_market_edges() -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
                     "best_side": best_side,
                     "best_edge": best_edge,
                     "price_grade": price_grade(best_edge, odds_valid, identity_clean),
-                    "validation_status": row.get("Validation Status", "NEEDS DATA"),
+                    "validation_status": row.get("validation_status", "NEEDS DATA"),
                     "usage_status": usage,
                     "notes": "Research only; not betting-ready unless Live Readiness is GO.",
                 }
@@ -206,7 +212,7 @@ def write_report(prob: pd.DataFrame, edges: pd.DataFrame, blockers: pd.DataFrame
         if not clean.empty:
             row = clean.sort_values("best_edge", ascending=False).iloc[0]
             best = f"{row['player_name']} {row['best_side']} {row['line']} edge={row['best_edge']:.4f}"
-    odds = _read(output_path("gate_inputs_normalized/market_odds_gate_normalized.csv"))
+    odds = _read(output_path("odds/current_market_odds_map.csv"))
     text = f"""# Receptions Market Edge Report
 
 Run timestamp: `{datetime.now(timezone.utc).replace(microsecond=0).isoformat()}`

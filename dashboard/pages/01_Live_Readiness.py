@@ -15,6 +15,7 @@ BLOCKERS_PATH = "outputs/google_sheets/forward_projection_blockers.csv"
 ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 ROLE_MAP_STATUS_PATH = "outputs/roles/current_role_map_status.csv"
 INJURY_MAP_STATUS_PATH = "outputs/injuries/current_injury_map_status.csv"
+ODDS_MAP_STATUS_PATH = "outputs/odds/current_market_odds_status.csv"
 
 
 st.set_page_config(page_title="Live Readiness", layout="wide")
@@ -27,6 +28,7 @@ blockers = load_csv_safe(BLOCKERS_PATH)
 roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 role_map_status = load_csv_safe(ROLE_MAP_STATUS_PATH)
 injury_map_status = load_csv_safe(INJURY_MAP_STATUS_PATH)
+odds_map_status = load_csv_safe(ODDS_MAP_STATUS_PATH)
 
 if not readiness.empty and {"Gate", "Status"}.issubset(readiness.columns):
     final = readiness.loc[readiness["Gate"].eq("Final Betting Use"), "Status"]
@@ -62,6 +64,8 @@ role_status = str(role_map_status["status"].iloc[0]) if not role_map_status.empt
 metric_card("Current Role Map", role_status, role_status, "A verified team is insufficient when projected workload remains unclear.")
 injury_status = str(injury_map_status["status"].iloc[0]) if not injury_map_status.empty and "status" in injury_map_status.columns else "NEEDS DATA"
 metric_card("Current Injury Map", injury_status, injury_status, "A verified role is insufficient when availability remains unclear.")
+odds_status = str(odds_map_status["status"].iloc[0]) if not odds_map_status.empty and "status" in odds_map_status.columns else "NEEDS DATA"
+metric_card("Market Odds Map", odds_status, odds_status, "True edge requires sportsbook lines, prices, and implied probabilities.")
 
 section_header("Blocking Gates")
 show_table_or_missing(presentation_table(blockers), BLOCKERS_PATH)

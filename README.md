@@ -413,3 +413,16 @@ python -m src.load.validate_current_injury_map
 ```
 
 Questionable, unknown, limited-practice, missing-ID, identity-conflict, team-mismatch, and unapproved override rows require review. Out, IR, PUP, suspended, inactive, or explicit block rows remain blockers unless a source-backed approved override is present. Live forward mode remains blocked until current roster, current role, and current injury maps are verified.
+
+## Market Odds Mapping
+
+Market odds mapping is a separate data and gate layer for sportsbook lines and prices. It normalizes active-market odds, converts American prices into implied probabilities, and prepares future edge comparison against model probabilities. It does not change projection math and does not create live betting output while final readiness is `NO-GO`.
+
+Place real source-backed odds CSVs in `data/gates/odds/` using `current_market_odds_input_template.csv`. Template files never count as production data. Approved odds corrections use `market_odds_overrides_template.csv`; do not hardcode sportsbook, player, or line fixes inside market models.
+
+```powershell
+python -m src.load.build_market_odds_map
+python -m src.load.validate_market_odds_map
+```
+
+True edge requires both sides of the equation: model probability plus sportsbook implied probability. Missing odds, invalid market keys, invalid American odds, unmatched players, stale odds, missing sides, or roster/role/injury blockers keep the Market Odds Gate from becoming live-ready. Live forward/betting mode remains blocked until odds and every live gate are verified.

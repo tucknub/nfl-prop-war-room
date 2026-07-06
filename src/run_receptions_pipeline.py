@@ -69,6 +69,8 @@ PIPELINE_MODULES = [
     "src.load.validate_current_role_map",
     "src.load.build_current_injury_map",
     "src.load.validate_current_injury_map",
+    "src.load.build_market_odds_map",
+    "src.load.validate_market_odds_map",
     "src.load.validate_gate_identity_matches",
     "src.export.export_sheet_gates",
     "src.models.receptions_probability",

@@ -35,6 +35,7 @@ Pages:
 - Live Readiness
 - Current Roster / Team Mapping
 - Injury / Availability Mapping
+- Market Odds Mapping
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -50,6 +51,10 @@ The role-map page verifies projected role, starter status, depth-chart rank, wor
 ## Injury / Availability Mapping
 
 The injury-map page verifies player availability after current-team and role context are established. Real injury inputs belong in `data/gates/injuries/`; template files are ignored as production data. Approved injury overrides are supplied through `injury_overrides_template.csv`-shaped files, never hardcoded into projection math. Questionable, unknown, limited, out, IR, inactive, team-mismatched, and unapproved rows keep live readiness blocked until reviewed.
+
+## Market Odds Mapping
+
+The odds-map page normalizes sportsbook lines and American prices for active markets, then converts prices into implied probabilities for future model-versus-market comparison. Real sportsbook odds belong in `data/gates/odds/`; template files are ignored as production data. The page is not a betting board: true edge still requires verified odds, current roster, role, injury, identity, safety gates, and `Live Readiness = GO`.
 - Gate Status
 - Identity Warnings
 - Run Reports

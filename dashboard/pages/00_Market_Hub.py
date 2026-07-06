@@ -13,6 +13,7 @@ MARKET_STATUS_PATH = "outputs/markets/market_status.csv"
 ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 ROLE_MAP_STATUS_PATH = "outputs/roles/current_role_map_status.csv"
 INJURY_MAP_STATUS_PATH = "outputs/injuries/current_injury_map_status.csv"
+ODDS_MAP_STATUS_PATH = "outputs/odds/current_market_odds_status.csv"
 
 
 st.set_page_config(page_title="Market Hub", layout="wide")
@@ -33,6 +34,7 @@ markets = load_csv_safe(MARKET_STATUS_PATH)
 roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 role_map_status = load_csv_safe(ROLE_MAP_STATUS_PATH)
 injury_map_status = load_csv_safe(INJURY_MAP_STATUS_PATH)
+odds_map_status = load_csv_safe(ODDS_MAP_STATUS_PATH)
 if markets.empty:
     st.warning(f"Missing file: `{MARKET_STATUS_PATH}`. Run `python -m src.run_receptions_pipeline`.")
     st.stop()
@@ -72,6 +74,8 @@ role_status = str(role_map_status["status"].iloc[0]) if not role_map_status.empt
 metric_card("Current Role Map", role_status, role_status, "Player workload and depth-chart roles must be verified independently from model math.")
 injury_status = str(injury_map_status["status"].iloc[0]) if not injury_map_status.empty and "status" in injury_map_status.columns else "NEEDS DATA"
 metric_card("Current Injury Map", injury_status, injury_status, "Player availability must be verified independently from projections.")
+odds_status = str(odds_map_status["status"].iloc[0]) if not odds_map_status.empty and "status" in odds_map_status.columns else "NEEDS DATA"
+metric_card("Market Odds Map", odds_status, odds_status, "Sportsbook lines and prices must be verified before any true edge calculation.")
 
 st.markdown(
     """
