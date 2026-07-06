@@ -36,6 +36,7 @@ Pages:
 - Current Roster / Team Mapping
 - Injury / Availability Mapping
 - Market Odds Mapping
+- Edge Preview Board
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -55,6 +56,10 @@ The injury-map page verifies player availability after current-team and role con
 ## Market Odds Mapping
 
 The odds-map page normalizes sportsbook lines and American prices for active markets, then converts prices into implied probabilities for future model-versus-market comparison. Real sportsbook odds belong in `data/gates/odds/`; template files are ignored as production data. The page is not a betting board: true edge still requires verified odds, current roster, role, injury, identity, safety gates, and `Live Readiness = GO`.
+
+## Edge Preview Board
+
+The Edge Preview Board is a research-only decision preview. It combines line-ladder model probabilities, odds-map status, and live-context blockers so the workflow is visible before real odds are loaded. It is not a betting board, and no row can become a qualified edge while Final Readiness is `NO-GO`.
 - Gate Status
 - Identity Warnings
 - Run Reports

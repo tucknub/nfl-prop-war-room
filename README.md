@@ -426,3 +426,14 @@ python -m src.load.validate_market_odds_map
 ```
 
 True edge requires both sides of the equation: model probability plus sportsbook implied probability. Missing odds, invalid market keys, invalid American odds, unmatched players, stale odds, missing sides, or roster/role/injury blockers keep the Market Odds Gate from becoming live-ready. Live forward/betting mode remains blocked until odds and every live gate are verified.
+
+## Edge Preview Board
+
+The Edge Preview Board is a unified research-only board that shows how qualified prop edges will be evaluated later. It is not a betting board. While final readiness is `NO-GO`, it can show no-odds watchlists and blockers only.
+
+```powershell
+python -m src.export.export_edge_preview_board
+python -m src.export.validate_edge_preview_board
+```
+
+Future true edge is `model_probability - sportsbook_implied_probability`. A row can become a `Qualified Edge` only after real odds are matched, roster/role/injury/identity gates pass, leakage and safety validation pass, projection mode is live-ready, and `Final Readiness = GO`. Current historical-test output remains `Research Only`, `No Odds`, `Historical Test Only`, and `Not Betting Ready`.

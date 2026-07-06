@@ -66,6 +66,7 @@ with c3:
     metric_card("Line Ladders", "Available", "PASS")
 with c4:
     metric_card("Edge Engine", "Blocked", "NO-GO", "Missing odds and live gates.")
+metric_card("Edge Preview Board", "Research Only", "BLOCKED", "Unified preview exists, but it is not a betting board while readiness is NO-GO.")
 
 roster_status = str(roster_map_status["status"].iloc[0]) if not roster_map_status.empty and "status" in roster_map_status.columns else "NEEDS DATA"
 section_header("Forward Team Context")

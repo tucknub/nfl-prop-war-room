@@ -83,6 +83,7 @@ current_injury_status = str(injury_map_status["status"].iloc[0]) if not injury_m
 metric_card("Current Injury Map", current_injury_status, current_injury_status, "Forward projections remain blocked until real non-template injury and practice data is verified.")
 current_odds_status = str(odds_map_status["status"].iloc[0]) if not odds_map_status.empty and "status" in odds_map_status.columns else "NEEDS DATA"
 metric_card("Market Odds Map", current_odds_status, current_odds_status, "Betting-edge output remains blocked until real non-template odds are verified.")
+metric_card("Edge Preview Board", "Research Only", "BLOCKED", "The preview board is not a live gate and cannot override missing data.")
 
 section_header("What Must Happen Before GO?")
 st.markdown(

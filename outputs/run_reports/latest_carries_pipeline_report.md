@@ -1,6 +1,6 @@
 # Carries V1 Pipeline Report
 
-Run timestamp: `2026-07-06T10:55:21+00:00`
+Run timestamp: `2026-07-06T11:04:06+00:00`
 
 Formula: `projected_team_rush_attempts x projected_player_rush_attempt_share = projected_carries`
 

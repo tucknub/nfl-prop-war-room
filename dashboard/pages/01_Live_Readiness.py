@@ -50,6 +50,7 @@ with cards[1]:
     metric_card("Leakage", leakage_status, leakage_status)
 with cards[2]:
     metric_card("Blocked Gates", len(blockers) if not blockers.empty else 0, "NO-GO" if str(final_status) != "GO" else "GO")
+metric_card("Edge Preview Board", "Research Only", "BLOCKED" if str(final_status) != "GO" else "REVIEW", "Preview rows cannot become actionable until Final Readiness is GO.")
 
 if str(final_status) != "GO":
     warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "Resolve every blocker and validate forward mode before treating this as live.")

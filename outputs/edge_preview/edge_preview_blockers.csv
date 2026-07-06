@@ -1,0 +1,8 @@
+blocker,status,severity,notes
+Final readiness is NO-GO,NO-GO,HIGH,No decision can become actionable until Final Readiness is GO.
+Current Roster Map NEEDS DATA,NEEDS DATA,HIGH,Current Roster Map must be READY before true edge use.
+Current Role Map NEEDS DATA,NEEDS DATA,HIGH,Current Role Map must be READY before true edge use.
+Current Injury Map NEEDS DATA,NEEDS DATA,HIGH,Current Injury Map must be READY before true edge use.
+Market Odds Map NEEDS DATA,NEEDS DATA,HIGH,Market Odds Map must be READY before true edge use.
+Historical-test mode,historical_test,HIGH,Historical-test output cannot be treated as live betting output.
+No live betting output allowed,ENFORCED,HIGH,The preview board is research-only while Final Readiness is NO-GO.

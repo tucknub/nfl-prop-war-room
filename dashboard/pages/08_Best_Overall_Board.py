@@ -12,6 +12,8 @@ from utils import inject_global_styles, load_csv_safe, metric_card, page_header,
 
 MARKET_STATUS_PATH = "outputs/markets/market_status.csv"
 LADDER_TOP_PATH = "outputs/market_edges/receptions_line_ladder_top_by_line.csv"
+EDGE_WATCHLIST_PATH = "outputs/edge_preview/no_odds_watchlist.csv"
+EDGE_BLOCKERS_PATH = "outputs/edge_preview/edge_preview_blockers.csv"
 
 
 st.set_page_config(page_title="Best Overall Board", layout="wide")
@@ -37,6 +39,21 @@ with cols[1]:
     metric_card("Available Markets", "7 historical-test markets", "built_historical_test")
 with cols[2]:
     metric_card("Best Overall Status", "Waiting", "NO-GO", "Needs multiple markets.")
+
+watchlist = load_csv_safe(EDGE_WATCHLIST_PATH)
+edge_blockers = load_csv_safe(EDGE_BLOCKERS_PATH)
+with st.container():
+    section_header("Edge Preview Summary", "Research Only - No Odds - Historical Test Only.")
+    summary_cols = st.columns(3)
+    with summary_cols[0]:
+        metric_card("Preview Watchlist Rows", len(watchlist), "Research Only")
+    with summary_cols[1]:
+        metric_card("Preview Blockers", len(edge_blockers), "NO-GO")
+    with summary_cols[2]:
+        metric_card("Qualified Edges", 0, "BLOCKED")
+    if not watchlist.empty:
+        preview_cols = ["market_display_name", "player_name", "team", "position", "line", "model_projection", "model_over_probability", "usage_status"]
+        st.dataframe(presentation_table(watchlist[[c for c in preview_cols if c in watchlist.columns]].head(35)), use_container_width=True, hide_index=True)
 
 st.markdown(
     """

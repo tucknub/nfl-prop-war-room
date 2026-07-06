@@ -76,6 +76,8 @@ PIPELINE_MODULES = [
     "src.models.receptions_probability",
     "src.export.export_receptions_market_edges",
     "src.export.export_receptions_line_ladder",
+    "src.export.export_edge_preview_board",
+    "src.export.validate_edge_preview_board",
     "src.export.build_google_sheets_import_pack",
 ]
 

@@ -87,6 +87,12 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     identity_report = _read_csv(identity_report_path)
     unmatched_identity = _read_csv(output_path("identity/unmatched_gate_rows.csv", cfg))
     market_edges = _read_csv(output_path("market_edges/receptions_market_edges.csv", cfg))
+    edge_preview_path = output_path("edge_preview/edge_preview_board.csv", cfg)
+    edge_preview_blockers_path = output_path("edge_preview/edge_preview_blockers.csv", cfg)
+    edge_preview_watchlist_path = output_path("edge_preview/no_odds_watchlist.csv", cfg)
+    edge_preview = _read_csv(edge_preview_path)
+    edge_preview_blockers = _read_csv(edge_preview_blockers_path)
+    edge_preview_watchlist = _read_csv(edge_preview_watchlist_path)
     line_ladder_path = output_path("market_edges/receptions_line_ladder.csv", cfg)
     line_ladder = _read_csv(line_ladder_path)
     receiving_yards_board_path = output_path("google_sheets_receiving_yards_historical_test.csv", cfg)
@@ -251,6 +257,22 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
         _add_check(rows, "edge_requires_implied_probability", "no edge without implied probability", len(edge_without_implied), edge_without_implied.empty)
     else:
         _add_check(rows, "market_edges_empty_when_no_odds", "empty allowed with no odds", len(market_edges), True)
+    _add_check(rows, "edge_preview_board_exists", "file exists", edge_preview_path.exists(), edge_preview_path.exists())
+    _add_check(rows, "edge_preview_blockers_exists", "file exists", edge_preview_blockers_path.exists(), edge_preview_blockers_path.exists())
+    _add_check(rows, "edge_preview_no_odds_watchlist_exists", "file exists", edge_preview_watchlist_path.exists(), edge_preview_watchlist_path.exists())
+    if not edge_preview.empty:
+        qualified_count = int(edge_preview["decision_status"].astype(str).eq("Qualified Edge").sum()) if "decision_status" in edge_preview.columns else len(edge_preview)
+        _add_check(rows, "edge_preview_no_qualified_edge_when_no_go", "0 Qualified Edge while NO-GO", qualified_count, final_readiness != "NO-GO" or qualified_count == 0)
+    else:
+        _add_check(rows, "edge_preview_empty_allowed_without_odds", "empty allowed with no odds", len(edge_preview), True)
+    if not edge_preview_blockers.empty:
+        blocker_text = " ".join(edge_preview_blockers.astype(str).agg(" ".join, axis=1).tolist())
+        blockers_present = all(text in blocker_text for text in ["Final readiness is NO-GO", "Market Odds Map NEEDS DATA"])
+        _add_check(rows, "edge_preview_blockers_present_when_missing_gates", "readiness and odds blockers present", blocker_text[:240], blockers_present)
+    if not edge_preview_watchlist.empty:
+        watchlist_labels = edge_preview_watchlist["usage_status"].astype(str) if "usage_status" in edge_preview_watchlist.columns else pd.Series(dtype=str)
+        watchlist_safe = (not watchlist_labels.empty and watchlist_labels.str.contains("Research Only", na=False).all() and watchlist_labels.str.contains("No Odds", na=False).all() and watchlist_labels.str.contains("Historical Test Only", na=False).all())
+        _add_check(rows, "edge_preview_watchlist_research_only", "Research Only / No Odds / Historical Test Only", sorted(watchlist_labels.unique())[:5], watchlist_safe)
     _add_check(rows, "line_ladder_exists", "file exists", line_ladder_path.exists(), line_ladder_path.exists())
     if not line_ladder.empty:
         ladder_probabilities_valid = (
