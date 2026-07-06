@@ -256,8 +256,17 @@ def build_injury_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, st
     normalized, normalized_status = _normalized_gate(config, "injury", "injury_gate_normalized.csv")
     if normalized is not None:
         return normalized, normalized_status or "READY"
+    map_status_path = output_path("injuries/current_injury_map_status.csv", config)
+    map_path = output_path("injuries/current_injury_map.csv", config)
+    if map_status_path.exists():
+        map_status = pd.read_csv(map_status_path, low_memory=False);status = str(map_status["status"].iloc[0]) if not map_status.empty else "NEEDS DATA";real_rows = int(map_status["injury_rows_loaded"].iloc[0]) if not map_status.empty else 0
+        if status == "READY" and real_rows > 0 and map_path.exists():
+            mapped=pd.read_csv(map_path,low_memory=False);out=pd.DataFrame({"Player Name":mapped.get("player_name",""),"Player ID":mapped.get("player_id",""),"Team":mapped.get("current_team",""),"Position":mapped.get("position",""),"Injury Status":mapped.get("injury_status",""),"Practice Status":mapped.get("practice_status",""),"Game Status":mapped.get("game_status",""),"Availability Risk":mapped.get("availability_risk",""),"Confidence Penalty":0,"Projection Action":mapped.get("projection_action",""),"Manual Override":mapped.get("manual_override",False),"Source":mapped.get("source",""),"Updated At":mapped.get("updated_at",""),"Validation Status":"READY","Notes":mapped.get("notes","")});return out,"READY"
     base = _candidate_template_base(config)
     status = "NEEDS DATA"
+    if map_status_path.exists():
+        map_status=pd.read_csv(map_status_path,low_memory=False)
+        if not map_status.empty:status=str(map_status["status"].iloc[0])
     out = pd.DataFrame(
         {
             "Player Name": base.get("Player Name", pd.Series(dtype="object")),
@@ -274,7 +283,7 @@ def build_injury_gate_template(config: dict[str, Any]) -> tuple[pd.DataFrame, st
             "Source": "manual injury gate required",
             "Updated At": updated_at(),
             "Validation Status": status,
-            "Notes": "Unknown injury status blocks or downgrades live use.",
+            "Notes": "Unknown injury status blocks live use. See outputs/injuries/current_injury_map_status.csv and current_injury_needs_review.csv.",
         }
     )
     return out, status
@@ -381,7 +390,7 @@ def build_live_readiness(
             "Status": gate_statuses["Injury Gate"],
             "Current Value": "Unknown",
             "Action Needed": "Import injury and practice status.",
-            "Source": "outputs/google_sheets/injury_gate_import_template.csv",
+            "Source": "outputs/injuries/current_injury_map_status.csv | outputs/injuries/current_injury_needs_review.csv",
             "Notes": "Out, IR, Doubtful, Inactive, or Unknown blocks/downgrades live use.",
         },
         {

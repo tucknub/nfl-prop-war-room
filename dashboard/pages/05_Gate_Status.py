@@ -15,6 +15,7 @@ SAFETY_PATH = "outputs/run_reports/latest_receptions_safety_validation.csv"
 DRY_RUN_PATH = "outputs/run_reports/latest_forward_projection_dry_run.csv"
 ROSTER_MAP_STATUS_PATH = "outputs/roster/current_roster_map_status.csv"
 ROLE_MAP_STATUS_PATH = "outputs/roles/current_role_map_status.csv"
+INJURY_MAP_STATUS_PATH = "outputs/injuries/current_injury_map_status.csv"
 
 
 st.set_page_config(page_title="Forward Readiness Gates", layout="wide")
@@ -28,6 +29,7 @@ safety = load_csv_safe(SAFETY_PATH)
 dry_run = load_csv_safe(DRY_RUN_PATH)
 roster_map_status = load_csv_safe(ROSTER_MAP_STATUS_PATH)
 role_map_status = load_csv_safe(ROLE_MAP_STATUS_PATH)
+injury_map_status = load_csv_safe(INJURY_MAP_STATUS_PATH)
 
 
 def gate_status(gate: str) -> str:
@@ -75,6 +77,8 @@ section_header("Current Team Verification")
 metric_card("Current Roster Map", current_roster_status, current_roster_status, "Forward projections remain blocked until all current teams are verified from real non-template roster data.")
 current_role_status = str(role_map_status["status"].iloc[0]) if not role_map_status.empty and "status" in role_map_status.columns else "NEEDS DATA"
 metric_card("Current Role Map", current_role_status, current_role_status, "Forward projections remain blocked until real non-template role data is verified.")
+current_injury_status = str(injury_map_status["status"].iloc[0]) if not injury_map_status.empty and "status" in injury_map_status.columns else "NEEDS DATA"
+metric_card("Current Injury Map", current_injury_status, current_injury_status, "Forward projections remain blocked until real non-template injury and practice data is verified.")
 
 section_header("What Must Happen Before GO?")
 st.markdown(

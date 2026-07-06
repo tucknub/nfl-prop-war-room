@@ -117,6 +117,7 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     role_map_status_path = output_path("roles/current_role_map_status.csv", cfg)
     role_map = _read_csv(role_map_path)
     role_map_status = _read_csv(role_map_status_path)
+    injury_map_path=output_path("injuries/current_injury_map.csv",cfg);injury_map_status_path=output_path("injuries/current_injury_map_status.csv",cfg);injury_map=_read_csv(injury_map_path);injury_map_status=_read_csv(injury_map_status_path)
 
     leakage_status = "MISSING" if audit.empty else str(audit["leakage_status"].iloc[0])
     leakage_exists = True if audit.empty else bool(audit["leakage_exists"].iloc[0])
@@ -145,6 +146,11 @@ def validate_safety() -> tuple[pd.DataFrame, dict[str, object]]:
     if not role_map.empty:
         unsafe_role=role_map[role_map["role_confidence"].astype(str).str.lower().isin({"low","unknown",""})&role_map["role_mapping_status"].astype(str).eq("READY")&~role_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})]
         _add_check(rows,"low_unknown_roles_require_review","0 silently-ready low/unknown roles",len(unsafe_role),unsafe_role.empty)
+    _add_check(rows,"current_injury_map_exists","file exists",injury_map_path.exists(),injury_map_path.exists());_add_check(rows,"current_injury_map_status_exists","file exists",injury_map_status_path.exists(),injury_map_status_path.exists())
+    if not injury_map_status.empty:
+        injury_status=str(injury_map_status["status"].iloc[0]);real_files=int(pd.to_numeric(injury_map_status["real_injury_files"],errors="coerce").fillna(0).iloc[0]);templates_ignored=str(injury_map_status["templates_ignored"].iloc[0]).lower()=="true";_add_check(rows,"current_injury_templates_ignored","True",templates_ignored,templates_ignored);_add_check(rows,"missing_current_injury_not_ready","NEEDS DATA when no real files",f"files={real_files}; status={injury_status}",real_files>0 or injury_status=="NEEDS DATA")
+    if not injury_map.empty:
+        unavailable=injury_map[(injury_map["injury_status"].astype(str).str.lower().isin({"out","ir","pup","suspended"})|injury_map["game_status"].astype(str).str.lower().isin({"out","inactive"}))&injury_map["injury_mapping_status"].eq("READY")&~injury_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})];uncertain=injury_map[(injury_map["injury_status"].astype(str).str.lower().isin({"questionable","unknown"})|injury_map["practice_status"].astype(str).str.lower().isin({"limited","unknown"}))&injury_map["injury_mapping_status"].eq("READY")&~injury_map["manual_override"].astype(str).str.lower().isin({"true","1","yes"})];_add_check(rows,"unavailable_players_cannot_pass",0,len(unavailable),unavailable.empty);_add_check(rows,"uncertain_injuries_require_review",0,len(uncertain),uncertain.empty)
     _add_check(rows, "projection_mode", "historical_test or forward_projection", projection_mode, projection_mode in {"historical_test", "forward_projection"})
     _add_check(rows, "target_season", "configured integer", target_season, target_season > 0)
     _add_check(rows, "target_week", "configured integer", target_week, target_week > 0)

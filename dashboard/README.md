@@ -34,6 +34,7 @@ Pages:
 
 - Live Readiness
 - Current Roster / Team Mapping
+- Injury / Availability Mapping
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -45,6 +46,10 @@ The roster-map page separates historical stat-team context from verified current
 ## Role / Depth Chart Mapping
 
 The role-map page verifies projected role, starter status, depth-chart rank, workload shares, and confidence after current-team mapping. Role changes and overrides are supplied through source-backed gate files, never hardcoded in model math. Template-only inputs keep the Role Gate at `NEEDS DATA`; low or unknown roles cannot silently become live-ready.
+
+## Injury / Availability Mapping
+
+The injury-map page verifies player availability after current-team and role context are established. Real injury inputs belong in `data/gates/injuries/`; template files are ignored as production data. Approved injury overrides are supplied through `injury_overrides_template.csv`-shaped files, never hardcoded into projection math. Questionable, unknown, limited, out, IR, inactive, team-mismatched, and unapproved rows keep live readiness blocked until reviewed.
 - Gate Status
 - Identity Warnings
 - Run Reports

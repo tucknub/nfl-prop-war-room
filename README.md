@@ -400,3 +400,16 @@ python -m src.load.validate_current_role_map
 ```
 
 Low-confidence roles, unknown starter status, identity/team conflicts, missing IDs, and unapproved overrides remain review or blocking conditions. Live forward mode remains blocked until both current roster and current role maps are verified.
+
+## Injury / Availability Mapping
+
+Injury mapping is a separate data and gate layer that verifies whether a projected workload is actually available. Roster tells us where a player is. Role tells us expected workload. Injury mapping tells us whether that workload is available. A player can have a strong projection and still be blocked if availability is unclear.
+
+Place real source-backed injury CSVs in `data/gates/injuries/` using `current_injury_input_template.csv`. Template files never count as production data. Approved availability adjustments use `injury_overrides_template.csv`; do not hardcode player-specific injury fixes in market models.
+
+```powershell
+python -m src.load.build_current_injury_map
+python -m src.load.validate_current_injury_map
+```
+
+Questionable, unknown, limited-practice, missing-ID, identity-conflict, team-mismatch, and unapproved override rows require review. Out, IR, PUP, suspended, inactive, or explicit block rows remain blockers unless a source-backed approved override is present. Live forward mode remains blocked until current roster, current role, and current injury maps are verified.
