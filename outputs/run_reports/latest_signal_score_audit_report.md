@@ -1,6 +1,6 @@
 # Signal Score Audit Report
 
-Run timestamp: `2026-07-07T15:16:12+00:00`
+Run timestamp: `2026-07-07T15:36:03+00:00`
 
 Audit type: `HISTORICAL TEST / RESEARCH ONLY`
 
@@ -35,8 +35,13 @@ Outcome source files inspected:
 - `outputs\receptions_backtest_summary.csv`
 - `outputs\receptions_backtest_summary_all.csv`
 - `outputs\receptions_backtest_summary_candidates.csv`
+- `outputs\run_reports\latest_historical_signal_backtest_report.md`
+- `outputs\run_reports\latest_historical_signal_backtest_validation.csv`
+- `outputs\run_reports\latest_historical_signal_backtest_validation.md`
 - `outputs\rushing_yards_backtest_rows_candidates.csv`
 - `outputs\rushing_yards_backtest_summary_candidates.csv`
+- `outputs\signal_boards\historical_signal_backtest_rows.csv`
+- `outputs\signal_boards\historical_signal_backtest_summary.csv`
 - `outputs\signal_boards\signal_score_outcome_audit.csv`
 - `src\backtest\__pycache__\backtest_carries.cpython-313.pyc`
 - `src\backtest\__pycache__\backtest_completions.cpython-313.pyc`

@@ -1,18 +1,14 @@
-# Signal Score Audit Validation
+# Historical Signal Backtest Validation
 
 Run timestamp: `2026-07-07T15:36:59+00:00`
 
 Overall status: `PASS`
 
-Summary rows: `4`
+Rows: `15191`
 
-Correlation rows: `14`
+Seasons: `2023, 2024`
 
-Driver rows: `762`
-
-Explainability rows: `762`
-
-Outcome audit labeled: `True`
+Market families: `passing, receiving, rushing`
 
 Final readiness: `NO-GO`
 

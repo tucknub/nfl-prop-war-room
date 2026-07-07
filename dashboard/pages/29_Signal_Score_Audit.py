@@ -16,6 +16,7 @@ CORRELATIONS = "outputs/signal_boards/signal_score_component_correlations.csv"
 DRIVERS = "outputs/signal_boards/signal_score_driver_audit.csv"
 EXPLAIN = "outputs/signal_boards/signal_score_explainability.csv"
 OUTCOME = "outputs/signal_boards/signal_score_outcome_audit.csv"
+HISTORICAL_FAMILY = "outputs/signal_boards/historical_signal_market_family_audit.csv"
 
 
 st.set_page_config(page_title="Signal Score Audit", layout="wide")
@@ -33,6 +34,7 @@ correlations = load_signal_csv(CORRELATIONS)
 drivers = load_signal_csv(DRIVERS)
 explain = load_signal_csv(EXPLAIN)
 outcome = load_signal_csv(OUTCOME)
+historical_family = load_signal_csv(HISTORICAL_FAMILY)
 
 total_rows = int(summary["row_count"].sum()) if not summary.empty and "row_count" in summary.columns else 0
 avg_score = pd.to_numeric(summary.get("average_overall_signal_score", pd.Series(dtype=float)), errors="coerce").mean() if not summary.empty else pd.NA
@@ -97,6 +99,23 @@ explain_columns = [
 render_signal_table(explain.head(300), ["overall_signal_score"], explain_columns, "Explainability Table")
 
 section_header("Outcome Audit")
+if not historical_family.empty:
+    st.success("Historical signal backtest output is available. See the Historical Signal Backtest page for tier lift, component usefulness, and market-family audit details.")
+    render_signal_table(
+        historical_family,
+        ["tier_lift", "score_actual_correlation"],
+        [
+            "market_family",
+            "rows",
+            "baseline_actual_average",
+            "elite_or_strong_average_actual",
+            "watch_or_review_average_actual",
+            "tier_lift",
+            "score_actual_correlation",
+            "monotonicity_status",
+        ],
+        "Historical Backtest Summary",
+    )
 if outcome.empty:
     st.info("Historical outcome audit not yet available for this signal table.")
 else:

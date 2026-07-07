@@ -1,0 +1,25 @@
+market_family,component_name,correlation_with_actual,spearman_correlation_with_actual,top_quartile_lift,bottom_quartile_lift,row_count,usefulness_flag,notes
+passing,projection_score,0.5258562632640286,0.48712862057490053,55.915416505372974,-86.42443969165363,1311,USEFUL,Candidate for later review only; no production weight changed.
+passing,usage_foundation_score,0.49342459203220274,0.45261107107234005,53.3262654207536,-81.6752087807206,1311,USEFUL,Candidate for later review only; no production weight changed.
+passing,recent_form_score,0.5693779989363171,0.4915847802164649,53.36139506259056,-86.23006835204357,1311,USEFUL,Candidate for later review only; no production weight changed.
+passing,opponent_fit_score,0.09006529054852266,0.08412317216620888,25.722689708818763,1.4915428477132764,1283,WEAK,Candidate for later review only; no production weight changed.
+passing,game_script_score,0.17233880589245332,0.1729836694674988,24.486580860847454,-16.11845647505524,1397,WEAK,Candidate for later review only; no production weight changed.
+passing,role_availability_score,,,,,1397,NOISY,Candidate for later review only; no production weight changed.
+passing,volatility_score,0.1692427431417219,0.16121284859641538,12.727166321654522,-22.297226425523036,1397,WEAK,Candidate for later review only; no production weight changed.
+passing,data_quality_score,0.1874333496452674,0.35127179464249386,15.388211483510048,0.0,1397,USEFUL,Candidate for later review only; no production weight changed.
+receiving,projection_score,0.5287855621091523,0.5450112428369112,27.100583000526502,-16.99089636372797,8592,USEFUL,Candidate for later review only; no production weight changed.
+receiving,usage_foundation_score,0.5177402823114875,0.5398241231680599,25.85895066078187,-17.322985560296814,8592,USEFUL,Candidate for later review only; no production weight changed.
+receiving,recent_form_score,0.5133870814719186,0.5492487854913776,27.241412761039253,-17.22273993914697,8592,USEFUL,Candidate for later review only; no production weight changed.
+receiving,opponent_fit_score,0.2731258176878727,0.2519999284651517,9.624855590213794,-11.79369821724022,8728,USEFUL,Candidate for later review only; no production weight changed.
+receiving,game_script_score,0.06973731719815547,0.052760388106662476,2.4577945940652803,-2.1726323771092595,9055,NOISY,Candidate for later review only; no production weight changed.
+receiving,role_availability_score,,,,,9055,NOISY,Candidate for later review only; no production weight changed.
+receiving,volatility_score,0.09467013055886465,0.11362574736822122,2.179491230095582,-4.610881497197774,9055,WEAK,Candidate for later review only; no production weight changed.
+receiving,data_quality_score,0.05210343143912695,0.08297400384433828,0.5974258409879063,0.0,9055,WEAK,Candidate for later review only; no production weight changed.
+rushing,projection_score,0.6106436699186301,0.6568982000319697,32.29001857796196,-20.198850522661374,4489,USEFUL,Candidate for later review only; no production weight changed.
+rushing,usage_foundation_score,0.595787416963178,0.6327572959495164,31.60969800805991,-19.089286885550045,4489,USEFUL,Candidate for later review only; no production weight changed.
+rushing,recent_form_score,0.5938786768170701,0.6470101042225421,32.456952755923254,-19.862252125510885,4489,USEFUL,Candidate for later review only; no production weight changed.
+rushing,opponent_fit_score,0.38066191453942366,0.41074636832434164,13.316139869614954,-16.980351358455223,4558,USEFUL,Candidate for later review only; no production weight changed.
+rushing,game_script_score,0.039571484211589784,0.029503209097551983,1.7459416198534363,-1.8360924785310253,4739,NOISY,Candidate for later review only; no production weight changed.
+rushing,role_availability_score,,,,,4739,NOISY,Candidate for later review only; no production weight changed.
+rushing,volatility_score,0.10053868829599838,0.10369572293428185,2.7040346064570606,-4.397033214610762,4739,WEAK,Candidate for later review only; no production weight changed.
+rushing,data_quality_score,0.05865404488374718,0.09635251552916659,0.7246639613682753,0.0,4739,WEAK,Candidate for later review only; no production weight changed.

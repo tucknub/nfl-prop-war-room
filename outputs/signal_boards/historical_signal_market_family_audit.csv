@@ -1,0 +1,4 @@
+market_family,rows,baseline_actual_average,elite_or_strong_average_actual,watch_or_review_average_actual,tier_lift,score_actual_correlation,monotonicity_status,data_quality_notes
+passing,1397,192.1782390837509,254.5548780487805,150.98179271708685,103.57308533169365,0.5450784347977498,PASS,Historical player-week actuals from weekly.csv; pregame features shifted before target row.
+receiving,9055,29.650579790171175,57.62900188323917,16.64282884310618,40.98617304013299,0.5301448216481903,PASS,Historical player-week actuals from weekly.csv; pregame features shifted before target row.
+rushing,4739,28.07596539354294,60.21038961038961,13.46998087954111,46.7404087308485,0.6006500076756119,PASS,Historical player-week actuals from weekly.csv; pregame features shifted before target row.

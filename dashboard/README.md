@@ -102,6 +102,10 @@ Defense fit is noisy and should be read as a research signal, not certainty. Wea
 ## Signal Score Audit V1
 
 The Signal Score Audit page reviews score distributions, component correlations, possible double-counting risk, player-level drivers, and plain-English explanations. It is research-only and does not prove profitability. Outcome audit data appears only when safe historical signal actuals are available; otherwise the page labels the outcome section as not yet available.
+
+## Historical Signal Backtest V1
+
+The Historical Signal Backtest page checks whether higher historical signal scores and tiers align with actual past player production. It shows tier lift, score-bucket monotonicity, component usefulness, and market-family strength. This is research-only, does not use pricing/line movement, and should guide future score review rather than live use.
 - Gate Status
 - Identity Warnings
 - Run Reports

@@ -521,3 +521,14 @@ It does not prove profitability, does not use pricing/line-movement logic, and d
 python -m src.export.export_signal_score_audit
 python -m src.export.validate_signal_score_audit
 ```
+
+## Historical Signal Backtest V1
+
+Historical Signal Backtest V1 checks whether higher historical signal scores and tiers align with better past player production. It uses shifted pregame features from `data/raw/weekly.csv` and schedule context from `data/raw/schedules.csv`, then evaluates actual outcomes after the scores are created.
+
+It is research-only. It does not prove sportsbook profitability, does not use pricing/line-movement logic, and does not change production projection math or signal weights. The output should guide future score-weight review.
+
+```powershell
+python -m src.export.export_historical_signal_backtest
+python -m src.export.validate_historical_signal_backtest
+```

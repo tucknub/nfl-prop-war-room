@@ -81,8 +81,9 @@ def validate_signal_score_audit() -> tuple[pd.DataFrame, str]:
     else:
         add(rows, "high_correlation_risks_reported_if_present", "correlation rows", len(correlations), False)
 
-    outcome_labeled = not outcome.empty and outcome.apply(lambda row: " ".join(str(value) for value in row.tolist()), axis=1).str.contains("NEEDS HISTORICAL SIGNAL BACKTEST DATA", na=False).any()
-    add(rows, "missing_outcome_audit_clearly_labeled", "NEEDS HISTORICAL SIGNAL BACKTEST DATA", outcome_labeled, outcome_labeled)
+    outcome_text = outcome.apply(lambda row: " ".join(str(value) for value in row.tolist()), axis=1) if not outcome.empty else pd.Series(dtype=str)
+    outcome_labeled = outcome_text.str.contains("NEEDS HISTORICAL SIGNAL BACKTEST DATA|PARTIAL_HISTORICAL_SIGNAL_BACKTEST", na=False, regex=True).any()
+    add(rows, "outcome_audit_clearly_labeled", "NEEDS HISTORICAL SIGNAL BACKTEST DATA or PARTIAL_HISTORICAL_SIGNAL_BACKTEST", outcome_labeled, outcome_labeled)
 
     required_master_cols = ["signal_explanation", "recommended_user_action", "top_positive_driver_1", "top_negative_driver_1"]
     present = [col for col in required_master_cols if col in master.columns]

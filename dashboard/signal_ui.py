@@ -157,8 +157,17 @@ def filter_minimum(df: pd.DataFrame, column: str, label: str, default: float = 0
     if df.empty or column not in df.columns:
         return df
     values = pd.to_numeric(df[column], errors="coerce")
-    max_value = float(values.max()) if values.notna().any() else default
-    threshold = st.slider(label, min_value=0.0, max_value=max(max_value, default), value=default)
+    finite_values = values.replace([float("inf"), float("-inf")], pd.NA).dropna()
+    if finite_values.empty:
+        st.caption(f"{label}: no numeric values available.")
+        return df
+    max_value = float(finite_values.max())
+    min_value = 0.0
+    if max_value <= min_value:
+        st.caption(f"{label}: all available values are {max_value:.1f}.")
+        return df
+    threshold_default = min(max(float(default), min_value), max_value)
+    threshold = st.slider(label, min_value=min_value, max_value=max_value, value=threshold_default)
     return df[values.fillna(-1) >= threshold]
 
 

@@ -50,3 +50,14 @@ Signal Score Audit V1 checks whether the signal system is behaving logically. It
 - Plain-English explanations and signal-only recommended actions.
 
 The audit does not prove profitability, does not use pricing/line movement logic, and does not change projection math or scoring weights. Outcome validation is generated only when a safe historical signal table with actual outcome columns exists. Until then, outcome validation is labeled `NEEDS HISTORICAL SIGNAL BACKTEST DATA`.
+
+## Historical Signal Backtest V1
+
+Historical Signal Backtest V1 creates historical player-week-market-family rows from shifted pregame features and evaluates actual outcomes afterward. It checks:
+
+- Whether stronger tiers show lift versus baseline production.
+- Whether higher score buckets generally produce stronger actual outcomes.
+- Which score components have useful, weak, noisy, inverted, or low-sample relationships to actual outcomes.
+- Which market family appears strongest historically.
+
+This is a research audit only. It does not use actual outcomes to create pregame scores, does not use future rows in rolling features, and does not change production score weights.
