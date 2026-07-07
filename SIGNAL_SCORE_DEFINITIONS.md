@@ -69,3 +69,9 @@ Signal Weight Tuning Lab V1 uses the historical backtest rows to compare `curren
 It evaluates profile and family combinations for correlation with actual outcomes, tier lift, top-versus-bottom separation, monotonicity, low-sample risk, and one-component dominance. It also uses component audit outputs to flag noisy, inverted, weak, or potentially double-counted components.
 
 `current_v1` remains the champion profile. Any recommended YAML is a research-only challenger and is not applied to `player_week_signal_master.csv` unless explicitly promoted in a later change.
+
+## Champion vs Challenger Signal Preview V1
+
+Champion vs Challenger Signal Preview V1 applies the recommended challenger profile to copied production rows and writes separate research-only preview files. It preserves current production fields as `current_*` columns, writes challenger fields as `challenger_*` columns, and leaves the production master signal table on `current_v1`.
+
+The preview can show rushing and passing challenger behavior, but it does not replace the main signal boards and does not promote weights. Promotion requires explicit approval after reviewing historical tuning results and preview board behavior.

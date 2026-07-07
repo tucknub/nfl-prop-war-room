@@ -1,0 +1,9 @@
+metric,value
+preview_usage_status,RESEARCH_ONLY
+production_champion_profile,current_v1
+rows_previewed,973
+families_with_challenger_test,2
+tier_upgrades,30
+tier_downgrades,25
+action_changes,55
+production_promotion_applied,False

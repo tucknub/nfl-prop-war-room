@@ -112,6 +112,12 @@ The Historical Signal Backtest page checks whether higher historical signal scor
 The Signal Weight Tuning Lab page compares `current_v1` against challenger score-weight profiles using historical signal backtest outputs. It shows champion-versus-challenger comparisons, market-family tier lift, component demotion/increase suggestions, and a research-only recommended challenger YAML preview.
 
 The page does not automatically promote challengers, does not create live betting output, and does not build a new market. It is meant to help decide whether receiving, rushing, and passing eventually need different score formulas while keeping `current_v1` as the production champion for now.
+
+## Champion vs Challenger Signal Preview V1
+
+The Champion vs Challenger Signal Preview page shows side-by-side production and challenger signal behavior without replacing the main boards. It displays family comparison, top movers, tier changes, action changes, and champion/challenger/delta board views.
+
+`current_v1` remains the production champion. Rushing and passing challenger profiles are preview-only, and promotion requires explicit user approval after review.
 - Gate Status
 - Identity Warnings
 - Run Reports

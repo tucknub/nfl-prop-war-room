@@ -553,3 +553,26 @@ Key outputs:
 - `outputs/signal_boards/signal_weight_tuning_recommendations.csv`
 - `outputs/signal_boards/recommended_signal_weight_profile.yaml`
 - `outputs/run_reports/latest_signal_weight_tuning_report.md`
+
+## Champion vs Challenger Signal Preview V1
+
+Champion vs Challenger Signal Preview V1 visually compares the production `current_v1` signal profile against the research-only challenger profile selected by the tuning lab. Rushing and passing challenger profiles are preview-only, and receiving currently stays on `current_v1`.
+
+The preview outputs do not replace the main signal boards, do not promote challenger weights, and do not change `outputs/signal_boards/player_week_signal_master.csv`. Promotion requires explicit approval after reviewing both historical results and board behavior.
+
+```powershell
+python -m src.export.export_signal_challenger_preview
+python -m src.export.validate_signal_challenger_preview
+```
+
+Key outputs:
+
+- `outputs/signal_boards/signal_challenger_preview_rows.csv`
+- `outputs/signal_boards/signal_challenger_preview_summary.csv`
+- `outputs/signal_boards/signal_challenger_top_movers.csv`
+- `outputs/signal_boards/signal_challenger_tier_changes.csv`
+- `outputs/signal_boards/signal_challenger_family_comparison.csv`
+- `outputs/signal_boards/challenger_slate_signal_board.csv`
+- `outputs/signal_boards/challenger_receiving_signal_board.csv`
+- `outputs/signal_boards/challenger_rushing_signal_board.csv`
+- `outputs/signal_boards/challenger_passing_signal_board.csv`

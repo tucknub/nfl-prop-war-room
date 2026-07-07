@@ -1,0 +1,4 @@
+market_family,champion_profile,challenger_profile,row_count,avg_current_score,avg_challenger_score,avg_score_delta,current_elite_strong_count,challenger_elite_strong_count,tier_upgrade_count,tier_downgrade_count,action_change_count,preview_recommendation,notes
+passing,current_v1,game_script_heavy,64,58.3367,58.2322,-0.1045,8,9,1,0,1,CONTINUE_TESTING_CHALLENGER,Preview only; no automatic production promotion.
+receiving,current_v1,current_v1,640,60.2682,60.2682,-0.0,103,103,0,0,0,KEEP_CHAMPION,Preview only; no automatic production promotion.
+rushing,current_v1,projection_heavy,269,57.0557,57.1147,0.059,36,64,29,25,54,CONTINUE_TESTING_CHALLENGER,Preview only; no automatic production promotion.

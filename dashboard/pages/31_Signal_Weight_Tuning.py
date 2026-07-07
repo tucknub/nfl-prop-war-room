@@ -16,6 +16,8 @@ BY_FAMILY = "outputs/signal_boards/signal_weight_tuning_by_family.csv"
 TIER_LIFT = "outputs/signal_boards/signal_weight_tuning_tier_lift.csv"
 RECOMMENDATIONS = "outputs/signal_boards/signal_weight_tuning_recommendations.csv"
 RECOMMENDED_YAML = "outputs/signal_boards/recommended_signal_weight_profile.yaml"
+CHALLENGER_SUMMARY = "outputs/signal_boards/signal_challenger_preview_summary.csv"
+CHALLENGER_FAMILY = "outputs/signal_boards/signal_challenger_family_comparison.csv"
 
 
 st.set_page_config(page_title="Signal Weight Tuning Lab", layout="wide")
@@ -33,6 +35,8 @@ by_family = load_signal_csv(BY_FAMILY)
 tier_lift = load_signal_csv(TIER_LIFT)
 recommendations = load_signal_csv(RECOMMENDATIONS)
 yaml_text = load_markdown_safe(RECOMMENDED_YAML)
+challenger_summary = load_signal_csv(CHALLENGER_SUMMARY)
+challenger_family = load_signal_csv(CHALLENGER_FAMILY)
 
 best = by_family[by_family.get("recommendation", pd.Series(dtype=str)).astype(str).eq("TEST_CHALLENGER")] if not by_family.empty else pd.DataFrame()
 best_profiles = ", ".join(sorted(best["profile_name"].dropna().astype(str).unique())) if not best.empty else "current_v1"
@@ -131,6 +135,39 @@ if yaml_text:
     st.code(yaml_text, language="yaml")
 else:
     st.warning(f"Missing file: `{RECOMMENDED_YAML}`")
+
+section_header("Champion vs Challenger Preview", "Open the Champion vs Challenger Signal Preview page for the visual board comparison.")
+if challenger_summary.empty or challenger_family.empty:
+    st.info("Challenger preview outputs are not available yet. Run `python -m src.export.export_signal_challenger_preview`.")
+else:
+    preview_rows = challenger_summary[challenger_summary["metric"].astype(str).eq("rows_previewed")]["value"].iloc[0]
+    tier_upgrades = challenger_summary[challenger_summary["metric"].astype(str).eq("tier_upgrades")]["value"].iloc[0]
+    tier_downgrades = challenger_summary[challenger_summary["metric"].astype(str).eq("tier_downgrades")]["value"].iloc[0]
+    preview_cols = st.columns(3)
+    with preview_cols[0]:
+        metric_card("Preview Rows", preview_rows, "INFO")
+    with preview_cols[1]:
+        metric_card("Tier Upgrades", tier_upgrades, "PASS")
+    with preview_cols[2]:
+        metric_card("Tier Downgrades", tier_downgrades, "REVIEW")
+    render_signal_table(
+        challenger_family,
+        ["avg_current_score", "avg_challenger_score", "avg_score_delta"],
+        [
+            "market_family",
+            "champion_profile",
+            "challenger_profile",
+            "row_count",
+            "avg_current_score",
+            "avg_challenger_score",
+            "avg_score_delta",
+            "tier_upgrade_count",
+            "tier_downgrade_count",
+            "action_change_count",
+            "preview_recommendation",
+        ],
+        "Preview Family Summary",
+    )
 
 section_header("Notes")
 st.markdown(
