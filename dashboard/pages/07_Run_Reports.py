@@ -20,6 +20,8 @@ REPORTS = [
     ("Edge Dry Run", "outputs/run_reports/latest_edge_dry_run.md", "Synthetic end-to-end edge decision validation."),
     ("Live Data Intake", "outputs/run_reports/latest_live_data_intake_report.md", "Real-data intake checklist and blockers."),
     ("Live Data Intake Validation", "outputs/run_reports/latest_live_data_intake_validation.md", "Safety validation for intake reporting."),
+    ("Signal Master Report", "outputs/run_reports/latest_player_week_signal_master_report.md", "Player-week signal master export summary."),
+    ("Signal Master Validation", "outputs/run_reports/latest_player_week_signal_master_validation.md", "Validation for signal inventory, master, and derived views."),
     ("Line Ladder Report", "outputs/run_reports/latest_line_ladder_report.md", "Odds-free ladder summary."),
     ("Stable Snapshot", "outputs/run_reports/STABLE_RECEPTIONS_V1_HISTORICAL_TEST_SNAPSHOT.md", "Rollback point before live data integration."),
     ("Next Steps", "outputs/run_reports/STABLE_RECEPTIONS_V1_NEXT_STEPS.md", "Safe next actions and do-not-do list."),

@@ -458,3 +458,16 @@ python -m src.export.validate_live_data_intake_status
 ```
 
 Use [LIVE_DATA_INTAKE.md](LIVE_DATA_INTAKE.md) for the plain-English intake guide. Real data must be placed in the appropriate `data/gates/` folders as non-template CSVs, then the full validation command block must pass. Final Readiness remains `NO-GO` until every required gate passes.
+
+## NFL Signal Board Foundation V1
+
+NFL Signal Board Foundation V1 creates one canonical player-week signal table at `outputs/signal_boards/player_week_signal_master.csv`. Future slate, game, receiving, rushing, passing, blocked/review, heatmap, and drilldown boards should derive from this table instead of recomputing scores independently.
+
+This is not an odds, CLV, or new-market build. Scores are limited to sourced data only. Projection and existing data-quality context are available now; opponent fit, weather, practice trends, detailed defense context, and live role/injury data are planned but not faked.
+
+```powershell
+python -m src.export.export_signal_data_inventory
+python -m src.export.export_player_week_signal_master
+python -m src.export.export_signal_board_views
+python -m src.export.validate_player_week_signal_master
+```

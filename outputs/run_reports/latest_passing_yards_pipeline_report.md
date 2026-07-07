@@ -1,6 +1,6 @@
 # Passing Yards V1 Pipeline Report
 
-Run timestamp: `2026-07-06T11:28:19.361869+00:00`
+Run timestamp: `2026-07-07T14:06:03.643202+00:00`
 
 Formula: `projected_pass_attempts x projected_yards_per_attempt = projected_passing_yards`
 

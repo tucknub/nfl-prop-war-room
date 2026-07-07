@@ -39,6 +39,7 @@ Pages:
 - Edge Preview Board
 - End-to-End Edge Dry Run
 - Live Data Intake
+- NFL Signal Board Foundation
 - Receptions Dashboard
 - Line Ladder
 - Market Edges
@@ -70,6 +71,10 @@ The Edge Dry Run page shows two validations: production missing live data remain
 ## Live Data Intake
 
 The Live Data Intake page is the bridge between historical testing and future forward projection. It explains which real files must be filled, where to place them, which commands to run, and what still blocks GO. It does not make the app live; real data must be loaded and validated, and Final Readiness remains `NO-GO` until every required gate passes.
+
+## NFL Signal Board Foundation
+
+The Signal Board Foundation page reads `outputs/signal_boards/player_week_signal_master.csv`, the one master player-week signal table. It is not an odds, CLV, or new-market page. V1 scores use sourced projection and data-quality context only; opponent fit, weather, practice trends, and detailed defensive context are planned but not faked.
 - Gate Status
 - Identity Warnings
 - Run Reports

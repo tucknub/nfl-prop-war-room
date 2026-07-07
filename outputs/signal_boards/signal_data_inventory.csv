@@ -1,0 +1,30 @@
+metric_name,metric_category,desired_board,current_source_file,current_source_column,available_now,historical_available,live_available,latency,cost,reliability_tier,implementation_status,notes
+receptions_projection,projection,Receiving Signal Board,outputs/google_sheets_receptions_historical_test.csv,projected_receptions_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+receiving_yards_projection,projection,Receiving Signal Board,outputs/google_sheets_receiving_yards_historical_test.csv,projected_receiving_yards_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+rushing_yards_projection,projection,Rushing Signal Board,outputs/google_sheets_rushing_yards_historical_test.csv,projected_rushing_yards_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+carries_projection,projection,Rushing Signal Board,outputs/google_sheets_carries_historical_test.csv,projected_carries_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+pass_attempts_projection,projection,Passing Signal Board,outputs/google_sheets_pass_attempts_historical_test.csv,projected_pass_attempts_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+completions_projection,projection,Passing Signal Board,outputs/google_sheets_completions_historical_test.csv,projected_completions_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+passing_yards_projection,projection,Passing Signal Board,outputs/google_sheets_passing_yards_historical_test.csv,projected_passing_yards_calibrated,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Historical-test projection only.
+projected_target_share,usage,Receiving Signal Board,outputs/google_sheets_receptions_historical_test.csv,projected_target_share,Yes,Yes,No,pipeline,local,medium,AVAILABLE,"Receptions model support signal, not Targets V1."
+estimated_routes_proxy,usage,Receiving Signal Board,outputs/google_sheets_receptions_historical_test.csv,estimated_routes,Yes,Yes,No,pipeline,local,low,AVAILABLE_PROXY,Route proxy is not true route participation.
+projected_carry_share,usage,Rushing Signal Board,outputs/google_sheets_carries_historical_test.csv,projected_player_rush_attempt_share,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Carries support signal.
+projection_confidence,data_quality,All Signal Boards,market projection outputs,confidence_bucket,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Available where market exports include confidence_bucket.
+quality_flags,data_quality,Blocked / Review Board,market projection outputs,quality_flags,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Used for review flags.
+current_roster_gate_status,role,Blocked / Review Board,outputs/roster/current_roster_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
+current_role_gate_status,role,Blocked / Review Board,outputs/roles/current_role_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
+current_injury_gate_status,injury,Blocked / Review Board,outputs/injuries/current_injury_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
+market_odds_gate_status,data_quality,Edge Preview Board,outputs/odds/current_market_odds_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Odds gate exists but no real odds loaded.
+recent_receptions_form,recent_form,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,Do not create unless real rolling recent-form columns are exposed.
+route_share,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,True route share is not currently sourced.
+snap_share,usage,All Signal Boards,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,True snap share is not currently sourced.
+air_yards_share,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No sourced air-yards-share column in current outputs.
+red_zone_targets,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,"Possible later from play-by-play, not built now."
+goal_line_carries,usage,Rushing Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,"Possible later from play-by-play, not built now."
+opponent_allowed_by_position,matchup,By-Game Matchup Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,Opponent defensive context is not sourced yet.
+coverage_tendency,defense_fit,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No man/zone source exists in current project.
+shadow_cb_matchup,defense_fit,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,Do not assume shadow coverage.
+spread_total_game_script,game_script,Slate Overview,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No live spread/total source loaded.
+weather,weather,Slate Overview,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No weather source loaded.
+practice_report_progression,practice_trend,Blocked / Review Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,"Injury status exists, but practice progression trend is not sourced."
+projection_volatility_proxy,volatility,Slate Overview,market projection outputs,confidence_bucket,Yes,Yes,No,pipeline,local,low,PARTIAL,Proxy only from confidence/quality flags.

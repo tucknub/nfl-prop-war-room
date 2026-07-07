@@ -80,6 +80,10 @@ PIPELINE_MODULES = [
     "src.export.validate_edge_preview_board",
     "src.export.export_live_data_intake_status",
     "src.export.validate_live_data_intake_status",
+    "src.export.export_signal_data_inventory",
+    "src.export.export_player_week_signal_master",
+    "src.export.export_signal_board_views",
+    "src.export.validate_player_week_signal_master",
     "src.export.build_google_sheets_import_pack",
 ]
 
