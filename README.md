@@ -471,3 +471,21 @@ python -m src.export.export_player_week_signal_master
 python -m src.export.export_signal_board_views
 python -m src.export.validate_player_week_signal_master
 ```
+
+## Heatmap UI V1
+
+Heatmap UI V1 adds user-facing signal boards to the Streamlit dashboard:
+
+- Slate Signal Board
+- By-Game Matchup Board
+- Receiving Signal Board
+- Rushing Signal Board
+- Passing Signal Board
+- Blocked / Review Board
+
+These pages read existing CSVs from `outputs/signal_boards/`, which are derived from `player_week_signal_master.csv`. They use green-to-red styling for review, filtering, and ranking, but they do not change model math, do not recompute signal definitions, do not create live betting output, and do not add Targets V1 or any new market. Existing model pages remain debug/research views; the Signal Boards are the main user-facing research layer. Opponent, weather, and coverage context remains limited until real sources are loaded.
+
+```powershell
+python -m src.export.validate_signal_heatmap_ui
+streamlit run dashboard/Home.py
+```

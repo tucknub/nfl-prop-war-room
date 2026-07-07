@@ -75,6 +75,19 @@ The Live Data Intake page is the bridge between historical testing and future fo
 ## NFL Signal Board Foundation
 
 The Signal Board Foundation page reads `outputs/signal_boards/player_week_signal_master.csv`, the one master player-week signal table. It is not an odds, CLV, or new-market page. V1 scores use sourced projection and data-quality context only; opponent fit, weather, practice trends, and detailed defensive context are planned but not faked.
+
+## Heatmap UI V1
+
+The main Signal Boards are the user-facing research layer:
+
+- Slate Signal Board
+- By-Game Matchup Board
+- Receiving Signal Board
+- Rushing Signal Board
+- Passing Signal Board
+- Blocked / Review Board
+
+They read from `outputs/signal_boards/` and derive from `player_week_signal_master.csv`. They do not recompute score formulas, do not create live betting output, and do not add new markets. Existing model pages remain debug/research views, while readiness and gate pages remain admin/safety views. Odds/CLV are not the focus of these heatmaps; opponent, weather, and coverage context stays limited until real data sources are loaded.
 - Gate Status
 - Identity Warnings
 - Run Reports

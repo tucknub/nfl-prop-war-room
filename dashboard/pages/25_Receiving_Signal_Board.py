@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from signal_ui import filter_minimum, filter_multiselect, load_signal_csv, render_signal_table
+from utils import inject_global_styles, metric_card, page_header, sidebar_status, warning_banner
+
+
+PATH = "outputs/signal_boards/receiving_signal_board.csv"
+SCORE_COLUMNS = [
+    "overall_signal_score",
+    "projection_score",
+    "usage_foundation_score",
+    "recent_form_score",
+    "opponent_fit_score",
+    "game_script_score",
+    "weather_score",
+    "role_availability_score",
+    "volatility_score",
+    "data_quality_score",
+]
+DISPLAY_COLUMNS = [
+    "player_name",
+    "team",
+    "opponent",
+    "position",
+    "overall_signal_score",
+    "signal_tier",
+    "receptions_projection",
+    "receiving_yards_projection",
+    "projection_score",
+    "usage_foundation_score",
+    "recent_form_score",
+    "opponent_fit_score",
+    "game_script_score",
+    "weather_score",
+    "role_availability_score",
+    "volatility_score",
+    "data_quality_score",
+    "green_signal_count",
+    "red_flag_count",
+    "top_signal_reason",
+    "review_reason",
+]
+
+
+def top_value(df: pd.DataFrame, column: str, label: str) -> tuple[str, str]:
+    if df.empty or column not in df.columns:
+        return "n/a", "MISSING"
+    values = pd.to_numeric(df[column], errors="coerce")
+    if not values.notna().any():
+        return "n/a", "MISSING"
+    row = df.loc[values.idxmax()]
+    return f"{row.get('player_name', 'n/a')} ({values.max():.1f})", label
+
+
+st.set_page_config(page_title="Receiving Signal Board", layout="wide")
+inject_global_styles()
+sidebar_status()
+
+page_header("Receiving Signal Board", "Receiving player signals from projections and sourced context.", "HISTORICAL TEST ONLY")
+warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "This is a signal research page, not a betting page.")
+
+df = load_signal_csv(PATH)
+if df.empty:
+    st.warning(f"Missing or empty file: `{PATH}`")
+    st.stop()
+
+with st.sidebar:
+    st.markdown("### Receiving Filters")
+    view = df.copy()
+    view = filter_multiselect(view, "team", "Team")
+    view = filter_multiselect(view, "opponent", "Opponent")
+    view = filter_multiselect(view, "position", "Position")
+    view = filter_multiselect(view, "signal_tier", "Signal tier")
+    view = filter_minimum(view, "receiving_yards_projection", "Minimum receiving yards projection", 0.0)
+    view = filter_minimum(view, "receptions_projection", "Minimum receptions projection", 0.0)
+
+cols = st.columns(5)
+with cols[0]:
+    metric_card("Best Overall", top_value(view, "overall_signal_score", "INFO")[0], "INFO")
+with cols[1]:
+    metric_card("Best Receptions", top_value(view, "receptions_projection", "INFO")[0], "INFO")
+with cols[2]:
+    metric_card("Best Rec Yards", top_value(view, "receiving_yards_projection", "INFO")[0], "INFO")
+with cols[3]:
+    complete = view.copy()
+    if "missing_signal_count" in complete.columns:
+        complete = complete.sort_values(["missing_signal_count", "overall_signal_score"], ascending=[True, False])
+    metric_card("Most Complete", complete.iloc[0].get("player_name", "n/a") if not complete.empty else "n/a", "INFO")
+with cols[4]:
+    risk = pd.to_numeric(view.get("red_flag_count", pd.Series(dtype=float)), errors="coerce")
+    risk_name = view.loc[risk.idxmax()].get("player_name", "n/a") if risk.notna().any() else "n/a"
+    metric_card("Most Review Risk", risk_name, "REVIEW")
+
+render_signal_table(
+    view.sort_values("overall_signal_score", ascending=False).head(300),
+    SCORE_COLUMNS,
+    DISPLAY_COLUMNS,
+    "Receiving Heatmap",
+)

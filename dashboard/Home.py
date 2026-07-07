@@ -70,9 +70,22 @@ def main() -> None:
     st.markdown(
         """
         <div class="info-card">
-        This dashboard reviews the active Receptions V1 model output, line-ladder probabilities, gate readiness,
-        identity warnings, market roadmap, and run reports. It is not betting-ready until all gates pass and
-        Final Readiness becomes GO.
+        This dashboard reviews signal boards, historical-test model outputs, line-ladder probabilities, gate readiness,
+        identity warnings, market roadmap, and run reports. Signal Boards are the user-facing research layer;
+        Model Outputs are debug/research views; Readiness and Gates are admin/safety views. It is not betting-ready
+        until all gates pass and Final Readiness becomes GO.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    section_header("Signal Boards", "Color-coded heatmaps built from the player-week signal master.")
+    st.markdown(
+        """
+        <div class="info-card">
+        Start with Slate Signal Board, then drill into By-Game Matchup Board, Receiving Signal Board,
+        Rushing Signal Board, Passing Signal Board, and Blocked / Review Board. These pages do not recompute
+        signal definitions and do not create live output.
         </div>
         """,
         unsafe_allow_html=True,

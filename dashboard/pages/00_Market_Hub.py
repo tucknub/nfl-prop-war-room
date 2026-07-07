@@ -81,8 +81,10 @@ metric_card("Market Odds Map", odds_status, odds_status, "Sportsbook lines and p
 st.markdown(
     """
     <div class="info-card">
-    Dashboard pages available now: Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, Passing Yards, line ladders, gates, and reports.
-    Forward Readiness Gates, Identity & Team Matching, Run Reports, and Best Overall Board placeholder.
+    Dashboard pages available now: Signal Boards, Receptions, Receiving Yards, Rushing Yards, Carries,
+    Pass Attempts, Completions, Passing Yards, line ladders, gates, and reports.
+    Signal Boards are the user-facing research layer. Model pages remain debug/research.
+    Readiness, identity, roster, role, injury, and market data pages remain admin/safety views.
     </div>
     """,
     unsafe_allow_html=True,

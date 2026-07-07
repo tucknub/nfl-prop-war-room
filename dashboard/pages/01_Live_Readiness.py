@@ -68,6 +68,17 @@ metric_card("Current Injury Map", injury_status, injury_status, "A verified role
 odds_status = str(odds_map_status["status"].iloc[0]) if not odds_map_status.empty and "status" in odds_map_status.columns else "NEEDS DATA"
 metric_card("Market Odds Map", odds_status, odds_status, "True edge requires sportsbook lines, prices, and implied probabilities.")
 
+section_header("Dashboard Zones")
+st.markdown(
+    """
+    <div class="info-card">
+    Signal Boards are user-facing research heatmaps. Model Outputs are debug/research tables.
+    Readiness and Gate pages are the control-room safety layer. None of these pages can make the system live while Final Readiness is NO-GO.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 section_header("Blocking Gates")
 show_table_or_missing(presentation_table(blockers), BLOCKERS_PATH)
 
