@@ -86,11 +86,13 @@ PIPELINE_MODULES = [
     "src.export.export_signal_board_views",
     "src.export.export_signal_score_audit",
     "src.export.export_historical_signal_backtest",
+    "src.export.export_signal_weight_tuning",
     "src.export.validate_signal_context_features",
     "src.export.validate_player_week_signal_master",
     "src.export.validate_signal_heatmap_ui",
     "src.export.validate_signal_score_audit",
     "src.export.validate_historical_signal_backtest",
+    "src.export.validate_signal_weight_tuning",
     "src.export.build_google_sheets_import_pack",
 ]
 

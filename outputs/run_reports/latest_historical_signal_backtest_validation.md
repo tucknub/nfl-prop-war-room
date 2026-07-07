@@ -1,6 +1,6 @@
 # Historical Signal Backtest Validation
 
-Run timestamp: `2026-07-07T15:36:59+00:00`
+Run timestamp: `2026-07-07T23:26:52+00:00`
 
 Overall status: `PASS`
 

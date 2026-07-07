@@ -61,3 +61,11 @@ Historical Signal Backtest V1 creates historical player-week-market-family rows 
 - Which market family appears strongest historically.
 
 This is a research audit only. It does not use actual outcomes to create pregame scores, does not use future rows in rolling features, and does not change production score weights.
+
+## Signal Weight Tuning Lab V1
+
+Signal Weight Tuning Lab V1 uses the historical backtest rows to compare `current_v1` weights against challenger profiles. The lab re-scores historical rows from existing pregame component scores only; it does not recalculate raw features and does not use actual outcomes to create pregame signals.
+
+It evaluates profile and family combinations for correlation with actual outcomes, tier lift, top-versus-bottom separation, monotonicity, low-sample risk, and one-component dominance. It also uses component audit outputs to flag noisy, inverted, weak, or potentially double-counted components.
+
+`current_v1` remains the champion profile. Any recommended YAML is a research-only challenger and is not applied to `player_week_signal_master.csv` unless explicitly promoted in a later change.

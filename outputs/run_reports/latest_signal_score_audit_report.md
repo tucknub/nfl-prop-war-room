@@ -1,6 +1,6 @@
 # Signal Score Audit Report
 
-Run timestamp: `2026-07-07T15:36:03+00:00`
+Run timestamp: `2026-07-07T23:25:58+00:00`
 
 Audit type: `HISTORICAL TEST / RESEARCH ONLY`
 

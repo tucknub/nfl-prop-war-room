@@ -1,0 +1,53 @@
+# Research-only signal weight profiles.
+# These profiles are not applied to production scoring unless explicitly promoted later.
+score_families:
+  - projection_score
+  - usage_foundation_score
+  - recent_form_score
+  - opponent_fit_score
+  - game_script_score
+  - role_availability_score
+  - volatility_score
+  - data_quality_score
+
+profiles:
+  current_v1:
+    notes: Current production signal blend.
+    receiving: {projection_score: 0.35, usage_foundation_score: 0.20, recent_form_score: 0.15, opponent_fit_score: 0.10, game_script_score: 0.10, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    rushing: {projection_score: 0.35, usage_foundation_score: 0.20, recent_form_score: 0.15, opponent_fit_score: 0.10, game_script_score: 0.10, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    passing: {projection_score: 0.35, usage_foundation_score: 0.20, recent_form_score: 0.15, opponent_fit_score: 0.10, game_script_score: 0.10, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+  projection_heavy:
+    notes: Tests whether current projection strength should dominate more.
+    receiving: {projection_score: 0.50, usage_foundation_score: 0.15, recent_form_score: 0.10, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    rushing: {projection_score: 0.50, usage_foundation_score: 0.15, recent_form_score: 0.10, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    passing: {projection_score: 0.50, usage_foundation_score: 0.15, recent_form_score: 0.10, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+  usage_heavy:
+    notes: Tests whether usage foundation should carry more weight.
+    receiving: {projection_score: 0.25, usage_foundation_score: 0.35, recent_form_score: 0.15, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    rushing: {projection_score: 0.25, usage_foundation_score: 0.35, recent_form_score: 0.15, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    passing: {projection_score: 0.25, usage_foundation_score: 0.35, recent_form_score: 0.15, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+  recent_form_heavy:
+    notes: Tests heavier recent production signal.
+    receiving: {projection_score: 0.28, usage_foundation_score: 0.15, recent_form_score: 0.30, opponent_fit_score: 0.07, game_script_score: 0.07, role_availability_score: 0.05, volatility_score: 0.03, data_quality_score: 0.05}
+    rushing: {projection_score: 0.28, usage_foundation_score: 0.15, recent_form_score: 0.30, opponent_fit_score: 0.07, game_script_score: 0.07, role_availability_score: 0.05, volatility_score: 0.03, data_quality_score: 0.05}
+    passing: {projection_score: 0.28, usage_foundation_score: 0.15, recent_form_score: 0.30, opponent_fit_score: 0.07, game_script_score: 0.07, role_availability_score: 0.05, volatility_score: 0.03, data_quality_score: 0.05}
+  matchup_heavy:
+    notes: Tests heavier reliability-gated opponent fit.
+    receiving: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.23, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.02, data_quality_score: 0.05}
+    rushing: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.23, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.02, data_quality_score: 0.05}
+    passing: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.23, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.02, data_quality_score: 0.05}
+  game_script_heavy:
+    notes: Tests heavier schedule environment signal.
+    receiving: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.08, game_script_score: 0.25, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    rushing: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.08, game_script_score: 0.25, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+    passing: {projection_score: 0.30, usage_foundation_score: 0.15, recent_form_score: 0.12, opponent_fit_score: 0.08, game_script_score: 0.25, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.05}
+  data_quality_strict:
+    notes: Tests stronger penalty for low reliability rows.
+    receiving: {projection_score: 0.30, usage_foundation_score: 0.17, recent_form_score: 0.13, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.20}
+    rushing: {projection_score: 0.30, usage_foundation_score: 0.17, recent_form_score: 0.13, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.20}
+    passing: {projection_score: 0.30, usage_foundation_score: 0.17, recent_form_score: 0.13, opponent_fit_score: 0.07, game_script_score: 0.08, role_availability_score: 0.05, volatility_score: 0.00, data_quality_score: 0.20}
+  balanced_conservative:
+    notes: Tests a flatter blend with less single-component reliance.
+    receiving: {projection_score: 0.28, usage_foundation_score: 0.18, recent_form_score: 0.16, opponent_fit_score: 0.09, game_script_score: 0.09, role_availability_score: 0.05, volatility_score: 0.05, data_quality_score: 0.10}
+    rushing: {projection_score: 0.28, usage_foundation_score: 0.18, recent_form_score: 0.16, opponent_fit_score: 0.09, game_script_score: 0.09, role_availability_score: 0.05, volatility_score: 0.05, data_quality_score: 0.10}
+    passing: {projection_score: 0.28, usage_foundation_score: 0.18, recent_form_score: 0.16, opponent_fit_score: 0.09, game_script_score: 0.09, role_availability_score: 0.05, volatility_score: 0.05, data_quality_score: 0.10}

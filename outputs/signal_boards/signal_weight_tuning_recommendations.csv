@@ -1,0 +1,49 @@
+profile_name,market_family,delta_tier_lift,delta_score_correlation,delta_top_vs_bottom_lift,delta_monotonicity,recommendation,notes,recommendation_scope,component_name,current_weight,historical_usefulness_flag,correlation_with_actual,double_count_risk
+current_v1,receiving,0.0,0.0,0.0,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0,False
+current_v1,rushing,0.0,0.0,0.0,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0,False
+current_v1,passing,0.0,0.0,0.0,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0,False
+projection_heavy,receiving,-0.7059454091034922,-0.002679899976063882,-0.25248383372725414,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.002679899976063882,False
+projection_heavy,rushing,0.08353962258456704,3.3682805322676757e-05,0.1916173927892899,SAME,TEST_CHALLENGER,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,3.3682805322676757e-05,False
+projection_heavy,passing,-3.9316931239349344,-0.008401609241324437,0.39714285714285325,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.008401609241324437,False
+usage_heavy,receiving,-1.0297502804090328,0.00043687026260219586,-0.0563566128266757,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.00043687026260219586,False
+usage_heavy,rushing,-0.43401738727726524,-0.004969234050152704,0.07769334215637969,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.004969234050152704,False
+usage_heavy,passing,-2.500346539450902,-0.009663243882204686,-2.702857142857141,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.009663243882204686,False
+recent_form_heavy,receiving,-1.5625343386874846,0.0012909241848675368,-0.15036061165030645,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0012909241848675368,False
+recent_form_heavy,rushing,-0.7587909575866547,-0.0002426726799676926,-0.23441984901203483,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.0002426726799676926,False
+recent_form_heavy,passing,0.9231358814849102,0.006122213188915149,-0.6142857142856997,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.006122213188915149,False
+matchup_heavy,receiving,-0.6434680961438914,-0.012644073101948261,-1.078783544004331,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.012644073101948261,False
+matchup_heavy,rushing,-0.02940193916792566,-0.004704679831312841,-0.6103101586014077,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.004704679831312841,False
+matchup_heavy,passing,0.7731251938567425,-0.005501767120175083,-3.920000000000016,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.005501767120175083,False
+game_script_heavy,receiving,3.7613384657059754,-0.0017969944323729115,-0.10097992184027049,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.0017969944323729115,False
+game_script_heavy,rushing,4.455480479324791,-0.0020197319883203946,-0.25807059861535464,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.0020197319883203946,False
+game_script_heavy,passing,1.4671964649436688,0.006475696553330801,1.6485714285714153,SAME,TEST_CHALLENGER,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.006475696553330801,False
+data_quality_strict,receiving,-2.782753112992154,-0.0038772011564041087,-0.07757002784733658,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.0038772011564041087,False
+data_quality_strict,rushing,-2.3045483901581463,-0.004201784359346039,-0.11133690524472684,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.004201784359346039,False
+data_quality_strict,passing,4.14837307399452,-0.014621594787353698,0.5,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,-0.014621594787353698,False
+balanced_conservative,receiving,-0.6059726213027687,0.0014902623589972963,0.0015651448139166746,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0014902623589972963,False
+balanced_conservative,rushing,-0.020536690900513577,0.0006529698278079366,0.018646224880349394,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.0006529698278079366,False
+balanced_conservative,passing,2.186648709317126,0.003671553137943151,-1.5670655270655516,SAME,KEEP_CURRENT,Champion remains current_v1 unless a challenger is explicitly promoted later.,profile,,,,0.003671553137943151,False
+,passing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,projection_score,0.35,USEFUL,0.5258562632640286,True
+,passing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,usage_foundation_score,0.2,USEFUL,0.4934245920322027,False
+,passing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,recent_form_score,0.15,USEFUL,0.5693779989363171,True
+,passing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,opponent_fit_score,0.1,WEAK,0.0900652905485226,False
+,passing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,game_script_score,0.1,WEAK,0.1723388058924533,False
+,passing,,,,,reduce_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,role_availability_score,0.05,NOISY,,False
+,passing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,volatility_score,0.0,WEAK,0.1692427431417219,False
+,passing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,data_quality_score,0.05,USEFUL,0.1874333496452674,True
+,receiving,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,projection_score,0.35,USEFUL,0.5287855621091523,True
+,receiving,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,usage_foundation_score,0.2,USEFUL,0.5177402823114875,False
+,receiving,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,recent_form_score,0.15,USEFUL,0.5133870814719186,True
+,receiving,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,opponent_fit_score,0.1,USEFUL,0.2731258176878727,False
+,receiving,,,,,reduce_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,game_script_score,0.1,NOISY,0.0697373171981554,False
+,receiving,,,,,reduce_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,role_availability_score,0.05,NOISY,,False
+,receiving,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,volatility_score,0.0,WEAK,0.0946701305588646,False
+,receiving,,,,,family_specific_only,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,data_quality_score,0.05,WEAK,0.0521034314391269,True
+,rushing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,projection_score,0.35,USEFUL,0.6106436699186301,True
+,rushing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,usage_foundation_score,0.2,USEFUL,0.595787416963178,False
+,rushing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,recent_form_score,0.15,USEFUL,0.5938786768170701,True
+,rushing,,,,,increase_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,opponent_fit_score,0.1,USEFUL,0.3806619145394236,False
+,rushing,,,,,reduce_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,game_script_score,0.1,NOISY,0.0395714842115897,False
+,rushing,,,,,reduce_weight,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,role_availability_score,0.05,NOISY,,False
+,rushing,,,,,keep,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,volatility_score,0.0,WEAK,0.1005386882959983,False
+,rushing,,,,,family_specific_only,Opponent fit should be reliability-gated or reduced when noisy; no production change applied.,component,data_quality_score,0.05,WEAK,0.0586540448837471,True

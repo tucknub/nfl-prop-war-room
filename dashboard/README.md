@@ -106,6 +106,12 @@ The Signal Score Audit page reviews score distributions, component correlations,
 ## Historical Signal Backtest V1
 
 The Historical Signal Backtest page checks whether higher historical signal scores and tiers align with actual past player production. It shows tier lift, score-bucket monotonicity, component usefulness, and market-family strength. This is research-only, does not use pricing/line movement, and should guide future score review rather than live use.
+
+## Signal Weight Tuning Lab V1
+
+The Signal Weight Tuning Lab page compares `current_v1` against challenger score-weight profiles using historical signal backtest outputs. It shows champion-versus-challenger comparisons, market-family tier lift, component demotion/increase suggestions, and a research-only recommended challenger YAML preview.
+
+The page does not automatically promote challengers, does not create live betting output, and does not build a new market. It is meant to help decide whether receiving, rushing, and passing eventually need different score formulas while keeping `current_v1` as the production champion for now.
 - Gate Status
 - Identity Warnings
 - Run Reports

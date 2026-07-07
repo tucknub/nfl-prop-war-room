@@ -1,0 +1,33 @@
+# Research-only recommendation.
+# Not applied to production signal master unless explicitly promoted later.
+# Generated from 2023-2024 historical signal backtest.
+profiles:
+  recommended_challenger_v1:
+    notes: Research-only challenger; not applied to production.
+    receiving:
+      projection_score: 0.35
+      usage_foundation_score: 0.2
+      recent_form_score: 0.15
+      opponent_fit_score: 0.1
+      game_script_score: 0.1
+      role_availability_score: 0.05
+      volatility_score: 0.0
+      data_quality_score: 0.05
+    rushing:
+      projection_score: 0.5
+      usage_foundation_score: 0.15
+      recent_form_score: 0.1
+      opponent_fit_score: 0.07
+      game_script_score: 0.08
+      role_availability_score: 0.05
+      volatility_score: 0.0
+      data_quality_score: 0.05
+    passing:
+      projection_score: 0.3
+      usage_foundation_score: 0.15
+      recent_form_score: 0.12
+      opponent_fit_score: 0.08
+      game_script_score: 0.25
+      role_availability_score: 0.05
+      volatility_score: 0.0
+      data_quality_score: 0.05

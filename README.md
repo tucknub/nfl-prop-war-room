@@ -532,3 +532,24 @@ It is research-only. It does not prove sportsbook profitability, does not use pr
 python -m src.export.export_historical_signal_backtest
 python -m src.export.validate_historical_signal_backtest
 ```
+
+## Signal Weight Tuning Lab V1
+
+Signal Weight Tuning Lab V1 compares `current_v1` signal weights against challenger profiles using the historical signal backtest rows. It helps answer whether receiving, rushing, and passing should eventually use different formulas, and flags components that look noisy, inverted, weak, or potentially double-counted.
+
+This is a research lab only. It does not automatically change production scoring, does not add odds or CLV logic, does not create live betting output, and does not build a new market. `current_v1` remains the champion unless a challenger is explicitly promoted in a later, separate change.
+
+```powershell
+python -m src.export.export_signal_weight_tuning
+python -m src.export.validate_signal_weight_tuning
+```
+
+Key outputs:
+
+- `config/signal_weight_profiles.yaml`
+- `outputs/signal_boards/signal_weight_tuning_results.csv`
+- `outputs/signal_boards/signal_weight_tuning_by_family.csv`
+- `outputs/signal_boards/signal_weight_tuning_tier_lift.csv`
+- `outputs/signal_boards/signal_weight_tuning_recommendations.csv`
+- `outputs/signal_boards/recommended_signal_weight_profile.yaml`
+- `outputs/run_reports/latest_signal_weight_tuning_report.md`
