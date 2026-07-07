@@ -1,0 +1,2 @@
+score_bucket,row_count,average_projection,average_actual,projection_error,hit_rate_over_common_line_if_available,notes
+NEEDS HISTORICAL SIGNAL BACKTEST DATA,762,,,,,Outcome audit not generated because current signal master is target-week projection only and does not contain actual outcome columns.

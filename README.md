@@ -505,3 +505,19 @@ python -m src.export.validate_signal_context_features
 ```
 
 The signal boards remain historical-test research views while Final Readiness is `NO-GO`.
+
+## Signal Score Audit V1
+
+Signal Score Audit V1 adds research-only audit outputs for score behavior and explainability:
+
+- Score distribution summaries by board.
+- Component correlations with high-correlation pairs flagged as possible double-counting risk.
+- Per-player top positive and negative drivers.
+- Plain-English signal explanations and recommended review actions.
+
+It does not prove profitability, does not use pricing/line-movement logic, and does not create a new market. Historical outcome validation is generated only if safe historical signal actuals exist; otherwise it is clearly labeled `NEEDS HISTORICAL SIGNAL BACKTEST DATA`.
+
+```powershell
+python -m src.export.export_signal_score_audit
+python -m src.export.validate_signal_score_audit
+```

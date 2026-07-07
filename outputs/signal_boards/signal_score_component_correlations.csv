@@ -1,0 +1,15 @@
+component_a,component_b,correlation,abs_correlation,double_count_risk,notes
+overall_signal_score,projection_score,0.989639,0.989639,True,Possible double-count risk: overall_signal_score and projection_score are highly correlated.
+data_quality_score,recent_form_score,0.986883,0.986883,True,Possible double-count risk: data_quality_score and recent_form_score are highly correlated.
+recent_form_score,usage_foundation_score,-0.673949,0.673949,False,
+data_quality_score,usage_foundation_score,-0.664817,0.664817,False,
+opponent_fit_score,projection_score,-0.390592,0.390592,False,
+overall_signal_score,usage_foundation_score,0.387994,0.387994,False,
+projection_score,usage_foundation_score,0.346175,0.346175,False,
+opponent_fit_score,overall_signal_score,-0.180762,0.180762,False,
+opponent_fit_score,recent_form_score,-0.104073,0.104073,False,
+data_quality_score,projection_score,-0.064712,0.064712,False,
+projection_score,recent_form_score,-0.062689,0.062689,False,
+data_quality_score,opponent_fit_score,-0.008537,0.008537,False,
+data_quality_score,overall_signal_score,-0.007475,0.007475,False,
+overall_signal_score,recent_form_score,-0.005943,0.005943,False,

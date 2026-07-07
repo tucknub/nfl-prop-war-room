@@ -1,0 +1,5 @@
+board,ELITE_SIGNAL_count,STRONG_SIGNAL_count,GOOD_SIGNAL_count,WATCH_count,REVIEW_count,BLOCKED_count,INSUFFICIENT_DATA_count
+slate,0,111,139,0,0,0,0
+receiving,0,103,293,206,38,0,0
+rushing,0,36,102,103,28,0,0
+passing,0,8,24,30,2,0,0

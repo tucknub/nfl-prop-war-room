@@ -1,0 +1,5 @@
+board,row_count,average_overall_signal_score,median_overall_signal_score,min_score,max_score,average_green_signal_count,average_red_flag_count,average_missing_signal_count,audit_flags,ELITE_SIGNAL_count,STRONG_SIGNAL_count,GOOD_SIGNAL_count,WATCH_count,REVIEW_count,BLOCKED_count,INSUFFICIENT_DATA_count
+slate,250,71.5444,71.525,66.6,76.1,2.012,0.0,4.932,No red/review rows; Scores clustered too tightly; Missing-data rows still ranking too high,0,111,139,0,0,0,0
+receiving,640,60.2682,62.375,24.15,76.1,1.3859,0.0,5.0,Missing-data rows still ranking too high,0,103,293,206,38,0,0
+rushing,269,57.0557,59.12,24.5,76.1,1.2714,0.0,5.0,Missing-data rows still ranking too high,0,36,102,103,28,0,0
+passing,64,58.3367,58.36,38.26,76.1,1.5312,0.0,4.125,Missing-data rows still ranking too high,0,8,24,30,2,0,0

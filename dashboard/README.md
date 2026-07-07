@@ -98,6 +98,10 @@ The signal pages now include sourced football context when available:
 - Opponent defense fit from historical allowed stats with reliability shrinkage.
 
 Defense fit is noisy and should be read as a research signal, not certainty. Weather, route share, first-read share, shadow coverage, and CB matchup data remain unavailable until real sources are added.
+
+## Signal Score Audit V1
+
+The Signal Score Audit page reviews score distributions, component correlations, possible double-counting risk, player-level drivers, and plain-English explanations. It is research-only and does not prove profitability. Outcome audit data appears only when safe historical signal actuals are available; otherwise the page labels the outcome section as not yet available.
 - Gate Status
 - Identity Warnings
 - Run Reports

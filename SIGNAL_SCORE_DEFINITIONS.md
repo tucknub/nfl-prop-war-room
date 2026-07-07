@@ -39,3 +39,14 @@ If a score family is not sourced for a row, it is omitted from the denominator a
 ## V1 Limits
 
 `ELITE_SIGNAL` requires a strong projection score, acceptable data quality, no major review/block reason, and at least one sourced context family from recent form, opponent fit, or game script. A player should not become elite simply because a projection is high while context is missing.
+
+## Signal Score Audit V1
+
+Signal Score Audit V1 checks whether the signal system is behaving logically. It audits:
+
+- Score distributions by board family.
+- Component correlations and possible double-counting risk.
+- Per-player positive and negative score drivers.
+- Plain-English explanations and signal-only recommended actions.
+
+The audit does not prove profitability, does not use pricing/line movement logic, and does not change projection math or scoring weights. Outcome validation is generated only when a safe historical signal table with actual outcome columns exists. Until then, outcome validation is labeled `NEEDS HISTORICAL SIGNAL BACKTEST DATA`.

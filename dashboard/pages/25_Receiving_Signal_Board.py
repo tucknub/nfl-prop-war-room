@@ -54,6 +54,10 @@ DISPLAY_COLUMNS = [
     "data_quality_score",
     "green_signal_count",
     "red_flag_count",
+    "signal_explanation",
+    "recommended_user_action",
+    "top_positive_driver_1",
+    "top_negative_driver_1",
     "top_signal_reason",
     "review_reason",
 ]

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from src.common import output_path
+from src.export.signal_explainability import add_explainability_columns
 
 
 MARKET_FILES = {
@@ -286,6 +287,7 @@ def export_player_week_signal_master() -> pd.DataFrame:
     master["readiness_status"] = "DATA_NEEDS_LIVE_CONTEXT" if final != "GO" else "READY"
     master["final_readiness"] = final
     master["live_betting_output_created"] = live_output
+    master = add_explainability_columns(master)
 
     ordered = [
         "season", "week", "player_id", "player_name", "team", "opponent", "position",
@@ -307,6 +309,8 @@ def export_player_week_signal_master() -> pd.DataFrame:
         "signal_tier", "green_signal_count", "yellow_signal_count", "red_flag_count", "missing_signal_count",
         "top_signal_reason", "review_reason", "blocked_reason", "roster_status", "role_status", "injury_status",
         "readiness_status", "usage_status", "final_readiness", "live_betting_output_created",
+        "signal_explanation", "recommended_user_action", "top_positive_driver_1", "top_positive_driver_2",
+        "top_negative_driver_1", "top_negative_driver_2",
     ]
     for col in ordered:
         if col not in master.columns:

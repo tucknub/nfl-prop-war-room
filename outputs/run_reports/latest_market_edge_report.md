@@ -1,6 +1,6 @@
 # Receptions Market Edge Report
 
-Run timestamp: `2026-07-07T14:56:32+00:00`
+Run timestamp: `2026-07-07T15:15:55+00:00`
 
 Projection mode: `historical_test`
 

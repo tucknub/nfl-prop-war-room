@@ -48,6 +48,10 @@ DISPLAY_COLUMNS = [
     "spread_bucket",
     "pass_volume_environment",
     "rush_volume_environment",
+    "signal_explanation",
+    "recommended_user_action",
+    "top_positive_driver_1",
+    "top_negative_driver_1",
     "top_signal_reason",
     "review_reason",
 ]
