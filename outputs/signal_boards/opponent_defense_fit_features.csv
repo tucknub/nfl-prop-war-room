@@ -1,0 +1,763 @@
+season,week,player_id,player_name,team,opponent,position,opp_allowed_targets_to_position,opp_allowed_receptions_to_position,opp_allowed_rec_yards_to_position,opp_allowed_rec_yards_per_game_to_position,opp_receiving_fit_score,defense_fit_sample_games,opp_allowed_carries_to_position,opp_allowed_rush_yards_to_position,opp_allowed_rush_yards_per_game_to_position,opp_rushing_fit_score,opp_allowed_pass_attempts,opp_allowed_completions,opp_allowed_passing_yards,opp_allowed_passing_yards_per_game,opp_passing_fit_score,defense_fit_reliability,opp_receiving_fit_reliability,opp_rushing_fit_reliability,opp_passing_fit_reliability,defense_fit_notes
+2025,1,,S.Barkley,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Chase,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Taylor,IND,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Murray,ARI,SF,QB,,,,,,37.0,4.1891891891891895,18.2972972972973,18.2972972972973,63.52,33.945945945945944,22.37837837837838,222.2972972972973,222.2972972972973,25.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,P.Nacua,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Higgins,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Thomas,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Henry,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jefferson,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jeudy,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Robinson,ATL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.McConkey,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.St. Brown,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Moore,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Williams,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Shavers,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Adams,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.McLaurin,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Ja.Williams,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Mixon,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0034855,B.Mayfield,TB,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Bell,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jennings,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jacobs,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Evans,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Pollard,TEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Collins,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Nabers,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Gibbs,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Smith-Njigba,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Dowdle,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Aiyuk,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Meyers,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Addison,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Diggs,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Williams,CHI,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,W.Robinson,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Irving,TB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Gould,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Godwin,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Hubbard,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Mayfield,TB,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,R.Pearsall,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Brown,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Swift,CHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Allen,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Conner,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Cowing,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.McBride,ARI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Johnson,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Pierce,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Shaheed,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Thielen,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Cook,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Kamara,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Wilson,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Hill,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Nailor,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Jones,MIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Etienne,JAX,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.London,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Lamb,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Martin,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Downs,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0033106,J.Goff,DET,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Palmer,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Samuel,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Washington,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Dobbins,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Rice,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Walker,SEA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Goff,DET,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,N.Brown,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Pittman,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Pickens,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Njoku,CLE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Allgeier,ATL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Harrison,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Smith,MIA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Pryor,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.McCaffrey,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Daniels,WAS,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Shakir,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.White,TB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Valdes-Scantling,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Harris,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.White,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Tillman,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Coker,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Kittle,SF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Bowers,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Bigsby,JAX,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Olave,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Brown,CIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Montgomery,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Gesicki,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Sutton,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Q.Johnston,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Hall,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Engram,JAX,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Waddle,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Freiermuth,PIT,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Metcalf,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0035228,K.Murray,ARI,SF,QB,,,,,,37.0,4.1891891891891895,18.2972972972973,18.2972972972973,63.52,33.945945945945944,22.37837837837838,222.2972972972973,222.2972972972973,25.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,X.Worthy,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Achane,MIA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Burton,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Jones,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Bowden,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Stevenson,NE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Dortch,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Perry,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Sherfield,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Mims,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Robinson,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Ertz,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Hill,NO,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Eskridge,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Iosivas,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Mason,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Kupp,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Gordon,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0039918,C.Williams,CHI,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Ridley,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Hunt,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Moore,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Watson,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.LaPorta,DET,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Boutte,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Jackson,BAL,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Tracy,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Washington,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Atwell,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.McClellan,ATL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.McMillan,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Chubb,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,O.Zaccheaus,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Moore,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Lassiter,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Reed,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.McCormick,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Doss,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Metchie,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Kirk,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Williams,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Westbrook-Ikhine,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Tremayne,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Whittington,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Jackson,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0036442,J.Burrow,CIN,PIT,QB,,,,,,36.0,3.888888888888889,18.27777777777778,18.27777777777778,62.89,33.47222222222222,21.27777777777778,241.30555555555554,241.30555555555554,71.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Brown,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Pacheco,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Moore,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Strachan,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Okonkwo,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Austin,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Mi.Wilson,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Doubs,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Taylor,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Moss,CIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Bachman,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Cracraft,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Jones,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Nix,DEN,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Skowronek,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Douglas,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Dell,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hurts,PHI,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Lazard,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Jones,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Trammell,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Richardson,IND,TEN,QB,,,,,,34.0,4.205882352941177,19.058823529411764,19.058823529411764,65.41,30.647058823529413,20.58823529411765,217.47058823529412,217.47058823529412,12.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Robinson,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Hockenson,MIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Ford,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Higbee,LA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Edmonds,TB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Montgomery,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Tucker,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Raymond,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Odunze,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Elliott,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Proche,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Carter,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,X.Legette,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Smith,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Wilson,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Spears,TEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Dillon,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Davis,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Williams,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Burrow,CIN,PIT,QB,,,,,,36.0,3.888888888888889,18.27777777777778,18.27777777777778,62.89,33.47222222222222,21.27777777777778,241.30555555555554,241.30555555555554,71.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Wilkerson,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Fournette,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Agnew,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,W.Snead,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Means,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,H.Renfrow,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Funk,IND,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Edwards,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Johnson,NO,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Thomas,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Mooney,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Zylstra,DET,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Hodgins,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Perine,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Charbonnet,SEA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Lockett,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0034796,L.Jackson,BAL,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Warren,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Fant,SEA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Hull,IND,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Mattison,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Kirkwood,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Murray,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Coleman,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Akins,CLE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Flowers,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Johnson,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.McLaughlin,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Jones,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Oliver,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Singletary,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Bateman,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Henderson,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Conklin,NYJ,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Harris,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Ekeler,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Philips,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Cooks,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.All,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Samuel,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Gore,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Wicks,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Jarrett,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Scott,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0034869,S.Darnold,MIN,LA,QB,,,,,,37.0,4.8108108108108105,22.027027027027028,22.027027027027028,73.58,33.32432432432432,21.16216216216216,241.78378378378378,241.78378378378378,75.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,R.Freeman,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Mostert,MIA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Culp,TB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Smith,SEA,LA,QB,,,,,,37.0,4.8108108108108105,22.027027027027028,22.027027027027028,73.58,33.32432432432432,21.16216216216216,241.78378378378378,241.78378378378378,75.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Powell,MIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Bolden,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Estime,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Brownlee,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.McCloud,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Wallace,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0039910,J.Daniels,WAS,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,I.Williams,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Davis,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.St. Brown,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Shenault,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Mitchell,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Duvernay,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Conley,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Penny,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Bourne,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Hodge,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Guyton,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Gibson,NE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Cobb,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Akers,MIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Tolbert,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Kinsey,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Goodwin,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Boyd,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Peoples-Jones,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,V.Jefferson,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Parker,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Milton,NE,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Pettis,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Thompkins,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Smartt,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Kelce,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Austin,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Crowder,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Sample,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Foreman,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Darnold,MIN,LA,QB,,,,,,37.0,4.8108108108108105,22.027027027027028,22.027027027027028,73.58,33.32432432432432,21.16216216216216,241.78378378378378,241.78378378378378,75.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,00-0030565,G.Smith,SEA,LA,QB,,,,,,37.0,4.8108108108108105,22.027027027027028,22.027027027027028,73.58,33.32432432432432,21.16216216216216,241.78378378378378,241.78378378378378,75.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Bobo,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Pierce,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Reagor,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Demercado,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Turner,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,F.Moreau,NO,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Jones,NYG,CAR,QB,,,,,,34.0,4.205882352941177,13.029411764705882,13.029411764705882,49.69,29.61764705882353,19.58823529411765,209.2058823529412,209.2058823529412,9.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Cook,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Gallup,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hill,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Patrick,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Allen,BUF,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Vele,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,X.Smith,LA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Hollins,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Hudson,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Harris,NE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0037834,B.Purdy,SF,DET,QB,,,,,,38.0,4.631578947368421,24.394736842105264,24.394736842105264,76.1,35.10526315789474,22.026315789473685,269.6842105263158,269.6842105263158,100.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Taylor,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Em.Wilson,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Claypool,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Woods,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Wilson,PIT,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,S.Morgan,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Tipton,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.White,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Johnson,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Remigio,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Mitchell,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Goedert,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Pringle,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Strange,JAX,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Fehoko,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Scott,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Chisena,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0039732,B.Nix,DEN,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,I.McKenzie,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Boykin,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Grandy,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Sermon,IND,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Jones,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Dotson,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,X.Hutchinson,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Thomas,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Turpin,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Shepard,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Ahmed,MIA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Williams,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Jackson,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Sanders,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Waller,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Flacco,IND,JAX,QB,,,,,,34.0,4.794117647058823,21.823529411764707,21.823529411764707,72.96,35.088235294117645,23.264705882352942,263.02941176470586,263.02941176470586,93.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.McKinnon,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,W.Dissly,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Miller,PIT,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Evans,CIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Kraft,GB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Heath,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Cooks,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Guerendo,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Slayton,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Vaughn,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Smith-Schuster,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Humphrey,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Ju.Watson,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Spiller,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Reynolds,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Edwards-Helaire,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Flournoy,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Davis,JAX,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0026158,J.Flacco,IND,JAX,QB,,,,,,34.0,4.794117647058823,21.823529411764707,21.823529411764707,72.96,35.088235294117645,23.264705882352942,263.02941176470586,263.02941176470586,93.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,Z.Evans,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Moore,CAR,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Ozigbo,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Miller,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Green,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Rodriguez,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0029263,R.Wilson,PIT,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Thompson,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Marshall,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Davis,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Ferguson,DAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Hooper,NE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Cooper,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Badie,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.DuBose,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Darden,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0034857,J.Allen,BUF,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Jennings,NE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Toure,GB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Miller,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Muse,MIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Abanikanda,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Brooks,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Johnson,CHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.McCaffrey,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Allen,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.McAllister,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,H.Henry,NE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Miller,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Q.Watkins,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Purdy,SF,DET,QB,,,,,,38.0,4.631578947368421,24.394736842105264,24.394736842105264,76.1,35.10526315789474,22.026315789473685,269.6842105263158,269.6842105263158,100.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Smith,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Watson,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Hardman,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Maye,NE,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Whyle,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Blair,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Fields,PIT,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Baccellia,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Otton,TB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Gainwell,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Tagovailoa,MIA,SF,QB,,,,,,37.0,4.1891891891891895,18.2972972972973,18.2972972972973,63.52,33.945945945945944,22.37837837837838,222.2972972972973,222.2972972972973,25.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Schultz,HOU,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Knight,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Benson,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jackson,NO,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Franklin,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Williams,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Barner,SEA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Alexander,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,H.Bryant,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Herbert,CIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Rattler,NO,TB,QB,,,,,,37.0,4.297297297297297,16.91891891891892,16.91891891891892,59.75,36.45945945945946,24.27027027027027,264.7567567567568,264.7567567567568,96.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Hopkins,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,X.Gipson,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Mitchell,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Wright,MIA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,O.Beckham,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Kibodi,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Abdullah,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Palmer,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Woods,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Andrews,BAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Covey,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Jackson,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Erickson,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Johnson,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Saubert,SF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Jackson,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Sinnott,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jones,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Vidal,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Breida,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Brown,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Robinson,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Dowell,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Dorsett,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Fotheringham,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Carter,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Corley,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Dulin,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Tucker,TB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Oliver,MIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Rodgers,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Reiman,ARI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Winfree,IND,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Davis-Price,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Pitts,ATL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Swaim,CLE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Taylor,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Ali,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Dotson,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Smith,HOU,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Fisk,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Hopkins,LA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Young,CAR,ATL,QB,,,,,,34.0,5.235294117647059,25.11764705882353,25.11764705882353,77.36,33.029411764705884,21.794117647058822,225.11764705882354,225.11764705882354,28.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Burks,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Robinson,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Ford-Wheaton,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Taylor,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Cas.Washington,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Bawden,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Kmet,CHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Pascal,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Walker,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Huntley,MIA,NYJ,QB,,,,,,34.0,4.4411764705882355,18.705882352941178,18.705882352941178,64.15,30.647058823529413,18.823529411764707,199.11764705882354,199.11764705882354,3.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Byrd,ATL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Higgins,ARI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Drake,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Bandy,DEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Shenker,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Wilcox,CIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Chandler,MIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Likely,BAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Carr,NO,NYG,QB,,,,,,34.0,3.676470588235294,19.235294117647058,19.235294117647058,66.04,31.88235294117647,21.176470588235293,236.05882352941177,236.05882352941177,53.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,P.Durham,TB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Ty.Johnson,BUF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Brooks,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Chark,LAC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Graham,NO,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Johnson,JAX,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Prescott,DAL,ATL,QB,,,,,,34.0,5.235294117647059,25.11764705882353,25.11764705882353,77.36,33.029411764705884,21.794117647058822,225.11764705882354,225.11764705882354,28.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,R.Bell,SF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.James,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.McIntosh,SEA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Lloyd,GB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Mundt,MIN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Agholor,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Adkins,DEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Vannett,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Montgomery,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Treadwell,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Campbell,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Corbin,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Cunningham,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Slater,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Turner,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Parham,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Mitchell,DET,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Goodson,IND,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Holker,NO,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Watson,CLE,CIN,QB,,,,,,34.0,5.764705882352941,26.5,26.5,79.25,33.088235294117645,21.61764705882353,249.8235294117647,249.8235294117647,87.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Virgil,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Smith-Marsette,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Mahomes,KC,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Dalton,CAR,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Washington,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Tremble,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Evans,CHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Driskel,CLE,CIN,QB,,,,,,34.0,5.764705882352941,26.5,26.5,79.25,33.088235294117645,21.61764705882353,249.8235294117647,249.8235294117647,87.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,H.Long,LA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Conner,MIA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Kelley,TEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Knox,BUF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Sims,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Willis,GB,CHI,QB,,,,,,34.0,2.9705882352941178,12.147058823529411,12.147058823529413,49.06,32.911764705882355,21.58823529411765,241.2058823529412,241.2058823529412,68.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Thornton,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Krull,DEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Reynolds,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Isabella,BUF,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Mayer,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Rivers,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Bellinger,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Irwin,CIN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0038598,J.Hall,MIN,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Parkinson,LA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Trautman,DEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Johnson,CHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Barkley,JAX,CAR,QB,,,,,,34.0,4.205882352941177,13.029411764705882,13.029411764705882,49.69,29.61764705882353,19.58823529411765,209.2058823529412,209.2058823529412,9.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Wells,TB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Mingo,DAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Davis,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Deguara,JAX,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Harty,BAL,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0036355,J.Herbert,LAC,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Herbert,LAC,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Granson,IND,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.McNichols,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Chosen,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Wright,DET,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Washington,PIT,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Gray,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Lewis,CHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Ogletree,IND,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Steele,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Hendershot,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Ruckert,NYJ,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Stover,HOU,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Woodside,ATL,NO,QB,,,,,,34.0,4.470588235294118,24.294117647058822,24.294117647058822,75.47,33.73529411764706,20.529411764705884,236.76470588235293,236.76470588235293,59.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,E.Stick,LAC,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Osborn,WAS,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hyatt,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Olszewski,NYG,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,W.Levis,TEN,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Quitoriano,HOU,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Farrell,JAX,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Co.Heyward,PIT,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Corum,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0036212,T.Tagovailoa,MIA,SF,QB,,,,,,37.0,4.1891891891891895,18.2972972972973,18.2972972972973,63.52,33.945945945945944,22.37837837837838,222.2972972972973,222.2972972972973,25.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Brooks,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Tonyan,CHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Ja.Williams,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Lawrence,JAX,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Allen,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Kincaid,BUF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Mariota,WAS,DET,QB,,,,,,38.0,4.631578947368421,24.394736842105264,24.394736842105264,76.1,35.10526315789474,22.026315789473685,269.6842105263158,269.6842105263158,100.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,G.Calcaterra,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Alie-Cox,IND,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Dobbs,SF,ARI,QB,,,,,,34.0,4.176470588235294,19.294117647058822,19.294117647058822,66.67,30.705882352941178,21.058823529411764,228.2058823529412,228.2058823529412,34.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Wesco,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0038391,S.Clifford,GB,MIN,QB,,,,,,35.0,3.5714285714285716,12.028571428571428,12.028571428571428,47.8,36.2,24.514285714285716,254.11428571428573,254.11428571428573,90.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Wiley,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Gabbert,KC,LAC,QB,,,,,,35.0,4.228571428571429,18.97142857142857,18.97142857142857,64.78,34.08571428571429,22.142857142857142,245.97142857142856,245.97142857142856,81.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,H.Hurst,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Sanders,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Schoonmaker,DAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0031280,D.Carr,NO,NYG,QB,,,,,,34.0,3.676470588235294,19.235294117647058,19.235294117647058,66.04,31.88235294117647,21.176470588235293,236.05882352941177,236.05882352941177,53.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.DeVito,NYG,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Manhertz,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Horsted,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Beathard,JAX,CAR,QB,,,,,,34.0,4.205882352941177,13.029411764705882,13.029411764705882,49.69,29.61764705882353,19.58823529411765,209.2058823529412,209.2058823529412,9.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Thompson-Robinson,CLE,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Mims,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Lance,DAL,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Whiteheart,CLE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Jones,JAX,IND,QB,,,,,,34.0,4.088235294117647,18.0,18.0,61.64,32.61764705882353,21.941176470588236,242.14705882352942,242.14705882352942,78.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Pruitt,PIT,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Bates,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.FitzPatrick,GB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Sims,GB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Kolar,BAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Chestnut,TEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hall,MIN,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Lock,NYG,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,00-0033077,D.Prescott,DAL,ATL,QB,,,,,,34.0,5.235294117647059,25.11764705882353,25.11764705882353,77.36,33.029411764705884,21.794117647058822,225.11764705882354,225.11764705882354,28.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,P.Brown,SEA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Thrash,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0039163,C.Stroud,HOU,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Jefferson,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Wilson,NYJ,MIA,QB,,,,,,35.0,3.857142857142857,14.885714285714286,14.885714285714286,55.35,33.65714285714286,21.914285714285715,234.74285714285713,234.74285714285713,43.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Jordan,HOU,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,H.Haskins,LAC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Yeboah,NYJ,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,W.Shipley,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Patterson,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Cager,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Keyton,LV,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Williams,PIT,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0036264,J.Love,GB,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Rudolph,TEN,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,P.Strong,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Thomas,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Gaskin,MIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Jackson,TEN,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,L.Musgrave,GB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Tannehill,TEN,JAX,QB,,,,,,34.0,4.794117647058823,21.823529411764707,21.823529411764707,72.96,35.088235294117645,23.264705882352942,263.02941176470586,263.02941176470586,93.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Ross,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Wilson,MIA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Kroft,MIA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Stroud,HOU,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,R.Dwelley,ATL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Young,SEA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.McKeon,DAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Daniels,DET,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Rypien,LA,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Tonges,SF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,I.Charles,NYJ,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Love,GB,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,00-0035282,E.Stick,LAC,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,G.Ricci,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Firkser,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Vaki,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Boone,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Everett,CHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Bell,NE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Rader,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.McKitty,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Anderson,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hill,MIA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Ogunbowale,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Woerner,ATL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Spann-Ford,DAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Tomlinson,LAC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Siemian,NYJ,NE,QB,,,,,,34.0,4.529411764705882,12.058823529411764,12.058823529411764,48.43,32.529411764705884,21.029411764705884,221.64705882352942,221.64705882352942,21.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,H.Luepke,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Smythe,MIA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Perine,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Yankoff,WAS,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,N.Peterman,CHI,LV,QB,,,,,,34.0,3.9705882352941178,16.647058823529413,16.647058823529413,57.23,33.029411764705884,21.91176470588235,231.7058823529412,231.7058823529412,40.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Shorter,LV,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Baker,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Garoppolo,LA,SEA,QB,,,,,,34.0,4.382352941176471,20.235294117647058,20.235294117647058,71.07,33.85294117647059,22.323529411764707,240.2941176470588,240.2941176470588,65.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Rush,DAL,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Dallas,ARI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Kieft,TB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Dulcich,NYG,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Walker,CLE,DEN,QB,,,,,,35.0,4.085714285714285,16.65714285714286,16.65714285714286,57.86,34.25714285714286,22.65714285714286,246.8,246.8,84.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Bell,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Fant,DAL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Blackshear,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Homer,CHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,W.Mallory,IND,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,V.Jones,CAR,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Cousins,ATL,LV,QB,,,,,,34.0,3.9705882352941178,16.647058823529413,16.647058823529413,57.23,33.029411764705884,21.91176470588235,231.7058823529412,231.7058823529412,40.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,S.Howell,SEA,GB,QB,,,,,,37.0,4.675675675675675,20.81081081081081,20.81081081081081,71.7,32.62162162162162,21.62162162162162,231.02702702702703,231.02702702702703,37.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Ward,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Polk,NE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Keenum,HOU,CLE,QB,,,,,,35.0,4.942857142857143,19.571428571428573,19.571428571428573,67.92,30.428571428571427,18.257142857142856,208.25714285714287,208.25714285714287,6.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,H.Pearson,GB,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0031345,J.Garoppolo,LA,SEA,QB,,,,,,34.0,4.382352941176471,20.235294117647058,20.235294117647058,71.07,33.85294117647059,22.323529411764707,240.2941176470588,240.2941176470588,65.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Toney,CLE,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0039376,S.Rattler,NO,TB,QB,,,,,,37.0,4.297297297297297,16.91891891891892,16.91891891891892,59.75,36.45945945945946,24.27027027027027,264.7567567567568,264.7567567567568,96.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Schrader,LA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Brightwell,CLE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Stidham,DEN,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Uzomah,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Hasty,NE,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Shampklin,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Q.Morris,BUF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,P.Hesse,ATL,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Allen,LA,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.McKee,PHI,NYG,QB,,,,,,34.0,3.676470588235294,19.235294117647058,19.235294117647058,66.04,31.88235294117647,21.176470588235293,236.05882352941177,236.05882352941177,53.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Ross,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,E.Gray,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,F.Franks,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Taylor,NYJ,BUF,QB,,,,,,39.0,4.076923076923077,19.46153846153846,19.46153846153846,67.3,32.41025641025641,21.692307692307693,226.7948717948718,226.7948717948718,31.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Trubisky,BUF,DEN,QB,,,,,,35.0,4.085714285714285,16.65714285714286,16.65714285714286,57.86,34.25714285714286,22.65714285714286,246.8,246.8,84.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Armah,WAS,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Ingram,KC,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Penix,ATL,CAR,QB,,,,,,34.0,4.205882352941177,13.029411764705882,13.029411764705882,49.69,29.61764705882353,19.58823529411765,209.2058823529412,209.2058823529412,9.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Martin-Robinson,TEN,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Vaughn,SF,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Stoll,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Brissett,NE,LAC,QB,,,,,,35.0,4.228571428571429,18.97142857142857,18.97142857142857,64.78,34.08571428571429,22.142857142857142,245.97142857142856,245.97142857142856,81.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,X.Weaver,ARI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Pickett,PHI,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Wayne,HOU,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Wilson,PHI,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Ridder,LV,LAC,QB,,,,,,35.0,4.228571428571429,18.97142857142857,18.97142857142857,64.78,34.08571428571429,22.142857142857142,245.97142857142856,245.97142857142856,81.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,E.Ezukanma,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,Z.Davidson,BUF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,00-0033949,J.Dobbs,SF,ARI,QB,,,,,,34.0,4.176470588235294,19.294117647058822,19.294117647058822,66.67,30.705882352941178,21.058823529411764,228.2058823529412,228.2058823529412,34.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,00-0039150,B.Young,CAR,ATL,QB,,,,,,34.0,5.235294117647059,25.11764705882353,25.11764705882353,77.36,33.029411764705884,21.794117647058822,225.11764705882354,225.11764705882354,28.12,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,G.Holani,SEA,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Clifford,GB,MIN,QB,,,,,,35.0,3.5714285714285716,12.028571428571428,12.028571428571428,47.8,36.2,24.514285714285716,254.11428571428573,254.11428571428573,90.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Hoyer,LV,CHI,QB,,,,,,34.0,2.9705882352941178,12.147058823529411,12.147058823529413,49.06,32.911764705882355,21.58823529411765,241.2058823529412,241.2058823529412,68.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Okwuegbunam,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Williams,CIN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Bagent,CHI,MIN,QB,,,,,,35.0,3.5714285714285716,12.028571428571428,12.028571428571428,47.8,36.2,24.514285714285716,254.11428571428573,254.11428571428573,90.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,T.Kennedy,DET,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.McFarland,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Trask,TB,CAR,QB,,,,,,34.0,4.205882352941177,13.029411764705882,13.029411764705882,49.69,29.61764705882353,19.58823529411765,209.2058823529412,209.2058823529412,9.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Berrios,MIA,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.McCarron,CIN,CLE,QB,,,,,,35.0,4.942857142857143,19.571428571428573,19.571428571428573,67.92,30.428571428571427,18.257142857142856,208.25714285714287,208.25714285714287,6.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Brooks,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Minshew,LV,DEN,QB,,,,,,35.0,4.085714285714285,16.65714285714286,16.65714285714286,57.86,34.25714285714286,22.65714285714286,246.8,246.8,84.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Nwangwu,NYJ,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Stafford,LA,PHI,QB,,,,,,39.0,3.871794871794872,19.871794871794872,19.871794871794872,69.81,35.56410256410256,22.564102564102566,235.94871794871796,235.94871794871796,50.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,E.Jenkins,PHI,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Fortson,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Collier,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Johnson,TB,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Wentz,KC,DEN,QB,,,,,,35.0,4.085714285714285,16.65714285714286,16.65714285714286,57.86,34.25714285714286,22.65714285714286,246.8,246.8,84.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,S.Moore,KC,,WR,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Beck,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Laube,LV,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.O'Connell,LV,LAC,QB,,,,,,35.0,4.228571428571429,18.97142857142857,18.97142857142857,64.78,34.08571428571429,22.142857142857142,245.97142857142856,245.97142857142856,81.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Johnson,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Heinicke,LAC,NE,QB,,,,,,34.0,4.529411764705882,12.058823529411764,12.058823529411764,48.43,32.529411764705884,21.029411764705884,221.64705882352942,221.64705882352942,21.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Ibrahim,DET,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Browning,CIN,CLE,QB,,,,,,35.0,4.942857142857143,19.571428571428573,19.571428571428573,67.92,30.428571428571427,18.257142857142856,208.25714285714287,208.25714285714287,6.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Robinson,JAX,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,G.Igwebuike,PIT,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,S.Sullivan,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Hairston,HOU,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Miller,NYG,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,D.Williams,TB,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.Davis,DAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,H.Hooker,DET,JAX,QB,,,,,,34.0,4.794117647058823,21.823529411764707,21.823529411764707,72.96,35.088235294117645,23.264705882352942,263.02941176470586,263.02941176470586,93.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Washington,DEN,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Bates,CLE,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Willis,SF,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,A.Prentice,NO,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Winston,CLE,KC,QB,,,,,,41.0,5.7560975609756095,26.536585365853657,26.536585365853657,79.87,33.19512195121951,21.0,218.0,218.0,15.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Rodgers,NYJ,MIA,QB,,,,,,35.0,3.857142857142857,14.885714285714286,14.885714285714286,55.35,33.65714285714286,21.914285714285715,234.74285714285713,234.74285714285713,43.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Oladokun,KC,DEN,QB,,,,,,35.0,4.085714285714285,16.65714285714286,16.65714285714286,57.86,34.25714285714286,22.65714285714286,246.8,246.8,84.38,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Juszczyk,SF,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Johnson,BAL,HOU,QB,,,,,,38.0,3.8157894736842106,21.263157894736842,21.263157894736842,72.33,32.63157894736842,20.657894736842106,235.1315789473684,235.1315789473684,46.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.Zappe,CLE,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,B.VanSumeren,PHI,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Haener,NO,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,C.Ham,MIN,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Boyle,NYG,BAL,QB,,,,,,38.0,3.6578947368421053,14.947368421052632,14.947368421052632,56.6,36.36842105263158,22.736842105263158,236.73684210526315,236.73684210526315,56.25,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,S.Thompson,MIA,SEA,QB,,,,,,34.0,4.382352941176471,20.235294117647058,20.235294117647058,71.07,33.85294117647059,22.323529411764707,240.2941176470588,240.2941176470588,65.62,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,D.Mills,HOU,TEN,QB,,,,,,34.0,4.205882352941177,19.058823529411764,19.058823529411764,65.41,30.647058823529413,20.58823529411765,217.47058823529412,217.47058823529412,12.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Ingold,MIA,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Allen,PIT,DAL,QB,,,,,,35.0,4.942857142857143,24.82857142857143,24.82857142857143,76.73,29.65714285714286,19.142857142857142,221.0,221.0,18.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,A.Williams,ATL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Allen,SF,CHI,QB,,,,,,34.0,2.9705882352941178,12.147058823529411,12.147058823529413,49.06,32.911764705882355,21.58823529411765,241.2058823529412,241.2058823529412,68.75,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,M.Burton,DEN,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Kelly,BAL,,RB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,M.White,BUF,NE,QB,,,,,,34.0,4.529411764705882,12.058823529411764,12.058823529411764,48.43,32.529411764705884,21.029411764705884,221.64705882352942,221.64705882352942,21.88,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,J.Cabinda,DET,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,J.Matthews,CAR,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,T.Bridgewater,DET,WAS,QB,,,,,,37.0,4.405405405405405,18.243243243243242,18.243243243243242,62.26,31.864864864864863,20.56756756756757,239.05405405405406,239.05405405405406,62.5,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,K.Smith,ATL,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,B.Cupp,KC,,TE,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,C.Tune,ARI,SF,QB,,,,,,37.0,4.1891891891891895,18.2972972972973,18.2972972972973,63.52,33.945945945945944,22.37837837837838,222.2972972972973,222.2972972972973,25.0,HIGH,MISSING,HIGH,HIGH,Shrinkage applied to historical allowed stats.
+2025,1,,P.Ricard,BAL,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,R.Gilliam,BUF,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.
+2025,1,,K.Blasingame,PHI,,FB,,,,,,,,,,,,,,,,MISSING,MISSING,MISSING,MISSING,LOW_RELIABILITY_DEFENSE_FIT: shrinkage applied to historical allowed stats.

@@ -26,6 +26,10 @@ DISPLAY_COLUMNS = [
     "role_status",
     "injury_status",
     "readiness_status",
+    "recent_form_reliability",
+    "defense_fit_reliability",
+    "game_environment_reliability",
+    "context_data_quality",
     "review_reason",
     "blocked_reason",
     "top_signal_reason",
@@ -55,6 +59,9 @@ with st.sidebar:
     view = filter_minimum(view, "missing_signal_count", "Minimum missing signal count", 0.0)
     view = filter_multiselect(view, "team", "Team")
     view = filter_multiselect(view, "position", "Position")
+    view = filter_multiselect(view, "recent_form_reliability", "Recent form reliability")
+    view = filter_multiselect(view, "defense_fit_reliability", "Defense fit reliability")
+    view = filter_multiselect(view, "game_environment_reliability", "Game environment reliability")
 
 review_rows = int(view["signal_tier"].astype(str).isin(["REVIEW", "INSUFFICIENT_DATA"]).sum()) if "signal_tier" in view.columns else len(view)
 blocked_rows = int(view["signal_tier"].astype(str).eq("BLOCKED").sum()) if "signal_tier" in view.columns else 0

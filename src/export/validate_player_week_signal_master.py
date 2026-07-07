@@ -63,14 +63,19 @@ def validate_player_week_signal_master() -> tuple[pd.DataFrame, str]:
         unavailable_real = inventory[inventory["implementation_status"].astype(str).isin(["NOT_AVAILABLE", "NEEDS SOURCE", "PLANNED_SOURCE"]) & inventory["available_now"].astype(str).eq("Yes")]
         add(rows, "unavailable_metrics_not_treated_as_real", 0, len(unavailable_real), unavailable_real.empty)
     if not master.empty:
-        unavailable_scores_missing = master[["opponent_fit_score", "game_script_score", "weather_score", "recent_form_score"]].notna().any().any()
-        add(rows, "missing_opponent_game_weather_not_green", False, unavailable_scores_missing, not unavailable_scores_missing)
+        weather_available = master["weather_score"].notna().any() if "weather_score" in master.columns else False
+        add(rows, "weather_not_green_without_source", False, weather_available, not weather_available)
+        context_columns = ["opponent_fit_score", "game_script_score", "recent_form_score"]
+        context_available = any(col in master.columns and master[col].notna().any() for col in context_columns)
+        add(rows, "context_v1_scores_allowed_when_sourced", True, context_available, context_available)
         labels_ok = master["usage_status"].astype(str).isin(["HISTORICAL TEST ONLY", "Research Only", "Research Only - Historical Test Only - Not Betting Ready"]).all()
         add(rows, "usage_status_research_or_historical", "HISTORICAL TEST ONLY/research-only", sorted(master["usage_status"].astype(str).unique())[:10], labels_ok)
         no_bet_cols = not {"bet_recommendation", "wager", "stake", "clv"}.intersection(master.columns)
         add(rows, "support_markets_not_betting_recommendations", "no bet columns", sorted({"bet_recommendation", "wager", "stake", "clv"}.intersection(master.columns)), no_bet_cols)
-        limited_notes = master["review_reason"].astype(str).str.contains("Limited V1", na=False).all()
-        add(rows, "missing_context_labeled_limited_v1", "Limited V1 review reason", limited_notes, limited_notes)
+        context_notes = master["review_reason"].astype(str).str.contains("Context V1", na=False).all()
+        unavailable_notes = master["review_reason"].astype(str).str.contains("weather|route share|first-read|coverage", case=False, na=False).all()
+        add(rows, "context_labeled_context_v1", "Context V1 review reason", context_notes, context_notes)
+        add(rows, "unavailable_context_still_labeled", "weather/route/coverage unavailable", unavailable_notes, unavailable_notes)
     final = final_readiness()
     add(rows, "final_readiness_remains_no_go", "NO-GO", final, final == "NO-GO")
     add(rows, "no_live_betting_output_created", False, live_output_created(), not live_output_created())

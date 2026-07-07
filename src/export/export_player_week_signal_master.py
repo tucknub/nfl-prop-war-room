@@ -17,6 +17,7 @@ MARKET_FILES = {
 }
 
 BASE_COLS = ["season", "week", "player_id", "player_name", "team", "opponent", "position", "usage_status"]
+CONTEXT_JOIN_KEYS = ["season", "week", "player_id"]
 
 
 def read_csv(relative: str) -> pd.DataFrame:
@@ -73,6 +74,34 @@ def percentile_score(series: pd.Series) -> pd.Series:
     return (numeric.rank(pct=True) * 100).round(2)
 
 
+def context_score_from_columns(df: pd.DataFrame, columns: list[str]) -> pd.Series:
+    scores = []
+    for column in columns:
+        if column in df.columns:
+            scores.append(percentile_score(df[column]))
+    if not scores:
+        return pd.Series([pd.NA] * len(df), index=df.index)
+    return pd.to_numeric(pd.concat(scores, axis=1).max(axis=1), errors="coerce").round(2)
+
+
+def reliability_available(series: pd.Series) -> pd.Series:
+    return series.fillna("MISSING").astype(str).isin(["HIGH", "MEDIUM", "LOW"])
+
+
+def load_context_features() -> pd.DataFrame:
+    context = read_csv("signal_boards/signal_context_features.csv")
+    if context.empty:
+        return context
+    for key in CONTEXT_JOIN_KEYS:
+        if key not in context.columns:
+            return pd.DataFrame()
+    context = context.copy()
+    context["player_id"] = context["player_id"].fillna("").astype(str)
+    context["season"] = pd.to_numeric(context["season"], errors="coerce")
+    context["week"] = pd.to_numeric(context["week"], errors="coerce")
+    return context.drop_duplicates(subset=CONTEXT_JOIN_KEYS)
+
+
 def projection_family_score(df: pd.DataFrame) -> pd.Series:
     projection_cols = [
         "receptions_projection",
@@ -118,6 +147,28 @@ def tier(score: float, red_flags: int, missing: int) -> str:
     return "REVIEW"
 
 
+def signal_tier(row: pd.Series) -> str:
+    red_flags = int(row.get("red_flag_count", 0))
+    missing = int(row.get("missing_signal_count", 0))
+    score = row.get("overall_signal_score")
+    if red_flags > 0:
+        return "REVIEW"
+    if pd.isna(score):
+        return "INSUFFICIENT_DATA"
+    context_available = bool(row.get("recent_context_available", False) or row.get("defense_context_available", False) or row.get("game_context_available", False))
+    if score >= 85 and row.get("projection_score", 0) >= 75 and row.get("data_quality_score", 0) >= 65 and context_available:
+        return "ELITE_SIGNAL"
+    if missing >= 5 and score >= 80:
+        return "STRONG_SIGNAL"
+    if score >= 72:
+        return "STRONG_SIGNAL"
+    if score >= 58:
+        return "GOOD_SIGNAL"
+    if score >= 40:
+        return "WATCH"
+    return "REVIEW"
+
+
 def export_player_week_signal_master() -> pd.DataFrame:
     frames = [normalize_market_frame(key, *spec) for key, spec in MARKET_FILES.items()]
     frames = [frame for frame in frames if not frame.empty]
@@ -143,15 +194,36 @@ def export_player_week_signal_master() -> pd.DataFrame:
     injury_status = gate_status("injuries/current_injury_map_status.csv")
     intake = gate_status("data_intake/live_data_intake_status.csv",) if False else "NO-GO"
 
+    context = load_context_features()
+    if not context.empty and not master.empty:
+        master["season"] = pd.to_numeric(master["season"], errors="coerce")
+        master["week"] = pd.to_numeric(master["week"], errors="coerce")
+        master["player_id"] = master["player_id"].fillna("").astype(str)
+        context_cols = [col for col in context.columns if col not in {"player_name", "team", "opponent", "position"}]
+        master = master.merge(context[context_cols], on=CONTEXT_JOIN_KEYS, how="left")
+
     projection_cols = [col for col in MARKET_FILES.values() if col[2] in master.columns]
     master["receiving_market_available"] = master[["receptions_projection", "receiving_yards_projection"]].notna().any(axis=1)
     master["rushing_market_available"] = master[["rushing_yards_projection", "carries_projection"]].notna().any(axis=1)
     master["passing_market_available"] = master[["pass_attempts_projection", "completions_projection", "passing_yards_projection"]].notna().any(axis=1)
     master["projection_score"] = projection_family_score(master)
     master["usage_foundation_score"] = usage_foundation_score(master)
-    master["recent_form_score"] = pd.NA
-    master["opponent_fit_score"] = pd.NA
-    master["game_script_score"] = pd.NA
+    master["recent_form_score"] = context_score_from_columns(
+        master,
+        [
+            "l3_targets",
+            "l3_receptions",
+            "l3_receiving_yards",
+            "l3_carries",
+            "l3_rushing_yards",
+            "l3_pass_attempts",
+            "l3_completions",
+            "l3_passing_yards",
+        ],
+    )
+    master["opponent_fit_score"] = context_score_from_columns(master, ["opp_receiving_fit_score", "opp_rushing_fit_score", "opp_passing_fit_score"])
+    if "game_script_score" not in master.columns:
+        master["game_script_score"] = pd.NA
     master["weather_score"] = pd.NA
     master["role_availability_score"] = 35 if any(status != "READY" for status in [roster_status, role_status, injury_status]) else 85
     flags = " ".join(master.filter(like="quality_flags").fillna("").astype(str).agg(" ".join, axis=1).tolist()) if not master.empty else ""
@@ -161,21 +233,52 @@ def export_player_week_signal_master() -> pd.DataFrame:
     missing_context = master["team"].fillna("").astype(str).eq("") | master["position"].fillna("").astype(str).eq("")
     missing_family = ~(master["receiving_market_available"] | master["rushing_market_available"] | master["passing_market_available"])
     live_context_missing = any(status != "READY" for status in [roster_status, role_status, injury_status])
-    master["missing_signal_count"] = 4 + missing_id.astype(int) + missing_context.astype(int) + missing_family.astype(int) + int(live_context_missing)
-    master["data_quality_score"] = (100 - master["missing_signal_count"] * 8).clip(lower=20)
-    master["overall_signal_score"] = (
-        master["projection_score"].fillna(0) * 0.45
-        + master["usage_foundation_score"].fillna(0) * 0.2
-        + master["role_availability_score"] * 0.15
-        + master["volatility_score"].fillna(40) * 0.1
-        + master["data_quality_score"] * 0.1
-    ).round(2)
+    master["recent_context_available"] = reliability_available(master.get("recent_form_reliability", pd.Series(["MISSING"] * len(master), index=master.index)))
+    master["defense_context_available"] = reliability_available(master.get("defense_fit_reliability", pd.Series(["MISSING"] * len(master), index=master.index)))
+    master["game_context_available"] = reliability_available(master.get("game_environment_reliability", pd.Series(["MISSING"] * len(master), index=master.index)))
+    unavailable_context_count = (~master["recent_context_available"]).astype(int) + (~master["defense_context_available"]).astype(int) + (~master["game_context_available"]).astype(int) + 1
+    master["missing_signal_count"] = unavailable_context_count + missing_id.astype(int) + missing_context.astype(int) + missing_family.astype(int) + int(live_context_missing)
+    context_quality = pd.to_numeric(master.get("context_data_quality", pd.Series([55] * len(master), index=master.index)), errors="coerce").fillna(55)
+    base_quality = (100 - master["missing_signal_count"] * 7).clip(lower=20)
+    master["data_quality_score"] = ((base_quality * 0.65) + (context_quality * 0.35)).clip(lower=20, upper=95).round(2)
+    score_parts = [
+        ("projection_score", 0.35),
+        ("usage_foundation_score", 0.20),
+        ("recent_form_score", 0.15),
+        ("opponent_fit_score", 0.10),
+        ("game_script_score", 0.10),
+        ("role_availability_score", 0.05),
+        ("data_quality_score", 0.05),
+    ]
+    numerator = pd.Series(0.0, index=master.index)
+    denominator = pd.Series(0.0, index=master.index)
+    for column, weight in score_parts:
+        if column not in master.columns:
+            continue
+        values = pd.to_numeric(master[column], errors="coerce")
+        mask = values.notna()
+        numerator = numerator + values.fillna(0) * weight
+        denominator = denominator + mask.astype(float) * weight
+    master["overall_signal_score"] = (numerator / denominator.replace(0, pd.NA)).round(2)
     master["red_flag_count"] = missing_family.astype(int) + (master["usage_status"].astype(str).ne("HISTORICAL TEST ONLY")).astype(int)
-    master["green_signal_count"] = (master["projection_score"] >= 75).astype(int) + (master["usage_foundation_score"] >= 60).astype(int)
+    master["green_signal_count"] = (
+        (master["projection_score"] >= 75).astype(int)
+        + (master["usage_foundation_score"] >= 60).astype(int)
+        + (pd.to_numeric(master["recent_form_score"], errors="coerce") >= 65).astype(int)
+        + (pd.to_numeric(master["opponent_fit_score"], errors="coerce") >= 65).astype(int)
+    )
     master["yellow_signal_count"] = ((master["projection_score"] >= 45) & (master["projection_score"] < 75)).astype(int)
-    master["signal_tier"] = master.apply(lambda row: tier(row["overall_signal_score"], int(row["red_flag_count"]), int(row["missing_signal_count"])), axis=1)
-    master["top_signal_reason"] = "Projection-led limited V1 signal from existing historical-test markets."
-    master["review_reason"] = "Limited V1: opponent fit, game script, weather, recent form, and live role/injury context are not fully sourced."
+    master["signal_tier"] = master.apply(signal_tier, axis=1)
+    master["top_signal_reason"] = "Projection-led signal with pre-target recent form, schedule game environment, and shrinkage-adjusted defense fit where sourced."
+    context_gaps = []
+    if not master["recent_context_available"].all():
+        context_gaps.append("recent form missing for some players")
+    if not master["defense_context_available"].all():
+        context_gaps.append("defense fit missing/low reliability for some players")
+    if not master["game_context_available"].all():
+        context_gaps.append("game environment missing for some players")
+    context_gap_text = "; ".join(context_gaps) if context_gaps else "context features sourced"
+    master["review_reason"] = "Context V1: " + context_gap_text + "; weather, route share, first-read share, and coverage are not sourced."
     master["blocked_reason"] = master.apply(lambda row: "Missing projection family." if not (row["receiving_market_available"] or row["rushing_market_available"] or row["passing_market_available"]) else "", axis=1)
     master["roster_status"] = roster_status
     master["role_status"] = role_status
@@ -188,6 +291,16 @@ def export_player_week_signal_master() -> pd.DataFrame:
         "season", "week", "player_id", "player_name", "team", "opponent", "position",
         "receptions_projection", "receiving_yards_projection", "rushing_yards_projection", "carries_projection",
         "pass_attempts_projection", "completions_projection", "passing_yards_projection",
+        "l3_targets", "l5_targets", "l8_targets", "l3_receptions", "l5_receptions", "l8_receptions",
+        "l3_receiving_yards", "l5_receiving_yards", "l8_receiving_yards",
+        "l3_carries", "l5_carries", "l8_carries", "l3_rushing_yards", "l5_rushing_yards", "l8_rushing_yards",
+        "l3_pass_attempts", "l5_pass_attempts", "l8_pass_attempts", "l3_completions", "l5_completions", "l8_completions",
+        "l3_passing_yards", "l5_passing_yards", "l8_passing_yards",
+        "spread_line", "total_line", "team_implied_total", "opponent_implied_total", "favorite_status",
+        "spread_bucket", "game_total_bucket", "pass_volume_environment", "rush_volume_environment",
+        "opp_receiving_fit_score", "opp_rushing_fit_score", "opp_passing_fit_score",
+        "defense_fit_sample_games", "defense_fit_reliability", "recent_form_reliability",
+        "game_environment_reliability", "context_data_quality",
         "receiving_market_available", "rushing_market_available", "passing_market_available",
         "projection_score", "usage_foundation_score", "recent_form_score", "opponent_fit_score", "game_script_score",
         "weather_score", "role_availability_score", "volatility_score", "data_quality_score", "overall_signal_score",
@@ -218,11 +331,13 @@ Live betting output created: `{live_output}`
 
 Live context: roster `{roster}`, role `{role}`, injury `{injury}`
 
-Scoring status: `LIMITED_V1`
+Scoring status: `CONTEXT_ENRICHED_V1`
 
-Unavailable context: `opponent fit, game script, weather, recent form, practice trend, detailed defense context`
+Available context: `pre-target recent form, schedules.csv game environment, shrinkage-adjusted defense fit`
 
-Next required action: Source real live context and matchup data before treating signal tiers as full slate confidence.
+Unavailable context: `weather, route share, first-read share, shadow coverage, CB matchup, practice trend`
+
+Next required action: Source real live context and unavailable matchup data before treating signal tiers as full slate confidence.
 """
     output_path("run_reports/latest_player_week_signal_master_report.md").write_text(text, encoding="utf-8")
 

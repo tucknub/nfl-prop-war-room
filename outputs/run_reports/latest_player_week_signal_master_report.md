@@ -1,6 +1,6 @@
 # Player Week Signal Master Report
 
-Run timestamp: `2026-07-07T14:28:14+00:00`
+Run timestamp: `2026-07-07T14:56:45+00:00`
 
 Rows: `762`
 
@@ -10,8 +10,10 @@ Live betting output created: `False`
 
 Live context: roster `NEEDS DATA`, role `NEEDS DATA`, injury `NEEDS DATA`
 
-Scoring status: `LIMITED_V1`
+Scoring status: `CONTEXT_ENRICHED_V1`
 
-Unavailable context: `opponent fit, game script, weather, recent form, practice trend, detailed defense context`
+Available context: `pre-target recent form, schedules.csv game environment, shrinkage-adjusted defense fit`
 
-Next required action: Source real live context and matchup data before treating signal tiers as full slate confidence.
+Unavailable context: `weather, route share, first-read share, shadow coverage, CB matchup, practice trend`
+
+Next required action: Source real live context and unavailable matchup data before treating signal tiers as full slate confidence.

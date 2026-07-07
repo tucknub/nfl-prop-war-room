@@ -1,12 +1,12 @@
 # Player Week Signal Master Validation
 
-Run timestamp: `2026-07-07T14:28:35.945733+00:00`
+Run timestamp: `2026-07-07T14:57:09.450398+00:00`
 
 Overall status: `PASS`
 
 Master rows: `762`
 
-Inventory rows: `29`
+Inventory rows: `34`
 
 Final readiness: `NO-GO`
 

@@ -32,6 +32,14 @@ DISPLAY_COLUMNS = [
     "signal_tier",
     "rushing_yards_projection",
     "carries_projection",
+    "l3_carries",
+    "l5_carries",
+    "l8_carries",
+    "l3_rushing_yards",
+    "l5_rushing_yards",
+    "opp_rushing_fit_score",
+    "defense_fit_reliability",
+    "rush_volume_environment",
     "projection_score",
     "usage_foundation_score",
     "recent_form_score",
@@ -76,6 +84,11 @@ with st.sidebar:
     view = filter_multiselect(view, "opponent", "Opponent")
     view = filter_multiselect(view, "position", "Position")
     view = filter_multiselect(view, "signal_tier", "Signal tier")
+    view = filter_multiselect(view, "recent_form_reliability", "Recent form reliability")
+    view = filter_multiselect(view, "defense_fit_reliability", "Defense fit reliability")
+    view = filter_multiselect(view, "rush_volume_environment", "Rush volume environment")
+    view = filter_multiselect(view, "game_total_bucket", "Game total bucket")
+    view = filter_multiselect(view, "spread_bucket", "Spread bucket")
     view = filter_minimum(view, "rushing_yards_projection", "Minimum rushing yards projection", 0.0)
     view = filter_minimum(view, "carries_projection", "Minimum carries projection", 0.0)
 
@@ -91,6 +104,7 @@ with cols[3]:
     risk_name = view.loc[risk.idxmax()].get("player_name", "n/a") if risk.notna().any() else "n/a"
     metric_card("Most Review Risk", risk_name, "REVIEW")
 
+st.caption("Defense fit is reliability-adjusted and should not be treated as certain.")
 render_signal_table(
     view.sort_values("overall_signal_score", ascending=False).head(300),
     SCORE_COLUMNS,

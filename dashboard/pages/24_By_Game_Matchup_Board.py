@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import load_signal_csv, render_signal_table
+from signal_ui import filter_multiselect, load_signal_csv, render_signal_table
 from utils import inject_global_styles, metric_card, page_header, section_header, sidebar_status, warning_banner
 
 
@@ -33,6 +33,14 @@ DISPLAY_COLUMNS = [
     "game_script_score",
     "role_availability_score",
     "injury_status",
+    "spread_line",
+    "total_line",
+    "team_implied_total",
+    "favorite_status",
+    "spread_bucket",
+    "game_total_bucket",
+    "pass_volume_environment",
+    "rush_volume_environment",
     "top_signal_reason",
     "review_reason",
 ]
@@ -77,6 +85,12 @@ df["game_selector"] = df.apply(game_label, axis=1)
 games = sorted(df["game_selector"].dropna().astype(str).unique())
 selected_game = st.selectbox("Game", games)
 game = df[df["game_selector"].astype(str).eq(selected_game)].copy()
+with st.sidebar:
+    st.markdown("### Game Context Filters")
+    game = filter_multiselect(game, "game_total_bucket", "Game total bucket")
+    game = filter_multiselect(game, "spread_bucket", "Spread bucket")
+    game = filter_multiselect(game, "pass_volume_environment", "Pass volume environment")
+    game = filter_multiselect(game, "rush_volume_environment", "Rush volume environment")
 
 review_count = 0
 if "signal_tier" in game.columns:
@@ -111,6 +125,7 @@ for idx, team in enumerate(teams[:2]):
         )
 
 section_header("Top Signals In This Game")
+st.caption("Defense and game-context signals are reliability-adjusted and should not be treated as certain.")
 render_signal_table(
     game.sort_values("overall_signal_score", ascending=False).head(25),
     SCORE_COLUMNS,

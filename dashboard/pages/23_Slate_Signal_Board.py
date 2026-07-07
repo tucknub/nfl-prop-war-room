@@ -42,6 +42,12 @@ DISPLAY_COLUMNS = [
     "data_quality_score",
     "green_signal_count",
     "red_flag_count",
+    "recent_form_reliability",
+    "defense_fit_reliability",
+    "game_total_bucket",
+    "spread_bucket",
+    "pass_volume_environment",
+    "rush_volume_environment",
     "top_signal_reason",
     "review_reason",
 ]
@@ -77,6 +83,12 @@ with st.sidebar:
     view = filter_multiselect(view, "position", "Position")
     view = filter_multiselect(view, "team", "Team")
     view = filter_multiselect(view, "signal_tier", "Signal tier")
+    view = filter_multiselect(view, "recent_form_reliability", "Recent form reliability")
+    view = filter_multiselect(view, "defense_fit_reliability", "Defense fit reliability")
+    view = filter_multiselect(view, "game_total_bucket", "Game total bucket")
+    view = filter_multiselect(view, "spread_bucket", "Spread bucket")
+    view = filter_multiselect(view, "pass_volume_environment", "Pass volume environment")
+    view = filter_multiselect(view, "rush_volume_environment", "Rush volume environment")
     view = filter_minimum(view, "overall_signal_score", "Minimum overall signal score", 0.0)
     if st.checkbox("Hide insufficient data", value=False) and "signal_tier" in view.columns:
         view = view[~view["signal_tier"].astype(str).eq("INSUFFICIENT_DATA")]
@@ -86,6 +98,7 @@ with st.sidebar:
 
 render_signal_kpis(view)
 top_signal_cards(view, count=5)
+st.caption("Defense fit is reliability-adjusted and should not be treated as certain.")
 render_signal_table(
     view.sort_values("overall_signal_score", ascending=False).head(300),
     SCORE_COLUMNS,

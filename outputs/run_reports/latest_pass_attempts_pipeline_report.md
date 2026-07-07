@@ -1,6 +1,6 @@
 # Pass Attempts V1 Pipeline Report
 
-Run timestamp: `2026-07-07T14:27:22+00:00`
+Run timestamp: `2026-07-07T14:55:47+00:00`
 
 Formula: `projected_team_pass_attempts x projected_qb_attempt_share = projected_pass_attempts`
 

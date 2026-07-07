@@ -11,20 +11,25 @@ estimated_routes_proxy,usage,Receiving Signal Board,outputs/google_sheets_recept
 projected_carry_share,usage,Rushing Signal Board,outputs/google_sheets_carries_historical_test.csv,projected_player_rush_attempt_share,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Carries support signal.
 projection_confidence,data_quality,All Signal Boards,market projection outputs,confidence_bucket,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Available where market exports include confidence_bucket.
 quality_flags,data_quality,Blocked / Review Board,market projection outputs,quality_flags,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Used for review flags.
+recent_form_features,recent_form,All Signal Boards,outputs/signal_boards/signal_context_features.csv,recent_form_reliability,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Pre-target L3/L5/L8 weekly player form from data/raw/weekly.csv.
+recent_receiving_form,recent_form,Receiving Signal Board,outputs/signal_boards/signal_context_features.csv,l3_targets,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Pre-target recent targets/catches/yards; not Targets V1.
+recent_rushing_form,recent_form,Rushing Signal Board,outputs/signal_boards/signal_context_features.csv,l3_carries,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Pre-target recent carries and rushing yards.
+recent_passing_form,recent_form,Passing Signal Board,outputs/signal_boards/signal_context_features.csv,l3_pass_attempts,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Pre-target recent pass volume and yards.
+spread_total_game_script,game_script,Slate Overview,outputs/signal_boards/signal_context_features.csv,game_script_score,Yes,Yes,No,pipeline,local,medium,AVAILABLE,From schedules.csv spread_line/total_line where present; historical-test context only.
+game_environment_buckets,game_script,By-Game Matchup Board,outputs/signal_boards/signal_context_features.csv,game_total_bucket,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Conservative total/spread buckets from schedules.csv.
+opponent_allowed_by_position,defense_fit,Position Signal Boards,outputs/signal_boards/signal_context_features.csv,defense_fit_reliability,Yes,Yes,No,pipeline,local,low,AVAILABLE_WITH_SHRINKAGE,Historical allowed stats by opponent/position with shrinkage toward league average.
+context_data_quality,data_quality,All Signal Boards,outputs/signal_boards/signal_context_features.csv,context_data_quality,Yes,Yes,No,pipeline,local,medium,AVAILABLE,Reliability-aware context data quality field.
 current_roster_gate_status,role,Blocked / Review Board,outputs/roster/current_roster_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
 current_role_gate_status,role,Blocked / Review Board,outputs/roles/current_role_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
 current_injury_gate_status,injury,Blocked / Review Board,outputs/injuries/current_injury_map_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Gate exists but production status currently needs real data.
 market_odds_gate_status,data_quality,Edge Preview Board,outputs/odds/current_market_odds_status.csv,status,Yes,Yes,No,pipeline,local,medium,AVAILABLE_NEEDS_DATA,Odds gate exists but no real odds loaded.
-recent_receptions_form,recent_form,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,Do not create unless real rolling recent-form columns are exposed.
 route_share,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,True route share is not currently sourced.
 snap_share,usage,All Signal Boards,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,True snap share is not currently sourced.
 air_yards_share,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No sourced air-yards-share column in current outputs.
 red_zone_targets,usage,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,"Possible later from play-by-play, not built now."
 goal_line_carries,usage,Rushing Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,"Possible later from play-by-play, not built now."
-opponent_allowed_by_position,matchup,By-Game Matchup Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,PLANNED_SOURCE,Opponent defensive context is not sourced yet.
 coverage_tendency,defense_fit,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No man/zone source exists in current project.
 shadow_cb_matchup,defense_fit,Receiving Signal Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,Do not assume shadow coverage.
-spread_total_game_script,game_script,Slate Overview,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No live spread/total source loaded.
 weather,weather,Slate Overview,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,No weather source loaded.
 practice_report_progression,practice_trend,Blocked / Review Board,NOT_AVAILABLE,NOT_AVAILABLE,No,No,No,planned,unknown,unknown,NEEDS SOURCE,"Injury status exists, but practice progression trend is not sourced."
 projection_volatility_proxy,volatility,Slate Overview,market projection outputs,confidence_bucket,Yes,Yes,No,pipeline,local,low,PARTIAL,Proxy only from confidence/quality flags.

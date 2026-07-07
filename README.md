@@ -489,3 +489,19 @@ These pages read existing CSVs from `outputs/signal_boards/`, which are derived 
 python -m src.export.validate_signal_heatmap_ui
 streamlit run dashboard/Home.py
 ```
+
+## Signal Context Enrichment V1
+
+Signal Context Enrichment V1 adds football context to the existing signal boards without creating a new market or changing projection math.
+
+- Recent form comes from pre-target `data/raw/weekly.csv` L3/L5/L8 player averages.
+- Game environment comes from `data/raw/schedules.csv` spread and total fields when present.
+- Opponent defense fit comes from historical allowed stats by defense and position, then shrinks noisy values toward league average.
+- Weather, route share, first-read share, shadow coverage, and CB matchup data remain unavailable until real source columns exist.
+
+```powershell
+python -m src.export.export_signal_context_features
+python -m src.export.validate_signal_context_features
+```
+
+The signal boards remain historical-test research views while Final Readiness is `NO-GO`.

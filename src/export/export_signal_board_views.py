@@ -16,6 +16,37 @@ def sort_board(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.sort_values(["overall_signal_score", "projection_score"], ascending=[False, False])
 
 
+VIEW_COLUMNS = {
+    "receiving_signal_board": [
+        "l3_targets", "l5_targets", "l8_targets", "l3_receptions", "l5_receptions",
+        "l3_receiving_yards", "l5_receiving_yards", "opp_receiving_fit_score",
+        "defense_fit_reliability", "pass_volume_environment", "game_script_score",
+        "recent_form_score",
+    ],
+    "rushing_signal_board": [
+        "l3_carries", "l5_carries", "l8_carries", "l3_rushing_yards", "l5_rushing_yards",
+        "opp_rushing_fit_score", "defense_fit_reliability", "rush_volume_environment",
+        "game_script_score", "recent_form_score",
+    ],
+    "passing_signal_board": [
+        "l3_pass_attempts", "l5_pass_attempts", "l3_passing_yards", "l5_passing_yards",
+        "opp_passing_fit_score", "defense_fit_reliability", "pass_volume_environment",
+        "game_script_score", "recent_form_score",
+    ],
+    "by_game_signal_board": [
+        "game_id", "home_team", "away_team", "is_home", "spread_line", "total_line",
+        "team_implied_total", "favorite_status", "spread_bucket", "game_total_bucket",
+        "pass_volume_environment", "rush_volume_environment", "game_environment_reliability",
+    ],
+}
+
+
+def keep_existing(frame: pd.DataFrame, preferred: list[str]) -> pd.DataFrame:
+    base = [column for column in frame.columns if column not in preferred]
+    ordered = base + [column for column in preferred if column in frame.columns and column not in base]
+    return frame[ordered]
+
+
 def export_signal_board_views() -> dict[str, pd.DataFrame]:
     master = read_master()
     boards: dict[str, pd.DataFrame] = {}
@@ -33,6 +64,9 @@ def export_signal_board_views() -> dict[str, pd.DataFrame]:
         for name in ["by_game_signal_board", "receiving_signal_board", "rushing_signal_board", "passing_signal_board", "blocked_review_board"]:
             boards[name] = master.copy()
     for name, frame in boards.items():
+        if name in VIEW_COLUMNS and not frame.empty:
+            frame = keep_existing(frame, VIEW_COLUMNS[name])
+            boards[name] = frame
         frame.to_csv(output_path(f"signal_boards/{name}.csv"), index=False)
     return boards
 

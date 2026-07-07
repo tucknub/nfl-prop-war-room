@@ -88,6 +88,16 @@ The main Signal Boards are the user-facing research layer:
 - Blocked / Review Board
 
 They read from `outputs/signal_boards/` and derive from `player_week_signal_master.csv`. They do not recompute score formulas, do not create live betting output, and do not add new markets. Existing model pages remain debug/research views, while readiness and gate pages remain admin/safety views. Odds/CLV are not the focus of these heatmaps; opponent, weather, and coverage context stays limited until real data sources are loaded.
+
+## Signal Context Enrichment V1
+
+The signal pages now include sourced football context when available:
+
+- Recent L3/L5/L8 form from pre-target weekly player stats.
+- Game environment from schedule spread/total fields.
+- Opponent defense fit from historical allowed stats with reliability shrinkage.
+
+Defense fit is noisy and should be read as a research signal, not certainty. Weather, route share, first-read share, shadow coverage, and CB matchup data remain unavailable until real sources are added.
 - Gate Status
 - Identity Warnings
 - Run Reports
