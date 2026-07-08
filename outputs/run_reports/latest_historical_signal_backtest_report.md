@@ -1,6 +1,6 @@
 # Historical Signal Backtest Report
 
-Run timestamp: `2026-07-08T00:16:29+00:00`
+Run timestamp: `2026-07-08T18:53:43+00:00`
 
 Audit type: `RESEARCH ONLY / HISTORICAL SIGNAL BACKTEST`
 

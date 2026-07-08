@@ -7,8 +7,8 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import filter_minimum, filter_multiselect, load_signal_csv, render_signal_table
-from utils import inject_global_styles, page_header, sidebar_status, warning_banner
+from signal_ui import filter_minimum, filter_multiselect, inject_signal_css, load_signal_csv, render_signal_legend, render_signal_table
+from utils import inject_global_styles, page_header, section_header, sidebar_status, warning_banner
 
 
 PATH = "outputs/signal_boards/blocked_review_board.csv"
@@ -42,6 +42,7 @@ DISPLAY_COLUMNS = [
 
 st.set_page_config(page_title="Blocked / Review Board", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
 page_header("Blocked / Review Board", "Rows that need more context before they should be trusted.", "REVIEW")
@@ -51,6 +52,7 @@ warning_banner(
     "A red or review player is not automatically bad at football. It means the signal is incomplete, risky, or missing key context.",
 )
 st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
+render_signal_legend()
 
 df = load_signal_csv(PATH)
 if df.empty:
@@ -83,6 +85,25 @@ with cols[2]:
     st.metric("Blocked Rows", blocked_rows)
 with cols[3]:
     st.metric("Missing / Red Flags", f"{missing_total} / {red_total}")
+
+section_header("Blockers By Reason", "Protection summary for missing or risky signal context.")
+reason_cols = st.columns(2)
+with reason_cols[0]:
+    if "blocked_reason" in view.columns:
+        blocked_summary = view["blocked_reason"].fillna("").astype(str)
+        blocked_summary = blocked_summary[blocked_summary.str.strip().ne("")].value_counts().reset_index()
+        blocked_summary.columns = ["blocked_reason", "row_count"]
+        st.dataframe(blocked_summary.head(12), use_container_width=True, hide_index=True)
+    else:
+        st.info("Blocked reason is not available.")
+with reason_cols[1]:
+    if "review_reason" in view.columns:
+        review_summary = view["review_reason"].fillna("").astype(str)
+        review_summary = review_summary[review_summary.str.strip().ne("")].value_counts().reset_index()
+        review_summary.columns = ["review_reason", "row_count"]
+        st.dataframe(review_summary.head(12), use_container_width=True, hide_index=True)
+    else:
+        st.info("Review reason is not available.")
 
 st.markdown(
     """

@@ -7,7 +7,16 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import build_heatmap_styler, command_center_card, load_signal_csv, quick_link_card, section_label
+from signal_ui import (
+    build_signal_heatmap,
+    command_center_card,
+    inject_signal_css,
+    load_signal_csv,
+    quick_link_card,
+    render_player_signal_card,
+    render_signal_legend,
+    section_label,
+)
 from utils import inject_global_styles, page_header, section_header, sidebar_status, warning_banner
 
 
@@ -33,6 +42,15 @@ def top_player(frame: pd.DataFrame, column: str, label: str) -> tuple[str, objec
         return "NOT_AVAILABLE", "NEEDS SOURCE"
     row = frame.loc[values.idxmax()]
     return f"{row.get('player_name', 'n/a')} ({values.max():.1f})", label
+
+
+def top_row(frame: pd.DataFrame, column: str = "overall_signal_score") -> pd.Series | None:
+    if frame.empty or column not in frame.columns:
+        return None
+    values = numeric(frame, column)
+    if not values.notna().any():
+        return None
+    return frame.loc[values.idxmax()]
 
 
 def game_key(row: pd.Series) -> str:
@@ -75,15 +93,21 @@ def by_game_mini(frame: pd.DataFrame) -> pd.DataFrame:
 
 st.set_page_config(page_title="NFL Signal Command Center", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
-page_header(
-    "NFL Signal Command Center",
-    "Color-coded player and matchup signals. No odds. No CLV. No betting output.",
-    "HISTORICAL TEST ONLY",
+st.markdown(
+    """
+    <div class="signal-header">
+      <h2>NFL Signal Command Center</h2>
+      <p>Color-coded player and matchup signals. No odds. No CLV. No betting output.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 section_label("Main Signal Workflow")
 warning_banner("Research-only signal board", "Final readiness remains NO-GO.")
+render_signal_legend()
 
 slate = load_signal_csv(SLATE)
 by_game = load_signal_csv(BY_GAME)
@@ -115,6 +139,21 @@ with kpi_cols[5]:
 with kpi_cols[6]:
     command_center_card("Passing Rows", len(passing), "PASS")
 
+section_header("Top Player Cards", "The fastest scan of the slate.")
+card_specs = [
+    ("Best Overall Signal", slate, "overall_signal_score"),
+    ("Best Receiving Signal", receiving, "overall_signal_score"),
+    ("Best Rushing Signal", rushing, "overall_signal_score"),
+    ("Best Passing Signal", passing, "overall_signal_score"),
+    ("Most Review Risk", blocked if not blocked.empty else slate, "missing_signal_count"),
+]
+card_cols = st.columns(5)
+for idx, (_, frame, column) in enumerate(card_specs):
+    row = top_row(frame, column)
+    if row is not None:
+        with card_cols[idx % len(card_cols)]:
+            render_player_signal_card(row)
+
 section_header("Top 10 Overall Signals", "Sorted from the existing slate signal board.")
 top_cols = [
     "player_name",
@@ -129,9 +168,10 @@ top_cols = [
 ]
 top = slate.sort_values("overall_signal_score", ascending=False).head(10)
 st.dataframe(
-    build_heatmap_styler(top[[col for col in top_cols if col in top.columns]], ["overall_signal_score"], ["signal_tier"]),
+    build_signal_heatmap(top[[col for col in top_cols if col in top.columns]], ["overall_signal_score"], ["signal_tier", "recommended_user_action"]),
     use_container_width=True,
     hide_index=True,
+    height=420,
 )
 
 section_header("Best By Category")
@@ -158,10 +198,25 @@ if mini.empty:
     st.info("By-game signal rows are not available.")
 else:
     st.dataframe(
-        build_heatmap_styler(mini.head(40), ["top_signal_score"], ["top_signal_tier"]),
+        build_signal_heatmap(mini.head(40), ["top_signal_score"], ["top_signal_tier"]),
         use_container_width=True,
         hide_index=True,
+        height=420,
     )
+
+section_header("Quick Start")
+st.markdown(
+    """
+    <div class="info-card">
+    1. Start with Top Overall Signals.<br>
+    2. Use By-Game Matchup Board to compare both teams.<br>
+    3. Open Receiving/Rushing/Passing boards for full tables.<br>
+    4. Use Player Signal Drilldown for the why.<br>
+    5. Check Blocked/Review before trusting any signal.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 section_header("Quick Links", "Use these pages in order for the main workflow.")
 links = [

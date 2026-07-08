@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import filter_minimum, filter_multiselect, load_signal_csv, render_signal_table
+from signal_ui import filter_minimum, filter_multiselect, inject_signal_css, load_signal_csv, render_signal_legend, render_signal_table, top_signal_cards
 from utils import inject_global_styles, metric_card, page_header, sidebar_status, warning_banner
 
 
@@ -34,7 +34,6 @@ DISPLAY_COLUMNS = [
     "carries_projection",
     "l3_carries",
     "l5_carries",
-    "l8_carries",
     "l3_rushing_yards",
     "l5_rushing_yards",
     "opp_rushing_fit_score",
@@ -50,10 +49,7 @@ DISPLAY_COLUMNS = [
     "data_quality_score",
     "green_signal_count",
     "red_flag_count",
-    "signal_explanation",
     "recommended_user_action",
-    "top_positive_driver_1",
-    "top_negative_driver_1",
     "top_signal_reason",
     "review_reason",
 ]
@@ -71,12 +67,14 @@ def top_name(df: pd.DataFrame, column: str) -> str:
 
 st.set_page_config(page_title="Rushing Signal Board", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
 page_header("Rushing Signal Board", "Rushing player signals from projections and sourced context.", "HISTORICAL TEST ONLY")
 st.caption("Section: Main Signal Workflow")
 warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "This is a signal research page, not a betting page.")
 st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
+render_signal_legend()
 
 df = load_signal_csv(PATH)
 if df.empty:
@@ -110,6 +108,7 @@ with cols[3]:
     risk_name = view.loc[risk.idxmax()].get("player_name", "n/a") if risk.notna().any() else "n/a"
     metric_card("Most Review Risk", risk_name, "REVIEW")
 
+top_signal_cards(view, count=5)
 st.caption("Defense fit is reliability-adjusted and should not be treated as certain.")
 render_signal_table(
     view.sort_values("overall_signal_score", ascending=False).head(300),

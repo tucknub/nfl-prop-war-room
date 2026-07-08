@@ -7,7 +7,17 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import build_heatmap_styler, load_signal_csv, render_signal_table
+from signal_ui import (
+    build_heatmap_styler,
+    inject_signal_css,
+    load_signal_csv,
+    render_action_badge,
+    render_metric_chip,
+    render_reliability_badge,
+    render_signal_badge,
+    render_signal_legend,
+    render_signal_table,
+)
 from utils import inject_global_styles, metric_card, page_header, section_header, sidebar_status, warning_banner
 
 
@@ -54,6 +64,7 @@ def text_block(title: str, value: object) -> None:
 
 st.set_page_config(page_title="Player Signal Drilldown", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
 page_header(
@@ -66,6 +77,7 @@ warning_banner(
     "Research-only player context",
     "No odds, no CLV, no betting output.",
 )
+render_signal_legend()
 
 profiles = load_signal_csv(PROFILES)
 market = load_signal_csv(MARKET)
@@ -103,6 +115,22 @@ labels = {
 selected_key = st.selectbox("Player", list(labels.keys()), format_func=lambda key: labels.get(key, key))
 selected = view.loc[view.apply(player_key, axis=1).eq(selected_key)].iloc[0]
 
+st.markdown(
+    f"""
+    <div class="signal-header">
+      <h2>{clean_value(selected.get('player_name'))}</h2>
+      <p>{clean_value(selected.get('team'), '')} / {clean_value(selected.get('opponent'), '')} / {clean_value(selected.get('position'), '')}</p>
+      <div class="signal-chip-row">
+        {render_signal_badge(selected.get('overall_signal_score'))}
+        {render_signal_badge(selected.get('signal_tier'))}
+        {render_action_badge(selected.get('recommended_user_action'))}
+        {render_reliability_badge(selected.get('readiness_status'))}
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 cols = st.columns(6)
 with cols[0]:
     metric_card("Overall Signal", clean_value(selected.get("overall_signal_score")), clean_value(selected.get("signal_tier")))
@@ -128,15 +156,43 @@ with count_cols[3]:
     metric_card("Missing", clean_value(selected.get("missing_signal_count"), "0"), "NEEDS SOURCE")
 
 section_header("Why This Player?")
-text_block("Signal explanation", selected.get("signal_explanation"))
+st.markdown(
+    f"""
+    <div class="info-card">
+      <strong>Signal explanation</strong><br><br>
+      {clean_value(selected.get('signal_explanation'), '')}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 driver_cols = st.columns(2)
 with driver_cols[0]:
-    text_block("Top positive drivers", "; ".join(clean_value(selected.get(col), "") for col in ["top_positive_driver_1", "top_positive_driver_2", "top_positive_driver_3"] if clean_value(selected.get(col), "")))
+    st.markdown(
+        f"""
+        <div class="info-card">
+        <strong>Top positive drivers</strong><br><br>
+        {"<br>".join(clean_value(selected.get(col), "") for col in ["top_positive_driver_1", "top_positive_driver_2", "top_positive_driver_3"] if clean_value(selected.get(col), ""))}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 with driver_cols[1]:
-    text_block("Top negative drivers", "; ".join(clean_value(selected.get(col), "") for col in ["top_negative_driver_1", "top_negative_driver_2", "top_negative_driver_3"] if clean_value(selected.get(col), "")))
-text_block("Review reason", selected.get("review_reason"))
-text_block("Blocked reason", selected.get("blocked_reason"))
-text_block("Data limitations", selected.get("data_limitations", "NOT_AVAILABLE"))
+    st.markdown(
+        f"""
+        <div class="info-card">
+        <strong>Top negative drivers</strong><br><br>
+        {"<br>".join(clean_value(selected.get(col), "") for col in ["top_negative_driver_1", "top_negative_driver_2", "top_negative_driver_3"] if clean_value(selected.get(col), ""))}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+reason_cols = st.columns(3)
+with reason_cols[0]:
+    text_block("Review reason", selected.get("review_reason"))
+with reason_cols[1]:
+    text_block("Blocked reason", selected.get("blocked_reason"))
+with reason_cols[2]:
+    text_block("Data limitations", selected.get("data_limitations", "NOT_AVAILABLE"))
 
 player_market = matching_rows(market, selected)
 render_signal_table(
@@ -181,6 +237,25 @@ render_signal_table(
 )
 
 player_context = matching_rows(context, selected)
+section_header("Context Chips", "Only sourced context fields are shown.")
+if player_context.empty:
+    st.info("Context chips are NOT_AVAILABLE for this player.")
+else:
+    first_context = player_context.iloc[0]
+    chip_columns = [
+        ("Total", "total_line"),
+        ("Spread", "spread_line"),
+        ("Favorite", "favorite_status"),
+        ("Pass Env", "pass_volume_environment"),
+        ("Rush Env", "rush_volume_environment"),
+        ("Defense Fit", "defense_fit_reliability"),
+        ("Recent Form", "recent_form_reliability"),
+    ]
+    chip_wrap = st.columns(4)
+    for idx, (label, column) in enumerate(chip_columns):
+        if column in player_context.columns:
+            with chip_wrap[idx % len(chip_wrap)]:
+                render_metric_chip(label, clean_value(first_context.get(column)), first_context.get(column))
 render_signal_table(
     player_context,
     ["spread_line", "total_line", "team_implied_total", "opp_receiving_fit_score", "opp_rushing_fit_score", "opp_passing_fit_score", "context_data_quality"],

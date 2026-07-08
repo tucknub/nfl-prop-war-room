@@ -1,6 +1,6 @@
 # Signal Weight Tuning Report
 
-Run timestamp: `2026-07-08T00:16:34+00:00`
+Run timestamp: `2026-07-08T18:53:47+00:00`
 
 Audit type: `RESEARCH ONLY / CHALLENGER PROFILES`
 

@@ -32,6 +32,12 @@ The main user-facing entry point is `Signal Command Center`. Use it before the l
 
 Signal pages are the main workflow. Research/audit pages validate the signal system. Readiness/admin pages explain data quality and safety blockers. Odds and CLV are not the current product focus.
 
+## Kasper-Style Signal Board UX Polish V1
+
+The main signal workflow now uses a cleaner command-center style: polished KPI cards, top-player cards, compact by-game summaries, green/yellow/orange/red score cells, tier/action badges, reliability chips, and a shared legend. Signal Command Center is the first page to use.
+
+Colors are intentionally simple: dark green for elite, green for strong, yellow for watch, orange for review/risk, red for blocked/weak, and gray for missing or unavailable. Debug/audit/admin pages remain secondary to visual signal scanning.
+
 Current expected state for the stable snapshot:
 
 - Final readiness: `NO-GO`

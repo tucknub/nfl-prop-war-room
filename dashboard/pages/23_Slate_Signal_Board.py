@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import filter_minimum, filter_multiselect, load_signal_csv, render_signal_kpis, render_signal_table, top_signal_cards
+from signal_ui import filter_minimum, filter_multiselect, inject_signal_css, load_signal_csv, render_signal_kpis, render_signal_legend, render_signal_table, top_signal_cards
 from utils import inject_global_styles, page_header, sidebar_status, warning_banner
 
 
@@ -19,7 +19,6 @@ SCORE_COLUMNS = [
     "recent_form_score",
     "opponent_fit_score",
     "game_script_score",
-    "weather_score",
     "role_availability_score",
     "volatility_score",
     "data_quality_score",
@@ -31,27 +30,17 @@ DISPLAY_COLUMNS = [
     "position",
     "overall_signal_score",
     "signal_tier",
+    "recommended_user_action",
     "projection_score",
     "usage_foundation_score",
     "recent_form_score",
     "opponent_fit_score",
     "game_script_score",
-    "weather_score",
     "role_availability_score",
     "volatility_score",
     "data_quality_score",
     "green_signal_count",
     "red_flag_count",
-    "recent_form_reliability",
-    "defense_fit_reliability",
-    "game_total_bucket",
-    "spread_bucket",
-    "pass_volume_environment",
-    "rush_volume_environment",
-    "signal_explanation",
-    "recommended_user_action",
-    "top_positive_driver_1",
-    "top_negative_driver_1",
     "top_signal_reason",
     "review_reason",
 ]
@@ -59,6 +48,7 @@ DISPLAY_COLUMNS = [
 
 st.set_page_config(page_title="Slate Signal Board", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
 page_header(
@@ -72,6 +62,8 @@ warning_banner(
     "This is a research heatmap built from existing signal board files. It does not create live output.",
 )
 st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
+st.caption("This board ranks players by sourced NFL signals: projections, usage foundation, recent form, opponent fit, game script, role/readiness, volatility, and data quality.")
+render_signal_legend()
 
 df = load_signal_csv(PATH)
 if df.empty:

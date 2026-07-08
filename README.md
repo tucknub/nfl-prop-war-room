@@ -608,3 +608,18 @@ Workflow sections:
 - Legacy Model Outputs: model/debug pages remain available but are secondary.
 
 Odds and CLV are not the current product focus. The dashboard remains a research signal command center until live readiness becomes `GO`.
+
+## Kasper-Style Signal Board UX Polish V1
+
+The user-facing signal workflow now uses a cleaner command-center layout with polished KPI cards, top-player cards, compact by-game summaries, green-to-red score heatmaps, tier/action badges, reliability chips, and a shared signal legend.
+
+Signal colors:
+
+- Dark green: elite signal, usually 85+
+- Green: strong signal, usually 70-84
+- Yellow: watch range, usually 55-69
+- Orange: review or risk range, usually 40-54
+- Red: blocked or weak signal
+- Gray: missing or unavailable
+
+The main workflow remains visual signal scanning: players, games, recent form, defense fit, game environment, role/injury/readiness, and drilldown context. Debug, audit, and admin pages remain secondary. Odds and CLV are not the current product focus.

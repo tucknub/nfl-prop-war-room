@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from signal_ui import filter_multiselect, load_signal_csv, render_signal_table
+from signal_ui import filter_multiselect, inject_signal_css, load_signal_csv, render_metric_chip, render_signal_legend, render_signal_table
 from utils import inject_global_styles, metric_card, page_header, section_header, sidebar_status, warning_banner
 
 
@@ -20,6 +20,7 @@ SCORE_COLUMNS = [
     "opponent_fit_score",
     "game_script_score",
     "role_availability_score",
+    "data_quality_score",
 ]
 DISPLAY_COLUMNS = [
     "player_name",
@@ -31,20 +32,7 @@ DISPLAY_COLUMNS = [
     "recent_form_score",
     "opponent_fit_score",
     "game_script_score",
-    "role_availability_score",
-    "injury_status",
-    "spread_line",
-    "total_line",
-    "team_implied_total",
-    "favorite_status",
-    "spread_bucket",
-    "game_total_bucket",
-    "pass_volume_environment",
-    "rush_volume_environment",
-    "signal_explanation",
-    "recommended_user_action",
-    "top_positive_driver_1",
-    "top_negative_driver_1",
+    "data_quality_score",
     "top_signal_reason",
     "review_reason",
 ]
@@ -71,6 +59,7 @@ def top_name(df: pd.DataFrame, mask_column: str | None = None) -> str:
 
 st.set_page_config(page_title="By-Game Matchup Board", layout="wide")
 inject_global_styles()
+inject_signal_css()
 sidebar_status()
 
 page_header("By-Game Matchup Board", "Game-level player signal splits from the existing by-game signal board.", "HISTORICAL TEST ONLY")
@@ -80,6 +69,7 @@ warning_banner(
     "Game tables are research views only and do not create live output.",
 )
 st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
+render_signal_legend()
 
 df = load_signal_csv(PATH)
 if df.empty:
@@ -91,6 +81,18 @@ df["game_selector"] = df.apply(game_label, axis=1)
 games = sorted(df["game_selector"].dropna().astype(str).unique())
 selected_game = st.selectbox("Game", games)
 game = df[df["game_selector"].astype(str).eq(selected_game)].copy()
+chip_columns = [
+    ("Total", "total_line"),
+    ("Spread", "spread_line"),
+    ("Favorite", "favorite_status"),
+    ("Pass Env", "pass_volume_environment"),
+    ("Rush Env", "rush_volume_environment"),
+]
+chip_row = st.columns(len(chip_columns))
+for idx, (label, column) in enumerate(chip_columns):
+    if column in game.columns and not game[column].dropna().empty:
+        with chip_row[idx]:
+            render_metric_chip(label, game[column].dropna().iloc[0], "INFO")
 with st.sidebar:
     st.markdown("### Game Context Filters")
     game = filter_multiselect(game, "game_total_bucket", "Game total bucket")

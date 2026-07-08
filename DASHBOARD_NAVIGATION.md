@@ -54,3 +54,22 @@ Model output pages remain available for debugging and review, but they are secon
 Start at `Signal Command Center`, then move into the slate, game, family, and player drilldown pages. Treat admin and research pages as validation/support tools, not the main product surface.
 
 Odds and CLV are not the current product focus. The dashboard is a research signal command center until live readiness becomes `GO`.
+
+## Signal UX Polish
+
+The signal workflow uses a Kasper-style scan pattern:
+
+- Top KPI cards summarize the slate.
+- Top-player cards call out the best signals.
+- Tables use green-to-red heatmap cells for scores.
+- Tier/action/reliability badges make status easy to scan.
+- By-game summaries help compare both sides before drilling into player details.
+
+Color meaning:
+
+- Dark green = elite
+- Green = strong
+- Yellow = watch
+- Orange = review/risk
+- Red = blocked/weak
+- Gray = missing/unavailable

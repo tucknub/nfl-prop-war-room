@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
+from html import escape
 
 import pandas as pd
 import streamlit as st
@@ -39,6 +40,135 @@ def load_signal_csv(path: str | Path) -> pd.DataFrame:
     return load_csv_safe(path)
 
 
+def inject_signal_css() -> None:
+    st.markdown(
+        """
+        <style>
+        .signal-shell {
+          background: linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+          border: 1px solid #d7dee8;
+          border-radius: 18px;
+          box-shadow: 0 18px 46px rgba(15, 23, 42, .12);
+          padding: 1.15rem;
+          margin: 1rem 0;
+        }
+        .signal-header {
+          background: linear-gradient(135deg, #0b1628 0%, #17243a 58%, #26364d 100%);
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 18px;
+          padding: 1.2rem 1.3rem;
+          box-shadow: 0 20px 48px rgba(0,0,0,.28);
+          margin: .5rem 0 1rem;
+        }
+        .signal-header h2 { color: #f8fafc; margin: 0 0 .35rem; letter-spacing: 0; }
+        .signal-header p { color: #c8d3e2; margin: 0; }
+        .signal-kpi-card {
+          background: #ffffff;
+          border: 1px solid #d8e0ea;
+          border-radius: 14px;
+          box-shadow: 0 10px 28px rgba(15, 23, 42, .10);
+          padding: .95rem;
+          min-height: 118px;
+        }
+        .signal-kpi-title { color: #526172; font-size: .75rem; font-weight: 900; text-transform: uppercase; }
+        .signal-kpi-value { color: #111827; font-size: 1.55rem; font-weight: 950; line-height: 1.05; margin: .38rem 0; }
+        .signal-kpi-subtitle { color: #6b7280; font-size: .82rem; }
+        .signal-player-card {
+          background: #ffffff;
+          border: 1px solid #d8e0ea;
+          border-radius: 14px;
+          padding: 1rem;
+          box-shadow: 0 12px 28px rgba(15, 23, 42, .10);
+          min-height: 150px;
+        }
+        .signal-player-card .name { color: #0f172a; font-weight: 950; font-size: 1.05rem; }
+        .signal-player-card .meta { color: #64748b; font-size: .82rem; margin: .18rem 0 .65rem; }
+        .signal-player-card .score { color: #0b6b3a; font-size: 1.7rem; font-weight: 950; line-height: 1; }
+        .signal-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: .25rem;
+          padding: .22rem .58rem;
+          border-radius: 999px;
+          font-size: .73rem;
+          font-weight: 900;
+          border: 1px solid transparent;
+          white-space: nowrap;
+          margin: .1rem .18rem .1rem 0;
+        }
+        .pill-green-dark { color: #eafff1; background: #064e2f; border-color: #0b6b3a; }
+        .pill-green { color: #f1fff6; background: #16803f; border-color: #1f9d55; }
+        .pill-green-light { color: #0f3f26; background: #bcf7cf; border-color: #6ee7a0; }
+        .pill-yellow { color: #3d310d; background: #ffe199; border-color: #d9a441; }
+        .pill-orange { color: #fff4e6; background: #c96a17; border-color: #e08b31; }
+        .pill-red { color: #fff2f2; background: #b42318; border-color: #e15245; }
+        .pill-gray { color: #e5e7eb; background: #667085; border-color: #98a2b3; }
+        .pill-blue { color: #eff6ff; background: #2563eb; border-color: #60a5fa; }
+        .signal-chip-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .45rem 0 .75rem; }
+        .signal-legend { display:flex;flex-wrap:wrap;gap:.45rem;margin:.35rem 0 .8rem; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _pill_class(value: object, kind: str = "status") -> str:
+    text = "" if pd.isna(value) else str(value).upper()
+    if kind == "score":
+        score = pd.to_numeric(value, errors="coerce")
+        if pd.isna(score):
+            return "pill-gray"
+        if score >= 85:
+            return "pill-green-dark"
+        if score >= 70:
+            return "pill-green"
+        if score >= 55:
+            return "pill-yellow"
+        if score >= 40:
+            return "pill-orange"
+        return "pill-red"
+    if text in {"ELITE_SIGNAL", "PRIORITY_REVIEW"}:
+        return "pill-green-dark"
+    if text in {"STRONG_SIGNAL", "READY", "PASS", "GO"}:
+        return "pill-green"
+    if text in {"GOOD_SIGNAL", "HIGH"}:
+        return "pill-green-light"
+    if text in {"WATCH", "WATCHLIST", "HISTORICAL TEST ONLY", "MEDIUM"}:
+        return "pill-yellow"
+    if text in {"REVIEW", "REVIEW_CONTEXT", "LOW_PRIORITY", "NEEDS REVIEW", "CHECK", "LOW"}:
+        return "pill-orange"
+    if text in {"BLOCKED", "BLOCKED_DATA", "FAIL", "NO-GO", "DO NOT USE"}:
+        return "pill-red"
+    if "MISSING" in text or "NEEDS" in text or "NOT_AVAILABLE" in text or not text:
+        return "pill-gray"
+    return "pill-blue"
+
+
+def _pill(value: object, kind: str = "status") -> str:
+    text = "NOT_AVAILABLE" if pd.isna(value) or str(value).strip() == "" else str(value)
+    return f"<span class='signal-pill {_pill_class(value, kind)}'>{escape(text)}</span>"
+
+
+def render_signal_badge(value: object) -> str:
+    number = pd.to_numeric(value, errors="coerce")
+    return _pill(value, "score" if pd.notna(number) else "status")
+
+
+def render_action_badge(value: object) -> str:
+    return _pill(value, "action")
+
+
+def render_reliability_badge(value: object) -> str:
+    return _pill(value, "reliability")
+
+
+def render_metric_chip(label: str, value: object, status: object | None = None) -> None:
+    st.markdown(
+        f"<span class='signal-pill {_pill_class(status if status is not None else value)}'><strong>{escape(label)}:</strong> {escape(str(value))}</span>",
+        unsafe_allow_html=True,
+    )
+
+
 def section_label(text: str) -> None:
     st.markdown(
         f"""
@@ -51,8 +181,56 @@ def section_label(text: str) -> None:
     )
 
 
+def render_section_pill(section_name: str) -> None:
+    section_label(section_name)
+
+
+def render_status_banner(text: str, status: object) -> None:
+    st.markdown(
+        f"""
+        <div class="signal-header">
+          <h2>{escape(str(status))}</h2>
+          <p>{escape(str(text))}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def command_center_card(title: str, value: object, status: object | None = None, help_text: str | None = None) -> None:
-    metric_card(title, value, status, help_text)
+    status_html = _pill(status) if status is not None else ""
+    subtitle = f"<div class='signal-kpi-subtitle'>{escape(str(help_text))}</div>" if help_text else ""
+    st.markdown(
+        f"""
+        <div class="signal-kpi-card">
+          <div class="signal-kpi-title">{escape(str(title))}</div>
+          <div class="signal-kpi-value">{escape(str(value))}</div>
+          {status_html}
+          {subtitle}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_kpi_card(title: str, value: object, subtitle: str | None = None, status: object | None = None) -> None:
+    command_center_card(title, value, status, subtitle)
+
+
+def render_player_signal_card(row: pd.Series) -> None:
+    score = row.get("overall_signal_score", row.get("challenger_overall_signal_score", "n/a"))
+    st.markdown(
+        f"""
+        <div class="signal-player-card">
+          <div class="name">{escape(str(row.get('player_name', 'n/a')))}</div>
+          <div class="meta">{escape(str(row.get('team', '')))} / {escape(str(row.get('opponent', '')))} / {escape(str(row.get('position', '')))}</div>
+          <div class="score">{format_percent_or_score(score)}</div>
+          <div>{_pill(row.get('signal_tier', row.get('challenger_signal_tier', '')))}</div>
+          <div class="metric-help">{escape(str(row.get('top_signal_reason', row.get('preview_notes', '')) or ''))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def quick_link_card(title: str, description: str, page_name: str) -> None:
@@ -62,6 +240,22 @@ def quick_link_card(title: str, description: str, page_name: str) -> None:
           <div class="player-name">{title}</div>
           <div class="player-meta">{page_name}</div>
           <div class="metric-help">{description}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_signal_legend() -> None:
+    st.markdown(
+        """
+        <div class="signal-legend">
+          <span class="signal-pill pill-green-dark">Dark green = elite</span>
+          <span class="signal-pill pill-green">Green = strong</span>
+          <span class="signal-pill pill-yellow">Yellow = watch</span>
+          <span class="signal-pill pill-orange">Orange = review/risk</span>
+          <span class="signal-pill pill-red">Red = blocked/weak</span>
+          <span class="signal-pill pill-gray">Gray = missing/unavailable</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -138,6 +332,17 @@ def build_heatmap_styler(df: pd.DataFrame, score_columns: Iterable[str], status_
     if status_columns:
         styler = styler.map(status_color, subset=status_columns)
     return styler
+
+
+def build_signal_heatmap(df: pd.DataFrame, score_columns: Iterable[str], status_columns: Iterable[str] | None = None):
+    return build_heatmap_styler(df, score_columns, status_columns)
+
+
+def safe_display_dataframe(df: pd.DataFrame, height: int = 600) -> None:
+    if df is None or df.empty:
+        st.info("No rows available for this view.")
+        return
+    st.dataframe(df, use_container_width=True, hide_index=True, height=height)
 
 
 def render_signal_kpis(df: pd.DataFrame) -> None:

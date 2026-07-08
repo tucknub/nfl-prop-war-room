@@ -1,0 +1,11 @@
+check_name,expected,actual,status,severity,notes
+shared_signal_ui_helpers_exist,"['inject_signal_css', 'render_section_pill', 'render_status_banner', 'render_kpi_card', 'render_player_signal_card', 'render_signal_badge', 'render_action_badge', 'render_reliability_badge', 'render_metric_chip', 'build_signal_heatmap', 'safe_display_dataframe', 'render_signal_legend']",[],PASS,INFO,
+command_center_exists,True,True,PASS,INFO,
+command_center_signal_first_wording,True,True,PASS,INFO,
+signal_pages_read_signal_board_csvs,outputs/signal_boards/,[],PASS,INFO,
+signal_pages_do_not_center_odds_clv_language,low/no odds and CLV emphasis,[],PASS,INFO,
+no_fake_signal_data_columns_introduced,no fake/mock/random signal data,[],PASS,INFO,
+streamlit_signal_pages_compile,True,[],PASS,INFO,
+final_readiness_remains_no_go,NO-GO,NO-GO,PASS,INFO,
+live_betting_output_remains_false,False,False,PASS,INFO,
+leakage_status_pass,PASS,PASS,PASS,INFO,

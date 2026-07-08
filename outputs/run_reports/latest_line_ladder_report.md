@@ -1,6 +1,6 @@
 # Receptions Line Ladder Report
 
-Run timestamp: `2026-07-08T00:15:59+00:00`
+Run timestamp: `2026-07-08T18:53:15+00:00`
 
 Probability method: `Normal approximation: mean=calibrated_projection, sd=calibrated_RMSE`
 
