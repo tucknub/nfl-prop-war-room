@@ -73,3 +73,20 @@ Color meaning:
 - Orange = review/risk
 - Red = blocked/weak
 - Gray = missing/unavailable
+
+## Dashboard Product Reset V1
+
+The visible Streamlit sidebar is now simplified to these product pages:
+
+- Home
+- Signal Command Center
+- By-Game Matchup Board
+- Position Signal Boards
+- Player Signal Drilldown
+- Blocked / Review
+- Research Lab
+- Admin / Readiness
+
+Archived debug pages were moved to `dashboard/archived_pages/`. They remain recoverable for maintenance and audits, but they are not shown as normal user pages.
+
+Research Lab contains validation/backtest/tuning/report views. Admin / Readiness contains safety, gate, identity, data-intake, current-map, and dry-run status views.

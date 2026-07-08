@@ -623,3 +623,26 @@ Signal colors:
 - Gray: missing or unavailable
 
 The main workflow remains visual signal scanning: players, games, recent form, defense fit, game environment, role/injury/readiness, and drilldown context. Debug, audit, and admin pages remain secondary. Odds and CLV are not the current product focus.
+
+## Dashboard Product Reset V1
+
+The Streamlit app now uses a simplified product sidebar so the normal user experience feels like an NFL signal board instead of a build/debug workspace.
+
+Visible user pages:
+
+- Home
+- Signal Command Center
+- By-Game Matchup Board
+- Position Signal Boards
+- Player Signal Drilldown
+- Blocked / Review
+- Research Lab
+- Admin / Readiness
+
+Archived debug pages were moved to `dashboard/archived_pages/`. They are still recoverable, but they are not shown in the sidebar. Research Lab rolls up score audit, historical backtest, weight tuning, challenger preview, and run reports. Admin / Readiness rolls up live readiness, data intake, current roster/role/injury/odds maps, gate status, identity warnings, and edge dry-run status.
+
+Use this validator to keep the product navigation clean:
+
+```powershell
+python -m src.export.validate_dashboard_product_reset
+```

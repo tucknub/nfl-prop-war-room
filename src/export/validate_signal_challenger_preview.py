@@ -69,8 +69,10 @@ def validate_signal_challenger_preview() -> tuple[pd.DataFrame, str]:
     add(checks, "preview_rows_have_rows", ">0", len(preview), len(preview) > 0)
     add(checks, "family_comparison_have_rows", ">0", len(family), len(family) > 0)
     add(checks, "top_movers_have_rows", ">0", len(movers), len(movers) > 0)
-    page_path = Path("dashboard/pages/32_Champion_vs_Challenger.py")
-    add(checks, "streamlit_preview_page_exists", True, page_path.exists(), page_path.exists())
+    page_path = Path("dashboard/pages/06_Research_Lab.py")
+    page_text = page_path.read_text(encoding="utf-8", errors="replace") if page_path.exists() else ""
+    preview_page_ok = page_path.exists() and "Champion vs Challenger" in page_text
+    add(checks, "streamlit_preview_available_in_research_lab", True, preview_page_ok, preview_page_ok)
 
     required_preview_cols = {
         "preview_usage_status",

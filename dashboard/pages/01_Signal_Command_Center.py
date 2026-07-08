@@ -210,7 +210,7 @@ st.markdown(
     <div class="info-card">
     1. Start with Top Overall Signals.<br>
     2. Use By-Game Matchup Board to compare both teams.<br>
-    3. Open Receiving/Rushing/Passing boards for full tables.<br>
+    3. Open Position Signal Boards for receiving, rushing, and passing tables.<br>
     4. Use Player Signal Drilldown for the why.<br>
     5. Check Blocked/Review before trusting any signal.
     </div>
@@ -220,13 +220,13 @@ st.markdown(
 
 section_header("Quick Links", "Use these pages in order for the main workflow.")
 links = [
-    ("Slate Signal Board", "Start with the full player signal heatmap.", "23_Slate_Signal_Board"),
-    ("By-Game Matchup Board", "Review players grouped by matchup context.", "24_By_Game_Matchup_Board"),
-    ("Receiving Signal Board", "Inspect receiving-only signal rows.", "25_Receiving_Signal_Board"),
-    ("Rushing Signal Board", "Inspect rushing-only signal rows.", "26_Rushing_Signal_Board"),
-    ("Passing Signal Board", "Inspect quarterback passing signal rows.", "27_Passing_Signal_Board"),
-    ("Player Signal Drilldown", "Open one player and inspect drivers, context, and history.", "33_Player_Signal_Drilldown"),
-    ("Blocked / Review Board", "Finish by checking missing context and risk rows.", "28_Blocked_Review_Board"),
+    ("Signal Command Center", "Start with the top signal cards and slate heatmap.", "01_Signal_Command_Center"),
+    ("By-Game Matchup Board", "Review players grouped by matchup context.", "02_By_Game_Matchup_Board"),
+    ("Position Signal Boards", "Inspect receiving, rushing, and passing tabs.", "03_Position_Signal_Boards"),
+    ("Player Signal Drilldown", "Open one player and inspect drivers, context, and history.", "04_Player_Signal_Drilldown"),
+    ("Blocked / Review", "Finish by checking missing context and risk rows.", "05_Blocked_Review"),
+    ("Research Lab", "Use backtests, score audits, tuning, and challenger previews.", "06_Research_Lab"),
+    ("Admin / Readiness", "Review gates, identity warnings, and readiness blockers.", "07_Admin_Readiness"),
 ]
 link_cols = st.columns(3)
 for idx, (title, description, page) in enumerate(links):

@@ -9,32 +9,17 @@ import pandas as pd
 from src.common import output_path, project_path
 
 
-MAIN_WORKFLOW = [
-    "dashboard/pages/23_Slate_Signal_Board.py",
-    "dashboard/pages/24_By_Game_Matchup_Board.py",
-    "dashboard/pages/25_Receiving_Signal_Board.py",
-    "dashboard/pages/26_Rushing_Signal_Board.py",
-    "dashboard/pages/27_Passing_Signal_Board.py",
-    "dashboard/pages/28_Blocked_Review_Board.py",
-    "dashboard/pages/33_Player_Signal_Drilldown.py",
-]
-RESEARCH = [
-    "dashboard/pages/29_Signal_Score_Audit.py",
-    "dashboard/pages/30_Historical_Signal_Backtest.py",
-    "dashboard/pages/31_Signal_Weight_Tuning.py",
-    "dashboard/pages/32_Champion_vs_Challenger.py",
-]
-ADMIN = [
-    "dashboard/pages/01_Live_Readiness.py",
-    "dashboard/pages/14_Current_Roster_Map.py",
-    "dashboard/pages/16_Current_Role_Map.py",
-    "dashboard/pages/17_Current_Injury_Map.py",
-    "dashboard/pages/18_Market_Odds_Map.py",
-    "dashboard/pages/20_Edge_Dry_Run.py",
-    "dashboard/pages/21_Live_Data_Intake.py",
+VISIBLE_PAGES = [
+    "dashboard/pages/01_Signal_Command_Center.py",
+    "dashboard/pages/02_By_Game_Matchup_Board.py",
+    "dashboard/pages/03_Position_Signal_Boards.py",
+    "dashboard/pages/04_Player_Signal_Drilldown.py",
+    "dashboard/pages/05_Blocked_Review.py",
+    "dashboard/pages/06_Research_Lab.py",
+    "dashboard/pages/07_Admin_Readiness.py",
 ]
 HOME = project_path("dashboard", "Home.py")
-COMMAND_CENTER = project_path("dashboard", "pages", "02_Signal_Command_Center.py")
+COMMAND_CENTER = project_path("dashboard", "pages", "01_Signal_Command_Center.py")
 NAV_DOC = project_path("DASHBOARD_NAVIGATION.md")
 
 
@@ -100,17 +85,16 @@ def validate_dashboard_navigation() -> tuple[pd.DataFrame, str]:
     home_text = text(HOME)
     command_text = text(COMMAND_CENTER)
     add(checks, "home_mentions_signal_command_center", "Signal Command Center", "Signal Command Center" in home_text, "Signal Command Center" in home_text)
-    add(checks, "home_mentions_main_product_signal_workflow", "main product is the signal board workflow", "main product is the signal board workflow" in home_text, "main product is the signal board workflow" in home_text)
+    add(checks, "home_mentions_signal_first_board", "Signal-first NFL prop research board", "Signal-first NFL prop research board" in home_text, "Signal-first NFL prop research board" in home_text)
 
-    ok, missing = files_contain(MAIN_WORKFLOW, "Section: Main Signal Workflow")
-    add(checks, "main_signal_pages_have_workflow_labels", "Section: Main Signal Workflow", missing, ok)
-    ok, missing = files_contain(RESEARCH, "Section: Research / Audit Lab")
-    add(checks, "research_pages_have_lab_labels", "Section: Research / Audit Lab", missing, ok)
-    ok, missing = files_contain(ADMIN, "Section: Readiness / Data Admin")
-    add(checks, "admin_pages_have_data_admin_labels", "Section: Readiness / Data Admin", missing, ok)
+    missing_pages = [relative for relative in VISIBLE_PAGES if not project_path(relative).exists()]
+    add(checks, "simplified_visible_pages_exist", VISIBLE_PAGES, missing_pages, not missing_pages)
+    visible_files = sorted(path.name for path in project_path("dashboard", "pages").glob("*.py"))
+    expected_files = sorted(Path(relative).name for relative in VISIBLE_PAGES)
+    add(checks, "visible_sidebar_page_count_is_simplified", expected_files, visible_files, visible_files == expected_files)
 
     combined_home = f"{home_text}\n{command_text}"
-    discouraged = ["Edge Preview Board", "Odds shopping", "CLV build"]
+    discouraged = ["Edge Preview Board", "Odds shopping", "CLV build", "Best sportsbook"]
     hits = [word for word in discouraged if word.lower() in combined_home.lower()]
     add(checks, "home_command_center_do_not_promote_edge_or_odds_workflow", "no edge/odds workflow promotion", hits, not hits)
 

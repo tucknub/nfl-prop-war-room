@@ -24,14 +24,11 @@ HELPERS = [
     "render_signal_legend",
 ]
 SIGNAL_PAGES = [
-    "dashboard/pages/02_Signal_Command_Center.py",
-    "dashboard/pages/23_Slate_Signal_Board.py",
-    "dashboard/pages/24_By_Game_Matchup_Board.py",
-    "dashboard/pages/25_Receiving_Signal_Board.py",
-    "dashboard/pages/26_Rushing_Signal_Board.py",
-    "dashboard/pages/27_Passing_Signal_Board.py",
-    "dashboard/pages/28_Blocked_Review_Board.py",
-    "dashboard/pages/33_Player_Signal_Drilldown.py",
+    "dashboard/pages/01_Signal_Command_Center.py",
+    "dashboard/pages/02_By_Game_Matchup_Board.py",
+    "dashboard/pages/03_Position_Signal_Boards.py",
+    "dashboard/pages/04_Player_Signal_Drilldown.py",
+    "dashboard/pages/05_Blocked_Review.py",
 ]
 
 
@@ -82,8 +79,9 @@ def validate_signal_ux_polish() -> tuple[pd.DataFrame, str]:
     missing_helpers = [name for name in HELPERS if f"def {name}" not in signal_ui]
     add(checks, "shared_signal_ui_helpers_exist", HELPERS, missing_helpers, not missing_helpers)
 
-    command_center = read_text(project_path("dashboard", "pages", "02_Signal_Command_Center.py"))
-    add(checks, "command_center_exists", True, project_path("dashboard", "pages", "02_Signal_Command_Center.py").exists(), project_path("dashboard", "pages", "02_Signal_Command_Center.py").exists())
+    command_center_path = project_path("dashboard", "pages", "01_Signal_Command_Center.py")
+    command_center = read_text(command_center_path)
+    add(checks, "command_center_exists", True, command_center_path.exists(), command_center_path.exists())
     wording_ok = "Color-coded player and matchup signals" in command_center and "No odds. No CLV. No betting output." in command_center
     add(checks, "command_center_signal_first_wording", True, wording_ok, wording_ok)
 

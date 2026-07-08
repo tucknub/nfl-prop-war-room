@@ -70,7 +70,8 @@ def validate_player_signal_profiles() -> tuple[pd.DataFrame, str]:
     context = read_csv("signal_boards/player_signal_context_summary.csv")
     challenger = read_csv("signal_boards/signal_challenger_preview_rows.csv")
 
-    add(checks, "drilldown_dashboard_page_exists", True, Path("dashboard/pages/33_Player_Signal_Drilldown.py").exists(), Path("dashboard/pages/33_Player_Signal_Drilldown.py").exists())
+    drilldown_page = Path("dashboard/pages/04_Player_Signal_Drilldown.py")
+    add(checks, "drilldown_dashboard_page_exists", True, drilldown_page.exists(), drilldown_page.exists())
     add(checks, "profiles_have_rows", ">0", len(profiles), len(profiles) > 0)
     add(checks, "market_summary_have_rows", ">0", len(market), len(market) > 0)
     add(checks, "context_summary_have_rows", ">0", len(context), len(context) > 0)

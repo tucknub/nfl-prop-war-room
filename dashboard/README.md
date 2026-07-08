@@ -139,6 +139,18 @@ The Champion vs Challenger Signal Preview page shows side-by-side production and
 The Player Signal Drilldown page lets the user inspect one player at a time. It shows summary cards, positive and negative drivers, review/block reasons, market-family rows, sourced context, prior-game history, and research-only champion/challenger comparison rows when available.
 
 The page explains signal strength only. It does not use odds or CLV, does not create betting output, and leaves missing data visible instead of filling unsupported assumptions.
-- Gate Status
-- Identity Warnings
-- Run Reports
+
+## Dashboard Product Reset V1
+
+The normal visible sidebar is intentionally small:
+
+- Home
+- Signal Command Center
+- By-Game Matchup Board
+- Position Signal Boards
+- Player Signal Drilldown
+- Blocked / Review
+- Research Lab
+- Admin / Readiness
+
+Old build, debug, audit, gate, and single-market pages live in `dashboard/archived_pages/`. They are recoverable for maintenance but are not visible in Streamlit's normal sidebar. Use Research Lab for validation/backtest/tuning work and Admin / Readiness for data quality, gates, identity, current maps, and safety status.

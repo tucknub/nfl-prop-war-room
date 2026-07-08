@@ -1,12 +1,12 @@
 # Signal Heatmap UI Validation
 
-Run timestamp: `2026-07-08T18:54:20.895358+00:00`
+Run timestamp: `2026-07-08T23:02:01.542793+00:00`
 
 Overall status: `PASS`
 
 Dashboard helper: `dashboard/signal_ui.py`
 
-Signal pages checked: `7`
+Signal pages checked: `5`
 
 Final readiness: `NO-GO`
 

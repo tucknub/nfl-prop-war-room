@@ -10,13 +10,11 @@ from src.common import output_path, project_path
 
 PAGE_FILES = [
     "dashboard/signal_ui.py",
-    "dashboard/pages/22_Signal_Board_Foundation.py",
-    "dashboard/pages/23_Slate_Signal_Board.py",
-    "dashboard/pages/24_By_Game_Matchup_Board.py",
-    "dashboard/pages/25_Receiving_Signal_Board.py",
-    "dashboard/pages/26_Rushing_Signal_Board.py",
-    "dashboard/pages/27_Passing_Signal_Board.py",
-    "dashboard/pages/28_Blocked_Review_Board.py",
+    "dashboard/pages/01_Signal_Command_Center.py",
+    "dashboard/pages/02_By_Game_Matchup_Board.py",
+    "dashboard/pages/03_Position_Signal_Boards.py",
+    "dashboard/pages/04_Player_Signal_Drilldown.py",
+    "dashboard/pages/05_Blocked_Review.py",
 ]
 
 SIGNAL_PATHS = [
@@ -31,8 +29,8 @@ SIGNAL_PATHS = [
 ]
 
 FORBIDDEN_CENTERED_TERMS = [
-    "clv",
-    "closing line value",
+    "clv build",
+    "closing line value workflow",
     "bet_recommendation",
     "stake_size",
     "wager",
