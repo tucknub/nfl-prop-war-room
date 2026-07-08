@@ -118,6 +118,12 @@ The page does not automatically promote challengers, does not create live bettin
 The Champion vs Challenger Signal Preview page shows side-by-side production and challenger signal behavior without replacing the main boards. It displays family comparison, top movers, tier changes, action changes, and champion/challenger/delta board views.
 
 `current_v1` remains the production champion. Rushing and passing challenger profiles are preview-only, and promotion requires explicit user approval after review.
+
+## Player Signal Drilldown V1
+
+The Player Signal Drilldown page lets the user inspect one player at a time. It shows summary cards, positive and negative drivers, review/block reasons, market-family rows, sourced context, prior-game history, and research-only champion/challenger comparison rows when available.
+
+The page explains signal strength only. It does not use odds or CLV, does not create betting output, and leaves missing data visible instead of filling unsupported assumptions.
 - Gate Status
 - Identity Warnings
 - Run Reports

@@ -576,3 +576,22 @@ Key outputs:
 - `outputs/signal_boards/challenger_receiving_signal_board.csv`
 - `outputs/signal_boards/challenger_rushing_signal_board.csv`
 - `outputs/signal_boards/challenger_passing_signal_board.csv`
+
+## Player Signal Drilldown V1
+
+Player Signal Drilldown V1 creates single-player research profiles so the dashboard can explain why a player is green, yellow, red, or missing context. It combines the current signal master, explainability fields, driver audit, challenger preview rows, sourced context, and prior-game weekly history where available.
+
+It does not use odds or CLV, does not create betting output, does not build a new market, and does not change production scoring. Missing context remains visible as `NOT_AVAILABLE`, `NEEDS SOURCE`, or a blank field with explanatory notes.
+
+```powershell
+python -m src.export.export_player_signal_profiles
+python -m src.export.validate_player_signal_profiles
+```
+
+Key outputs:
+
+- `outputs/signal_boards/player_signal_profiles.csv`
+- `outputs/signal_boards/player_signal_recent_history.csv`
+- `outputs/signal_boards/player_signal_market_summary.csv`
+- `outputs/signal_boards/player_signal_context_summary.csv`
+- `outputs/run_reports/latest_player_signal_profiles_report.md`

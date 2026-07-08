@@ -49,6 +49,7 @@ warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
     "A red or review player is not automatically bad at football. It means the signal is incomplete, risky, or missing key context.",
 )
+st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
 
 df = load_signal_csv(PATH)
 if df.empty:

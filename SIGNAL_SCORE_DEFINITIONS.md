@@ -75,3 +75,9 @@ It evaluates profile and family combinations for correlation with actual outcome
 Champion vs Challenger Signal Preview V1 applies the recommended challenger profile to copied production rows and writes separate research-only preview files. It preserves current production fields as `current_*` columns, writes challenger fields as `challenger_*` columns, and leaves the production master signal table on `current_v1`.
 
 The preview can show rushing and passing challenger behavior, but it does not replace the main signal boards and does not promote weights. Promotion requires explicit approval after reviewing historical tuning results and preview board behavior.
+
+## Player Signal Drilldown V1
+
+Player Signal Drilldown V1 is an explanatory layer over existing signal outputs. It creates player profiles, market-family summaries, context summaries, and prior-game history tables so a user can understand why a player is green, yellow, red, or missing context.
+
+Recent history is for display only and excludes the configured target week and future weeks. Drilldown data does not feed back into pregame scoring, does not add odds or CLV logic, and does not create betting output.

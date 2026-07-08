@@ -78,6 +78,7 @@ warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
     "Game tables are research views only and do not create live output.",
 )
+st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
 
 df = load_signal_csv(PATH)
 if df.empty:

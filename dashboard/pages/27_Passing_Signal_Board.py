@@ -77,6 +77,7 @@ sidebar_status()
 
 page_header("Passing Signal Board", "Quarterback passing signals from projections and sourced context.", "HISTORICAL TEST ONLY")
 warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "This is a quarterback signal research page, not a betting page.")
+st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
 
 df = load_signal_csv(PATH)
 if df.empty:
