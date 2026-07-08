@@ -1,6 +1,6 @@
 # Player Signal Profiles Report
 
-Run timestamp: `2026-07-08T00:00:58+00:00`
+Run timestamp: `2026-07-08T00:16:39+00:00`
 
 Report status: `RESEARCH_ONLY`
 

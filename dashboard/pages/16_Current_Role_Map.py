@@ -5,7 +5,7 @@ import pandas as pd,streamlit as st
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from utils import inject_global_styles,load_csv_safe,metric_card,page_header,presentation_table,section_header,show_table_or_missing,sidebar_status,warning_banner
 MAP="outputs/roles/current_role_map.csv";STATUS="outputs/roles/current_role_map_status.csv";REVIEW="outputs/roles/current_role_needs_review.csv"
-st.set_page_config(page_title="Role / Depth Chart Mapping",layout="wide");inject_global_styles();sidebar_status();page_header("Role / Depth Chart Mapping","Verified workload context required for every forward projection.","NO-GO");warning_banner("Forward projection blocked until player roles are verified","Template rows do not count as role data. Low-confidence, unknown, mismatched, and unapproved role rows remain blockers.")
+st.set_page_config(page_title="Role / Depth Chart Mapping",layout="wide");inject_global_styles();sidebar_status();page_header("Role / Depth Chart Mapping","Verified workload context required for every forward projection.","NO-GO");st.caption("Section: Readiness / Data Admin");warning_banner("Forward projection blocked until player roles are verified","Template rows do not count as role data. Low-confidence, unknown, mismatched, and unapproved role rows remain blockers.")
 mapped=load_csv_safe(MAP);status=load_csv_safe(STATUS);review=load_csv_safe(REVIEW)
 def value(c):
  if status.empty or c not in status.columns:return 0

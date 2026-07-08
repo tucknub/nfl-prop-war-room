@@ -23,6 +23,15 @@ The dashboard reads files from `outputs/` and does not upload anything. It is re
 
 This is the full NFL Prop War Room dashboard shell. Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, and Passing Yards V1 are active historical-test markets; the other markets remain planned. The Passing Yards page includes QB projections, a passing-volume versus efficiency view, and a no-odds research ladder. Current roster mapping is built but remains `NEEDS DATA` until real source-backed roster files are loaded.
 
+The main user-facing entry point is `Signal Command Center`. Use it before the legacy model output pages. The dashboard sections are:
+
+- Main Signal Workflow
+- Research / Audit Lab
+- Readiness / Data Admin
+- Legacy Model Outputs
+
+Signal pages are the main workflow. Research/audit pages validate the signal system. Readiness/admin pages explain data quality and safety blockers. Odds and CLV are not the current product focus.
+
 Current expected state for the stable snapshot:
 
 - Final readiness: `NO-GO`

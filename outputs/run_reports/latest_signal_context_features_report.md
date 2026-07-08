@@ -1,6 +1,6 @@
 # Signal Context Features Report
 
-Run timestamp: `2026-07-08T00:00:28+00:00`
+Run timestamp: `2026-07-08T00:16:09+00:00`
 
 Target season/week: `2025 Week 1`
 

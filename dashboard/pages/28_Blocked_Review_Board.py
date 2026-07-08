@@ -45,6 +45,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Blocked / Review Board", "Rows that need more context before they should be trusted.", "REVIEW")
+st.caption("Section: Main Signal Workflow")
 warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
     "A red or review player is not automatically bad at football. It means the signal is incomplete, risky, or missing key context.",

@@ -53,6 +53,7 @@ page_header(
     "Visual comparison of production current_v1 scoring versus research-only challenger scoring.",
     "HISTORICAL TEST ONLY",
 )
+st.caption("Section: Research / Audit Lab")
 warning_banner(
     "Research-only",
     "Challenger weights are not applied to production signal boards.",

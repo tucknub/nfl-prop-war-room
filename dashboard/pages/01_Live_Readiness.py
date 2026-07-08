@@ -42,6 +42,7 @@ else:
     leakage_status = leakage_row["value"].iloc[0] if not leakage_row.empty and "value" in leakage_row.columns else "UNKNOWN"
 
 page_header("Live Readiness", "The control-room status board for projection and betting readiness.", final_status)
+st.caption("Section: Readiness / Data Admin")
 
 cards = st.columns(3)
 with cards[0]:

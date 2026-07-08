@@ -20,6 +20,7 @@ st.set_page_config(page_title="Current Roster / Team Mapping", layout="wide")
 inject_global_styles()
 sidebar_status()
 page_header("Current Roster / Team Mapping", "Verified team context required for every forward projection.", "NO-GO")
+st.caption("Section: Readiness / Data Admin")
 warning_banner("Forward projection blocked until current teams are verified", "Template rows do not count as roster data. Every changed team needs source-backed verification or an approved override.")
 
 mapped = load_csv_safe(MAP_PATH)

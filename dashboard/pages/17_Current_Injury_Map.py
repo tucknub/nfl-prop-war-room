@@ -34,6 +34,7 @@ page_header(
     "Verified player availability required before any forward projection can become live-ready.",
     "NO-GO",
 )
+st.caption("Section: Readiness / Data Admin")
 warning_banner(
     "Forward projection blocked until player availability is verified",
     "Template rows do not count as injury data. Questionable, unknown, out, IR, inactive, team-mismatched, and unapproved override rows remain review or blocking conditions.",

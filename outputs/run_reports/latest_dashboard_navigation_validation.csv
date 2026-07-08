@@ -1,0 +1,13 @@
+check_name,expected,actual,status,severity,notes
+dashboard_navigation_doc_exists,True,True,PASS,INFO,
+signal_command_center_exists,True,True,PASS,INFO,
+home_mentions_signal_command_center,Signal Command Center,True,PASS,INFO,
+home_mentions_main_product_signal_workflow,main product is the signal board workflow,True,PASS,INFO,
+main_signal_pages_have_workflow_labels,Section: Main Signal Workflow,[],PASS,INFO,
+research_pages_have_lab_labels,Section: Research / Audit Lab,[],PASS,INFO,
+admin_pages_have_data_admin_labels,Section: Readiness / Data Admin,[],PASS,INFO,
+home_command_center_do_not_promote_edge_or_odds_workflow,no edge/odds workflow promotion,[],PASS,INFO,
+streamlit_page_files_compile,True,[],PASS,INFO,
+final_readiness_remains_no_go,NO-GO,NO-GO,PASS,INFO,
+live_betting_output_remains_false,False,False,PASS,INFO,
+leakage_status_pass,PASS,PASS,PASS,INFO,

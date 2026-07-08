@@ -595,3 +595,16 @@ Key outputs:
 - `outputs/signal_boards/player_signal_market_summary.csv`
 - `outputs/signal_boards/player_signal_context_summary.csv`
 - `outputs/run_reports/latest_player_signal_profiles_report.md`
+
+## Dashboard Navigation And Signal Command Center V1
+
+The dashboard is now organized around the signal board workflow. `Signal Command Center` is the main user-facing page and should be opened first. It summarizes total signal rows, top overall signals, best category signals, a by-game mini board, and quick links into the main workflow.
+
+Workflow sections:
+
+- Main Signal Workflow: Signal Command Center, Slate, By-Game, Receiving, Rushing, Passing, Player Drilldown, and Blocked / Review.
+- Research / Audit Lab: score audit, historical backtest, signal weight tuning, and champion/challenger preview.
+- Readiness / Data Admin: readiness, intake, roster, role, injury, market-data, dry-run, gates, identity, and reports.
+- Legacy Model Outputs: model/debug pages remain available but are secondary.
+
+Odds and CLV are not the current product focus. The dashboard remains a research signal command center until live readiness becomes `GO`.

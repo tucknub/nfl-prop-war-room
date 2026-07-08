@@ -39,6 +39,35 @@ def load_signal_csv(path: str | Path) -> pd.DataFrame:
     return load_csv_safe(path)
 
 
+def section_label(text: str) -> None:
+    st.markdown(
+        f"""
+        <div style="display:inline-block;margin:.15rem 0 .65rem;padding:.22rem .6rem;border-radius:999px;
+        border:1px solid #334155;background:#111827;color:#9fb3cc;font-size:.76rem;font-weight:900;">
+        Section: {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def command_center_card(title: str, value: object, status: object | None = None, help_text: str | None = None) -> None:
+    metric_card(title, value, status, help_text)
+
+
+def quick_link_card(title: str, description: str, page_name: str) -> None:
+    st.markdown(
+        f"""
+        <div class="info-card">
+          <div class="player-name">{title}</div>
+          <div class="player-meta">{page_name}</div>
+          <div class="metric-help">{description}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def score_color(value: object) -> str:
     score = pd.to_numeric(value, errors="coerce")
     if pd.isna(score):

@@ -74,6 +74,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("By-Game Matchup Board", "Game-level player signal splits from the existing by-game signal board.", "HISTORICAL TEST ONLY")
+st.caption("Section: Main Signal Workflow")
 warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
     "Game tables are research views only and do not create live output.",

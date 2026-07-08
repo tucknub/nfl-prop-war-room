@@ -78,6 +78,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Receiving Signal Board", "Receiving player signals from projections and sourced context.", "HISTORICAL TEST ONLY")
+st.caption("Section: Main Signal Workflow")
 warning_banner("HISTORICAL TEST ONLY - NOT LIVE BETTING READY", "This is a signal research page, not a betting page.")
 st.caption("Use Player Signal Drilldown to inspect drivers and recent history for any player.")
 

@@ -1,6 +1,6 @@
 # Player Week Signal Master Report
 
-Run timestamp: `2026-07-08T00:00:31+00:00`
+Run timestamp: `2026-07-08T00:16:12+00:00`
 
 Rows: `762`
 

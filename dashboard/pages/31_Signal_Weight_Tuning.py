@@ -25,6 +25,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Signal Weight Tuning Lab", "Research-only comparison of challenger signal formulas against historical outcomes.", "HISTORICAL TEST ONLY")
+st.caption("Section: Research / Audit Lab")
 warning_banner(
     "Research-only",
     "This page compares challenger signal formulas against historical outcomes. It does not create live betting output.",

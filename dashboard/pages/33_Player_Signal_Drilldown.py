@@ -61,6 +61,7 @@ page_header(
     "Single-player signal context, drivers, recent history, and challenger preview.",
     "HISTORICAL TEST ONLY",
 )
+st.caption("Section: Main Signal Workflow")
 warning_banner(
     "Research-only player context",
     "No odds, no CLV, no betting output.",

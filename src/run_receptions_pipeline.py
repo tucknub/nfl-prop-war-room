@@ -97,6 +97,7 @@ PIPELINE_MODULES = [
     "src.export.validate_signal_weight_tuning",
     "src.export.validate_signal_challenger_preview",
     "src.export.validate_player_signal_profiles",
+    "src.export.validate_dashboard_navigation",
     "src.export.build_google_sheets_import_pack",
 ]
 

@@ -24,6 +24,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Historical Signal Backtest", "Research-only audit of whether historical signal scores align with past player production.", "HISTORICAL TEST ONLY")
+st.caption("Section: Research / Audit Lab")
 warning_banner(
     "Research-only historical audit",
     "This checks whether signal scores align with actual past player production. It is not a betting board.",

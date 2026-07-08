@@ -30,6 +30,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Market Odds Mapping", "Sportsbook line and price normalization for future edge calculation.", "NO-GO")
+st.caption("Section: Readiness / Data Admin")
 warning_banner(
     "True edge calculation blocked until odds and all live gates are verified",
     "Odds mapping is a data gate. It does not create live betting output while Final Readiness is NO-GO.",

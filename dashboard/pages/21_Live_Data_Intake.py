@@ -33,6 +33,7 @@ page_header(
     "Checklist and status workflow for loading real roster, role, injury, and odds data safely.",
     "NO-GO",
 )
+st.caption("Section: Readiness / Data Admin")
 warning_banner(
     "This is the bridge from historical test to future live-readiness. It does not make the model live by itself.",
     "Only real non-template data can move live-context gates toward READY. Historical-test warnings remain in force.",

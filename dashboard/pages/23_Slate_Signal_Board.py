@@ -66,6 +66,7 @@ page_header(
     "Color-coded player signals from projections and available context. No odds. No betting output.",
     "HISTORICAL TEST ONLY",
 )
+st.caption("Section: Main Signal Workflow")
 warning_banner(
     "HISTORICAL TEST ONLY - NOT LIVE BETTING READY",
     "This is a research heatmap built from existing signal board files. It does not create live output.",

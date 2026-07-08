@@ -23,6 +23,7 @@ page_header(
     "Isolated synthetic validation of the full edge decision pipeline.",
     "SYNTHETIC TEST ONLY",
 )
+st.caption("Section: Readiness / Data Admin")
 warning_banner(
     "Synthetic test only - not production",
     "This page proves the edge engine can stay blocked in production while also showing that the full pipeline can produce qualified edges only when every synthetic gate is satisfied.",

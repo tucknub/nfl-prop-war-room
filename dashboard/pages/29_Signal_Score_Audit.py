@@ -24,6 +24,7 @@ inject_global_styles()
 sidebar_status()
 
 page_header("Signal Score Audit", "Research-only audit of signal distributions, component behavior, drivers, and explanations.", "HISTORICAL TEST ONLY")
+st.caption("Section: Research / Audit Lab")
 warning_banner(
     "Research-only audit",
     "This page checks whether the signal system is behaving sensibly. It is not a betting board.",
