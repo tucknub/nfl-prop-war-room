@@ -37,7 +37,67 @@ STATUS_COLORS = {
 
 
 def load_signal_csv(path: str | Path) -> pd.DataFrame:
-    return load_csv_safe(path)
+    return clean_display_frame(load_csv_safe(path))
+
+
+def clean_display_text(value: object, fallback: str = "—") -> str:
+    """Return presentation-safe copy without changing the underlying data."""
+    if value is None or pd.isna(value):
+        return fallback
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "null", "nat", "<na>"}:
+        return fallback
+    return text
+
+
+def clean_display_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Sanitize display-only text values for bettor-facing tables and cards."""
+    if df is None or df.empty:
+        return df
+    view = df.copy()
+    missing_tokens = {"", "nan", "none", "null", "nat", "<na>"}
+    for column in view.columns:
+        if pd.api.types.is_object_dtype(view[column]) or pd.api.types.is_string_dtype(view[column]):
+            view[column] = view[column].map(
+                lambda value: pd.NA
+                if value is None or (isinstance(value, str) and value.strip().lower() in missing_tokens)
+                else value
+            )
+            view[column] = view[column].replace(
+                {
+                    "HISTORICAL TEST ONLY": "Research mode",
+                    "NOT_AVAILABLE": "Unavailable",
+                    "NEEDS SOURCE": "Unavailable",
+                }
+            )
+    fallbacks = {
+        "player_name": "Player unavailable",
+        "team": "Team TBD",
+        "opponent": "Opponent TBD",
+        "position": "Position TBD",
+    }
+    for column, fallback in fallbacks.items():
+        if column in view.columns:
+            view[column] = view[column].fillna(fallback)
+    return view
+
+
+def player_selection_token(row: pd.Series) -> str:
+    player_id = clean_display_text(row.get("player_id"), "")
+    if player_id:
+        return f"id::{player_id}"
+    return "name::{player}|{team}|{position}".format(
+        player=clean_display_text(row.get("player_name"), ""),
+        team=clean_display_text(row.get("team"), ""),
+        position=clean_display_text(row.get("position"), ""),
+    )
+
+
+def render_player_detail_action(row: pd.Series, key: str) -> None:
+    """Open Player Details with this card's player selected when available."""
+    if st.button("View player details →", key=key, use_container_width=True):
+        st.session_state["player_detail_key"] = player_selection_token(row)
+        st.switch_page("pages/04_Player_Signal_Drilldown.py")
 
 
 def inject_signal_css() -> None:
@@ -65,8 +125,8 @@ def inject_signal_css() -> None:
         .signal-kpi-card {
           background: #ffffff;
           border: 1px solid #d8e0ea;
-          border-radius: 14px;
-          box-shadow: 0 10px 28px rgba(15, 23, 42, .10);
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(15, 23, 42, .07);
           padding: .95rem;
           min-height: 118px;
         }
@@ -76,14 +136,38 @@ def inject_signal_css() -> None:
         .signal-player-card {
           background: #ffffff;
           border: 1px solid #d8e0ea;
-          border-radius: 14px;
+          border-radius: 10px;
           padding: 1rem;
-          box-shadow: 0 12px 28px rgba(15, 23, 42, .10);
+          box-shadow: 0 2px 8px rgba(15, 23, 42, .07);
           min-height: 150px;
         }
         .signal-player-card .name { color: #0f172a; font-weight: 950; font-size: 1.05rem; }
         .signal-player-card .meta { color: #64748b; font-size: .82rem; margin: .18rem 0 .65rem; }
         .signal-player-card .score { color: #0b6b3a; font-size: 1.7rem; font-weight: 950; line-height: 1; }
+        .signal-spotlight-card {
+          background: #ffffff;
+          border: 1px solid #d8e0ea;
+          border-radius: 10px;
+          padding: .8rem .85rem;
+          box-shadow: 0 2px 8px rgba(15, 23, 42, .07);
+          min-height: 142px;
+        }
+        .signal-spotlight-card .rank { color: #64748b; font-size: .72rem; font-weight: 900; text-transform: uppercase; }
+        .signal-spotlight-card .name { color: #0f172a; font-size: 1.08rem; font-weight: 950; margin: .15rem 0; word-break: keep-all; overflow-wrap: normal; }
+        .signal-spotlight-card .meta { color: #64748b; font-size: .82rem; }
+        .signal-spotlight-card .score { color: #0b6b3a; font-size: 1.85rem; font-weight: 950; line-height: 1; margin: .55rem 0; }
+        .signal-spotlight-card .reason { color: #475569; font-size: .82rem; line-height: 1.3; margin-top: .45rem; }
+        .plain-signal-list {
+          background: #ffffff;
+          border: 1px solid #d8e0ea;
+          border-radius: 12px;
+          padding: .8rem .95rem;
+          margin: .5rem 0;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+        }
+        .plain-signal-list h4 { color: #0f172a; margin: 0 0 .45rem; }
+        .plain-signal-list ul { color: #334155; margin: .35rem 0 .1rem 1.1rem; padding: 0; }
+        .plain-signal-list li { margin: .18rem 0; }
         .signal-pill {
           display: inline-flex;
           align-items: center;
@@ -94,6 +178,7 @@ def inject_signal_css() -> None:
           font-weight: 900;
           border: 1px solid transparent;
           white-space: nowrap;
+          word-break: keep-all;
           margin: .1rem .18rem .1rem 0;
         }
         .pill-green-dark { color: #eafff1; background: #064e2f; border-color: #0b6b3a; }
@@ -106,6 +191,20 @@ def inject_signal_css() -> None:
         .pill-blue { color: #eff6ff; background: #2563eb; border-color: #60a5fa; }
         .signal-chip-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .45rem 0 .75rem; }
         .signal-legend { display:flex;flex-wrap:wrap;gap:.45rem;margin:.35rem 0 .8rem; }
+        @media (max-width: 640px) {
+          .signal-spotlight-card {
+            min-height: 0;
+            padding: .65rem .7rem;
+          }
+          .signal-spotlight-card .name { font-size: .98rem; }
+          .signal-spotlight-card .score { font-size: 1.55rem; margin: .35rem 0; }
+          .signal-spotlight-card .reason { display: none; }
+          .signal-spotlight-card + div[data-testid="stButton"] button {
+            min-height: 2rem;
+            padding: .25rem .5rem;
+            font-size: .78rem;
+          }
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -222,8 +321,8 @@ def render_player_signal_card(row: pd.Series) -> None:
     st.markdown(
         f"""
         <div class="signal-player-card">
-          <div class="name">{escape(str(row.get('player_name', 'n/a')))}</div>
-          <div class="meta">{escape(str(row.get('team', '')))} / {escape(str(row.get('opponent', '')))} / {escape(str(row.get('position', '')))}</div>
+          <div class="name">{escape(clean_display_text(row.get('player_name'), 'Player unavailable'))}</div>
+          <div class="meta">{escape(clean_display_text(row.get('team'), 'Team TBD'))} vs {escape(clean_display_text(row.get('opponent'), 'Opponent TBD'))} / {escape(clean_display_text(row.get('position'), 'Position TBD'))}</div>
           <div class="score">{format_percent_or_score(score)}</div>
           <div>{_pill(row.get('signal_tier', row.get('challenger_signal_tier', '')))}</div>
           <div class="metric-help">{escape(str(row.get('top_signal_reason', row.get('preview_notes', '')) or ''))}</div>
@@ -231,6 +330,38 @@ def render_player_signal_card(row: pd.Series) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def summarize_reason(value: object, max_len: int = 110) -> str:
+    if pd.isna(value):
+        return ""
+    text = str(value).replace("Context V1:", "").replace("NOT_AVAILABLE", "missing").strip()
+    while "  " in text:
+        text = text.replace("  ", " ")
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 1].rsplit(" ", 1)[0] + "..."
+
+
+def render_spotlight_card(row: pd.Series, rank: int | None = None, action_key: str | None = None) -> None:
+    score = format_percent_or_score(row.get("overall_signal_score"))
+    rank_text = f"#{rank} Slate Spotlight" if rank else "Slate Spotlight"
+    reason = summarize_reason(row.get("top_signal_reason", row.get("signal_explanation", "")))
+    st.markdown(
+        f"""
+        <div class="signal-spotlight-card">
+          <div class="rank">{escape(rank_text)}</div>
+          <div class="name">{escape(clean_display_text(row.get('player_name'), 'Player unavailable'))}</div>
+          <div class="meta">{escape(clean_display_text(row.get('team'), 'Team TBD'))} vs {escape(clean_display_text(row.get('opponent'), 'Opponent TBD'))} / {escape(clean_display_text(row.get('position'), 'Position TBD'))}</div>
+          <div class="score">{escape(score)}</div>
+          <div>{_pill(row.get('signal_tier', ''))}</div>
+          <div class="reason">{escape(reason)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if action_key:
+        render_player_detail_action(row, action_key)
 
 
 def quick_link_card(title: str, description: str, page_name: str) -> None:
@@ -379,15 +510,15 @@ def render_signal_table(
     st.dataframe(build_heatmap_styler(view, score_columns, status_columns), use_container_width=True, hide_index=True)
 
 
-def filter_multiselect(df: pd.DataFrame, column: str, label: str) -> pd.DataFrame:
+def filter_multiselect(df: pd.DataFrame, column: str, label: str, key: str | None = None) -> pd.DataFrame:
     if df.empty or column not in df.columns:
         return df
     options = sorted(value for value in df[column].dropna().astype(str).unique() if value)
-    selected = st.multiselect(label, options)
+    selected = st.multiselect(label, options, key=key)
     return df if not selected else df[df[column].astype(str).isin(selected)]
 
 
-def filter_minimum(df: pd.DataFrame, column: str, label: str, default: float = 0.0) -> pd.DataFrame:
+def filter_minimum(df: pd.DataFrame, column: str, label: str, default: float = 0.0, key: str | None = None) -> pd.DataFrame:
     if df.empty or column not in df.columns:
         return df
     values = pd.to_numeric(df[column], errors="coerce")
@@ -401,11 +532,11 @@ def filter_minimum(df: pd.DataFrame, column: str, label: str, default: float = 0
         st.caption(f"{label}: all available values are {max_value:.1f}.")
         return df
     threshold_default = min(max(float(default), min_value), max_value)
-    threshold = st.slider(label, min_value=min_value, max_value=max_value, value=threshold_default)
+    threshold = st.slider(label, min_value=min_value, max_value=max_value, value=threshold_default, key=key)
     return df[values.fillna(-1) >= threshold]
 
 
-def top_signal_cards(df: pd.DataFrame, count: int = 5) -> None:
+def top_signal_cards(df: pd.DataFrame, count: int = 5, action_key_prefix: str = "top_signal") -> None:
     if df.empty:
         return
     view = df.sort_values("overall_signal_score", ascending=False).head(count)
@@ -419,9 +550,9 @@ def top_signal_cards(df: pd.DataFrame, count: int = 5) -> None:
                   <div class="player-meta">{row.get('team', '')} / {row.get('opponent', '')} / {row.get('position', '')}</div>
                   <div class="player-proj">{format_percent_or_score(row.get('overall_signal_score'))}</div>
                   <div>{tier_badge(row.get('signal_tier'))}</div>
-                  <div class="metric-help" style="margin-top:.45rem;">{row.get('top_signal_reason', '')}</div>
-                  <div class="metric-help">{row.get('review_reason', '')}</div>
+                  <div class="metric-help" style="margin-top:.45rem;">{summarize_reason(row.get('top_signal_reason', ''))}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+            render_player_detail_action(row, f"{action_key_prefix}_{idx}_{player_selection_token(row)}")
