@@ -89,6 +89,7 @@ def add_matchup_context(profile_frame: pd.DataFrame, matchup_frame: pd.DataFrame
         return profile_frame
     reference = matchup_frame[keys + ["opponent"]].copy()
     reference["opponent"] = reference["opponent"].fillna("").astype(str).str.strip()
+    reference = reference[~reference["opponent"].str.lower().isin({"", "nan", "none", "null", "nat", "<na>", "opponent tbd"})]
     reference = reference[reference["opponent"].ne("")].drop_duplicates(keys)
     if reference.empty:
         return profile_frame

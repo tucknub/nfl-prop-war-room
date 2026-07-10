@@ -36,6 +36,7 @@ STATUS_COLORS = {
 }
 
 SCHEDULE_PATH = "data/raw/schedules.csv"
+MISSING_DISPLAY_VALUES = {"", "nan", "none", "null", "nat", "<na>", "opponent tbd"}
 
 
 def load_signal_csv(path: str | Path) -> pd.DataFrame:
@@ -80,6 +81,8 @@ def _schedule_opponent_map() -> dict[tuple[str, str, str], str]:
 
 def _derived_opponent(row: pd.Series, opponents: dict[tuple[str, str, str], str]) -> str:
     existing = clean_display_text(row.get("opponent"), "")
+    if existing.lower() in MISSING_DISPLAY_VALUES:
+        existing = ""
     if existing:
         return existing
 
@@ -101,7 +104,7 @@ def clean_display_text(value: object, fallback: str = "—") -> str:
     if value is None or pd.isna(value):
         return fallback
     text = str(value).strip()
-    if not text or text.lower() in {"nan", "none", "null", "nat", "<na>"}:
+    if not text or text.lower() in MISSING_DISPLAY_VALUES:
         return fallback
     return text
 
@@ -111,7 +114,7 @@ def clean_display_frame(df: pd.DataFrame) -> pd.DataFrame:
     if df is None or df.empty:
         return df
     view = df.copy()
-    missing_tokens = {"", "nan", "none", "null", "nat", "<na>"}
+    missing_tokens = MISSING_DISPLAY_VALUES
     for column in view.columns:
         if pd.api.types.is_object_dtype(view[column]) or pd.api.types.is_string_dtype(view[column]):
             view[column] = view[column].map(
@@ -124,6 +127,7 @@ def clean_display_frame(df: pd.DataFrame) -> pd.DataFrame:
                     "HISTORICAL TEST ONLY": "Research mode",
                     "NOT_AVAILABLE": "Unavailable",
                     "NEEDS SOURCE": "Unavailable",
+                    "Opponent TBD": pd.NA,
                 }
             )
     # Some historical-test signal exports have a valid player/team and target
