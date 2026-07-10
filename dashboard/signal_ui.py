@@ -35,9 +35,65 @@ STATUS_COLORS = {
     "DATA_NEEDS_LIVE_CONTEXT": "#667085",
 }
 
+SCHEDULE_PATH = "data/raw/schedules.csv"
+
 
 def load_signal_csv(path: str | Path) -> pd.DataFrame:
     return clean_display_frame(load_csv_safe(path))
+
+
+def _schedule_team_key(season: object, week: object, team: object) -> tuple[str, str, str] | None:
+    season_text = clean_display_text(season, "")
+    week_text = clean_display_text(week, "")
+    team_text = clean_display_text(team, "").upper()
+    if not season_text or not week_text or not team_text:
+        return None
+    try:
+        season_text = str(int(float(season_text)))
+        week_text = str(int(float(week_text)))
+    except (TypeError, ValueError):
+        return None
+    return season_text, week_text, team_text
+
+
+@st.cache_data(show_spinner=False)
+def _schedule_opponent_map() -> dict[tuple[str, str, str], str]:
+    schedules = load_csv_safe(SCHEDULE_PATH)
+    required = {"season", "week", "home_team", "away_team"}
+    if schedules.empty or not required.issubset(schedules.columns):
+        return {}
+
+    opponents: dict[tuple[str, str, str], str] = {}
+    for _, game in schedules.iterrows():
+        home = clean_display_text(game.get("home_team"), "").upper()
+        away = clean_display_text(game.get("away_team"), "").upper()
+        if not home or not away:
+            continue
+        home_key = _schedule_team_key(game.get("season"), game.get("week"), home)
+        away_key = _schedule_team_key(game.get("season"), game.get("week"), away)
+        if home_key:
+            opponents[home_key] = away
+        if away_key:
+            opponents[away_key] = home
+    return opponents
+
+
+def _derived_opponent(row: pd.Series, opponents: dict[tuple[str, str, str], str]) -> str:
+    existing = clean_display_text(row.get("opponent"), "")
+    if existing:
+        return existing
+
+    team = clean_display_text(row.get("team"), "").upper()
+    home = clean_display_text(row.get("home_team"), "").upper()
+    away = clean_display_text(row.get("away_team"), "").upper()
+    if team and home and away:
+        if team == home:
+            return away
+        if team == away:
+            return home
+
+    key = _schedule_team_key(row.get("season"), row.get("week"), team)
+    return opponents.get(key, "") if key else ""
 
 
 def clean_display_text(value: object, fallback: str = "—") -> str:
@@ -70,16 +126,31 @@ def clean_display_frame(df: pd.DataFrame) -> pd.DataFrame:
                     "NEEDS SOURCE": "Unavailable",
                 }
             )
+    # Some historical-test signal exports have a valid player/team and target
+    # week but no opponent column value. Derive that presentation context from
+    # the already-loaded game fields or the raw schedule without changing the
+    # exported signal data or any scoring inputs.
+    if "opponent" in view.columns and {"season", "week", "team"}.issubset(view.columns):
+        opponents = _schedule_opponent_map()
+        view["opponent"] = view.apply(lambda row: _derived_opponent(row, opponents), axis=1)
+
     fallbacks = {
         "player_name": "Player unavailable",
         "team": "Team TBD",
-        "opponent": "Opponent TBD",
         "position": "Position TBD",
     }
     for column, fallback in fallbacks.items():
         if column in view.columns:
             view[column] = view[column].fillna(fallback)
     return view
+
+
+def player_context_text(row: pd.Series) -> str:
+    """Show matchup context only when an opponent is actually known."""
+    team = clean_display_text(row.get("team"), "Team TBD")
+    opponent = clean_display_text(row.get("opponent"), "")
+    position = clean_display_text(row.get("position"), "Position TBD")
+    return f"{team} vs {opponent} / {position}" if opponent else f"{team} / {position}"
 
 
 def player_selection_token(row: pd.Series) -> str:
@@ -322,7 +393,7 @@ def render_player_signal_card(row: pd.Series) -> None:
         f"""
         <div class="signal-player-card">
           <div class="name">{escape(clean_display_text(row.get('player_name'), 'Player unavailable'))}</div>
-          <div class="meta">{escape(clean_display_text(row.get('team'), 'Team TBD'))} vs {escape(clean_display_text(row.get('opponent'), 'Opponent TBD'))} / {escape(clean_display_text(row.get('position'), 'Position TBD'))}</div>
+          <div class="meta">{escape(player_context_text(row))}</div>
           <div class="score">{format_percent_or_score(score)}</div>
           <div>{_pill(row.get('signal_tier', row.get('challenger_signal_tier', '')))}</div>
           <div class="metric-help">{escape(str(row.get('top_signal_reason', row.get('preview_notes', '')) or ''))}</div>
@@ -352,7 +423,7 @@ def render_spotlight_card(row: pd.Series, rank: int | None = None, action_key: s
         <div class="signal-spotlight-card">
           <div class="rank">{escape(rank_text)}</div>
           <div class="name">{escape(clean_display_text(row.get('player_name'), 'Player unavailable'))}</div>
-          <div class="meta">{escape(clean_display_text(row.get('team'), 'Team TBD'))} vs {escape(clean_display_text(row.get('opponent'), 'Opponent TBD'))} / {escape(clean_display_text(row.get('position'), 'Position TBD'))}</div>
+          <div class="meta">{escape(player_context_text(row))}</div>
           <div class="score">{escape(score)}</div>
           <div>{_pill(row.get('signal_tier', ''))}</div>
           <div class="reason">{escape(reason)}</div>
@@ -547,7 +618,7 @@ def top_signal_cards(df: pd.DataFrame, count: int = 5, action_key_prefix: str = 
                 f"""
                 <div class="player-card">
                   <div class="player-name">{row.get('player_name', '')}</div>
-                  <div class="player-meta">{row.get('team', '')} / {row.get('opponent', '')} / {row.get('position', '')}</div>
+                  <div class="player-meta">{escape(player_context_text(row))}</div>
                   <div class="player-proj">{format_percent_or_score(row.get('overall_signal_score'))}</div>
                   <div>{tier_badge(row.get('signal_tier'))}</div>
                   <div class="metric-help" style="margin-top:.45rem;">{summarize_reason(row.get('top_signal_reason', ''))}</div>

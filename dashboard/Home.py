@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from signal_ui import build_signal_heatmap, inject_signal_css, load_signal_csv, render_spotlight_card
+from signal_ui import build_signal_heatmap, inject_signal_css, load_signal_csv, player_context_text, render_spotlight_card
 from utils import inject_global_styles, page_header, section_header, sidebar_status
 
 
@@ -28,9 +28,9 @@ def first_matchup(frame: pd.DataFrame) -> tuple[str, pd.DataFrame]:
     if group_column and frame[group_column].notna().any():
         key = frame[group_column].dropna().astype(str).iloc[0]
         return key, frame[frame[group_column].astype(str).eq(key)]
-    team = str(frame.iloc[0].get("team", "Team TBD"))
-    opponent = str(frame.iloc[0].get("opponent", "Opponent TBD"))
-    return f"{team} vs {opponent}", frame.head(8)
+    first = frame.iloc[0]
+    opponent = str(first.get("opponent", "") or "").strip()
+    return (player_context_text(first) if opponent else "Matchup context unavailable"), frame.head(8)
 
 
 def main() -> None:

@@ -17,6 +17,7 @@ from signal_ui import (
     render_signal_badge,
     render_signal_table,
     summarize_reason,
+    player_context_text,
     player_selection_token,
 )
 from utils import inject_global_styles, metric_card, page_header, section_header, sidebar_status
@@ -27,6 +28,7 @@ MARKET = "outputs/signal_boards/player_signal_market_summary.csv"
 CONTEXT = "outputs/signal_boards/player_signal_context_summary.csv"
 HISTORY = "outputs/signal_boards/player_signal_recent_history.csv"
 CHALLENGER = "outputs/signal_boards/signal_challenger_preview_rows.csv"
+MATCHUPS = "outputs/signal_boards/by_game_signal_board.csv"
 
 
 def clean_value(value: object, fallback: str = "—") -> str:
@@ -67,6 +69,7 @@ sidebar_status()
 page_header("Player Details", "One-player view of strengths, risks, context, and recent history.")
 
 profiles = load_signal_csv(PROFILES)
+matchups = load_signal_csv(MATCHUPS)
 market = load_signal_csv(MARKET)
 context = load_signal_csv(CONTEXT)
 history = load_signal_csv(HISTORY)
@@ -75,6 +78,29 @@ challenger = load_signal_csv(CHALLENGER)
 if profiles.empty:
     st.warning(f"Missing or empty file: `{PROFILES}`")
     st.stop()
+
+
+def add_matchup_context(profile_frame: pd.DataFrame, matchup_frame: pd.DataFrame) -> pd.DataFrame:
+    """Fill profile-only rows from the display-ready by-game board."""
+    if profile_frame.empty or matchup_frame.empty or "opponent" not in matchup_frame.columns:
+        return profile_frame
+    keys = [column for column in ["player_name", "team"] if column in profile_frame.columns and column in matchup_frame.columns]
+    if len(keys) < 2:
+        return profile_frame
+    reference = matchup_frame[keys + ["opponent"]].copy()
+    reference["opponent"] = reference["opponent"].fillna("").astype(str).str.strip()
+    reference = reference[reference["opponent"].ne("")].drop_duplicates(keys)
+    if reference.empty:
+        return profile_frame
+    enriched = profile_frame.merge(reference, on=keys, how="left", suffixes=("", "_derived"))
+    if "opponent_derived" in enriched.columns:
+        current = enriched["opponent"].fillna("").astype(str).str.strip() if "opponent" in enriched.columns else pd.Series("", index=enriched.index)
+        enriched["opponent"] = current.where(current.ne(""), enriched["opponent_derived"])
+        enriched = enriched.drop(columns=["opponent_derived"])
+    return enriched
+
+
+profiles = add_matchup_context(profiles, matchups)
 
 view = profiles.copy()
 with st.sidebar:
@@ -114,7 +140,7 @@ st.markdown(
     f"""
     <div class="signal-header">
       <h2>{clean_value(selected.get('player_name'))}</h2>
-      <p>{clean_value(selected.get('team'), 'Team TBD')} vs {clean_value(selected.get('opponent'), 'Opponent TBD')} / {clean_value(selected.get('position'), 'Position TBD')}</p>
+      <p>{player_context_text(selected)}</p>
       <div class="signal-chip-row">
         {render_signal_badge(selected.get('overall_signal_score'))}
         {render_signal_badge(selected.get('signal_tier'))}
@@ -133,8 +159,9 @@ with cols[1]:
     metric_card("Strength", clean_value(selected.get("signal_tier")), clean_value(selected.get("signal_tier")))
 with cols[2]:
     metric_card("Action", clean_value(selected.get("recommended_user_action")), clean_value(selected.get("readiness_status")))
-with cols[3]:
-    metric_card("Opponent", clean_value(selected.get("opponent"), "Opponent TBD"), "INFO")
+if clean_value(selected.get("opponent"), ""):
+    with cols[3]:
+        metric_card("Opponent", clean_value(selected.get("opponent")), "INFO")
 
 section_header("Why This Player?")
 driver_cols = st.columns(2)
