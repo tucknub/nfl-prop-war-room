@@ -1,0 +1,10 @@
+{
+  "started_at_utc": "2026-07-13T22:02:13.664392+00:00",
+  "season": 2022,
+  "config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "start_commit": "bdff056fa625eef76152e1b9f3ef0e88fda2bbab",
+  "single_execution_authorized": true,
+  "completed": true,
+  "completed_at_utc": "2026-07-13T22:02:38.950319+00:00",
+  "alert_archive_sha256": "725e4bbc73028819dbcc754012aa49888a77826cb15ceac12f43647d1248508d"
+}

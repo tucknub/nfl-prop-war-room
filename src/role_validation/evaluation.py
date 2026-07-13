@@ -18,17 +18,26 @@ def build_future_outcome_lookup(
         & weekly["_eval_metric"].notna()
     )
     eligible_weekly = weekly.loc[eligible].copy()
-    grouped = eligible_weekly.groupby(["player_id", "role_family", "season"], sort=False)["_eval_metric"]
+    group_keys = ["player_id", "role_family", "season"]
+    grouped = eligible_weekly.groupby(group_keys, sort=False)["_eval_metric"]
+    grouped_week = eligible_weekly.groupby(group_keys, sort=False)["week"]
     future_columns = []
+    future_week_columns = []
     for offset in range(1, horizon + 1):
         column = f"_future_{offset}"
+        week_column = f"future_week_{offset}"
         eligible_weekly[column] = grouped.shift(-offset)
+        eligible_weekly[week_column] = grouped_week.shift(-offset)
         future_columns.append(column)
+        future_week_columns.append(week_column)
     eligible_weekly["future_n"] = eligible_weekly[future_columns].notna().sum(axis=1)
     eligible_weekly["next_game_value"] = eligible_weekly[future_columns[0]]
     eligible_weekly["future_mean"] = eligible_weekly[future_columns].mean(axis=1)
     keys = ["season", "week", "player_id", "team", "role_family"]
-    return eligible_weekly[keys + ["future_n", "next_game_value", "future_mean"]].drop_duplicates(keys)
+    return eligible_weekly[
+        keys
+        + ["future_n", "next_game_value", "future_mean", *future_week_columns]
+    ].drop_duplicates(keys)
 
 
 def attach_future_outcomes(

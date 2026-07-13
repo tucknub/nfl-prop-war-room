@@ -1,0 +1,9 @@
+check,passed
+only_2022_alerts,True
+minimum_four_game_baseline,True
+confirmation_window_complete,True
+baseline_strictly_before_confirmation,True
+confirmation_ends_on_alert_week,True
+first_outcome_strictly_after_alert,True
+second_outcome_strictly_after_first,True
+same_season_grouping_enabled_by_frozen_config,True

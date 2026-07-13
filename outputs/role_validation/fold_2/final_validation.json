@@ -1,0 +1,329 @@
+{
+  "status": "PASS",
+  "checks_passed": 64,
+  "checks": [
+    {
+      "check": "required_artifacts_present",
+      "passed": true,
+      "detail": "missing=[]"
+    },
+    {
+      "check": "config_integrity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "frozen_copy_byte_identical",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "config_clean_vs_head",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "pre_fold2_tag",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "execution_lock_completed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "execution_locked_to_2022",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "execution_locked_to_config",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "alert_archive_hash",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "alerts_2022_only",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "canonical_2022_only",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "partial_policies_exact",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "methods_exact",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "families_exact",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "canonical_unique_key",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "canonical_row_count_recomputed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "canonical_required_nulls_zero",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "canonical_identity_full",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "equal_volume_rows",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "equal_volume_all",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "equal_volume_method_count",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "equal_volume_counts_match",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "temporal_checks_all",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "baseline_before_confirmation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "confirmation_ends_at_alert",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "outcomes_after_alert",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "method_result_keys",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_alerts",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_evaluable_alerts",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_precision",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_precision_ci_low",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_precision_ci_high",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_reversion_rate",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_median_retention",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_full_alerts",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_full_evaluable_alerts",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_full_precision",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_naive_precision",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_precision_improvement",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_precision_improvement_ci_low",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_precision_improvement_ci_high",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_full_reversion_rate",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_reversion_improvement",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "recomputed_comparison_full_median_retention",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "release_status_recomputed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "release_failures_recomputed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "no_family_passes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "pre_execution_tests_passed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_concise_judgment",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_2022_data_audit",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_family_and_method_results",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_2021_redevelopment_versus_untouched_2022",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_partial-game_sensitivity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_locked_release-gate_judgment",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_recommended_next_action",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_section_limitations",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_no_validation_claim",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "report_no_post_2022_use",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "notebook_code_cells_executed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "notebook_no_errors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "staged_scope_only",
+      "passed": true,
+      "detail": "disallowed=[]"
+    },
+    {
+      "check": "frozen_config_not_staged",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "dashboard_not_staged",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "locked_files_not_staged",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "validated_alert_archive_sha256": "725e4bbc73028819dbcc754012aa49888a77826cb15ceac12f43647d1248508d",
+  "validated_config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "require_staged_scope": true
+}

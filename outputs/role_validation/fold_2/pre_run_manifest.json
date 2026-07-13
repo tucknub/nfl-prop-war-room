@@ -1,0 +1,18 @@
+{
+  "stage": "precheck",
+  "passed": true,
+  "evaluation_executed": false,
+  "allowed_seasons": [
+    2022
+  ],
+  "post_2022_seasons_read": false,
+  "canonical_rows": 7478,
+  "canonical_duplicate_keys": 0,
+  "confirmed_partial_family_rows": 19,
+  "suspected_partial_family_rows": 93,
+  "source_coverage_passed": true,
+  "identity_coverage_passed": true,
+  "config_integrity_passed": true,
+  "temporal_design_static_checks_passed": true,
+  "equal_volume_automated_test_required_before_execute": true
+}

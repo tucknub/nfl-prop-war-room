@@ -11,6 +11,7 @@ from role_validation.evaluation import attach_future_outcomes, build_future_outc
 
 
 ALLOWED_REDEVELOPMENT_SEASONS = (2018, 2019, 2020, 2021)
+APPROVED_ROLE_VALIDATION_SEASONS = (2018, 2019, 2020, 2021, 2022)
 ROLE_FAMILIES = (
     "rb_carry_share",
     "rb_opportunity_share",
@@ -32,12 +33,17 @@ def load_canonical_seasons(
     path: str,
     seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
 ) -> pd.DataFrame:
-    """Read only the explicitly allowed seasons from the combined canonical file."""
+    """Read only explicitly requested, protocol-approved seasons.
+
+    The default remains the 2018-2021 redevelopment boundary. Fold 2 must pass
+    ``seasons=[2022]`` explicitly so 2022 cannot enter a redevelopment run by
+    accident.
+    """
     allowed = {int(season) for season in seasons}
-    if not allowed or not allowed.issubset(set(ALLOWED_REDEVELOPMENT_SEASONS)):
+    if not allowed or not allowed.issubset(set(APPROVED_ROLE_VALIDATION_SEASONS)):
         raise ValueError(
-            f"Redevelopment seasons must be a non-empty subset of "
-            f"{ALLOWED_REDEVELOPMENT_SEASONS}; received {sorted(allowed)}."
+            f"Role-validation seasons must be a non-empty subset of "
+            f"{APPROVED_ROLE_VALIDATION_SEASONS}; received {sorted(allowed)}."
         )
     selected: list[pd.DataFrame] = []
     for chunk in pd.read_csv(path, chunksize=10_000, low_memory=False):
@@ -163,6 +169,9 @@ def _disjoint_features(
         "confirmation_mean_team_denominator": np.full(size, np.nan),
         "baseline_mean_player_opportunities": np.full(size, np.nan),
         "baseline_mean_team_denominator": np.full(size, np.nan),
+        "baseline_max_week": np.full(size, np.nan),
+        "confirmation_start_week": np.full(size, np.nan),
+        "confirmation_end_week": np.full(size, np.nan),
         "strict_confirmation_pass": np.zeros(size, dtype=bool),
         "legacy_confirmation_pass": np.zeros(size, dtype=bool),
         "feature_eligible": np.zeros(size, dtype=bool),
@@ -188,6 +197,7 @@ def _disjoint_features(
                             else np.nan
                         ),
                         "season": int(df.at[index, "season"]),
+                        "week": int(df.at[index, "week"]),
                     }
                 )
                 baseline_pool = (
@@ -218,6 +228,9 @@ def _disjoint_features(
                     )
                     values["baseline_mean_team_denominator"][index] = float(
                         np.nanmean([item["denominator"] for item in recent_pool])
+                    )
+                    values["baseline_max_week"][index] = float(
+                        max(int(item["week"]) for item in recent_pool)
                     )
                     season_value = (
                         float(np.mean([item["metric"] for item in season_pool]))
@@ -259,6 +272,12 @@ def _disjoint_features(
                         values["confirmation_mean_team_denominator"][index] = float(
                             np.nanmean(confirmation_denominator)
                         )
+                        values["confirmation_start_week"][index] = float(
+                            min(int(item["week"]) for item in confirmation)
+                        )
+                        values["confirmation_end_week"][index] = float(
+                            max(int(item["week"]) for item in confirmation)
+                        )
                         direction = np.sign(detected_delta)
                         component_directions = np.sign(confirmation_metrics - baseline_value)
                         values["strict_confirmation_pass"][index] = bool(
@@ -281,6 +300,7 @@ def _disjoint_features(
                             else np.nan
                         ),
                         "season": int(df.at[index, "season"]),
+                        "week": int(df.at[index, "week"]),
                     }
                 )
 
@@ -462,10 +482,14 @@ def build_full_candidate_alerts(
     candidate: dict[str, Any],
     partial_policy: str = "PRIMARY_CONFIRMED_EXCLUDED",
     feature_cache: dict[tuple[Any, ...], pd.DataFrame] | None = None,
+    allowed_seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build a transparent full-detector alert set before comparator matching."""
     observed = set(pd.to_numeric(data["season"], errors="raise").astype(int).unique())
-    if not observed.issubset(set(ALLOWED_REDEVELOPMENT_SEASONS)):
+    allowed = {int(season) for season in allowed_seasons}
+    if not allowed or not allowed.issubset(set(APPROVED_ROLE_VALIDATION_SEASONS)):
+        raise ValueError(f"Invalid allowed seasons: {sorted(allowed)}")
+    if not observed.issubset(allowed):
         raise AssertionError(f"Candidate input contains disallowed seasons: {sorted(observed)}")
     rows = [
         _candidate_family_rows(
@@ -659,6 +683,7 @@ def evaluate_candidate_alerts(
     horizon: int = 2,
     retention_threshold: float = 0.50,
     reversion_threshold: float = 0.25,
+    allowed_seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
 ) -> pd.DataFrame:
     if alerts.empty:
         return alerts.copy()
@@ -681,7 +706,8 @@ def evaluate_candidate_alerts(
         future_lookup=lookup,
     )
     observed = set(pd.to_numeric(evaluated["season"], errors="raise").astype(int).unique())
-    if not observed.issubset(set(ALLOWED_REDEVELOPMENT_SEASONS)):
+    allowed = {int(season) for season in allowed_seasons}
+    if not observed.issubset(allowed):
         raise AssertionError(f"Evaluation produced disallowed seasons: {sorted(observed)}")
     return evaluated
 
@@ -692,10 +718,15 @@ def run_candidate(
     *,
     partial_policy: str = "PRIMARY_CONFIRMED_EXCLUDED",
     feature_cache: dict[tuple[Any, ...], pd.DataFrame] | None = None,
+    allowed_seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
 ) -> dict[str, pd.DataFrame]:
     """Build, equal-volume match, and evaluate one candidate deterministically."""
     full, suppressed = build_full_candidate_alerts(
-        data, candidate, partial_policy, feature_cache=feature_cache
+        data,
+        candidate,
+        partial_policy,
+        feature_cache=feature_cache,
+        allowed_seasons=allowed_seasons,
     )
     alerts, equal_volume = select_equal_volume_candidate_comparators(
         data,
@@ -708,6 +739,7 @@ def run_candidate(
         alerts,
         data,
         partial_policy=partial_policy,
+        allowed_seasons=allowed_seasons,
     )
     return {
         "alerts": evaluated,
