@@ -1,0 +1,5 @@
+role_family,weeks,alerts,mean_per_week,median_per_week,max_per_week
+rb_carry_share,18,273,15.166666666666666,14.0,23
+rb_opportunity_share,18,324,18.0,17.5,30
+te_target_share,18,35,1.9444444444444444,2.0,6
+wr_target_share,18,85,4.722222222222222,4.5,11

@@ -1,0 +1,5 @@
+file,rows,seasons,status_at_start
+data/raw/pbp.csv,147928,"2023, 2024, 2025",present before role-validation integration
+data/raw/weekly.csv,57045,"2023, 2024, 2025",present before role-validation integration
+data/raw/rosters.csv,9443,"2023, 2024, 2025",present before role-validation integration
+data/raw/schedules.csv,855,"2023, 2024, 2025",present before role-validation integration

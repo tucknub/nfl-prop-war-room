@@ -1,0 +1,8 @@
+metric,value
+rows,57928
+columns,26
+seasons,"2018,2019,2020,2021,2022,2023,2024,2025"
+duplicate_key_rows,0
+partial_game_rate,0.0
+quality_pass_rate,0.992818671454219
+qualifying_game_rate,0.992818671454219

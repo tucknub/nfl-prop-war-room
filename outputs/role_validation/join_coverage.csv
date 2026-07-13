@@ -1,0 +1,17 @@
+season,join,rows,matched_rows,coverage_rate
+2018,opportunity_to_identity,29956,29956,1.0
+2018,participating_player_to_identity,9511,9420,0.9904321312164862
+2019,opportunity_to_identity,30027,30027,1.0
+2019,participating_player_to_identity,9454,9360,0.9900571186799239
+2020,opportunity_to_identity,30597,30597,1.0
+2020,participating_player_to_identity,9700,9700,1.0
+2021,opportunity_to_identity,32052,32052,1.0
+2021,participating_player_to_identity,10227,10227,1.0
+2022,opportunity_to_identity,31546,31546,1.0
+2022,participating_player_to_identity,10173,10173,1.0
+2023,opportunity_to_identity,31567,31567,1.0
+2023,participating_player_to_identity,10225,10225,1.0
+2024,opportunity_to_identity,31184,31184,1.0
+2024,participating_player_to_identity,10209,10209,1.0
+2025,opportunity_to_identity,30691,30691,1.0
+2025,participating_player_to_identity,10166,10162,0.999606531575841

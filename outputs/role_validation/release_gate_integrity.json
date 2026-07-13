@@ -1,0 +1,21 @@
+{
+  "unchanged": true,
+  "expected": {
+    "min_holdout_alerts": 50,
+    "min_persistence_precision": 0.6,
+    "min_absolute_improvement_vs_naive": 0.1,
+    "max_immediate_reversion_rate": 0.25,
+    "min_reversion_improvement_vs_naive": 0.08,
+    "min_median_retention": 0.5,
+    "min_alerts_per_week": 0.5
+  },
+  "actual": {
+    "min_holdout_alerts": 50,
+    "min_persistence_precision": 0.6,
+    "min_absolute_improvement_vs_naive": 0.1,
+    "max_immediate_reversion_rate": 0.25,
+    "min_reversion_improvement_vs_naive": 0.08,
+    "min_median_retention": 0.5,
+    "min_alerts_per_week": 0.5
+  }
+}

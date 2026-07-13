@@ -1,0 +1,117 @@
+protocol_version: "1.0.0"
+project:
+  name: "PropWar Role Intelligence"
+  start_season: 2018
+  final_historical_holdout: 2025
+  first_prospective_season: 2026
+
+data:
+  required_columns:
+    - season
+    - week
+    - player_id
+    - player_name
+    - team
+    - position
+    - role_family
+    - metric_all
+    - metric_normal
+    - raw_opportunities_all
+    - raw_opportunities_normal
+    - team_opportunities_all
+    - team_opportunities_normal
+    - qualifying_game
+    - partial_game_flag
+    - data_quality_pass
+  share_columns:
+    - metric_all
+    - metric_normal
+  key_columns:
+    - season
+    - week
+    - player_id
+    - team
+    - role_family
+
+normal_game:
+  q3_garbage_abs_score_diff: 24
+  q4_garbage_abs_score_diff: 17
+  exclude_overtime: true
+  exclude_kneels: true
+  exclude_spikes: true
+  include_competitive_two_minute: true
+
+folds:
+  - {name: "fold_1", develop_through: 2020, test_season: 2021}
+  - {name: "fold_2", develop_through: 2021, test_season: 2022}
+  - {name: "fold_3", develop_through: 2022, test_season: 2023}
+  - {name: "fold_4", develop_through: 2023, test_season: 2024}
+  - {name: "final_holdout", develop_through: 2024, test_season: 2025}
+
+role_families:
+  rb_carry_share:
+    positions: ["RB"]
+    metric_source: "carry_share"
+    direction: "both"
+    candidate_min_abs_delta: [0.08, 0.10, 0.12, 0.15]
+    min_baseline_games: [3, 4]
+    baseline_window_games: [3, 4, 6]
+  rb_opportunity_share:
+    positions: ["RB"]
+    metric_source: "rb_opportunity_share"
+    direction: "both"
+    candidate_min_abs_delta: [0.08, 0.10, 0.12, 0.15]
+    min_baseline_games: [3, 4]
+    baseline_window_games: [3, 4, 6]
+  wr_target_share:
+    positions: ["WR"]
+    metric_source: "target_share"
+    direction: "both"
+    candidate_min_abs_delta: [0.06, 0.08, 0.10, 0.12]
+    min_baseline_games: [3, 4]
+    baseline_window_games: [3, 4, 6]
+  te_target_share:
+    positions: ["TE"]
+    metric_source: "target_share"
+    direction: "both"
+    candidate_min_abs_delta: [0.05, 0.07, 0.09, 0.11]
+    min_baseline_games: [3, 4]
+    baseline_window_games: [3, 4, 6]
+
+primary_outcome:
+  horizon_qualifying_games: 2
+  retention_threshold: 0.50
+  immediate_reversion_threshold: 0.25
+
+release_gates:
+  full_release:
+    min_holdout_alerts: 50
+    min_persistence_precision: 0.60
+    min_absolute_improvement_vs_naive: 0.10
+    max_immediate_reversion_rate: 0.25
+    min_reversion_improvement_vs_naive: 0.08
+    min_median_retention: 0.50
+    min_alerts_per_week: 0.50
+  experimental:
+    min_holdout_alerts: 25
+    max_holdout_alerts: 49
+
+bootstrap:
+  iterations: 2000
+  confidence_level: 0.95
+  random_seed: 850
+
+development_selection:
+  min_evaluable_alerts: 25
+  ranking_order:
+    - precision_improvement_vs_equal_volume_naive
+    - persistence_precision
+    - lower_immediate_reversion
+    - median_retention
+    - evaluable_alert_count
+  note: "Fold-development selection only; this does not change any release gate."
+
+status:
+  rules_frozen_for_2025: false
+  frozen_at_utc: null
+  frozen_config_sha256: null

@@ -1,0 +1,13 @@
+season,role_family,rows,players,qualifying_rows,data_quality_pass_rows
+2018,rb_carry_share,1467,163,1415,1415
+2018,rb_opportunity_share,1467,163,1415,1415
+2018,te_target_share,1483,134,1438,1438
+2018,wr_target_share,2360,231,2284,2284
+2019,rb_carry_share,1509,160,1463,1463
+2019,rb_opportunity_share,1509,160,1463,1463
+2019,te_target_share,1409,136,1371,1371
+2019,wr_target_share,2389,236,2328,2328
+2020,rb_carry_share,1569,172,1569,1569
+2020,rb_opportunity_share,1569,172,1569,1569
+2020,te_target_share,1531,143,1531,1531
+2020,wr_target_share,2465,248,2465,2465

@@ -1,0 +1,30 @@
+{
+  "seasons": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "coverage_seasons": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "canonical_rows": 57928,
+  "audit_rows_2018_2020": 20727,
+  "audit_passed": true,
+  "canonical_path": "outputs\\role_validation\\canonical_player_week_role.csv.gz",
+  "canonical_sha256": "11d57cdde92238024da8afbedabe124da746250aa9a2026422014382ccc14e90",
+  "protocol_sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+  "locked_decisions_sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+}

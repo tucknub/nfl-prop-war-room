@@ -1,0 +1,21 @@
+{
+  "validation_status": "Verified",
+  "analysis_readiness": "Needs revision",
+  "public_detector_claim_supported": false,
+  "checks": {
+    "canonical_hash_matches_manifest": true,
+    "protocol_exact_hash": true,
+    "locked_decisions_exact_hash": true,
+    "canonical_rows_57928": true,
+    "audit_rows_20727": true,
+    "zero_duplicate_keys": true,
+    "zero_required_nulls": true,
+    "shares_in_range": true,
+    "fold_only_2021": true,
+    "equal_volume_all_family_weeks": true,
+    "precision_recomputes": true,
+    "no_family_passes_all_point_gates": true,
+    "release_gates_unchanged": true,
+    "notebook_executed_without_errors": true
+  }
+}

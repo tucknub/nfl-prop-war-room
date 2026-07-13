@@ -1,0 +1,3 @@
+severity,limitation,status,detail,leakage_risk
+high,partial_game_exclusions,UNRELIABLE_SOURCE,"No trustworthy in-game player-exit flag exists in PBP, participation, snaps, rosters, or injury reports. partial_game_flag is present but conservatively false and is not release-grade.",Using next-week injury reports or outcome-correlated snap drops would introduce look-ahead or selection bias.
+medium,late_backup_only,UNAVAILABLE,No trustworthy late-backup-only source field exists; the protocol permits exclusion only when reliably identified.,No future data used; flag remains false and explicitly unreliable.

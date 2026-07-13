@@ -1,0 +1,16 @@
+{
+  "mode": "development",
+  "fold": "fold_1",
+  "input": "outputs\\role_validation\\canonical_player_week_role.csv.gz",
+  "development_seasons": [
+    2018,
+    2019,
+    2020
+  ],
+  "test_season": 2021,
+  "rows": 57928,
+  "alert_rows_all_methods": 2868,
+  "full_propwar_alerts": 717,
+  "equal_volume_family_weeks": 72,
+  "equal_volume_verified": true
+}
