@@ -1,0 +1,8 @@
+metric,rows_compared,maximum_absolute_difference,matched
+alerts,8,0.0,True
+evaluable_alerts,8,0.0,True
+precision,8,0.0,True
+precision_ci_low,8,8.881784197001252e-16,True
+precision_ci_high,8,0.0,True
+reversion_rate,8,8.326672684688674e-17,True
+median_retention,8,0.0,True

@@ -1,0 +1,13 @@
+partial_policy,role_family,alerts,quality_violations,qualifying_violations,identity_violations,baseline_minimum_violations,confirmation_complete_violations,strict_confirmation_violations,absolute_delta_violations,player_opportunity_violations,team_denominator_violations,all_rules_satisfied
+ALL_INCLUDED,rb_carry_share,61,0,0,0,0,0,0,0,0,0,True
+ALL_INCLUDED,rb_opportunity_share,75,0,0,0,0,0,0,0,0,0,True
+ALL_INCLUDED,te_target_share,4,0,0,0,0,0,0,0,0,0,True
+ALL_INCLUDED,wr_target_share,29,0,0,0,0,0,0,0,0,0,True
+PRIMARY_CONFIRMED_EXCLUDED,rb_carry_share,60,0,0,0,0,0,0,0,0,0,True
+PRIMARY_CONFIRMED_EXCLUDED,rb_opportunity_share,74,0,0,0,0,0,0,0,0,0,True
+PRIMARY_CONFIRMED_EXCLUDED,te_target_share,4,0,0,0,0,0,0,0,0,0,True
+PRIMARY_CONFIRMED_EXCLUDED,wr_target_share,27,0,0,0,0,0,0,0,0,0,True
+STRICT_SUSPECTED_EXCLUDED,rb_carry_share,59,0,0,0,0,0,0,0,0,0,True
+STRICT_SUSPECTED_EXCLUDED,rb_opportunity_share,71,0,0,0,0,0,0,0,0,0,True
+STRICT_SUSPECTED_EXCLUDED,te_target_share,3,0,0,0,0,0,0,0,0,0,True
+STRICT_SUSPECTED_EXCLUDED,wr_target_share,22,0,0,0,0,0,0,0,0,0,True

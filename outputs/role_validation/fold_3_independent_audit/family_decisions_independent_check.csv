@@ -1,0 +1,3 @@
+role_family,all_gates_pass,failed_gates
+rb_carry_share,True,
+rb_opportunity_share,False,direction_consistent_across_periods

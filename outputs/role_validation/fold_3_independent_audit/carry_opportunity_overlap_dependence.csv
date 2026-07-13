@@ -1,0 +1,7 @@
+period,role_family,overlap_group,alerts,evaluable_alerts,persistent_alerts,precision,reversion_evaluable_alerts,immediate_reversions,reversion_rate,median_retention
+untouched_2022,rb_carry_share,also_opportunity,33,27,15,0.5555555555555556,27,4,0.14814814814814814,0.5508871725513518
+untouched_2022,rb_carry_share,carry_only,16,12,10,0.8333333333333334,13,2,0.15384615384615385,0.738639296982422
+untouched_2023,rb_carry_share,also_opportunity,41,33,25,0.7575757575757576,35,5,0.14285714285714285,0.8385099453962244
+untouched_2023,rb_carry_share,carry_only,19,14,6,0.42857142857142855,17,7,0.4117647058823529,0.3883402834541255
+pooled_2022_2023,rb_carry_share,also_opportunity,74,60,40,0.6666666666666666,62,9,0.14516129032258066,0.7723626170121385
+pooled_2022_2023,rb_carry_share,carry_only,35,26,16,0.6153846153846154,30,9,0.3,0.6308967168376047

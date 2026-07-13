@@ -1,0 +1,11 @@
+check,passed
+alert_archive_2023_only,True
+canonical_archive_2023_only,True
+baseline_precedes_confirmation,True
+confirmation_ends_on_alert_week,True
+first_outcome_after_alert,True
+second_outcome_after_first,True
+primary_contains_no_confirmed_partial,True
+primary_retains_suspected_rows,True
+confirmed_evidence_after_trigger,True
+confirmed_evidence_before_next_game,True

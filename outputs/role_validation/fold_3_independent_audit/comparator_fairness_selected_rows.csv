@@ -1,0 +1,9 @@
+role_family,method,alerts,unique_players,data_quality_pass_rate,qualifying_game_rate,identity_resolved_rate,feature_eligible_rate,minimum_baseline_n,confirmation_window_match_rate,outcome_evaluable_rate
+rb_carry_share,full_propwar,60,39,1.0,1.0,1.0,1.0,4,1.0,0.7833333333333333
+rb_carry_share,naive_spike,60,38,1.0,1.0,1.0,1.0,4,1.0,0.8166666666666667
+rb_carry_share,normal_game_trend,60,28,1.0,1.0,1.0,1.0,4,1.0,0.8166666666666667
+rb_carry_share,two_week_raw,60,29,1.0,1.0,1.0,1.0,4,1.0,0.8166666666666667
+rb_opportunity_share,full_propwar,74,45,1.0,1.0,1.0,1.0,4,1.0,0.7702702702702703
+rb_opportunity_share,naive_spike,74,44,1.0,1.0,1.0,1.0,4,1.0,0.7837837837837838
+rb_opportunity_share,normal_game_trend,74,34,1.0,1.0,1.0,1.0,4,1.0,0.7837837837837838
+rb_opportunity_share,two_week_raw,74,35,1.0,1.0,1.0,1.0,4,1.0,0.7972972972972973

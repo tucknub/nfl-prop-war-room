@@ -1,0 +1,3 @@
+role_family,alerts,unique_players,players_with_multiple_alerts,alerts_from_multiple_alert_players,maximum_alerts_one_player,consecutive_repeat_alerts,consecutive_repeat_rate
+rb_carry_share,60,39,15,36,4,1,0.016666666666666666
+rb_opportunity_share,74,45,18,47,4,0,0.0

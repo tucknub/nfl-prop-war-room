@@ -1,0 +1,10 @@
+field,rows_compared,mismatch_rows,maximum_absolute_difference,matched
+future_n,660,0,0.0,True
+next_game_value,660,0,0.0,True
+future_week_1,660,0,0.0,True
+future_week_2,660,0,0.0,True
+future_mean,660,0,8.326672684688674e-17,True
+next_game_retention,660,0,8.881784197001252e-16,True
+retention,660,0,8.881784197001252e-16,True
+persistent,660,0,0.0,True
+immediate_reversion,660,0,0.0,True

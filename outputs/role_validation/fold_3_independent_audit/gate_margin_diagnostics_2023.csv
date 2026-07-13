@@ -1,0 +1,5 @@
+role_family,stress,minimum_changes_to_fail
+rb_carry_share,persistent_outcomes_flipped_to_fail_precision,3
+rb_carry_share,persistent_outcomes_flipped_to_fail_naive_lift,2
+rb_carry_share,additional_immediate_reversions_to_fail,2
+rb_carry_share,alerts_removed_to_fail_volume,11

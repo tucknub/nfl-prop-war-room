@@ -1,0 +1,27 @@
+{
+  "audited_commit": "a18c5cc3e8c9124be4781bececea0a93f7b4faf8",
+  "audit_passed": true,
+  "alert_archive_sha256": "f9c4b971c0abb15662f66f3cc2d9103df0bed257b718408c82543f4f0cc943ee",
+  "config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "equal_volume_cells": 216,
+  "unequal_volume_cells": 0,
+  "duplicate_alert_keys": 0,
+  "temporal_checks_passed": 10,
+  "temporal_checks_total": 10,
+  "outcome_fields_reconstructed": 9,
+  "outcome_reconstruction_passed": true,
+  "source_hashes_matched": true,
+  "full_alert_rule_compliance_passed": true,
+  "comparator_replay_cells": 648,
+  "comparator_replay_passed": true,
+  "post_2023_values_used_in_scoring": false,
+  "multi_season_cache_files_scanned_before_row_filtering": true,
+  "manifest_post_2023_read_flag_literally_accurate": false,
+  "fold4_executed": false,
+  "recommendations": {
+    "rb_carry_share": "ADVANCE_UNCHANGED_TO_FOLD_4",
+    "rb_opportunity_share": "CONTINUE_UNCHANGED_SHADOW_FOLD_4",
+    "wr_target_share": "REMAIN_RETIRED",
+    "te_target_share": "REMAIN_RETIRED"
+  }
+}

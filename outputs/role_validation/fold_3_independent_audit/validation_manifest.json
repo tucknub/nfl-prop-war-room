@@ -1,0 +1,120 @@
+{
+  "validator": "fold3_independent_audit_validator",
+  "passed": true,
+  "checks_passed": 22,
+  "checks_total": 22,
+  "audited_commit": "a18c5cc3e8c9124be4781bececea0a93f7b4faf8",
+  "fold4_executed": false,
+  "checks": [
+    {
+      "check": "audit_manifest_passed",
+      "passed": true,
+      "detail": "{'audited_commit': 'a18c5cc3e8c9124be4781bececea0a93f7b4faf8', 'audit_passed': True, 'alert_archive_sha256': 'f9c4b971c0abb15662f66f3cc2d9103df0bed257b718408c82543f4f0cc943ee', 'config_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'equal_volume_cells': 216, 'unequal_volume_cells': 0, 'duplicate_alert_keys': 0, 'temporal_checks_passed': 10, 'temporal_checks_total': 10, 'outcome_fields_reconstructed': 9, 'outcome_reconstruction_passed': True, 'source_hashes_matched': True, 'full_alert_rule_compliance_passed': True, 'comparator_replay_cells': 648, 'comparator_replay_passed': True, 'post_2023_values_used_in_scoring': False, 'multi_season_cache_files_scanned_before_row_filtering': True, 'manifest_post_2023_read_flag_literally_accurate': False, 'fold4_executed': False, 'recommendations': {'rb_carry_share': 'ADVANCE_UNCHANGED_TO_FOLD_4', 'rb_opportunity_share': 'CONTINUE_UNCHANGED_SHADOW_FOLD_4', 'wr_target_share': 'REMAIN_RETIRED', 'te_target_share': 'REMAIN_RETIRED'}}"
+    },
+    {
+      "check": "audited_commit",
+      "passed": true,
+      "detail": "a18c5cc3e8c9124be4781bececea0a93f7b4faf8"
+    },
+    {
+      "check": "no_fold4",
+      "passed": true,
+      "detail": "False"
+    },
+    {
+      "check": "carry_raw_numerators",
+      "passed": true,
+      "detail": "(np.int64(60), np.int64(47), np.int64(31))"
+    },
+    {
+      "check": "opportunity_raw_numerators",
+      "passed": true,
+      "detail": "(np.int64(74), np.int64(57), np.int64(44))"
+    },
+    {
+      "check": "headline_method_rows",
+      "passed": true,
+      "detail": "8"
+    },
+    {
+      "check": "carry_lift",
+      "passed": true,
+      "detail": "0.1289622231871471"
+    },
+    {
+      "check": "opportunity_lift",
+      "passed": true,
+      "detail": "0.2029643073200241"
+    },
+    {
+      "check": "carry_all_gates",
+      "passed": true,
+      "detail": "{'all_gates_pass': True, 'failed_gates': nan}"
+    },
+    {
+      "check": "opportunity_direction_failure",
+      "passed": true,
+      "detail": "{'all_gates_pass': False, 'failed_gates': 'direction_consistent_across_periods'}"
+    },
+    {
+      "check": "pooled_carry_raw",
+      "passed": true,
+      "detail": "{'period': 'pooled_untouched_2022_2023', 'full_alerts': 109, 'full_evaluable_alerts': 86, 'full_persistent_alerts': 56, 'full_precision': 0.6511627906976745, 'naive_alerts': 109, 'naive_evaluable_alerts': 87, 'naive_persistent_alerts': 44, 'naive_precision': 0.5057471264367817, 'precision_improvement': 0.1454156642608928, 'precision_improvement_ci_low': 0.0352801857585139, 'precision_improvement_ci_high': 0.2493326401109155, 'full_reversion_evaluable_alerts': 92, 'full_immediate_reversions': 18, 'full_reversion_rate': 0.1956521739130435, 'naive_reversion_evaluable_alerts': 92, 'naive_immediate_reversions': 33, 'naive_reversion_rate': 0.358695652173913, 'reversion_improvement': 0.1630434782608695, 'full_median_retention': 0.738639296982422, 'naive_median_retention': 0.5046111014442318}"
+    },
+    {
+      "check": "pooled_opportunity_raw",
+      "passed": true,
+      "detail": "{'period': 'pooled_untouched_2022_2023', 'full_alerts': 133, 'full_evaluable_alerts': 104, 'full_persistent_alerts': 73, 'full_precision': 0.7019230769230769, 'naive_alerts': 133, 'naive_evaluable_alerts': 103, 'naive_persistent_alerts': 57, 'naive_precision': 0.5533980582524272, 'precision_improvement': 0.1485250186706497, 'precision_improvement_ci_low': 0.0239457384331261, 'precision_improvement_ci_high': 0.2613040248687373, 'full_reversion_evaluable_alerts': 114, 'full_immediate_reversions': 17, 'full_reversion_rate': 0.1491228070175438, 'naive_reversion_evaluable_alerts': 110, 'naive_immediate_reversions': 35, 'naive_reversion_rate': 0.3181818181818182, 'reversion_improvement': 0.1690590111642743, 'full_median_retention': 0.7937678481642929, 'naive_median_retention': 0.5876501560876723}"
+    },
+    {
+      "check": "equal_volume",
+      "passed": true,
+      "detail": "216 cells"
+    },
+    {
+      "check": "comparator_replay",
+      "passed": true,
+      "detail": "648 cells"
+    },
+    {
+      "check": "full_rule_compliance",
+      "passed": true,
+      "detail": "[{'partial_policy': 'ALL_INCLUDED', 'role_family': 'rb_carry_share', 'alerts': 61, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'ALL_INCLUDED', 'role_family': 'rb_opportunity_share', 'alerts': 75, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'ALL_INCLUDED', 'role_family': 'te_target_share', 'alerts': 4, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'ALL_INCLUDED', 'role_family': 'wr_target_share', 'alerts': 29, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'PRIMARY_CONFIRMED_EXCLUDED', 'role_family': 'rb_carry_share', 'alerts': 60, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'PRIMARY_CONFIRMED_EXCLUDED', 'role_family': 'rb_opportunity_share', 'alerts': 74, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'PRIMARY_CONFIRMED_EXCLUDED', 'role_family': 'te_target_share', 'alerts': 4, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'PRIMARY_CONFIRMED_EXCLUDED', 'role_family': 'wr_target_share', 'alerts': 27, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'STRICT_SUSPECTED_EXCLUDED', 'role_family': 'rb_carry_share', 'alerts': 59, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'STRICT_SUSPECTED_EXCLUDED', 'role_family': 'rb_opportunity_share', 'alerts': 71, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'STRICT_SUSPECTED_EXCLUDED', 'role_family': 'te_target_share', 'alerts': 3, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}, {'partial_policy': 'STRICT_SUSPECTED_EXCLUDED', 'role_family': 'wr_target_share', 'alerts': 22, 'quality_violations': 0, 'qualifying_violations': 0, 'identity_violations': 0, 'baseline_minimum_violations': 0, 'confirmation_complete_violations': 0, 'strict_confirmation_violations': 0, 'absolute_delta_violations': 0, 'player_opportunity_violations': 0, 'team_denominator_violations': 0, 'all_rules_satisfied': True}]"
+    },
+    {
+      "check": "temporal_checks",
+      "passed": true,
+      "detail": "[{'check': 'alert_archive_2023_only', 'passed': True}, {'check': 'canonical_archive_2023_only', 'passed': True}, {'check': 'baseline_precedes_confirmation', 'passed': True}, {'check': 'confirmation_ends_on_alert_week', 'passed': True}, {'check': 'first_outcome_after_alert', 'passed': True}, {'check': 'second_outcome_after_first', 'passed': True}, {'check': 'primary_contains_no_confirmed_partial', 'passed': True}, {'check': 'primary_retains_suspected_rows', 'passed': True}, {'check': 'confirmed_evidence_after_trigger', 'passed': True}, {'check': 'confirmed_evidence_before_next_game', 'passed': True}]"
+    },
+    {
+      "check": "outcome_reconstruction",
+      "passed": true,
+      "detail": "[{'field': 'future_n', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}, {'field': 'next_game_value', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}, {'field': 'future_week_1', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}, {'field': 'future_week_2', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}, {'field': 'future_mean', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 8.326672684688674e-17, 'matched': True}, {'field': 'next_game_retention', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 8.881784197001252e-16, 'matched': True}, {'field': 'retention', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 8.881784197001252e-16, 'matched': True}, {'field': 'persistent', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}, {'field': 'immediate_reversion', 'rows_compared': 660, 'mismatch_rows': 0, 'maximum_absolute_difference': 0.0, 'matched': True}]"
+    },
+    {
+      "check": "input_hashes",
+      "passed": true,
+      "detail": "[{'source': 'canonical', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\outputs\\\\role_validation\\\\canonical_player_week_role.csv.gz', 'expected_sha256': '11d57cdde92238024da8afbedabe124da746250aa9a2026422014382ccc14e90', 'observed_sha256': '11d57cdde92238024da8afbedabe124da746250aa9a2026422014382ccc14e90', 'matched': True}, {'source': 'cached_pbp', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\data\\\\raw\\\\role_validation\\\\pbp_2017_2025.csv.gz', 'expected_sha256': 'd1dc6fce4b338694de70e3a960433dd1fe6f420066139411be7095aafc791ed5', 'observed_sha256': 'd1dc6fce4b338694de70e3a960433dd1fe6f420066139411be7095aafc791ed5', 'matched': True}, {'source': 'cached_participation', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\data\\\\raw\\\\role_validation\\\\participation_2017_2025.csv.gz', 'expected_sha256': 'b355c2527125f2780179c81dbfd9ad058dbbb16d1be6d80f652c30d0041710ef', 'observed_sha256': 'b355c2527125f2780179c81dbfd9ad058dbbb16d1be6d80f652c30d0041710ef', 'matched': True}, {'source': 'cached_injuries', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\data\\\\raw\\\\role_validation\\\\injuries_2017_2025.csv.gz', 'expected_sha256': 'ef559797eb422f478319be68057e54eb20e3eecc073f38af88fce7d7653330d6', 'observed_sha256': 'ef559797eb422f478319be68057e54eb20e3eecc073f38af88fce7d7653330d6', 'matched': True}, {'source': 'frozen_config', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\config\\\\role_change_fold2_candidate.yaml', 'expected_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'observed_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'matched': True}, {'source': 'fold2_frozen_config', 'path': 'C:\\\\Users\\\\tucka\\\\OneDrive\\\\Desktop\\\\NFL PRop Projection\\\\outputs\\\\role_validation\\\\fold_2\\\\frozen_role_change_fold2_candidate.yaml', 'expected_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'observed_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'matched': True}]"
+    },
+    {
+      "check": "summary_reconciliation",
+      "passed": true,
+      "detail": "[{'metric': 'alerts', 'rows_compared': 8, 'maximum_absolute_difference': 0.0, 'matched': True}, {'metric': 'evaluable_alerts', 'rows_compared': 8, 'maximum_absolute_difference': 0.0, 'matched': True}, {'metric': 'precision', 'rows_compared': 8, 'maximum_absolute_difference': 0.0, 'matched': True}, {'metric': 'precision_ci_low', 'rows_compared': 8, 'maximum_absolute_difference': 8.881784197001252e-16, 'matched': True}, {'metric': 'precision_ci_high', 'rows_compared': 8, 'maximum_absolute_difference': 0.0, 'matched': True}, {'metric': 'reversion_rate', 'rows_compared': 8, 'maximum_absolute_difference': 8.326672684688674e-17, 'matched': True}, {'metric': 'median_retention', 'rows_compared': 8, 'maximum_absolute_difference': 0.0, 'matched': True}]"
+    },
+    {
+      "check": "report_recommendations",
+      "passed": true,
+      "detail": "['ADVANCE_UNCHANGED_TO_FOLD_4', 'CONTINUE_UNCHANGED_SHADOW_FOLD_4', 'REMAIN_RETIRED']"
+    },
+    {
+      "check": "notebook_executed",
+      "passed": true,
+      "detail": "8 cells, 0 errors"
+    },
+    {
+      "check": "detector_results_and_config_unmodified",
+      "passed": true,
+      "detail": "no changes"
+    }
+  ]
+}

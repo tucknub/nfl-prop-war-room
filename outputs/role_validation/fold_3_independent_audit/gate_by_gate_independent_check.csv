@@ -1,0 +1,19 @@
+role_family,gate,observed,threshold,passed
+rb_carry_share,min_holdout_alerts,60,>= 50,True
+rb_carry_share,min_persistence_precision,0.6595744680851063,>= 0.6,True
+rb_carry_share,min_absolute_improvement_vs_naive,0.12896222318714712,>= 0.1,True
+rb_carry_share,max_immediate_reversion_rate,0.23076923076923078,<= 0.25,True
+rb_carry_share,min_reversion_improvement_vs_naive,0.09615384615384615,>= 0.08,True
+rb_carry_share,min_median_retention,0.7949311152875244,>= 0.5,True
+rb_carry_share,min_alerts_per_week,3.3333333333333335,>= 0.5,True
+rb_carry_share,direction_consistent_across_periods,True,all available period-direction lifts >= 0,True
+rb_carry_share,frozen_before_holdout,True,required,True
+rb_opportunity_share,min_holdout_alerts,74,>= 50,True
+rb_opportunity_share,min_persistence_precision,0.7719298245614035,>= 0.6,True
+rb_opportunity_share,min_absolute_improvement_vs_naive,0.20296430732002413,>= 0.1,True
+rb_opportunity_share,max_immediate_reversion_rate,0.15625,<= 0.25,True
+rb_opportunity_share,min_reversion_improvement_vs_naive,0.16121031746031744,>= 0.08,True
+rb_opportunity_share,min_median_retention,0.9100854548691472,>= 0.5,True
+rb_opportunity_share,min_alerts_per_week,4.111111111111111,>= 0.5,True
+rb_opportunity_share,direction_consistent_across_periods,False,all available period-direction lifts >= 0,False
+rb_opportunity_share,frozen_before_holdout,True,required,True
