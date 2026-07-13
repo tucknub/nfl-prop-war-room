@@ -1,0 +1,490 @@
+season,week,player_id,team,player_name,position,role_families,family_alert_rows,family_count,directions,direction_conflict,duplicate_family_alert,consecutive_player_repeat
+2021,16,00-0027793,TB,Antonio Brown,WR,wr_target_share,1,1,increase,False,False,False
+2021,16,00-0027944,TEN,Julio Jones,WR,wr_target_share,1,1,decrease,False,False,False
+2021,1,00-0027966,HOU,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0027966,HOU,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,3,00-0027966,HOU,Mark Ingram,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,6,00-0027966,HOU,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,8,00-0027966,NO,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0027966,NO,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,10,00-0027966,NO,Mark Ingram,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,11,00-0027966,NO,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,13,00-0027966,NO,Mark Ingram,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,15,00-0027966,NO,Mark Ingram,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,16,00-0027966,NO,Mark Ingram,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,9,00-0027981,NYG,Kyle Rudolph,TE,te_target_share,1,1,increase,False,False,False
+2021,1,00-0028002,GB,Randall Cobb,WR,wr_target_share,1,1,decrease,False,False,False
+2021,5,00-0029000,BUF,Cole Beasley,WR,wr_target_share,1,1,decrease,False,False,False
+2021,11,00-0029000,BUF,Cole Beasley,WR,wr_target_share,1,1,decrease,False,False,False
+2021,3,00-0029239,NE,Brandon Bolden,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,4,00-0029239,NE,Brandon Bolden,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,16,00-0030035,MIN,Adam Thielen,WR,wr_target_share,1,1,decrease,False,False,False
+2021,11,00-0030181,IND,Jack Doyle,TE,te_target_share,1,1,increase,False,False,False
+2021,12,00-0030181,IND,Jack Doyle,TE,te_target_share,1,1,increase,False,False,True
+2021,17,00-0030181,IND,Jack Doyle,TE,te_target_share,1,1,decrease,False,False,False
+2021,1,00-0030288,HOU,Rex Burkhead,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,2,00-0030288,HOU,Rex Burkhead,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,11,00-0030288,HOU,Rex Burkhead,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,12,00-0030288,HOU,Rex Burkhead,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,13,00-0030288,HOU,Rex Burkhead,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,1,00-0030456,TB,Giovani Bernard,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0030456,TB,Giovani Bernard,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,3,00-0030456,TB,Giovani Bernard,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,16,00-0030496,TB,Le'Veon Bell,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,4,00-0030513,BAL,Latavius Murray,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,12,00-0030513,BAL,Latavius Murray,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,14,00-0030513,BAL,Latavius Murray,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,16,00-0030513,BAL,Latavius Murray,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,2,00-0030578,ATL,Cordarrelle Patterson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,3,00-0030578,ATL,Cordarrelle Patterson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0030578,ATL,Cordarrelle Patterson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,1,00-0030663,LV,Willie Snead,WR,wr_target_share,1,1,decrease,False,False,False
+2021,2,00-0030874,CHI,Damien Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0030874,CHI,Damien Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,4,00-0030874,CHI,Damien Williams,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,5,00-0030874,CHI,Damien Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,6,00-0031045,JAX,Carlos Hyde,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0031045,JAX,Carlos Hyde,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0031045,JAX,Carlos Hyde,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,12,00-0031045,JAX,Carlos Hyde,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,7,00-0031051,DEN,John Brown,WR,wr_target_share,1,1,decrease,False,False,False
+2021,8,00-0031236,HOU,Brandin Cooks,WR,wr_target_share,1,1,decrease,False,False,False
+2021,4,00-0031260,WAS,Logan Thomas,TE,te_target_share,1,1,decrease,False,False,False
+2021,2,00-0031285,BAL,Devonta Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0031285,BAL,Devonta Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,4,00-0031285,BAL,Devonta Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,6,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,7,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,9,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,10,00-0031285,BAL,Devonta Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,11,00-0031285,BAL,Devonta Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,14,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,16,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0031285,BAL,Devonta Freeman,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,2,00-0031325,BAL,Sammy Watkins,WR,wr_target_share,1,1,increase,False,False,False
+2021,10,00-0031325,BAL,Sammy Watkins,WR,wr_target_share,1,1,decrease,False,False,False
+2021,3,00-0031381,GB,Davante Adams,WR,wr_target_share,1,1,increase,False,False,False
+2021,7,00-0031381,GB,Davante Adams,WR,wr_target_share,1,1,decrease,False,False,False
+2021,13,00-0031544,DAL,Amari Cooper,WR,wr_target_share,1,1,decrease,False,False,False
+2021,3,00-0031610,LV,Darren Waller,TE,te_target_share,1,1,decrease,False,False,False
+2021,1,00-0031687,SF,Raheem Mostert,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,4,00-0031806,MIA,Malcolm Brown,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,1,00-0031868,CHI,Damiere Byrd,WR,wr_target_share,1,1,decrease,False,False,False
+2021,15,00-0031941,NYJ,Jamison Crowder,WR,wr_target_share,1,1,increase,False,False,False
+2021,1,00-0032058,NYJ,Tevin Coleman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0032058,NYJ,Tevin Coleman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,12,00-0032058,NYJ,Tevin Coleman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,13,00-0032058,NYJ,Tevin Coleman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0032063,ATL,Mike Davis,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,14,00-0032104,CAR,Ameer Abdullah,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,15,00-0032104,CAR,Ameer Abdullah,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,1,00-0032187,HOU,David Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0032187,HOU,David Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,3,00-0032187,HOU,David Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,4,00-0032187,HOU,David Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,8,00-0032187,HOU,David Johnson,RB,rb_carry_share,1,1,increase,False,False,False
+2021,11,00-0032187,HOU,David Johnson,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,13,00-0032200,NO,Ty Montgomery,WR,wr_target_share,1,1,increase,False,False,False
+2021,17,00-0032200,NO,Ty Montgomery,WR,wr_target_share,1,1,decrease,False,False,False
+2021,8,00-0032211,SEA,Tyler Lockett,WR,wr_target_share,1,1,increase,False,False,False
+2021,11,00-0032257,MIA,Duke Johnson,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0032257,MIA,Duke Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0032392,CLE,Austin Hooper,TE,te_target_share,1,1,increase,False,False,False
+2021,14,00-0032394,NO,Nick Vannett,TE,te_target_share,1,1,increase,False,False,False
+2021,6,00-0032398,HOU,Chris Moore,WR,wr_target_share,1,1,increase,False,False,False
+2021,2,00-0032426,SEA,Alex Collins,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,3,00-0032426,SEA,Alex Collins,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,5,00-0032426,SEA,Alex Collins,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,6,00-0032426,SEA,Alex Collins,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0032426,SEA,Alex Collins,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,14,00-0032426,SEA,Alex Collins,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0032464,DET,Kalif Raymond,WR,wr_target_share,1,1,increase,False,False,False
+2021,4,00-0032464,DET,Kalif Raymond,WR,wr_target_share,1,1,increase,False,False,True
+2021,1,00-0032602,WAS,J.D. McKissic,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0032602,WAS,J.D. McKissic,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,1,00-0032688,CAR,Robbie Chosen,WR,wr_target_share,1,1,decrease,False,False,False
+2021,8,00-0032688,CAR,Robbie Chosen,WR,wr_target_share,1,1,decrease,False,False,False
+2021,3,00-0032741,LV,Peyton Barber,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0032741,LV,Peyton Barber,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,13,00-0032741,LV,Peyton Barber,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,14,00-0032741,LV,Peyton Barber,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,9,00-0032780,PHI,Jordan Howard,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,10,00-0032780,PHI,Jordan Howard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,4,00-0032972,NYG,Devontae Booker,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,5,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,6,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,8,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,11,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,12,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,13,00-0032972,NYG,Devontae Booker,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,18,00-0032972,NYG,Devontae Booker,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,1,00-0032977,CLE,Rashard Higgins,WR,wr_target_share,1,1,decrease,False,False,False
+2021,3,00-0033009,CIN,Tyler Boyd,WR,wr_target_share,1,1,increase,False,False,False
+2021,6,00-0033009,CIN,Tyler Boyd,WR,wr_target_share,1,1,decrease,False,False,False
+2021,7,00-0033040,KC,Tyreek Hill,WR,wr_target_share,1,1,decrease,False,False,False
+2021,9,00-0033040,KC,Tyreek Hill,WR,wr_target_share,1,1,increase,False,False,False
+2021,18,00-0033045,DAL,Ezekiel Elliott,RB,rb_carry_share,1,1,increase,False,False,False
+2021,2,00-0033118,LV,Kenyan Drake,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,3,00-0033118,LV,Kenyan Drake,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,4,00-0033118,LV,Kenyan Drake,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,5,00-0033118,LV,Kenyan Drake,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,7,00-0033118,LV,Kenyan Drake,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,9,00-0033118,LV,Kenyan Drake,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,17,00-0033217,IND,Mo Alie-Cox,TE,te_target_share,1,1,increase,False,False,False
+2021,3,00-0033280,CAR,Christian McCaffrey,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0033280,CAR,Christian McCaffrey,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,11,00-0033280,CAR,Christian McCaffrey,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,5,00-0033282,WAS,Curtis Samuel,WR,wr_target_share,1,1,decrease,False,False,False
+2021,12,00-0033282,WAS,Curtis Samuel,WR,wr_target_share,1,1,decrease,False,False,False
+2021,14,00-0033288,SF,George Kittle,TE,te_target_share,1,1,increase,False,False,False
+2021,17,00-0033288,SF,George Kittle,TE,te_target_share,1,1,decrease,False,False,False
+2021,3,00-0033293,GB,Aaron Jones,RB,rb_carry_share,1,1,increase,False,False,False
+2021,12,00-0033293,GB,Aaron Jones,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,16,00-0033293,GB,Aaron Jones,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0033308,BUF,Matt Breida,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,10,00-0033308,BUF,Matt Breida,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,12,00-0033308,BUF,Matt Breida,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0033308,BUF,Matt Breida,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0033375,DEN,Tim Patrick,WR,wr_target_share,1,1,increase,False,False,False
+2021,1,00-0033439,HOU,Pharaoh Brown,TE,te_target_share,1,1,increase,False,False,False
+2021,2,00-0033526,CIN,Samaje Perine,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0033526,CIN,Samaje Perine,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,5,00-0033526,CIN,Samaje Perine,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,7,00-0033526,CIN,Samaje Perine,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,9,00-0033526,CIN,Samaje Perine,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,2,00-0033553,ARI,James Conner,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,8,00-0033553,ARI,James Conner,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,10,00-0033553,ARI,James Conner,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,11,00-0033553,ARI,James Conner,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,13,00-0033553,ARI,James Conner,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,14,00-0033553,ARI,James Conner,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,18,00-0033553,ARI,James Conner,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,8,00-0033572,JAX,Jamal Agnew,WR,wr_target_share,1,1,increase,False,False,False
+2021,5,00-0033611,WAS,Ricky Seals-Jones,TE,te_target_share,1,1,increase,False,False,False
+2021,6,00-0033611,WAS,Ricky Seals-Jones,TE,te_target_share,1,1,increase,False,False,True
+2021,14,00-0033699,LAC,Austin Ekeler,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,15,00-0033699,LAC,Austin Ekeler,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,18,00-0033699,LAC,Austin Ekeler,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,14,00-0033725,DAL,Corey Clement,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,4,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,5,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,8,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,16,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,17,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,18,00-0033854,JAX,Dare Ogunbowale,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,13,00-0033858,NE,Jonnu Smith,TE,te_target_share,1,1,increase,False,False,False
+2021,17,00-0033858,NE,Jonnu Smith,TE,te_target_share,1,1,decrease,False,False,False
+2021,1,00-0033885,CLE,David Njoku,TE,te_target_share,1,1,increase,False,False,False
+2021,4,00-0033893,MIN,Dalvin Cook,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,17,00-0033893,MIN,Dalvin Cook,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,2,00-0033897,CIN,Joe Mixon,RB,rb_carry_share,1,1,increase,False,False,False
+2021,3,00-0033897,CIN,Joe Mixon,RB,rb_carry_share,1,1,increase,False,False,True
+2021,5,00-0033897,CIN,Joe Mixon,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,6,00-0033897,CIN,Joe Mixon,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,8,00-0033897,CIN,Joe Mixon,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,9,00-0033897,CIN,Joe Mixon,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,9,00-0033906,NO,Alvin Kamara,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,17,00-0033906,NO,Alvin Kamara,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,2,00-0033908,LA,Cooper Kupp,WR,wr_target_share,1,1,increase,False,False,False
+2021,14,00-0033908,LA,Cooper Kupp,WR,wr_target_share,1,1,increase,False,False,False
+2021,15,00-0033908,LA,Cooper Kupp,WR,wr_target_share,1,1,increase,False,False,True
+2021,18,00-0033908,LA,Cooper Kupp,WR,wr_target_share,1,1,decrease,False,False,False
+2021,6,00-0033923,CLE,Kareem Hunt,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,14,00-0033923,CLE,Kareem Hunt,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,10,00-0033925,TEN,D'Onta Foreman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0033925,TEN,D'Onta Foreman,RB,rb_carry_share,1,1,increase,False,False,True
+2021,14,00-0033925,TEN,D'Onta Foreman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0033925,TEN,D'Onta Foreman,RB,rb_carry_share,1,1,increase,False,False,False
+2021,17,00-0033932,NYG,Kenny Golladay,WR,wr_target_share,1,1,increase,False,False,False
+2021,2,00-0033948,DET,Jamaal Williams,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,3,00-0033948,DET,Jamaal Williams,RB,rb_carry_share,1,1,increase,False,False,True
+2021,4,00-0033948,DET,Jamaal Williams,RB,rb_carry_share,1,1,increase,False,False,True
+2021,12,00-0033948,DET,Jamaal Williams,RB,rb_carry_share,1,1,increase,False,False,False
+2021,13,00-0033948,DET,Jamaal Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,4,00-0033950,ATL,Wayne Gallman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,5,00-0033950,ATL,Wayne Gallman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,7,00-0033950,ATL,Wayne Gallman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0033951,IND,Marlon Mack,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,4,00-0033951,IND,Marlon Mack,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,9,00-0033955,TEN,Jeremy McNichols,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,10,00-0033955,TEN,Jeremy McNichols,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,12,00-0034011,JAX,Dan Arnold,TE,te_target_share,1,1,decrease,False,False,False
+2021,2,00-0034109,HOU,Phillip Lindsay,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0034109,HOU,Phillip Lindsay,RB,rb_carry_share,1,1,increase,False,False,False
+2021,12,00-0034115,SF,Jeff Wilson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,13,00-0034115,SF,Jeffery Wilson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,15,00-0034115,SF,Jeff Wilson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,16,00-0034115,SF,Jeff Wilson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0034115,SF,Jeff Wilson,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,18,00-0034115,SF,Jeff Wilson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,11,00-0034253,TEN,Dontrell Hilliard,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,12,00-0034253,TEN,Dontrell Hilliard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0034270,MIN,Tyler Conklin,TE,te_target_share,1,1,increase,False,False,False
+2021,1,00-0034272,GB,Marquez Valdes-Scantling,WR,wr_target_share,1,1,increase,False,False,False
+2021,12,00-0034272,GB,Marquez Valdes-Scantling,WR,wr_target_share,1,1,increase,False,False,False
+2021,4,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,5,00-0034301,KC,Darrel Williams,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,6,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,11,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,13,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,14,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,17,00-0034301,KC,Darrel Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,8,00-0034351,PHI,Dallas Goedert,TE,te_target_share,1,1,increase,False,False,False
+2021,9,00-0034351,PHI,Dallas Goedert,TE,te_target_share,1,1,increase,False,False,True
+2021,4,00-0034353,HOU,Anthony Miller,WR,wr_target_share,1,1,increase,False,False,False
+2021,5,00-0034367,IND,Nyheim Hines,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,11,00-0034367,IND,Nyheim Hines,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0034378,DAL,Ito Smith,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,4,00-0034383,DAL,Dalton Schultz,TE,te_target_share,1,1,increase,False,False,False
+2021,5,00-0034383,DAL,Dalton Schultz,TE,te_target_share,1,1,increase,False,False,True
+2021,10,00-0034383,DAL,Dalton Schultz,TE,te_target_share,1,1,decrease,False,False,False
+2021,4,00-0034400,IND,Jordan Wilkins,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,7,00-0034414,PHI,Boston Scott,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,16,00-0034414,PHI,Boston Scott,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0034418,DAL,Cedrick Wilson Jr.,WR,wr_target_share,1,1,increase,False,False,False
+2021,17,00-0034419,NYJ,Braxton Berrios,WR,wr_target_share,1,1,increase,False,False,False
+2021,16,00-0034440,LAC,Justin Jackson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0034440,LAC,Justin Jackson,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,14,00-0034614,DET,Godwin Igwebuike,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0034681,ARI,Chase Edmonds,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,3,00-0034681,ARI,Chase Edmonds,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,8,00-0034681,ARI,Chase Edmonds,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,9,00-0034681,ARI,Chase Edmonds,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,15,00-0034681,ARI,Chase Edmonds,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,16,00-0034681,ARI,Chase Edmonds,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0034681,ARI,Chase Edmonds,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,14,00-0034750,SEA,Rashaad Penny,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,15,00-0034750,SEA,Rashaad Penny,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,16,00-0034750,SEA,Rashaad Penny,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0034750,SEA,Rashaad Penny,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,3,00-0034766,MIN,Christopher Herndon,TE,te_target_share,1,1,decrease,False,False,False
+2021,4,00-0034777,JAX,D.J. Chark,WR,wr_target_share,1,1,decrease,False,False,False
+2021,9,00-0034791,CLE,Nick Chubb,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0034791,CLE,Nick Chubb,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,16,00-0034791,CLE,Nick Chubb,RB,rb_carry_share,1,1,increase,False,False,False
+2021,18,00-0034791,CLE,Nick Chubb,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,5,00-0034799,PIT,Kalen Ballage,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,1,00-0034816,TB,Ronald Jones,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0034816,TB,Ronald Jones,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,3,00-0034816,TB,Ronald Jones,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,10,00-0034816,TB,Ronald Jones,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,16,00-0034816,TB,Ronald Jones,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,17,00-0034816,TB,Ronald Jones,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,14,00-0034838,HOU,Royce Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0034838,HOU,Royce Freeman,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,1,00-0034844,NYG,Saquon Barkley,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0034844,NYG,Saquon Barkley,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,4,00-0034844,NYG,Saquon Barkley,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,5,00-0034844,NYG,Saquon Barkley,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,14,00-0034844,NYG,Saquon Barkley,RB,rb_carry_share,1,1,increase,False,False,False
+2021,18,00-0034844,NYG,Saquon Barkley,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,6,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,7,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,13,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,14,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,15,00-0034845,LA,Sony Michel,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0034854,DET,KhaDarel Hodge,WR,wr_target_share,1,1,increase,False,False,False
+2021,17,00-0034960,NE,Jakobi Meyers,WR,wr_target_share,1,1,increase,False,False,False
+2021,18,00-0034960,NE,Jakobi Meyers,WR,wr_target_share,1,1,increase,False,False,True
+2021,3,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,4,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share,1,1,increase,False,False,True
+2021,5,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,8,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,10,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,13,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,17,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,18,00-0034972,MIN,Alexander Mattison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,15,00-0034981,LV,Foster Moreau,TE,te_target_share,1,1,increase,False,False,False
+2021,14,00-0034983,LV,Hunter Renfrow,WR,wr_target_share,1,1,increase,False,False,False
+2021,16,00-0034983,LV,Hunter Renfrow,WR,wr_target_share,1,1,decrease,False,False,False
+2021,17,00-0035187,NYJ,Austin Walter,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,4,00-0035215,NO,Deonte Harty,WR,wr_target_share,1,1,increase,False,False,False
+2021,2,00-0035217,PIT,Benny Snell,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,3,00-0035217,PIT,Benny Snell,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,4,00-0035217,PIT,Benny Snell,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,18,00-0035217,PIT,Benny Snell,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,7,00-0035229,DET,T.J. Hockenson,TE,te_target_share,1,1,increase,False,False,False
+2021,8,00-0035229,DET,T.J. Hockenson,TE,te_target_share,1,1,increase,False,False,True
+2021,13,00-0035229,DET,T.J. Hockenson,TE,te_target_share,1,1,decrease,False,False,False
+2021,2,00-0035243,PHI,Miles Sanders,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,3,00-0035243,PHI,Miles Sanders,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,7,00-0035243,PHI,Miles Sanders,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,11,00-0035243,PHI,Miles Sanders,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,12,00-0035243,PHI,Miles Sanders,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,15,00-0035243,PHI,Miles Sanders,RB,rb_carry_share,1,1,increase,False,False,False
+2021,2,00-0035250,BUF,Devin Singletary,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,6,00-0035250,BUF,Devin Singletary,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,15,00-0035250,BUF,Devin Singletary,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,16,00-0035250,BUF,Devin Singletary,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,1,00-0035261,DAL,Tony Pollard,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,17,00-0035261,DAL,Tony Pollard,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,17,00-0035268,JAX,Ryquell Armstead,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,11,00-0035273,ATL,Qadree Ollison,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,16,00-0035273,ATL,Qadree Ollison,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,18,00-0035291,CIN,Trayveon Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,1,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,4,00-0035311,MIA,Myles Gaskin,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,8,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share,1,1,increase,False,False,False
+2021,9,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share,1,1,increase,False,False,True
+2021,10,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,15,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,16,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,17,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,18,00-0035311,MIA,Myles Gaskin,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,14,00-0035537,NYJ,Ty Johnson,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,18,00-0035567,DET,Craig Reynolds,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,16,00-0035624,NE,N'Keal Harry,TE,te_target_share,1,1,increase,False,False,False
+2021,7,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,8,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,10,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,12,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,14,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,15,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,17,00-0035628,CLE,D'Ernest Johnson,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,18,00-0035628,CLE,D'Ernest Johnson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,2,00-0035631,CIN,Drew Sample,TE,te_target_share,1,1,decrease,False,False,False
+2021,15,00-0035640,SEA,DK Metcalf,WR,wr_target_share,1,1,increase,False,False,False
+2021,1,00-0035657,NE,Damien Harris,RB,rb_carry_share,1,1,increase,False,False,False
+2021,2,00-0035657,NE,Damien Harris,RB,rb_carry_share,1,1,increase,False,False,True
+2021,3,00-0035657,NE,Damien Harris,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,4,00-0035657,NE,Damien Harris,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,11,00-0035657,NE,Damien Harris,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,17,00-0035657,NE,Damien Harris,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,14,00-0035659,WAS,Terry McLaurin,WR,wr_target_share,1,1,decrease,False,False,False
+2021,18,00-0035659,WAS,Terry McLaurin,WR,wr_target_share,1,1,increase,False,False,False
+2021,4,00-0035662,BAL,Marquise Brown,WR,wr_target_share,1,1,decrease,False,False,False
+2021,1,00-0035664,LA,Darrell Henderson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0035664,LA,Darrell Henderson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,4,00-0035664,LA,Darrell Henderson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,7,00-0035664,LA,Darrell Henderson,RB,rb_carry_share,1,1,increase,False,False,False
+2021,15,00-0035664,LA,Darrell Henderson,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,16,00-0035664,LA,Darrell Henderson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,3,00-0035676,TEN,A.J. Brown,WR,wr_target_share,1,1,decrease,False,False,False
+2021,6,00-0035676,TEN,A.J. Brown,WR,wr_target_share,1,1,increase,False,False,False
+2021,11,00-0035676,TEN,A.J. Brown,WR,wr_target_share,1,1,decrease,False,False,False
+2021,5,00-0035700,LV,Josh Jacobs,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,7,00-0035700,LV,Josh Jacobs,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,9,00-0035700,LV,Josh Jacobs,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,12,00-0035700,LV,Josh Jacobs,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,14,00-0035700,LV,Josh Jacobs,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0035719,SF,Deebo Samuel Sr.,WR,wr_target_share,1,1,decrease,False,False,False
+2021,16,00-0035719,SF,Deebo Samuel Sr.,WR,wr_target_share,1,1,increase,False,False,False
+2021,17,00-0035719,SF,Deebo Samuel Sr.,WR,wr_target_share,1,1,increase,False,False,True
+2021,1,00-0035806,SF,JaMycal Hasty,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,2,00-0035806,SF,JaMycal Hasty,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,1,00-0035831,JAX,James Robinson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,10,00-0035831,JAX,James Robinson,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,11,00-0035831,JAX,James Robinson,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,16,00-0035831,JAX,James Robinson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,4,00-0035860,NO,Tony Jones,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,12,00-0035860,NO,Tony Jones,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,16,00-0035860,NO,Tony Jones,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,17,00-0035860,NO,Tony Jones,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,18,00-0035860,NO,Tony Jones,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,17,00-0035864,DEN,Kendall Hinton,WR,wr_target_share,1,1,increase,False,False,False
+2021,5,00-0035957,CAR,Rodney Smith,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,18,00-0035973,GB,Patrick Taylor,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,1,00-0036020,MIA,Salvon Ahmed,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,12,00-0036182,TEN,Nick Westbrook-Ikhine,WR,wr_target_share,1,1,increase,False,False,False
+2021,15,00-0036219,NO,Marquez Callaway,WR,wr_target_share,1,1,increase,False,False,False
+2021,16,00-0036219,NO,Marquez Callaway,WR,wr_target_share,1,1,increase,False,False,True
+2021,17,00-0036219,NO,Marquez Callaway,WR,wr_target_share,1,1,increase,False,False,True
+2021,11,00-0036223,IND,Jonathan Taylor,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0036251,BUF,Zack Moss,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,10,00-0036251,BUF,Zack Moss,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,11,00-0036251,BUF,Zack Moss,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,3,00-0036252,IND,Michael Pittman,WR,wr_target_share,1,1,increase,False,False,False
+2021,15,00-0036252,IND,Michael Pittman,WR,wr_target_share,1,1,increase,False,False,False
+2021,18,00-0036252,IND,Michael Pittman,WR,wr_target_share,1,1,decrease,False,False,False
+2021,1,00-0036261,SF,Brandon Aiyuk,WR,wr_target_share,1,1,decrease,False,False,False
+2021,2,00-0036261,SF,Brandon Aiyuk,WR,wr_target_share,1,1,decrease,False,False,True
+2021,11,00-0036261,SF,Brandon Aiyuk,WR,wr_target_share,1,1,increase,False,False,False
+2021,10,00-0036265,GB,AJ Dillon,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0036265,GB,AJ Dillon,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,12,00-0036265,GB,AJ Dillon,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,15,00-0036265,GB,AJ Dillon,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,16,00-0036265,GB,AJ Dillon,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,7,00-0036269,NYJ,La'Mical Perine,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,8,00-0036269,NYJ,La'Mical Perine,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,8,00-0036275,DET,D'Andre Swift,RB,rb_carry_share,1,1,increase,False,False,False
+2021,10,00-0036275,DET,D'Andre Swift,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,12,00-0036275,DET,D'Andre Swift,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,17,00-0036275,DET,D'Andre Swift,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,18,00-0036275,DET,D'Andre Swift,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,18,00-0036278,PHI,Jason Huntley,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,13,00-0036309,CHI,Darnell Mooney,WR,wr_target_share,1,1,decrease,False,False,False
+2021,17,00-0036309,CHI,Darnell Mooney,WR,wr_target_share,1,1,increase,False,False,False
+2021,1,00-0036328,WAS,Antonio Gibson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,2,00-0036328,WAS,Antonio Gibson,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,13,00-0036328,WAS,Antonio Gibson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,14,00-0036328,WAS,Antonio Gibson,RB,rb_opportunity_share,1,1,increase,False,False,True
+2021,14,00-0036345,MIN,K.J. Osborn,WR,wr_target_share,1,1,increase,False,False,False
+2021,17,00-0036358,DAL,CeeDee Lamb,WR,wr_target_share,1,1,decrease,False,False,False
+2021,5,00-0036360,KC,Clyde Edwards-Helaire,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,6,00-0036370,LAC,Joshua Kelley,RB,rb_carry_share,1,1,increase,False,False,False
+2021,14,00-0036383,ARI,Eno Benjamin,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,13,00-0036410,CIN,Tee Higgins,WR,wr_target_share,1,1,increase,False,False,False
+2021,18,00-0036414,LA,Cam Akers,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,1,00-0036422,NO,Adam Trautman,TE,te_target_share,1,1,increase,False,False,False
+2021,11,00-0036422,NO,Adam Trautman,TE,te_target_share,1,1,increase,False,False,False
+2021,17,00-0036422,NO,Adam Trautman,TE,te_target_share,1,1,decrease,False,False,False
+2021,18,00-0036422,NO,Adam Trautman,TE,te_target_share,1,1,decrease,False,False,True
+2021,6,00-0036425,SEA,DeeJay Dallas,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,12,00-0036425,SEA,DeeJay Dallas,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,14,00-0036425,SEA,DeeJay Dallas,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,18,00-0036425,SEA,DeeJay Dallas,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,17,00-0036450,TB,Ke'Shawn Vaughn,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0036450,TB,Ke'Shawn Vaughn,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,7,00-0036457,BAL,Ty'Son Williams,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,9,00-0036457,BAL,Ty'Son Williams,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,12,00-0036457,BAL,Ty'Son Williams,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,17,00-0036550,BAL,Rashod Bateman,WR,wr_target_share,1,1,increase,False,False,False
+2021,5,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,6,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,8,00-0036555,CAR,Chuba Hubbard,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,9,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,10,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,11,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,14,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,15,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,16,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,17,00-0036555,CAR,Chuba Hubbard,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,8,00-0036567,SF,Elijah Mitchell,RB,rb_carry_share,1,1,increase,False,False,False
+2021,13,00-0036567,SF,Elijah Mitchell,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,17,00-0036567,SF,Elijah Mitchell,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,8,00-0036755,WAS,Jaret Patterson,RB,rb_carry_share,1,1,increase,False,False,False
+2021,13,00-0036755,WAS,Jaret Patterson,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,17,00-0036755,WAS,Jaret Patterson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,18,00-0036857,CIN,Chris Evans,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,10,00-0036875,NE,Rhamondre Stevenson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,11,00-0036875,NE,Rhamondre Stevenson,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,18,00-0036875,NE,Rhamondre Stevenson,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,18,00-0036893,PIT,Najee Harris,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,6,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False
+2021,7,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,8,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,True
+2021,9,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,11,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,12,00-0036906,CHI,Khalil Herbert,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,13,00-0036906,CHI,Khalil Herbert,RB,rb_opportunity_share,1,1,decrease,False,False,True
+2021,4,00-0036913,NYG,Kadarius Toney,WR,wr_target_share,1,1,increase,False,False,False
+2021,5,00-0036913,NYG,Kadarius Toney,WR,wr_target_share,1,1,increase,False,False,True
+2021,9,00-0036913,NYG,Kadarius Toney,WR,wr_target_share,1,1,decrease,False,False,False
+2021,16,00-0036913,NYG,Kadarius Toney,WR,wr_target_share,1,1,increase,False,False,False
+2021,9,00-0036919,PHI,Kenny Gainwell,RB,rb_opportunity_share,1,1,decrease,False,False,False
+2021,13,00-0036919,PHI,Kenny Gainwell,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,18,00-0036919,PHI,Kenny Gainwell,RB,rb_opportunity_share,1,1,increase,False,False,False
+2021,15,00-0036924,NYJ,Michael Carter,RB,rb_carry_share,1,1,decrease,False,False,False
+2021,16,00-0036924,NYJ,Michael Carter,RB,rb_carry_share,1,1,decrease,False,False,True
+2021,17,00-0036924,NYJ,Michael Carter,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,True
+2021,14,00-0036963,DET,Amon-Ra St. Brown,WR,wr_target_share,1,1,increase,False,False,False
+2021,15,00-0036963,DET,Amon-Ra St. Brown,WR,wr_target_share,1,1,increase,False,False,True
+2021,12,00-0036980,NYJ,Elijah Moore,WR,wr_target_share,1,1,increase,False,False,False
+2021,13,00-0036980,NYJ,Elijah Moore,WR,wr_target_share,1,1,increase,False,False,True
+2021,11,00-0036984,SF,Trey Sermon,RB,rb_carry_share | rb_opportunity_share,2,2,decrease,False,True,False
+2021,13,00-0036997,DEN,Javonte Williams,RB,rb_carry_share | rb_opportunity_share,2,2,increase,False,True,False

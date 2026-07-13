@@ -1,0 +1,38 @@
+{
+  "stage": "final",
+  "checkpoint_commit": "00d6085a55c60147e0ace46c847460ef5708e968",
+  "allowed_seasons": [
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "development_seasons": [
+    2018,
+    2019,
+    2020
+  ],
+  "test_season": 2021,
+  "fold_2_executed": false,
+  "post_2021_results_used": false,
+  "release_gates_changed": false,
+  "canonical_rows_2018_2021": 28199,
+  "original_full_family_alerts_2021": 717,
+  "original_deduplicated_feed_alerts_2021": 489,
+  "explicit_partial_family_rows": 96,
+  "suspected_partial_family_rows": 298,
+  "screen_candidates_attempted": 54,
+  "screen_candidates_valid": 53,
+  "screen_candidates_integrity_failures": 1,
+  "serious_candidates": [
+    "S1_corrected_minimal",
+    "S2_balanced_directional_no_cooldown",
+    "S2_balanced_directional",
+    "S2_symmetric_deltas",
+    "S3_balanced_season_recent",
+    "S4_high_specificity"
+  ],
+  "recommended_config": "config/role_change_fold2_candidate.yaml",
+  "all_serious_equal_volume": true,
+  "expected_methods_present": true
+}

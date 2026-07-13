@@ -1,0 +1,411 @@
+{
+  "status": "PASS",
+  "checks_passed": 59,
+  "allowed_seasons": [
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "fold_2_executed": false,
+  "release_gates_changed": false,
+  "checks": [
+    {
+      "check": "branch",
+      "status": "PASS",
+      "detail": "role-change-validation-v1"
+    },
+    {
+      "check": "checkpoint_tag",
+      "status": "PASS",
+      "detail": "00d6085a55c60147e0ace46c847460ef5708e968"
+    },
+    {
+      "check": "locked_hash:ROLE_CHANGE_VALIDATION_PROTOCOL.md",
+      "status": "PASS",
+      "detail": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe"
+    },
+    {
+      "check": "locked_hash:LOCKED_DECISIONS.md",
+      "status": "PASS",
+      "detail": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+    },
+    {
+      "check": "locked_hash:config/role_change_validation.yaml",
+      "status": "PASS",
+      "detail": "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d"
+    },
+    {
+      "check": "allowed_seasons_manifest",
+      "status": "PASS",
+      "detail": [
+        2018,
+        2019,
+        2020,
+        2021
+      ]
+    },
+    {
+      "check": "fold2_not_executed",
+      "status": "PASS",
+      "detail": false
+    },
+    {
+      "check": "post2021_not_used",
+      "status": "PASS",
+      "detail": false
+    },
+    {
+      "check": "gates_unchanged_manifest",
+      "status": "PASS",
+      "detail": false
+    },
+    {
+      "check": "screen_integrity_counts",
+      "status": "PASS",
+      "detail": {
+        "valid": 53,
+        "failed": 1
+      }
+    },
+    {
+      "check": "candidate_allowed_data",
+      "status": "PASS",
+      "detail": [
+        2018,
+        2019,
+        2020,
+        2021
+      ]
+    },
+    {
+      "check": "candidate_fold2_flag",
+      "status": "PASS",
+      "detail": false
+    },
+    {
+      "check": "candidate_post2021_flag",
+      "status": "PASS",
+      "detail": false
+    },
+    {
+      "check": "candidate_gate_hash",
+      "status": "PASS",
+      "detail": "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d"
+    },
+    {
+      "check": "candidate_protocol_hash",
+      "status": "PASS",
+      "detail": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe"
+    },
+    {
+      "check": "candidate_decisions_hash",
+      "status": "PASS",
+      "detail": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+    },
+    {
+      "check": "candidate_config_manifest_hash",
+      "status": "PASS",
+      "detail": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    {
+      "check": "canonical_rows",
+      "status": "PASS",
+      "detail": 28199
+    },
+    {
+      "check": "canonical_duplicate_grain",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "check": "required_missingness",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "check": "enriched_grain",
+      "status": "PASS",
+      "detail": 28199
+    },
+    {
+      "check": "confirmed_not_usage_only",
+      "status": "PASS",
+      "detail": 96
+    },
+    {
+      "check": "confirmed_no_return",
+      "status": "PASS",
+      "detail": 96
+    },
+    {
+      "check": "confirmed_five_plays",
+      "status": "PASS",
+      "detail": 96
+    },
+    {
+      "check": "confirmed_temporal_window",
+      "status": "PASS",
+      "detail": 96
+    },
+    {
+      "check": "schedule_trigger_coverage",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "check": "schedule_final_boundaries",
+      "status": "PASS",
+      "detail": 128
+    },
+    {
+      "check": "original_family_alerts",
+      "status": "PASS",
+      "detail": 717
+    },
+    {
+      "check": "original_deduplicated_alerts",
+      "status": "PASS",
+      "detail": 489
+    },
+    {
+      "check": "rb_family_overlap",
+      "status": "PASS",
+      "detail": {
+        "carry_alerts": 273.0,
+        "opportunity_alerts": 324.0,
+        "overlap_alerts": 228.0,
+        "union_alerts": 369.0,
+        "carry_overlap_rate": 0.8351648351648352,
+        "opportunity_overlap_rate": 0.7037037037037037,
+        "jaccard_overlap": 0.6178861788617886,
+        "direction_conflicts": 0.0
+      }
+    },
+    {
+      "check": "consecutive_repeats",
+      "status": "PASS",
+      "detail": 151
+    },
+    {
+      "check": "serious_equal_volume",
+      "status": "PASS",
+      "detail": 1656
+    },
+    {
+      "check": "serious_methods_present",
+      "status": "PASS",
+      "detail": 1656
+    },
+    {
+      "check": "serious_counts_exact",
+      "status": "PASS",
+      "detail": 1656
+    },
+    {
+      "check": "partial_sensitivity_equal_volume",
+      "status": "PASS",
+      "detail": 828
+    },
+    {
+      "check": "partial_sensitivity_methods_present",
+      "status": "PASS",
+      "detail": 828
+    },
+    {
+      "check": "partial_sensitivity_counts_exact",
+      "status": "PASS",
+      "detail": 828
+    },
+    {
+      "check": "screen_valid_failure",
+      "status": "PASS",
+      "detail": 54
+    },
+    {
+      "check": "serious_archive_grain",
+      "status": "PASS",
+      "detail": 21696
+    },
+    {
+      "check": "sensitivity_archive_grain",
+      "status": "PASS",
+      "detail": 7352
+    },
+    {
+      "check": "recommended_membership_matches_serious",
+      "status": "PASS",
+      "detail": 2484
+    },
+    {
+      "check": "precision_intervals_present",
+      "status": "PASS",
+      "detail": 96
+    },
+    {
+      "check": "improvement_intervals_present",
+      "status": "PASS",
+      "detail": 24
+    },
+    {
+      "check": "relative_improvement_present_when_defined",
+      "status": "PASS",
+      "detail": 18
+    },
+    {
+      "check": "gate_diagnostic_only",
+      "status": "PASS",
+      "detail": 4
+    },
+    {
+      "check": "gate_result_labels_are_non_release",
+      "status": "PASS",
+      "detail": [
+        "POINT_GATES_FAIL",
+        "POINT_GATES_PASS"
+      ]
+    },
+    {
+      "check": "gate_not_frozen",
+      "status": "PASS",
+      "detail": 4
+    },
+    {
+      "check": "manual_review_count",
+      "status": "PASS",
+      "detail": 254
+    },
+    {
+      "check": "manual_review_complete",
+      "status": "PASS",
+      "detail": 254
+    },
+    {
+      "check": "manual_review_source_hash",
+      "status": "PASS",
+      "detail": "93ce7cbe59152cec5a3e5a48d6a878aec80aa7a0398fc4f8d15bfcde0fe000b6"
+    },
+    {
+      "check": "report_exists",
+      "status": "PASS",
+      "detail": 60061
+    },
+    {
+      "check": "report_phrase:Fold 2 was not executed",
+      "status": "PASS",
+      "detail": "Fold 2 was not executed"
+    },
+    {
+      "check": "report_phrase:does not claim that the detector works",
+      "status": "PASS",
+      "detail": "does not claim that the detector works"
+    },
+    {
+      "check": "report_phrase:Original versus recommended Fold 1",
+      "status": "PASS",
+      "detail": "Original versus recommended Fold 1"
+    },
+    {
+      "check": "report_phrase:Exact candidate recommended for Fold 2",
+      "status": "PASS",
+      "detail": "Exact candidate recommended for Fold 2"
+    },
+    {
+      "check": "notebook_executed",
+      "status": "PASS",
+      "detail": 9
+    },
+    {
+      "check": "notebook_no_errors",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "check": "staged_dashboard_scope",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "check": "locked_files_not_staged",
+      "status": "PASS",
+      "detail": [
+        "config/fold1_false_positive_manual_review.yaml",
+        "config/role_change_fold1_experiments.yaml",
+        "config/role_change_fold2_candidate.yaml",
+        "notebooks/fold_1_detector_diagnostics.ipynb",
+        "outputs/role_validation/fold_1_diagnostics/COMMANDS_RUN.md",
+        "outputs/role_validation/fold_1_diagnostics/FOLD_1_DIAGNOSTIC_AND_REDEVELOPMENT_REPORT.md",
+        "outputs/role_validation/fold_1_diagnostics/TEST_AND_VALIDATION_RESULTS.md",
+        "outputs/role_validation/fold_1_diagnostics/candidate_axis_screen_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/candidate_axis_screen_equal_volume.csv",
+        "outputs/role_validation/fold_1_diagnostics/candidate_axis_screen_feed_volume.csv",
+        "outputs/role_validation/fold_1_diagnostics/canonical_redevelopment_audit_2018_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/canonical_redevelopment_missingness_2018_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/canonical_role_2018_2021_enriched.csv.gz",
+        "outputs/role_validation/fold_1_diagnostics/false_positive_reason_definitions.csv",
+        "outputs/role_validation/fold_1_diagnostics/final_validation.json",
+        "outputs/role_validation/fold_1_diagnostics/input_source_manifest.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_ablation_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_ablation_equal_volume.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_ablation_membership.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_ablation_summary.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_ablation_value.csv",
+        "outputs/role_validation/fold_1_diagnostics/legacy_safeguard_full_alerts_2021.csv.gz",
+        "outputs/role_validation/fold_1_diagnostics/manual_review_manifest.json",
+        "outputs/role_validation/fold_1_diagnostics/original_checkpoint_alerts_enriched_2021.csv.gz",
+        "outputs/role_validation/fold_1_diagnostics/original_deduplicated_feed_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_false_positive_case_review_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_false_positive_manual_adjudication_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_false_positive_reason_summary_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_four_method_comparison_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_full_vs_naive_comparisons_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_method_membership_overlap_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_rb_family_overlap_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_repeat_alerts_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_requested_breakdowns_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_vs_recommended_fold1_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/original_weekly_family_vs_deduplicated_volume_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/partial_game_evidence_2018_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/partial_game_source_coverage.csv",
+        "outputs/role_validation/fold_1_diagnostics/partial_game_status_counts.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_locked_gate_diagnostic_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_alerts_2018_2021.csv.gz",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_block_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_blocks.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_by_season.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_by_season_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_direction.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_equal_volume.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_family.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_feed_summary_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_partial_sensitivity_weekly_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/recommended_candidate_persistence_threshold_sensitivity.csv",
+        "outputs/role_validation/fold_1_diagnostics/run_manifest.json",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_alerts_2018_2021.csv.gz",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_block_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_blocks.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_by_season.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_by_season_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_comparisons.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_direction.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_equal_volume.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_family.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_feed_volume_summary_2021.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_requested_breakdowns.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_suppressed_alerts.csv",
+        "outputs/role_validation/fold_1_diagnostics/serious_candidate_weekly_feed_volume_2021.csv",
+        "scripts/build_fold1_diagnostic_notebook.py",
+        "scripts/finalize_fold1_false_positive_review.py",
+        "scripts/generate_fold1_diagnostic_report.py",
+        "scripts/run_fold1_diagnostics.py",
+        "scripts/validate_fold1_diagnostics.py",
+        "src/role_validation/diagnostics.py",
+        "src/role_validation/legacy_ablation.py",
+        "src/role_validation/partial_game.py",
+        "src/role_validation/redevelopment.py",
+        "tests/test_role_validation_redevelopment.py"
+      ]
+    }
+  ]
+}

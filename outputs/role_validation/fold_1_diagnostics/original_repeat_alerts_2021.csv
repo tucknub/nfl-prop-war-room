@@ -1,0 +1,7 @@
+grain,alerts,repeat_alerts,repeat_rate,players_with_repeat
+deduplicated_player_week,489,151,0.30879345603271985,70
+family_player_week,717,219,0.3054393305439331,69
+family:rb_carry_share,273,90,0.32967032967032966,43
+family:rb_opportunity_share,324,113,0.3487654320987654,50
+family:te_target_share,35,6,0.17142857142857143,6
+family:wr_target_share,85,10,0.11764705882352941,9

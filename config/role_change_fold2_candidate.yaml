@@ -1,0 +1,128 @@
+candidate_version: "fold2-candidate-v1"
+status: "recommended_for_untouched_2022_test_not_executed"
+derived_from_checkpoint: "00d6085a55c60147e0ace46c847460ef5708e968"
+
+analysis_contract:
+  allowed_development_data: [2018, 2019, 2020, 2021]
+  fold_1_development_seasons: [2018, 2019, 2020]
+  fold_1_test_season: 2021
+  fold_2_test_season: 2022
+  fold_2_executed: false
+  post_2021_results_used: false
+  release_gates_changed: false
+  release_gates_source: "config/role_change_validation.yaml"
+  release_gates_source_sha256: "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d"
+  protocol_sha256: "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe"
+  locked_decisions_sha256: "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+
+candidate:
+  name: "fold2_candidate_v1_symmetric_deltas"
+  metric: "metric_normal"
+
+  baseline:
+    type: "recent"
+    recent_games: 4
+    min_games: 4
+    exclude_confirmation_games: true
+    reset_each_season: true
+    recent_weight: 1.0
+    season_weight: 0.0
+
+  confirmation:
+    default_games: 2
+    mode: "strict"
+    require_each_game_same_direction: true
+    te_target_share_games: 3
+
+  thresholds:
+    rb_carry_share:
+      increase:
+        min_abs_delta: 0.20
+        min_player_opportunities: 6
+        player_opportunity_reference: "confirmation_min"
+        min_team_denominator: 18
+      decrease:
+        min_abs_delta: 0.20
+        min_player_opportunities: 6
+        player_opportunity_reference: "baseline_mean"
+        min_team_denominator: 18
+
+    rb_opportunity_share:
+      increase:
+        min_abs_delta: 0.20
+        min_player_opportunities: 6
+        player_opportunity_reference: "confirmation_min"
+        min_team_denominator: 18
+      decrease:
+        min_abs_delta: 0.20
+        min_player_opportunities: 6
+        player_opportunity_reference: "baseline_mean"
+        min_team_denominator: 18
+
+    wr_target_share:
+      increase:
+        min_abs_delta: 0.15
+        min_player_opportunities: 4
+        player_opportunity_reference: "confirmation_min"
+        min_team_denominator: 20
+      decrease:
+        min_abs_delta: 0.15
+        min_player_opportunities: 4
+        player_opportunity_reference: "baseline_mean"
+        min_team_denominator: 20
+
+    te_target_share:
+      increase:
+        min_abs_delta: 0.15
+        min_player_opportunities: 3
+        player_opportunity_reference: "confirmation_min"
+        min_team_denominator: 20
+      decrease:
+        min_abs_delta: 0.15
+        min_player_opportunities: 3
+        player_opportunity_reference: "baseline_mean"
+        min_team_denominator: 20
+
+  safeguards:
+    require_data_quality: true
+    require_qualifying_game: true
+    history_uses_exclusion_policy: true
+    require_min_abs_delta: true
+    require_player_opportunity_floor: true
+    require_team_denominator_floor: true
+
+  partial_game_policy:
+    primary: "PRIMARY_CONFIRMED_EXCLUDED"
+    confirmed_focal_games: "exclude from trigger, baseline, and outcome history"
+    suspected_focal_games: "include in primary"
+    sensitivities: ["ALL_INCLUDED", "STRICT_SUSPECTED_EXCLUDED"]
+
+  repeat_suppression:
+    enabled: true
+    scope: "player_role_family"
+    cooldown_calendar_weeks: 1
+    direction_sensitive: true
+
+  feed_deduplication:
+    key: [season, week, player_id, team]
+    preserve_role_family_tags: true
+    deduplication_affects_volume_only: true
+
+  comparison:
+    methods: ["naive_spike", "two_week_raw", "normal_game_trend", "full_propwar"]
+    equal_volume_within: [role_family, season, week]
+    deterministic_ties: ["absolute_score_desc", "player_id_asc", "team_asc"]
+
+family_disposition_after_fold_1:
+  rb_carry_share:
+    fold_2_status: "recommended_for_untouched_test"
+    detector_claim_supported_now: false
+  rb_opportunity_share:
+    fold_2_status: "recommended_for_untouched_test_with_development_precision_and_reversion_caveats"
+    detector_claim_supported_now: false
+  wr_target_share:
+    fold_2_status: "shadow_test_only_insufficient_fold_1_evidence"
+    detector_claim_supported_now: false
+  te_target_share:
+    fold_2_status: "shadow_test_only_insufficient_fold_1_evidence"
+    detector_claim_supported_now: false

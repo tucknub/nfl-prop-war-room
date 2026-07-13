@@ -1,0 +1,23 @@
+{
+  "status": "COMPLETE",
+  "source": "outputs/role_validation/fold_1_diagnostics/original_false_positive_case_review_2021.csv",
+  "source_sha256": "93ce7cbe59152cec5a3e5a48d6a878aec80aa7a0398fc4f8d15bfcde0fe000b6",
+  "review_config": "config/fold1_false_positive_manual_review.yaml",
+  "review_config_sha256": "6a78a51980032f8bba24e2b829da5e39f663c84b191330d879d1a33208d45ca2",
+  "reviewed_rows": 254,
+  "overrides": 66,
+  "reviewer": "Codex (model-assisted manual evidence review)",
+  "reviewed_at_utc": "2026-07-13T15:57:00Z",
+  "row_by_row_review_completed": true,
+  "manual_reason_counts": {
+    "ROLE_REVERSION_NO_OBSERVED_DATA_ISSUE": 84,
+    "BASELINE_SMALL_OR_UNSTABLE": 53,
+    "LOW_TEAM_DENOMINATOR_NOISE": 52,
+    "MARGINAL_CHANGE_NEAR_THRESHOLD": 35,
+    "LOW_PLAYER_OPPORTUNITY_NOISE": 8,
+    "SUSPECTED_FOCAL_PARTIAL": 8,
+    "NORMAL_CONTEXT_SENSITIVE": 7,
+    "SUSPECTED_TEAMMATE_EXIT_CONTEXT": 5,
+    "CONFIRMED_FOCAL_PARTIAL": 2
+  }
+}

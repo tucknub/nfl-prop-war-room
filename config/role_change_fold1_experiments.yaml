@@ -1,0 +1,169 @@
+analysis_contract:
+  checkpoint_commit: "00d6085a55c60147e0ace46c847460ef5708e968"
+  allowed_seasons: [2018, 2019, 2020, 2021]
+  development_seasons: [2018, 2019, 2020]
+  fold_1_test_season: 2021
+  fold_2_executed: false
+  release_gates_source: "config/role_change_validation.yaml"
+  release_gates_changed: false
+  primary_partial_policy: "PRIMARY_CONFIRMED_EXCLUDED"
+  partial_sensitivities:
+    - "ALL_INCLUDED"
+    - "STRICT_SUSPECTED_EXCLUDED"
+  equal_volume_grain: [role_family, season, week]
+  feed_deduplication_key: [season, week, player_id, team]
+
+screening_axes:
+  recent_baseline_games: [3, 4, 6]
+  minimum_baseline_games: [3, 4]
+  baseline_types: [recent, season_plus_recent]
+  confirmation_modes: [none, legacy, strict]
+  default_confirmation_games: [1, 2]
+  te_confirmation_games: [2, 3]
+  repeat_cooldown_calendar_weeks: [0, 1]
+  rb_absolute_change: [0.15, 0.18, 0.20, 0.22]
+  wr_absolute_change: [0.12, 0.13, 0.15, 0.16]
+  te_absolute_change: [0.11, 0.12, 0.15, 0.16]
+  rb_player_opportunity_floor: [0, 4, 6, 8]
+  wr_player_opportunity_floor: [0, 3, 4, 5]
+  te_player_opportunity_floor: [0, 2, 3, 4]
+  rb_team_denominator_floor: [0, 15, 18, 20]
+  receiver_team_denominator_floor: [0, 18, 20, 22]
+
+serious_candidates:
+  - name: S1_corrected_minimal
+    metric: metric_normal
+    baseline:
+      type: recent
+      recent_games: 4
+      min_games: 4
+      exclude_confirmation_games: true
+      reset_each_season: true
+      recent_weight: 1.0
+      season_weight: 0.0
+    confirmation:
+      default_games: 2
+      mode: strict
+      te_target_share_games: 2
+    thresholds:
+      rb_carry_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 0, player_opportunity_reference: confirmation_min, min_team_denominator: 0}
+        decrease: {min_abs_delta: 0.15, min_player_opportunities: 0, player_opportunity_reference: baseline_mean, min_team_denominator: 0}
+      rb_opportunity_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 0, player_opportunity_reference: confirmation_min, min_team_denominator: 0}
+        decrease: {min_abs_delta: 0.15, min_player_opportunities: 0, player_opportunity_reference: baseline_mean, min_team_denominator: 0}
+      wr_target_share:
+        increase: {min_abs_delta: 0.12, min_player_opportunities: 0, player_opportunity_reference: confirmation_min, min_team_denominator: 0}
+        decrease: {min_abs_delta: 0.12, min_player_opportunities: 0, player_opportunity_reference: baseline_mean, min_team_denominator: 0}
+      te_target_share:
+        increase: {min_abs_delta: 0.11, min_player_opportunities: 0, player_opportunity_reference: confirmation_min, min_team_denominator: 0}
+        decrease: {min_abs_delta: 0.11, min_player_opportunities: 0, player_opportunity_reference: baseline_mean, min_team_denominator: 0}
+    safeguards: &standard_safeguards
+      require_data_quality: true
+      require_qualifying_game: true
+      history_uses_exclusion_policy: true
+      require_min_abs_delta: true
+      require_player_opportunity_floor: true
+      require_team_denominator_floor: true
+    repeat_suppression: &no_repeat_suppression
+      enabled: false
+      scope: player_role_family
+      cooldown_calendar_weeks: 0
+      direction_sensitive: true
+
+  - name: S2_balanced_directional_no_cooldown
+    metric: metric_normal
+    baseline: &recent_four_baseline
+      type: recent
+      recent_games: 4
+      min_games: 4
+      exclude_confirmation_games: true
+      reset_each_season: true
+      recent_weight: 1.0
+      season_weight: 0.0
+    confirmation: &balanced_confirmation
+      default_games: 2
+      mode: strict
+      te_target_share_games: 3
+    thresholds: &balanced_thresholds
+      rb_carry_share:
+        increase: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: confirmation_min, min_team_denominator: 18}
+        decrease: {min_abs_delta: 0.18, min_player_opportunities: 6, player_opportunity_reference: baseline_mean, min_team_denominator: 18}
+      rb_opportunity_share:
+        increase: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: confirmation_min, min_team_denominator: 18}
+        decrease: {min_abs_delta: 0.18, min_player_opportunities: 6, player_opportunity_reference: baseline_mean, min_team_denominator: 18}
+      wr_target_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 4, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.13, min_player_opportunities: 4, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+      te_target_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 3, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.12, min_player_opportunities: 3, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+    safeguards: *standard_safeguards
+    repeat_suppression: *no_repeat_suppression
+
+  - name: S2_balanced_directional
+    metric: metric_normal
+    baseline: *recent_four_baseline
+    confirmation: *balanced_confirmation
+    thresholds: *balanced_thresholds
+    safeguards: *standard_safeguards
+    repeat_suppression: &one_week_repeat_suppression
+      enabled: true
+      scope: player_role_family
+      cooldown_calendar_weeks: 1
+      direction_sensitive: true
+
+  - name: S2_symmetric_deltas
+    metric: metric_normal
+    baseline: *recent_four_baseline
+    confirmation: *balanced_confirmation
+    thresholds:
+      rb_carry_share:
+        increase: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: confirmation_min, min_team_denominator: 18}
+        decrease: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: baseline_mean, min_team_denominator: 18}
+      rb_opportunity_share:
+        increase: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: confirmation_min, min_team_denominator: 18}
+        decrease: {min_abs_delta: 0.20, min_player_opportunities: 6, player_opportunity_reference: baseline_mean, min_team_denominator: 18}
+      wr_target_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 4, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.15, min_player_opportunities: 4, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+      te_target_share:
+        increase: {min_abs_delta: 0.15, min_player_opportunities: 3, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.15, min_player_opportunities: 3, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+    safeguards: *standard_safeguards
+    repeat_suppression: *one_week_repeat_suppression
+
+  - name: S3_balanced_season_recent
+    metric: metric_normal
+    baseline:
+      type: season_plus_recent
+      recent_games: 4
+      min_games: 4
+      exclude_confirmation_games: true
+      reset_each_season: true
+      recent_weight: 0.5
+      season_weight: 0.5
+    confirmation: *balanced_confirmation
+    thresholds: *balanced_thresholds
+    safeguards: *standard_safeguards
+    repeat_suppression: *one_week_repeat_suppression
+
+  - name: S4_high_specificity
+    metric: metric_normal
+    baseline: *recent_four_baseline
+    confirmation: *balanced_confirmation
+    thresholds:
+      rb_carry_share:
+        increase: {min_abs_delta: 0.22, min_player_opportunities: 8, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.20, min_player_opportunities: 8, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+      rb_opportunity_share:
+        increase: {min_abs_delta: 0.22, min_player_opportunities: 8, player_opportunity_reference: confirmation_min, min_team_denominator: 20}
+        decrease: {min_abs_delta: 0.20, min_player_opportunities: 8, player_opportunity_reference: baseline_mean, min_team_denominator: 20}
+      wr_target_share:
+        increase: {min_abs_delta: 0.16, min_player_opportunities: 5, player_opportunity_reference: confirmation_min, min_team_denominator: 22}
+        decrease: {min_abs_delta: 0.14, min_player_opportunities: 5, player_opportunity_reference: baseline_mean, min_team_denominator: 22}
+      te_target_share:
+        increase: {min_abs_delta: 0.16, min_player_opportunities: 4, player_opportunity_reference: confirmation_min, min_team_denominator: 22}
+        decrease: {min_abs_delta: 0.14, min_player_opportunities: 4, player_opportunity_reference: baseline_mean, min_team_denominator: 22}
+    safeguards: *standard_safeguards
+    repeat_suppression: *one_week_repeat_suppression

@@ -1,0 +1,17 @@
+role_family,method,full_alerts,method_alerts,overlap,jaccard
+rb_carry_share,naive_spike,273,273,178,0.483695652173913
+rb_carry_share,two_week_raw,273,273,237,0.7669902912621359
+rb_carry_share,normal_game_trend,273,273,268,0.9640287769784173
+rb_carry_share,full_propwar,273,273,273,1.0
+rb_opportunity_share,naive_spike,324,324,228,0.5428571428571428
+rb_opportunity_share,two_week_raw,324,324,279,0.7560975609756098
+rb_opportunity_share,normal_game_trend,324,324,318,0.9636363636363636
+rb_opportunity_share,full_propwar,324,324,324,1.0
+te_target_share,naive_spike,35,35,19,0.37254901960784315
+te_target_share,two_week_raw,35,35,31,0.7948717948717948
+te_target_share,normal_game_trend,35,35,35,1.0
+te_target_share,full_propwar,35,35,35,1.0
+wr_target_share,naive_spike,85,85,34,0.25
+wr_target_share,two_week_raw,85,85,60,0.5454545454545454
+wr_target_share,normal_game_trend,85,85,84,0.9767441860465116
+wr_target_share,full_propwar,85,85,85,1.0

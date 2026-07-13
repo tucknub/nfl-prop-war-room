@@ -1,0 +1,5 @@
+season,canonical_rows,unique_players,duplicate_key_rows,duplicate_key_rate,required_field_null_cells,quality_fail_rows,quality_pass_rate,qualifying_rate,confirmed_partial_family_rows,suspected_partial_family_rows
+2018,6777,526,0,0.0,0,225,0.9667994687915007,0.9667994687915007,16,77
+2019,6816,529,0,0.0,0,191,0.9719776995305164,0.9719776995305164,23,67
+2020,7134,557,0,0.0,0,0,1.0,1.0,23,75
+2021,7472,587,0,0.0,0,0,1.0,1.0,34,79

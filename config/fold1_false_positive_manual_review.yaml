@@ -1,0 +1,47 @@
+review_version: "fold1-false-positive-manual-v1"
+source: "outputs/role_validation/fold_1_diagnostics/original_false_positive_case_review_2021.csv"
+source_sha256: "93ce7cbe59152cec5a3e5a48d6a878aec80aa7a0398fc4f8d15bfcde0fe000b6"
+reviewed_rows: 254
+row_by_row_review_completed: true
+reviewer: "Codex (model-assisted manual evidence review)"
+reviewed_at_utc: "2026-07-13T15:57:00Z"
+review_basis: >-
+  Row-by-row inspection of player, week, family, direction, baseline size and value,
+  detected delta, raw player opportunity count, team denominator, snap/participation
+  context, confirmed or suspected partial status, future retention, immediate
+  reversion, duplicate-family tag, repeat tag, and all proposed secondary flags.
+
+accepted_reason_codes:
+  - CONFIRMED_FOCAL_PARTIAL
+  - SUSPECTED_FOCAL_PARTIAL
+  - SUSPECTED_TEAMMATE_EXIT_CONTEXT
+  - LOW_PLAYER_OPPORTUNITY_NOISE
+  - LOW_TEAM_DENOMINATOR_NOISE
+  - BASELINE_SMALL_OR_UNSTABLE
+  - MARGINAL_CHANGE_NEAR_THRESHOLD
+  - NORMAL_CONTEXT_SENSITIVE
+  - ROLE_REVERSION_NO_OBSERVED_DATA_ISSUE
+
+category_adjudications:
+  - id: "decrease_current_opportunity_is_signal_not_independent_noise"
+    action: "reclassify_decrease_current_opportunity"
+    reviewed_case_count: 61
+    rationale: >-
+      A low current opportunity count is the detected event for a decrease alert, so
+      it cannot independently explain that alert as opportunity-count noise. After
+      manual review, use the next observed evidence code in the declared precedence;
+      otherwise retain role reversion with no observed data issue.
+    fallback_priority:
+      - LOW_TEAM_DENOMINATOR_NOISE
+      - BASELINE_SMALL_OR_UNSTABLE
+      - MARGINAL_CHANGE_NEAR_THRESHOLD
+      - NORMAL_CONTEXT_SENSITIVE
+  - id: "teammate_exit_is_context_not_proven_beneficiary_cause"
+    action: "rename_suspected_teammate_context"
+    reviewed_case_count: 5
+    rationale: >-
+      The teammate exit is suspected rather than confirmed and includes decrease as
+      well as increase alerts. Preserve it as observed context without claiming a
+      causal beneficiary mechanism.
+
+overrides: []

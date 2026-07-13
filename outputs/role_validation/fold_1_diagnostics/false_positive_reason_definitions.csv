@@ -1,0 +1,10 @@
+reason_code,definition
+CONFIRMED_FOCAL_PARTIAL,Explicit focal-player partial-game evidence meets the temporal policy.
+SUSPECTED_FOCAL_PARTIAL,Usage/participation pattern suggests a focal-player partial game but is not confirmed.
+SUSPECTED_TEAMMATE_EXIT_BENEFICIARY,Same-position teammate had a suspected/confirmed exit context; alert remains eligible.
+LOW_PLAYER_OPPORTUNITY_NOISE,Player opportunity count is below the diagnostic family floor.
+LOW_TEAM_DENOMINATOR_NOISE,Team denominator is below the diagnostic family floor.
+BASELINE_SMALL_OR_UNSTABLE,Legacy baseline has only three observations or crosses the season boundary.
+MARGINAL_CHANGE_NEAR_THRESHOLD,Absolute change is within two points of the legacy family threshold.
+NORMAL_CONTEXT_SENSITIVE,Raw and normal-game two-week changes differ materially or reverse sign.
+ROLE_REVERSION_NO_OBSERVED_DATA_ISSUE,Outcome failed without an observed data-quality explanation.

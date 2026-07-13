@@ -1,0 +1,7 @@
+candidate_name,partial_policy,family_alert_rows,deduplicated_feed_alerts,duplicate_family_rows_removed,median_all_18_weeks,median_active_weeks,mean_all_18_weeks,p90_all_18_weeks,max_week,zero_alert_weeks,weeks_above_15,weeks_above_20,within_5_15_median_target
+S1_corrected_minimal,PRIMARY_CONFIRMED_EXCLUDED,587,425,162,27.0,32.0,23.61111111111111,44.3,46,5,13,11,False
+S2_balanced_directional_no_cooldown,PRIMARY_CONFIRMED_EXCLUDED,223,166,57,10.0,13.0,9.222222222222221,17.3,22,5,3,1,True
+S2_balanced_directional,PRIMARY_CONFIRMED_EXCLUDED,179,136,43,8.5,10.0,7.555555555555555,13.600000000000001,20,5,1,0,True
+S2_symmetric_deltas,PRIMARY_CONFIRMED_EXCLUDED,163,122,41,7.5,10.0,6.777777777777778,11.900000000000002,17,5,1,0,True
+S3_balanced_season_recent,PRIMARY_CONFIRMED_EXCLUDED,178,131,47,9.0,10.0,7.277777777777778,13.3,16,5,1,0,True
+S4_high_specificity,PRIMARY_CONFIRMED_EXCLUDED,118,87,31,4.5,6.0,4.833333333333333,12.0,13,5,0,0,False
