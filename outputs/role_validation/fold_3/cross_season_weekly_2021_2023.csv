@@ -1,0 +1,13 @@
+period,role_family,seasons,season_weeks,weekly_median,weekly_maximum,zero_alert_weeks,active_weeks,weekly_mean
+redeveloped_2021,rb_carry_share,2021,18,3.0,8,5,13,3.111111111111111
+redeveloped_2021,rb_opportunity_share,2021,18,4.0,11,5,13,4.277777777777778
+redeveloped_2021,wr_target_share,2021,18,1.5,3,7,11,1.4444444444444444
+redeveloped_2021,te_target_share,2021,18,0.0,2,15,3,0.2222222222222222
+untouched_2022,rb_carry_share,2022,18,2.5,7,5,13,2.7222222222222223
+untouched_2022,rb_opportunity_share,2022,18,3.5,9,6,12,3.2777777777777777
+untouched_2022,wr_target_share,2022,18,1.0,5,6,12,1.6666666666666667
+untouched_2022,te_target_share,2022,18,0.0,1,14,4,0.2222222222222222
+untouched_2023,rb_carry_share,2023,18,4.0,8,5,13,3.3333333333333335
+untouched_2023,rb_opportunity_share,2023,18,4.5,11,5,13,4.111111111111111
+untouched_2023,wr_target_share,2023,18,1.0,4,7,11,1.5
+untouched_2023,te_target_share,2023,18,0.0,1,14,4,0.2222222222222222

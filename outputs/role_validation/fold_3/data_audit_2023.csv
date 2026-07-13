@@ -1,0 +1,2 @@
+season,canonical_rows,unique_players,played_games,observed_weeks,duplicate_key_rows,duplicate_key_rate,required_null_cells,required_null_rows,identity_resolved_rows,identity_coverage,quality_pass_rows,quality_pass_rate,qualifying_rows,qualifying_rate
+2023,7448,531,272,18,0,0.0,0,0,7448,1.0,7448,1.0,7448,1.0

@@ -110,14 +110,20 @@ def assert_frozen_config_integrity(
     }
 
 
-def canonical_audit(canonical: pd.DataFrame, required_columns: Iterable[str]) -> pd.DataFrame:
+def canonical_audit(
+    canonical: pd.DataFrame,
+    required_columns: Iterable[str],
+    expected_season: int = FOLD2_SEASON,
+) -> pd.DataFrame:
     required = list(required_columns)
     missing_columns = sorted(set(required) - set(canonical.columns))
     if missing_columns:
         raise AssertionError(f"Canonical data lacks required columns: {missing_columns}")
     seasons = set(pd.to_numeric(canonical["season"], errors="raise").astype(int).unique())
-    if seasons != {FOLD2_SEASON}:
-        raise AssertionError(f"Fold 2 canonical data contains seasons {sorted(seasons)}")
+    if seasons != {expected_season}:
+        raise AssertionError(
+            f"Expected canonical season {expected_season}; found {sorted(seasons)}"
+        )
     duplicate_rows = int(canonical.duplicated(CANONICAL_KEY, keep=False).sum())
     required_null_cells = int(canonical[required].isna().sum().sum())
     required_null_rows = int(canonical[required].isna().any(axis=1).sum())
@@ -127,7 +133,7 @@ def canonical_audit(canonical: pd.DataFrame, required_columns: Iterable[str]) ->
     audit = pd.DataFrame(
         [
             {
-                "season": FOLD2_SEASON,
+                "season": expected_season,
                 "canonical_rows": len(canonical),
                 "unique_players": canonical["player_id"].nunique(),
                 "played_games": canonical["game_id"].nunique(),
@@ -154,13 +160,16 @@ def canonical_audit(canonical: pd.DataFrame, required_columns: Iterable[str]) ->
     return audit
 
 
-def missingness_table(canonical: pd.DataFrame) -> pd.DataFrame:
+def missingness_table(
+    canonical: pd.DataFrame,
+    expected_season: int = FOLD2_SEASON,
+) -> pd.DataFrame:
     rows = []
     for column in canonical.columns:
         missing = int(canonical[column].isna().sum())
         rows.append(
             {
-                "season": FOLD2_SEASON,
+                "season": expected_season,
                 "column": column,
                 "rows": len(canonical),
                 "missing_count": missing,
@@ -170,11 +179,16 @@ def missingness_table(canonical: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def assert_temporal_integrity(alerts: pd.DataFrame) -> pd.DataFrame:
+def assert_temporal_integrity(
+    alerts: pd.DataFrame,
+    expected_season: int = FOLD2_SEASON,
+) -> pd.DataFrame:
     full = alerts.loc[alerts["method"].eq("full_propwar")].copy()
     evaluable = full.loc[full["future_n"].ge(2)].copy()
     checks = {
-        "only_2022_alerts": set(full["season"].astype(int).unique()) == {FOLD2_SEASON},
+        f"only_{expected_season}_alerts": (
+            set(full["season"].astype(int).unique()) == {expected_season}
+        ),
         "minimum_four_game_baseline": bool(full["baseline_n"].ge(4).all()),
         "confirmation_window_complete": bool(
             full["confirmation_n"].eq(full["confirmation_games"]).all()
@@ -258,8 +272,11 @@ def block_results(alerts: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def weekly_stability(alerts: pd.DataFrame) -> pd.DataFrame:
-    weeks = pd.DataFrame({"season": FOLD2_SEASON, "week": range(1, 19)})
+def weekly_stability(
+    alerts: pd.DataFrame,
+    season: int = FOLD2_SEASON,
+) -> pd.DataFrame:
+    weeks = pd.DataFrame({"season": season, "week": range(1, 19)})
     rows = []
     for (policy, family, method), group in alerts.groupby(
         ["partial_policy", "role_family", "method"], sort=True
@@ -284,12 +301,15 @@ def weekly_stability(alerts: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def feed_summary(alerts: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def feed_summary(
+    alerts: pd.DataFrame,
+    season: int = FOLD2_SEASON,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     summary_rows = []
     weekly_rows = []
     for (policy, method), group in alerts.groupby(["partial_policy", "method"], sort=True):
         feed = deduplicated_feed(group)
-        counts = pd.DataFrame({"season": FOLD2_SEASON, "week": range(1, 19)})
+        counts = pd.DataFrame({"season": season, "week": range(1, 19)})
         weekly = feed.groupby(["season", "week"]).size().rename("deduplicated_alerts").reset_index()
         counts = counts.merge(weekly, on=["season", "week"], how="left")
         counts["deduplicated_alerts"] = counts["deduplicated_alerts"].fillna(0).astype(int)

@@ -1,0 +1,7 @@
+source,path,sha256
+canonical,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\outputs\role_validation\canonical_player_week_role.csv.gz,11d57cdde92238024da8afbedabe124da746250aa9a2026422014382ccc14e90
+cached_pbp,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\data\raw\role_validation\pbp_2017_2025.csv.gz,d1dc6fce4b338694de70e3a960433dd1fe6f420066139411be7095aafc791ed5
+cached_participation,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\data\raw\role_validation\participation_2017_2025.csv.gz,b355c2527125f2780179c81dbfd9ad058dbbb16d1be6d80f652c30d0041710ef
+cached_injuries,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\data\raw\role_validation\injuries_2017_2025.csv.gz,ef559797eb422f478319be68057e54eb20e3eecc073f38af88fce7d7653330d6
+frozen_config,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\config\role_change_fold2_candidate.yaml,4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7
+fold2_frozen_config,C:\Users\tucka\OneDrive\Desktop\NFL PRop Projection\outputs\role_validation\fold_2\frozen_role_change_fold2_candidate.yaml,4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7

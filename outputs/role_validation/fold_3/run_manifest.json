@@ -1,0 +1,29 @@
+{
+  "stage": "execute",
+  "passed": true,
+  "fold3_executed_once": true,
+  "test_season": 2023,
+  "post_2023_results_used": false,
+  "fold4_executed": false,
+  "config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "candidate_name": "fold2_candidate_v1_symmetric_deltas",
+  "partial_policies": [
+    "PRIMARY_CONFIRMED_EXCLUDED",
+    "ALL_INCLUDED",
+    "STRICT_SUSPECTED_EXCLUDED"
+  ],
+  "family_alert_method_rows": 1956,
+  "primary_full_family_alerts": 165,
+  "equal_volume_cells": 216,
+  "all_equal_volume": true,
+  "all_temporal_checks_passed": true,
+  "pre_execution_tests_passed": true,
+  "rb_fold3_statuses": {
+    "rb_carry_share": "PASSES_FOLD_3_POINT_GATES",
+    "rb_opportunity_share": "FAILS_FOLD_3_POINT_GATES"
+  },
+  "retired_families": [
+    "wr_target_share",
+    "te_target_share"
+  ]
+}

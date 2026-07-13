@@ -296,10 +296,12 @@ def test_legacy_full_membership_ignores_score_weights():
     assert before_keys == after_keys
 
 
-def test_loader_allows_explicit_fold2_but_rejects_post_2022_request(tmp_path):
+def test_loader_allows_explicit_folds_but_rejects_post_2023_request(tmp_path):
     path = tmp_path / "canonical.csv"
-    pd.DataFrame({"season": [2018, 2022, 2023], "value": [1, 2, 3]}).to_csv(path, index=False)
+    pd.DataFrame({"season": [2018, 2022, 2023, 2024], "value": [1, 2, 3, 4]}).to_csv(path, index=False)
     fold2 = load_canonical_seasons(str(path), seasons=[2022])
     assert fold2["season"].tolist() == [2022]
-    with pytest.raises(ValueError, match="2018.*2022"):
-        load_canonical_seasons(str(path), seasons=[2023])
+    fold3 = load_canonical_seasons(str(path), seasons=[2023])
+    assert fold3["season"].tolist() == [2023]
+    with pytest.raises(ValueError, match="2018.*2023"):
+        load_canonical_seasons(str(path), seasons=[2024])

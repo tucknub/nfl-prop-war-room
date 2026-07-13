@@ -11,7 +11,7 @@ from role_validation.evaluation import attach_future_outcomes, build_future_outc
 
 
 ALLOWED_REDEVELOPMENT_SEASONS = (2018, 2019, 2020, 2021)
-APPROVED_ROLE_VALIDATION_SEASONS = (2018, 2019, 2020, 2021, 2022)
+APPROVED_ROLE_VALIDATION_SEASONS = (2018, 2019, 2020, 2021, 2022, 2023)
 ROLE_FAMILIES = (
     "rb_carry_share",
     "rb_opportunity_share",

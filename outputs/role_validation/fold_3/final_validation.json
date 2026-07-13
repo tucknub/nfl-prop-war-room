@@ -1,0 +1,131 @@
+{
+  "validator": "independent_fold3_output_validator",
+  "passed": true,
+  "checks_passed": 24,
+  "checks_total": 24,
+  "test_season": 2023,
+  "post_2023_results_used": false,
+  "fold4_executed": false,
+  "checks": [
+    {
+      "check": "required_artifacts",
+      "passed": true,
+      "detail": "15 present"
+    },
+    {
+      "check": "current_config_hash",
+      "passed": true,
+      "detail": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    {
+      "check": "frozen_config_hash",
+      "passed": true,
+      "detail": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    {
+      "check": "semantic_config_equality",
+      "passed": true,
+      "detail": "YAML objects equal"
+    },
+    {
+      "check": "start_commit",
+      "passed": true,
+      "detail": "c10bb7f3e0446a3c5f85caa4adcb3175fe6be4f9"
+    },
+    {
+      "check": "single_execution",
+      "passed": true,
+      "detail": "{'started_at_utc': '2026-07-13T22:28:23.058087+00:00', 'season': 2023, 'config_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'start_commit': 'c10bb7f3e0446a3c5f85caa4adcb3175fe6be4f9', 'single_execution_authorized': True, 'completed': True, 'completed_at_utc': '2026-07-13T22:28:49.542074+00:00', 'alert_archive_sha256': 'f9c4b971c0abb15662f66f3cc2d9103df0bed257b718408c82543f4f0cc943ee'}"
+    },
+    {
+      "check": "season_isolation",
+      "passed": true,
+      "detail": "{'stage': 'execute', 'passed': True, 'fold3_executed_once': True, 'test_season': 2023, 'post_2023_results_used': False, 'fold4_executed': False, 'config_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'candidate_name': 'fold2_candidate_v1_symmetric_deltas', 'partial_policies': ['PRIMARY_CONFIRMED_EXCLUDED', 'ALL_INCLUDED', 'STRICT_SUSPECTED_EXCLUDED'], 'family_alert_method_rows': 1956, 'primary_full_family_alerts': 165, 'equal_volume_cells': 216, 'all_equal_volume': True, 'all_temporal_checks_passed': True, 'pre_execution_tests_passed': True, 'rb_fold3_statuses': {'rb_carry_share': 'PASSES_FOLD_3_POINT_GATES', 'rb_opportunity_share': 'FAILS_FOLD_3_POINT_GATES'}, 'retired_families': ['wr_target_share', 'te_target_share']}"
+    },
+    {
+      "check": "alert_archive_hash",
+      "passed": true,
+      "detail": "f9c4b971c0abb15662f66f3cc2d9103df0bed257b718408c82543f4f0cc943ee"
+    },
+    {
+      "check": "canonical_2023_only",
+      "passed": true,
+      "detail": "[np.int64(2023)]"
+    },
+    {
+      "check": "canonical_row_count",
+      "passed": true,
+      "detail": "7448"
+    },
+    {
+      "check": "canonical_duplicate_keys",
+      "passed": true,
+      "detail": "0"
+    },
+    {
+      "check": "canonical_required_nulls",
+      "passed": true,
+      "detail": "0"
+    },
+    {
+      "check": "alerts_2023_only",
+      "passed": true,
+      "detail": "[np.int64(2023)]"
+    },
+    {
+      "check": "future_after_alert",
+      "passed": true,
+      "detail": "future_week_1 > week"
+    },
+    {
+      "check": "confirmation_ends_on_alert",
+      "passed": true,
+      "detail": "confirmation_end_week == week"
+    },
+    {
+      "check": "baseline_before_confirmation",
+      "passed": true,
+      "detail": "baseline_max_week < confirmation_start_week"
+    },
+    {
+      "check": "equal_volume_file",
+      "passed": true,
+      "detail": "216 cells"
+    },
+    {
+      "check": "equal_volume_recomputed",
+      "passed": true,
+      "detail": "122 nonzero cells"
+    },
+    {
+      "check": "summary_metrics_recomputed",
+      "passed": true,
+      "detail": "48 rows"
+    },
+    {
+      "check": "temporal_manifest",
+      "passed": true,
+      "detail": "[{'check': 'only_2023_alerts', 'passed': True}, {'check': 'minimum_four_game_baseline', 'passed': True}, {'check': 'confirmation_window_complete', 'passed': True}, {'check': 'baseline_strictly_before_confirmation', 'passed': True}, {'check': 'confirmation_ends_on_alert_week', 'passed': True}, {'check': 'first_outcome_strictly_after_alert', 'passed': True}, {'check': 'second_outcome_strictly_after_first', 'passed': True}, {'check': 'same_season_grouping_enabled_by_frozen_config', 'passed': True}]"
+    },
+    {
+      "check": "carry_status",
+      "passed": true,
+      "detail": "PASSES_FOLD_3_POINT_GATES"
+    },
+    {
+      "check": "opportunity_status",
+      "passed": true,
+      "detail": "direction_consistent_across_periods"
+    },
+    {
+      "check": "retired_not_reinstated",
+      "passed": true,
+      "detail": "{'wr_target_share': 'NOT_APPLICABLE_RETIRED', 'te_target_share': 'NOT_APPLICABLE_RETIRED'}"
+    },
+    {
+      "check": "staged_dashboard_unchanged",
+      "passed": true,
+      "detail": "no staged dashboard files"
+    }
+  ]
+}

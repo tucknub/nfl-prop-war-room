@@ -1,0 +1,17 @@
+{
+  "stage": "precheck",
+  "passed": true,
+  "evaluation_executed": false,
+  "allowed_seasons": [
+    2023
+  ],
+  "post_2023_seasons_read": false,
+  "canonical_rows": 7448,
+  "canonical_duplicate_keys": 0,
+  "confirmed_partial_family_rows": 17,
+  "suspected_partial_family_rows": 68,
+  "source_coverage_passed": true,
+  "identity_coverage_passed": true,
+  "config_integrity_passed": true,
+  "temporal_design_static_checks_passed": true
+}

@@ -1,0 +1,32 @@
+{
+  "branch": "role-change-validation-v1",
+  "start_commit": "c10bb7f3e0446a3c5f85caa4adcb3175fe6be4f9",
+  "pre_fold3_tag": "role-change-validation-v1-pre-fold3-checkpoint",
+  "pre_fold3_tag_commit": "c10bb7f3e0446a3c5f85caa4adcb3175fe6be4f9",
+  "config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "fold2_frozen_copy_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "semantic_match_to_fold1_report": true,
+  "byte_identical_to_fold2_frozen_copy": true,
+  "protected_hashes": {
+    "release_gates": "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d",
+    "protocol": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+    "locked_decisions": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+  },
+  "integrity_checks": {
+    "sha256_matches_precommitted_fingerprint": true,
+    "document_matches_fold1_report": true,
+    "fold2_test_season_is_2022": true,
+    "fold2_was_unexecuted_when_frozen": true,
+    "post_2021_results_were_unused_when_frozen": true,
+    "release_gates_unchanged": true,
+    "baseline_resets_each_season": true,
+    "baseline_excludes_confirmation_games": true,
+    "equal_volume_within_family_season_week": true,
+    "primary_partial_policy_is_confirmed_excluded": true,
+    "byte_identical_to_fold2_frozen_copy": true,
+    "fold2_fingerprint_matches": true
+  },
+  "frozen_copy": "outputs/role_validation/fold_3/frozen_role_change_fold3_candidate.yaml",
+  "frozen_copy_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "recorded_at_utc": "2026-07-13T22:26:40.627867+00:00"
+}

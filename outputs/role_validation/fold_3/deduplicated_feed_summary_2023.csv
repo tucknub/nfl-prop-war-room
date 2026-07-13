@@ -1,0 +1,13 @@
+partial_policy,method,family_alert_rows,deduplicated_player_week_team_alerts,duplicate_family_rows_removed,weekly_median,weekly_maximum,zero_alert_weeks
+ALL_INCLUDED,full_propwar,169,128,41,9.0,16,5
+ALL_INCLUDED,naive_spike,169,122,47,8.5,16,5
+ALL_INCLUDED,normal_game_trend,169,123,46,8.5,16,5
+ALL_INCLUDED,two_week_raw,169,121,48,8.5,15,5
+PRIMARY_CONFIRMED_EXCLUDED,full_propwar,165,124,41,8.5,17,5
+PRIMARY_CONFIRMED_EXCLUDED,naive_spike,165,117,48,7.0,16,5
+PRIMARY_CONFIRMED_EXCLUDED,normal_game_trend,165,119,46,7.5,17,5
+PRIMARY_CONFIRMED_EXCLUDED,two_week_raw,165,117,48,7.5,17,5
+STRICT_SUSPECTED_EXCLUDED,full_propwar,155,115,40,7.5,14,5
+STRICT_SUSPECTED_EXCLUDED,naive_spike,155,111,44,6.5,13,5
+STRICT_SUSPECTED_EXCLUDED,normal_game_trend,155,109,46,7.0,14,5
+STRICT_SUSPECTED_EXCLUDED,two_week_raw,155,106,49,7.0,14,5
