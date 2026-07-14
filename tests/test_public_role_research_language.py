@@ -34,6 +34,15 @@ PROHIBITED = [
     r"\bpredictive label",
     r"\bconfidence score",
     r"\bplay / lean / pass\b",
+    r"\bconfirmed role change\b",
+    r"\bbreakout\b",
+    r"\block\b",
+    r"\blean\b",
+    r"\bpass\b",
+    r"\bbuy\b",
+    r"\bfade\b",
+    r"\bbest bet\b",
+    r"\bvalidated detector\b",
 ]
 
 
@@ -43,10 +52,13 @@ def test_public_files_exclude_prohibited_product_language() -> None:
     assert not failures, failures
 
 
-def test_navigation_registers_only_requested_public_pages_plus_admin() -> None:
+def test_public_navigation_excludes_research_admin() -> None:
     app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
     for title in ["Home", "Teams", "Players", "Games", "Reports", "Explorer"]:
         assert f'title="{title}"' in app
+    assert "90_Admin_Research.py" not in app
+    assert 'title="Research Admin"' not in app
+    assert (ROOT / "dashboard" / "pages" / "90_Admin_Research.py").exists()
     for retired_page in ["Signal_Command_Center", "Matchup_Board", "Position_Signal_Boards", "Blocked_Review"]:
         assert retired_page not in app
 
@@ -62,3 +74,10 @@ def test_public_copy_marks_2025_complete_and_2026_not_started() -> None:
     assert "Completed historical data through 2025" in home
     assert "2026 NFL season has not started" in home
     assert '[2025, 2024, 2023]' in explorer
+
+
+def test_no_fixed_jets_or_team_logo_element_is_defined() -> None:
+    text = "\n".join(path.read_text(encoding="utf-8") for path in PUBLIC_FILES).lower()
+    assert "new york jets" not in text
+    assert "jets logo" not in text
+    assert "position:fixed" not in text.replace(" ", "")

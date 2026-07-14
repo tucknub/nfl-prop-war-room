@@ -31,15 +31,7 @@ def main() -> None:
             st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
             st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
             st.Page("pages/05_Explorer.py", title="Explorer", icon=":material/search:", url_path="explorer"),
-        ],
-        "Admin / Research": [
-            st.Page(
-                "pages/90_Admin_Research.py",
-                title="Research Admin",
-                icon=":material/science:",
-                url_path="admin-research",
-            ),
-        ],
+        ]
     }
 
     st.navigation(pages).run()

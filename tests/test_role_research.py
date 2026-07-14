@@ -23,6 +23,7 @@ from dashboard.research_data import (  # noqa: E402
     team_window_summary,
 )
 from scripts.build_role_research_data import build_context_rows  # noqa: E402
+from dashboard.research_ui import nfl_week_axis_values, numeric_percent_sort, ratio_text, selection_summary_text  # noqa: E402
 
 
 def test_committed_canonical_data_is_unique_complete_and_ends_in_2025() -> None:
@@ -138,3 +139,23 @@ def test_builder_accepts_completed_2025_and_uses_same_game_denominators() -> Non
     assert set(carry["team_opportunities"]) == {2}
     assert set(production["season"]) == {2024, 2025}
     assert set(events["season"]) == {2024, 2025}
+
+
+def test_mobile_ratio_text_always_includes_numerator_denominator_and_percentage() -> None:
+    assert ratio_text(6, 18, "team carries") == "6 of 18 team carries · 33.3%"
+
+
+def test_percentage_sorting_uses_numeric_values_not_formatted_strings() -> None:
+    frame = pd.DataFrame({"Player": ["Eight", "Twenty Five"], "Red zone share": [8.3, 25.0]})
+    ordered = numeric_percent_sort(frame, "Red zone share")
+    assert ordered["Player"].tolist() == ["Twenty Five", "Eight"]
+
+
+def test_nfl_week_axis_begins_at_one_and_ends_at_eighteen() -> None:
+    assert nfl_week_axis_values() == list(range(1, 19))
+
+
+def test_filter_summary_preserves_selection_order_and_sample() -> None:
+    assert selection_summary_text("Arizona · 2025 · Last 4", "Normal game · WR target share", "4 players") == (
+        "Arizona · 2025 · Last 4 | Normal game · WR target share | 4 players"
+    )

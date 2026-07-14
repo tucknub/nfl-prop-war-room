@@ -249,10 +249,19 @@ def situational_team_summary(
     )["raw_opportunities"].sum()
     joined = numerators.merge(denominators, on="context", how="left")
     joined["share"] = joined["raw_opportunities"] / joined["team_opportunities"].replace(0, np.nan)
-    pivot = joined.pivot_table(
-        index=["player_id", "player_name", "position"], columns="context", values="share", aggfunc="first"
-    ).reset_index()
-    return pivot
+    result = joined[["player_id", "player_name", "position"]].drop_duplicates().reset_index(drop=True)
+    for context in sorted(joined["context"].dropna().astype(str).unique().tolist()):
+        context_rows = joined[joined["context"].eq(context)][
+            ["player_id", "raw_opportunities", "team_opportunities", "share"]
+        ].rename(
+            columns={
+                "raw_opportunities": f"{context}_raw",
+                "team_opportunities": f"{context}_denominator",
+                "share": context,
+            }
+        )
+        result = result.merge(context_rows, on="player_id", how="left")
+    return result
 
 
 def league_window_summary(
@@ -435,7 +444,21 @@ def game_usage(season: int, week: int, game_id: str) -> pd.DataFrame:
     identity = roles[["player_id", "player_name", "team", "position", "partial_game_note"]].drop_duplicates("player_id")
     shares = roles.pivot_table(index="player_id", columns="role_family", values="metric_all", aggfunc="first").reset_index()
     normal = roles.pivot_table(index="player_id", columns="role_family", values="metric_normal", aggfunc="first").add_suffix("_normal").reset_index()
+    raw_all = roles.pivot_table(
+        index="player_id", columns="role_family", values="raw_opportunities_all", aggfunc="first"
+    ).add_suffix("_raw").reset_index()
+    denominator_all = roles.pivot_table(
+        index="player_id", columns="role_family", values="team_opportunities_all", aggfunc="first"
+    ).add_suffix("_denominator").reset_index()
+    raw_normal = roles.pivot_table(
+        index="player_id", columns="role_family", values="raw_opportunities_normal", aggfunc="first"
+    ).add_suffix("_normal_raw").reset_index()
+    denominator_normal = roles.pivot_table(
+        index="player_id", columns="role_family", values="team_opportunities_normal", aggfunc="first"
+    ).add_suffix("_normal_denominator").reset_index()
     result = identity.merge(shares, on="player_id", how="left").merge(normal, on="player_id", how="left")
+    for counts in [raw_all, denominator_all, raw_normal, denominator_normal]:
+        result = result.merge(counts, on="player_id", how="left")
     production = load_production_data()
     production = production[
         production["season"].eq(season) & production["week"].eq(week) & production["game_id"].eq(game_id)
