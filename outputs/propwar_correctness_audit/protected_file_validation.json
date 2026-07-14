@@ -1,0 +1,117 @@
+{
+  "baseline_commit": "8b759f18c34708300acf5e3ef84d0e4cbbbde597",
+  "changed_paths": [
+    "docs/propwar/CURRENT_PHASE.md",
+    "docs/propwar/LOCKED_DECISIONS.md",
+    "docs/propwar/PHASE_GATES.md",
+    "docs/propwar/PRODUCT_BACKLOG.md",
+    "docs/propwar/PROJECT_BLUEPRINT.md",
+    "docs/propwar/RELEASE_HISTORY.md",
+    "docs/propwar/ROLLBACK_PLAN.md",
+    "notebooks/propwar_targeted_correctness_audit.ipynb",
+    "outputs/propwar_correctness_audit/COMMANDS_RUN.md",
+    "outputs/propwar_correctness_audit/TARGETED_CORRECTNESS_AUDIT.md",
+    "outputs/propwar_correctness_audit/browser_state_evidence.json",
+    "outputs/propwar_correctness_audit/calculation_discrepancies.csv",
+    "outputs/propwar_correctness_audit/cross_page_reconciliation.csv",
+    "outputs/propwar_correctness_audit/explorer_validation.csv",
+    "outputs/propwar_correctness_audit/final_validation.json",
+    "outputs/propwar_correctness_audit/findings.csv",
+    "outputs/propwar_correctness_audit/game_validation.csv",
+    "outputs/propwar_correctness_audit/home_validation.csv",
+    "outputs/propwar_correctness_audit/link_state_validation.csv",
+    "outputs/propwar_correctness_audit/player_validation.csv",
+    "outputs/propwar_correctness_audit/protected_file_validation.json",
+    "outputs/propwar_correctness_audit/public_language_scan.csv",
+    "outputs/propwar_correctness_audit/report_validation.csv",
+    "scripts/build_targeted_correctness_notebook.py",
+    "scripts/run_targeted_correctness_audit.py",
+    "scripts/validate_targeted_correctness_outputs.py",
+    "scripts/validate_targeted_correctness_scope.py",
+    "tests/test_targeted_correctness_audit.py"
+  ],
+  "allowed_patterns": [
+    "docs/propwar/*",
+    "outputs/propwar_correctness_audit/*",
+    "notebooks/propwar_targeted_correctness_audit.ipynb",
+    "scripts/run_targeted_correctness_audit.py",
+    "scripts/build_targeted_correctness_notebook.py",
+    "scripts/validate_targeted_correctness_outputs.py",
+    "scripts/validate_targeted_correctness_scope.py",
+    "tests/test_targeted_correctness_audit.py"
+  ],
+  "violations": [],
+  "protected_hashes": [
+    {
+      "path": "LOCKED_DECISIONS.md",
+      "baseline_sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00",
+      "worktree_sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "ROLE_CHANGE_VALIDATION_PROTOCOL.md",
+      "baseline_sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+      "worktree_sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/release_gate_integrity.json",
+      "baseline_sha256": "476c8ccbe99fd33ad4f35ca31c5eddcc5983f4f20f8b3da740fdd4a2ca3a2833",
+      "worktree_sha256": "476c8ccbe99fd33ad4f35ca31c5eddcc5983f4f20f8b3da740fdd4a2ca3a2833",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_2/frozen_role_change_fold2_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "worktree_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_2/frozen_config_fingerprint.json",
+      "baseline_sha256": "20ec2560a649715ea605661dcae7c744eba04c79d62f0ac198b88e77d42fe679",
+      "worktree_sha256": "20ec2560a649715ea605661dcae7c744eba04c79d62f0ac198b88e77d42fe679",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_2/release_gate_results_2022.csv",
+      "baseline_sha256": "58c5eb6d62afa305dbfd7884a0e4cd5308296cb3c27de72931a25effc4a65006",
+      "worktree_sha256": "58c5eb6d62afa305dbfd7884a0e4cd5308296cb3c27de72931a25effc4a65006",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_3/frozen_config_fingerprint.json",
+      "baseline_sha256": "97bf6c8415bdd67dbe113ce6881edf42cd611e77640d2d8ca19c70d15b626a7e",
+      "worktree_sha256": "97bf6c8415bdd67dbe113ce6881edf42cd611e77640d2d8ca19c70d15b626a7e",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_3/frozen_role_change_fold3_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "worktree_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_4/frozen_role_change_fold4_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "worktree_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    },
+    {
+      "path": "outputs/role_validation/fold_4/frozen_execution_package_manifest.json",
+      "baseline_sha256": "097ae21a836b064e575f118943c7860b48a5a2b22d9cdbd5f3094fb3fe751bab",
+      "worktree_sha256": "097ae21a836b064e575f118943c7860b48a5a2b22d9cdbd5f3094fb3fe751bab",
+      "hash_basis": "canonical LF bytes",
+      "match": true
+    }
+  ],
+  "protected_files_unchanged": true
+}

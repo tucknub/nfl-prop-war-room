@@ -1,0 +1,61 @@
+{
+  "live_url": "https://propwar.streamlit.app/",
+  "tested_app_url": "https://propwar.streamlit.app/~/+/",
+  "tested_at": "2026-07-14",
+  "checks": [
+    {
+      "check": "Live valid direct player URL",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Tank Bigsby direct URL resolved to Tank Bigsby, 2025, RB carry share; weekly axis states Weeks 1-18."
+    },
+    {
+      "check": "Live traded-player selector identity",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "Tank Bigsby profile summary showed PHI while the selected combobox label showed JAX."
+    },
+    {
+      "check": "Live invalid player URL",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "player=INVALID_PLAYER silently rendered A.J. Brown instead of an invalid-state message."
+    },
+    {
+      "check": "Live direct team URL",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "team=BUF rendered ARI because the Teams page ignores query parameters."
+    },
+    {
+      "check": "Live Explorer Reset",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "After changing team and context, Reset restored 2025, All teams, Weeks 1-18, RB carry share, Normal game, minimum 5 and the matching summary."
+    },
+    {
+      "check": "Live back/forward navigation",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Back returned to the prior Teams URL and Team Opportunity Map; forward returned to Explorer without carrying a stale entity into the other page."
+    },
+    {
+      "check": "Live public navigation",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Navigation contained Home, Teams, Players, Games, Reports, and Explorer only; Research Admin was absent."
+    },
+    {
+      "check": "Live rendered public-language scan",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Rendered Home, Teams, Players, Games, Reports, and Explorer snapshots contained no prohibited analytical or recommendation phrase; ordinary uses of play/passing remained descriptive."
+    },
+    {
+      "check": "Live browser console errors",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "No error-level messages; Vega emitted repeated empty-extent warnings when profiles had missing chart series."
+    }
+  ]
+}

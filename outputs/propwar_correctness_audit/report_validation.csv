@@ -1,0 +1,8 @@
+report,period,season,normal_rows,all_play_rows,normal_all_toggle_changes_result,context_filter_applied,numeric_sort,mobile_table_same_source,label_assessment,severity
+Red Zone Usage,Last 4,2025,61,61,False,False,True,True,FAIL: normal/all-play control is ignored for situational report,High
+Backfield Usage,Last 4,2025,159,166,True,True,True,True,PASS,No issue
+Target Share,Last 4,2025,148,161,True,True,True,True,PASS,No issue
+Recent Usage Risers and Fallers,Last 4,2025,307,327,True,True,True,True,PASS,No issue
+Opportunity Versus Production,Last 4,2025,307,327,True,True,True,True,PASS,No issue
+Game-Script Usage,Last 4,2025,135,135,False,False,True,True,FAIL: normal/all-play control is ignored for situational report,High
+High-Value Opportunities,Last 4,2025,23,23,False,False,True,True,FAIL: normal/all-play control is ignored for situational report,High

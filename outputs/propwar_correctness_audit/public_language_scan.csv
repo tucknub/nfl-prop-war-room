@@ -1,0 +1,13 @@
+file,line,term,text,classification,status
+dashboard/pages/02_Players.py,140,play,"chart_data[""Series""] = chart_data[""series""].map({""metric_all"": ""All play"", ""metric_normal"": ""Normal game""})",harmless ordinary-language use,PASS
+dashboard/pages/02_Players.py,170,play,"scale=alt.Scale(domain=[""All play"", ""Normal game""], range=[""#0b5cff"", ""#8a9aae""]),",harmless ordinary-language use,PASS
+dashboard/pages/02_Players.py,194,play,"section(""Weekly counts"", ""All-play and normal-game counts remain visible with participation notes."")",harmless ordinary-language use,PASS
+dashboard/pages/02_Players.py,214,play,"(""All play"", ratio_text(row[""raw_opportunities_all""], row[""team_opportunities_all""], role_noun(role_family)), ""Player / team opportunities""),",harmless ordinary-language use,PASS
+dashboard/pages/02_Players.py,257,play,"""All-play and normal-game values use the same player identity and team-week join."",",harmless ordinary-language use,PASS
+dashboard/pages/03_Games.py,101,play,"(""Team share"", ratio_text(raw, denominator, role_noun(family)), ""All play""),",harmless ordinary-language use,PASS
+dashboard/pages/03_Games.py,139,play,"""All-play and normal-game shares use the player count divided by the matching team count."",",harmless ordinary-language use,PASS
+dashboard/pages/03_Games.py,140,play,"""Outside-normal-game opportunities equal all-play opportunities minus normal-game opportunities."",",harmless ordinary-language use,PASS
+dashboard/pages/05_Explorer.py,126,play,"(""Selected share"", ratio_text(row[""raw_opportunities""], row[""team_denominator""], role_noun(role_family)), ""Selected play conditions""),",harmless ordinary-language use,PASS
+dashboard/pages/05_Explorer.py,128,play,"(""Context"", ""Normal game"" if normal_game else ""All play"", game_state if game_state != ""All"" else ""All game states""),",harmless ordinary-language use,PASS
+dashboard/pages/05_Explorer.py,162,play,"source_footer(""Completed historical play-level data through 2025; no 2026 usage is shown."")",harmless ordinary-language use,PASS
+dashboard/research_ui.py,327,play,"""details"": f""Normal game {percent(row['metric_normal'])}; all play {percent(row['metric_all'])}. {row['factual_text']}"",",harmless ordinary-language use,PASS

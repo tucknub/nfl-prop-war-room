@@ -1,0 +1,21 @@
+check,status,severity,evidence
+Home player links,PASS,No issue,/players?player=<id>&season=<season>&family=<family>
+Home team links,FAIL,Medium,No team link is rendered.
+Team player links,PASS,No issue,"Player ID, season, and family are encoded."
+Game player links,PASS,No issue,"Player ID, season, and family are encoded."
+Report player links,PASS,No issue,"Player ID, season, and family are encoded."
+Explorer player links,PASS,No issue,"Player ID, season, and family are encoded."
+Direct player URL,PASS,No issue,Valid player ID and family select the requested profile in a fresh session.
+Invalid player value,FAIL,High,Invalid player query silently falls back to the first selector option.
+Direct team URL,FAIL,High,Teams page does not read a team query parameter.
+Invalid team value,FAIL,High,No invalid-team state exists because team query parameters are ignored.
+Research Admin navigation,PASS,No issue,Admin is absent from st.navigation.
+Live valid direct player URL,PASS,No issue,"Tank Bigsby direct URL resolved to Tank Bigsby, 2025, RB carry share; weekly axis states Weeks 1-18."
+Live traded-player selector identity,FAIL,Medium,Tank Bigsby profile summary showed PHI while the selected combobox label showed JAX.
+Live invalid player URL,FAIL,High,player=INVALID_PLAYER silently rendered A.J. Brown instead of an invalid-state message.
+Live direct team URL,FAIL,High,team=BUF rendered ARI because the Teams page ignores query parameters.
+Live Explorer Reset,PASS,No issue,"After changing team and context, Reset restored 2025, All teams, Weeks 1-18, RB carry share, Normal game, minimum 5 and the matching summary."
+Live back/forward navigation,PASS,No issue,Back returned to the prior Teams URL and Team Opportunity Map; forward returned to Explorer without carrying a stale entity into the other page.
+Live public navigation,PASS,No issue,"Navigation contained Home, Teams, Players, Games, Reports, and Explorer only; Research Admin was absent."
+Live rendered public-language scan,PASS,No issue,"Rendered Home, Teams, Players, Games, Reports, and Explorer snapshots contained no prohibited analytical or recommendation phrase; ordinary uses of play/passing remained descriptive."
+Live browser console errors,PASS,No issue,No error-level messages; Vega emitted repeated empty-extent warnings when profiles had missing chart series.
