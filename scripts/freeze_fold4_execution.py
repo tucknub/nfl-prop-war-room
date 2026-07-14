@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs" / "role_validation" / "fold_4"
 CHECKPOINT_COMMIT = "603bd5159833e1ce11ca4ff261b0d88fd040ea73"
 CHECKPOINT_TAG = "pre-fold-4-checkpoint"
+INITIAL_EXECUTION_PACKAGE_COMMIT = "12cdb1bf34352392b6fba5a40c7cec82d532f4bc"
 EXPECTED_CONFIG_SHA256 = "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
 PACKAGE_FILES = {
     "candidate_configuration": "config/role_change_fold2_candidate.yaml",
@@ -85,6 +86,12 @@ def main() -> int:
         )
 
     OUT.mkdir(parents=True, exist_ok=True)
+    prior_precheck_failure_path = OUT / "precheck_failure.json"
+    prior_precheck_failure = (
+        json.loads(prior_precheck_failure_path.read_text(encoding="utf-8"))
+        if prior_precheck_failure_path.is_file()
+        else None
+    )
     frozen_config = OUT / "frozen_role_change_fold4_candidate.yaml"
     shutil.copyfile(config_path, frozen_config)
     files = {
@@ -96,7 +103,11 @@ def main() -> int:
     }
     manifest = {
         "manifest_type": "pre_result_frozen_fold4_execution_package",
-        "frozen_before_2024_data_access": True,
+        "initial_execution_package_commit": INITIAL_EXECUTION_PACKAGE_COMMIT,
+        "initial_package_frozen_before_first_2024_data_access": True,
+        "frozen_before_first_2024_data_access": prior_precheck_failure is None,
+        "frozen_before_2024_result_access": True,
+        "prior_invalidated_precheck": prior_precheck_failure,
         "checkpoint_tag": CHECKPOINT_TAG,
         "checkpoint_commit": CHECKPOINT_COMMIT,
         "execution_package_commit": head,
