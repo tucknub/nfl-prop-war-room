@@ -1,2 +1,4 @@
 ROLE_CHANGE_VALIDATION_PROTOCOL.md text eol=lf
 LOCKED_DECISIONS.md text eol=lf
+config/*.yaml text eol=lf
+outputs/role_validation/**/frozen_role_change_fold*_candidate.yaml text eol=lf
