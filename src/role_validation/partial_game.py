@@ -40,7 +40,7 @@ def load_explicit_injury_sources(
     seasons: list[int],
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load only the requested seasons from nflverse for explicit PBP evidence."""
-    allowed = {2018, 2019, 2020, 2021, 2022, 2023}
+    allowed = {2018, 2019, 2020, 2021, 2022, 2023, 2024}
     if not set(seasons).issubset(allowed):
         raise ValueError(f"Explicit injury evidence is restricted to {sorted(allowed)}")
     import nflreadpy as nfl

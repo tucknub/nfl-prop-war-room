@@ -11,7 +11,7 @@ from role_validation.evaluation import attach_future_outcomes, build_future_outc
 
 
 ALLOWED_REDEVELOPMENT_SEASONS = (2018, 2019, 2020, 2021)
-APPROVED_ROLE_VALIDATION_SEASONS = (2018, 2019, 2020, 2021, 2022, 2023)
+APPROVED_ROLE_VALIDATION_SEASONS = (2018, 2019, 2020, 2021, 2022, 2023, 2024)
 ROLE_FAMILIES = (
     "rb_carry_share",
     "rb_opportunity_share",
@@ -483,6 +483,7 @@ def build_full_candidate_alerts(
     partial_policy: str = "PRIMARY_CONFIRMED_EXCLUDED",
     feature_cache: dict[tuple[Any, ...], pd.DataFrame] | None = None,
     allowed_seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
+    role_families: Iterable[str] = ROLE_FAMILIES,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build a transparent full-detector alert set before comparator matching."""
     observed = set(pd.to_numeric(data["season"], errors="raise").astype(int).unique())
@@ -491,11 +492,17 @@ def build_full_candidate_alerts(
         raise ValueError(f"Invalid allowed seasons: {sorted(allowed)}")
     if not observed.issubset(allowed):
         raise AssertionError(f"Candidate input contains disallowed seasons: {sorted(observed)}")
+    families = tuple(str(family) for family in role_families)
+    if not families or not set(families).issubset(set(ROLE_FAMILIES)):
+        raise ValueError(f"Invalid role-family scope: {families}")
+    missing_families = set(families) - set(data["role_family"].astype(str).unique())
+    if missing_families:
+        raise AssertionError(f"Candidate input lacks scoped families: {sorted(missing_families)}")
     rows = [
         _candidate_family_rows(
             data, candidate, family, partial_policy, feature_cache=feature_cache
         )
-        for family in ROLE_FAMILIES
+        for family in families
     ]
     full = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
     return _apply_repeat_suppression(full, candidate)
@@ -583,6 +590,7 @@ def select_equal_volume_candidate_comparators(
     full_alerts: pd.DataFrame,
     partial_policy: str = "PRIMARY_CONFIRMED_EXCLUDED",
     feature_cache: dict[tuple[Any, ...], pd.DataFrame] | None = None,
+    role_families: Iterable[str] = ROLE_FAMILIES,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Match every comparator to the full candidate count within family-week.
 
@@ -604,7 +612,10 @@ def select_equal_volume_candidate_comparators(
         else {}
     )
 
-    for family in ROLE_FAMILIES:
+    families = tuple(str(family) for family in role_families)
+    if not families or not set(families).issubset(set(ROLE_FAMILIES)):
+        raise ValueError(f"Invalid role-family scope: {families}")
+    for family in families:
         family_data = data.loc[data["role_family"].eq(family)].copy()
         method_frames = {
             method: _comparator_features(
@@ -719,6 +730,7 @@ def run_candidate(
     partial_policy: str = "PRIMARY_CONFIRMED_EXCLUDED",
     feature_cache: dict[tuple[Any, ...], pd.DataFrame] | None = None,
     allowed_seasons: Iterable[int] = ALLOWED_REDEVELOPMENT_SEASONS,
+    role_families: Iterable[str] = ROLE_FAMILIES,
 ) -> dict[str, pd.DataFrame]:
     """Build, equal-volume match, and evaluate one candidate deterministically."""
     full, suppressed = build_full_candidate_alerts(
@@ -727,6 +739,7 @@ def run_candidate(
         partial_policy,
         feature_cache=feature_cache,
         allowed_seasons=allowed_seasons,
+        role_families=role_families,
     )
     alerts, equal_volume = select_equal_volume_candidate_comparators(
         data,
@@ -734,6 +747,7 @@ def run_candidate(
         full,
         partial_policy,
         feature_cache=feature_cache,
+        role_families=role_families,
     )
     evaluated = evaluate_candidate_alerts(
         alerts,
