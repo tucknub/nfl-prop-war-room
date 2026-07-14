@@ -1,0 +1,109 @@
+{
+  "validator": "fold4_staged_scope_validator",
+  "passed": true,
+  "checks_passed": 7,
+  "checks_total": 7,
+  "staged_paths": [
+    "notebooks/fold_4_untouched_2024_validation.ipynb",
+    "outputs/role_validation/fold_4/COMMANDS_RUN.md",
+    "outputs/role_validation/fold_4/DATA_AUDIT_2024.md",
+    "outputs/role_validation/fold_4/FOLD_4_REPORT.md",
+    "outputs/role_validation/fold_4/PRECHECK_CORRECTION_NOTE.md",
+    "outputs/role_validation/fold_4/TEST_AND_VALIDATION_RESULTS.md",
+    "outputs/role_validation/fold_4/active_family_comparisons_2024.csv",
+    "outputs/role_validation/fold_4/active_family_method_results_2024.csv",
+    "outputs/role_validation/fold_4/baseline_stability_thresholds_2024.csv",
+    "outputs/role_validation/fold_4/canonical_role_2024_enriched.csv.gz",
+    "outputs/role_validation/fold_4/concentration_entities_2024.csv",
+    "outputs/role_validation/fold_4/concentration_summary_2024.csv",
+    "outputs/role_validation/fold_4/cross_season_direction_2021_2024.csv",
+    "outputs/role_validation/fold_4/cross_season_family_2021_2024.csv",
+    "outputs/role_validation/fold_4/cross_season_weekly_2021_2024.csv",
+    "outputs/role_validation/fold_4/data_audit_2024.csv",
+    "outputs/role_validation/fold_4/data_audit_checks_2024.csv",
+    "outputs/role_validation/fold_4/deduplicated_feed_summary_2024.csv",
+    "outputs/role_validation/fold_4/deduplicated_weekly_volume_2024.csv",
+    "outputs/role_validation/fold_4/direction_results_2024.csv",
+    "outputs/role_validation/fold_4/equal_volume_verification_2024.csv",
+    "outputs/role_validation/fold_4/exclusions_2024.csv",
+    "outputs/role_validation/fold_4/explicit_pbp_2024.csv.gz",
+    "outputs/role_validation/fold_4/explicit_rosters_2024.csv.gz",
+    "outputs/role_validation/fold_4/explicit_schedules_2024.csv.gz",
+    "outputs/role_validation/fold_4/file_access_manifest.csv",
+    "outputs/role_validation/fold_4/final_validation.json",
+    "outputs/role_validation/fold_4/fold4_alerts_2024.csv.gz",
+    "outputs/role_validation/fold_4/fold4_execution_lock.json",
+    "outputs/role_validation/fold_4/fold4_family_recommendations.csv",
+    "outputs/role_validation/fold_4/fold4_gate_decisions.csv",
+    "outputs/role_validation/fold_4/fold4_gate_details.csv",
+    "outputs/role_validation/fold_4/frozen_execution_package_manifest.json",
+    "outputs/role_validation/fold_4/frozen_role_change_fold4_candidate.yaml",
+    "outputs/role_validation/fold_4/individual_season_gate_status_2021_2024.csv",
+    "outputs/role_validation/fold_4/input_source_manifest.csv",
+    "outputs/role_validation/fold_4/join_coverage_2024.csv",
+    "outputs/role_validation/fold_4/missingness_2024.csv",
+    "outputs/role_validation/fold_4/overlap_dependence_2024.csv",
+    "outputs/role_validation/fold_4/partial_alert_status_2024.csv",
+    "outputs/role_validation/fold_4/partial_game_evidence_2024.csv",
+    "outputs/role_validation/fold_4/partial_game_sensitivity_2024.csv",
+    "outputs/role_validation/fold_4/partial_game_source_coverage_2024.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_direction_2022_2023.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_direction_2022_2024.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_family_2022_2023.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_family_2022_2024.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_weekly_2022_2023.csv",
+    "outputs/role_validation/fold_4/pooled_untouched_weekly_2022_2024.csv",
+    "outputs/role_validation/fold_4/pre_execution_test_results.txt",
+    "outputs/role_validation/fold_4/pre_run_manifest.json",
+    "outputs/role_validation/fold_4/precheck_failure.json",
+    "outputs/role_validation/fold_4/rb_family_overlap_2024.csv",
+    "outputs/role_validation/fold_4/repeat_alert_rates_2024.csv",
+    "outputs/role_validation/fold_4/repeat_suppressed_alerts_2024.csv",
+    "outputs/role_validation/fold_4/retention_outlier_diagnostics_2024.csv",
+    "outputs/role_validation/fold_4/run_manifest.json",
+    "outputs/role_validation/fold_4/season_block_results_2024.csv",
+    "outputs/role_validation/fold_4/source_coverage_2024.csv",
+    "outputs/role_validation/fold_4/staged_scope_validation.json",
+    "outputs/role_validation/fold_4/subgroup_stability_2024.csv",
+    "outputs/role_validation/fold_4/temporal_integrity_checks_2024.csv",
+    "outputs/role_validation/fold_4/temporal_precheck_2024.csv",
+    "outputs/role_validation/fold_4/weekly_stability_2024.csv"
+  ],
+  "checks": [
+    {
+      "check": "staged_files_present",
+      "passed": true,
+      "detail": "64 staged paths"
+    },
+    {
+      "check": "only_fold4_artifacts_staged",
+      "passed": true,
+      "detail": "all allowed"
+    },
+    {
+      "check": "executed_notebook_staged",
+      "passed": true,
+      "detail": "notebooks/fold_4_untouched_2024_validation.ipynb"
+    },
+    {
+      "check": "execution_package_commit_unchanged",
+      "passed": true,
+      "detail": "6446d4ef7fa554e20978c90fda6ddefbedafc4fa"
+    },
+    {
+      "check": "execution_package_hashes_unchanged",
+      "passed": true,
+      "detail": "15 matched"
+    },
+    {
+      "check": "cached_diff_check",
+      "passed": true,
+      "detail": "clean"
+    },
+    {
+      "check": "dashboard_not_staged",
+      "passed": true,
+      "detail": "none"
+    }
+  ]
+}

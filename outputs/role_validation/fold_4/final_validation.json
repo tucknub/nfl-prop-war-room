@@ -1,0 +1,186 @@
+{
+  "validator": "independent_fold4_output_validator",
+  "passed": true,
+  "checks_passed": 35,
+  "checks_total": 35,
+  "test_season": 2024,
+  "2025_results_used": false,
+  "fold4_executed_once": true,
+  "checks": [
+    {
+      "check": "required_artifacts",
+      "passed": true,
+      "detail": "28 present"
+    },
+    {
+      "check": "frozen_execution_hashes",
+      "passed": true,
+      "detail": "15 matched"
+    },
+    {
+      "check": "execution_package_commit",
+      "passed": true,
+      "detail": "6446d4ef7fa554e20978c90fda6ddefbedafc4fa"
+    },
+    {
+      "check": "candidate_config_hash",
+      "passed": true,
+      "detail": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    {
+      "check": "frozen_config_hash",
+      "passed": true,
+      "detail": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    {
+      "check": "pre_run_passed",
+      "passed": true,
+      "detail": "{'stage': 'precheck', 'passed': True, 'evaluation_executed': False, 'test_season': 2024, 'source_seasons_physically_available': [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], 'source_seasons_physically_opened': [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], 'seasons_admitted_to_feature_generation': [2024], 'seasons_admitted_to_alert_selection': [2024], 'seasons_admitted_to_outcome_evaluation': [2024], 'seasons_admitted_to_cross_season_reporting': [2021, 2022, 2023, 2024], 'post_2024_values_admitted': False, 'canonical_rows': 7390, 'canonical_duplicate_keys': 0, 'confirmed_partial_family_rows': 18, 'suspected_partial_family_rows': 73, 'repository': {'branch': 'role-change-validation-v1', 'head': '6446d4ef7fa554e20978c90fda6ddefbedafc4fa', 'checkpoint_tag': 'pre-fold-4-checkpoint', 'checkpoint_commit': '603bd5159833e1ce11ca4ff261b0d88fd040ea73', 'execution_manifest_sha256': '77b07fb22ce8bdc834327fd62cec752ebe0548e2a7a4425ea6a31b4487c5fab3', 'config_integrity_checks': {'sha256_matches_precommitted_fingerprint': True, 'document_matches_fold1_report': True, 'fold2_test_season_is_2022': True, 'fold2_was_unexecuted_when_frozen': True, 'post_2021_results_were_unused_when_frozen': True, 'release_gates_unchanged': True, 'baseline_resets_each_season': True, 'baseline_excludes_confirmation_games': True, 'equal_volume_within_family_season_week': True, 'primary_partial_policy_is_confirmed_excluded': True, 'byte_identical_to_fold2_frozen_copy': True, 'fold2_fingerprint_matches': True, 'byte_identical_to_fold3_frozen_copy': True, 'fold3_fingerprint_matches': True}, 'execution_files_verified': 15}}"
+    },
+    {
+      "check": "single_execution_completed",
+      "passed": true,
+      "detail": "{'started_at_utc': '2026-07-14T13:14:25.146764+00:00', 'season': 2024, 'config_sha256': '4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7', 'execution_package_commit': '6446d4ef7fa554e20978c90fda6ddefbedafc4fa', 'execution_manifest_sha256': '77b07fb22ce8bdc834327fd62cec752ebe0548e2a7a4425ea6a31b4487c5fab3', 'single_execution_authorized': True, 'completed': True, 'completed_at_utc': '2026-07-14T13:14:45.700613+00:00', 'alert_archive_sha256': '9eba028998d20ba50a0616d7aa7ffa5237025d6b53593002be723675e137cb25'}"
+    },
+    {
+      "check": "no_2025_results",
+      "passed": true,
+      "detail": "False"
+    },
+    {
+      "check": "season_admission_boundary",
+      "passed": true,
+      "detail": "{'seasons_admitted_to_feature_generation': [2024], 'seasons_admitted_to_alert_selection': [2024], 'seasons_admitted_to_outcome_evaluation': [2024]}"
+    },
+    {
+      "check": "physical_access_reported",
+      "passed": true,
+      "detail": "[2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]"
+    },
+    {
+      "check": "input_source_hashes",
+      "passed": true,
+      "detail": "13 inputs"
+    },
+    {
+      "check": "data_audit_checks",
+      "passed": true,
+      "detail": "[{'check': 'canonical_grain_unique', 'passed': True}, {'check': 'required_fields_complete', 'passed': True}, {'check': 'identity_coverage_complete', 'passed': True}, {'check': 'played_weeks_complete', 'passed': True}, {'check': 'source_schema_and_games_complete', 'passed': True}, {'check': 'identity_and_opportunity_joins_complete', 'passed': True}, {'check': 'execution_hashes_verified', 'passed': True}, {'check': 'temporal_precheck_passed', 'passed': True}]"
+    },
+    {
+      "check": "canonical_2024_only",
+      "passed": true,
+      "detail": "[np.int64(2024)]"
+    },
+    {
+      "check": "canonical_grain",
+      "passed": true,
+      "detail": "0"
+    },
+    {
+      "check": "alerts_2024_only",
+      "passed": true,
+      "detail": "[np.int64(2024)]"
+    },
+    {
+      "check": "active_families_only",
+      "passed": true,
+      "detail": "['rb_carry_share', 'rb_opportunity_share']"
+    },
+    {
+      "check": "alert_grain_unique",
+      "passed": true,
+      "detail": "0"
+    },
+    {
+      "check": "primary_excludes_confirmed_partial",
+      "passed": true,
+      "detail": "no confirmed primary alerts"
+    },
+    {
+      "check": "equal_volume_manifest",
+      "passed": true,
+      "detail": "108 cells"
+    },
+    {
+      "check": "equal_volume_recomputed",
+      "passed": true,
+      "detail": "77 nonzero cells"
+    },
+    {
+      "check": "temporal_manifest",
+      "passed": true,
+      "detail": "[{'check': 'only_2024_alerts', 'passed': True}, {'check': 'minimum_four_game_baseline', 'passed': True}, {'check': 'confirmation_window_complete', 'passed': True}, {'check': 'baseline_strictly_before_confirmation', 'passed': True}, {'check': 'confirmation_ends_on_alert_week', 'passed': True}, {'check': 'first_outcome_strictly_after_alert', 'passed': True}, {'check': 'second_outcome_strictly_after_first', 'passed': True}, {'check': 'same_season_grouping_enabled_by_frozen_config', 'passed': True}]"
+    },
+    {
+      "check": "baseline_before_confirmation",
+      "passed": true,
+      "detail": "strict"
+    },
+    {
+      "check": "confirmation_ends_on_alert",
+      "passed": true,
+      "detail": "exact"
+    },
+    {
+      "check": "future_after_alert",
+      "passed": true,
+      "detail": "1129 rows"
+    },
+    {
+      "check": "method_metrics_recomputed",
+      "passed": true,
+      "detail": "24 rows"
+    },
+    {
+      "check": "comparison_metrics_recomputed",
+      "passed": true,
+      "detail": "6 rows"
+    },
+    {
+      "check": "pooled_raw_recomputed",
+      "passed": true,
+      "detail": "2022-2024 raw numerators matched"
+    },
+    {
+      "check": "gate_statuses_recomputed",
+      "passed": true,
+      "detail": "[{'role_family': 'rb_carry_share', 'fold4_candidate_status_stored': 'FAILS_FOLD_4_POINT_GATES', 'fold4_candidate_status_recomputed': 'FAILS_FOLD_4_POINT_GATES'}, {'role_family': 'rb_opportunity_share', 'fold4_candidate_status_stored': 'FAILS_FOLD_4_POINT_GATES', 'fold4_candidate_status_recomputed': 'FAILS_FOLD_4_POINT_GATES'}, {'role_family': 'wr_target_share', 'fold4_candidate_status_stored': 'NOT_APPLICABLE_RETIRED', 'fold4_candidate_status_recomputed': 'NOT_APPLICABLE_RETIRED'}, {'role_family': 'te_target_share', 'fold4_candidate_status_stored': 'NOT_APPLICABLE_RETIRED', 'fold4_candidate_status_recomputed': 'NOT_APPLICABLE_RETIRED'}]"
+    },
+    {
+      "check": "recommendations_recomputed",
+      "passed": true,
+      "detail": "[{'role_family': 'rb_carry_share', 'recommendation_stored': 'CONTINUE_SHADOW_ONLY', 'recommendation_recomputed': 'CONTINUE_SHADOW_ONLY'}, {'role_family': 'rb_opportunity_share', 'recommendation_stored': 'CONTINUE_SHADOW_ONLY_WITHOUT_HOLDOUT_CLAIM', 'recommendation_recomputed': 'CONTINUE_SHADOW_ONLY_WITHOUT_HOLDOUT_CLAIM'}, {'role_family': 'wr_target_share', 'recommendation_stored': 'REMAIN_RETIRED', 'recommendation_recomputed': 'REMAIN_RETIRED'}, {'role_family': 'te_target_share', 'recommendation_stored': 'REMAIN_RETIRED', 'recommendation_recomputed': 'REMAIN_RETIRED'}]"
+    },
+    {
+      "check": "subgroup_dimensions",
+      "passed": true,
+      "detail": "['absolute_role_change', 'baseline_stability', 'player', 'player_opportunity_count', 'team', 'team_denominator', 'week_block']"
+    },
+    {
+      "check": "alert_archive_hash",
+      "passed": true,
+      "detail": "9eba028998d20ba50a0616d7aa7ffa5237025d6b53593002be723675e137cb25"
+    },
+    {
+      "check": "notebook_executed",
+      "passed": true,
+      "detail": "7 code cells; 0 errors"
+    },
+    {
+      "check": "report_recommendations",
+      "passed": true,
+      "detail": "['CONTINUE_SHADOW_ONLY', 'CONTINUE_SHADOW_ONLY_WITHOUT_HOLDOUT_CLAIM', 'REMAIN_RETIRED']"
+    },
+    {
+      "check": "staged_dashboard_unchanged",
+      "passed": true,
+      "detail": "none"
+    },
+    {
+      "check": "no_execution_failure",
+      "passed": true,
+      "detail": "absent"
+    }
+  ]
+}

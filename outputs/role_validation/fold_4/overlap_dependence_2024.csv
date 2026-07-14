@@ -1,0 +1,5 @@
+role_family,overlap_status,alerts,evaluable_alerts,evaluable_rate,persistent_alerts,precision,reversion_evaluable_alerts,immediate_reversions,reversion_rate,median_retention,mean_retention,unique_players,active_weeks
+rb_carry_share,family_only,24,14,0.5833333333333334,9,0.6428571428571429,21,6,0.2857142857142857,0.7723616240106492,0.7010275405123794,20,11
+rb_carry_share,overlapping_rb_family,24,21,0.875,13,0.6190476190476191,24,3,0.125,0.5578674375411117,0.47884353969654064,20,11
+rb_opportunity_share,family_only,31,27,0.8709677419354839,17,0.6296296296296297,27,10,0.37037037037037035,0.8469943463496737,0.5903193972764428,26,12
+rb_opportunity_share,overlapping_rb_family,24,21,0.875,12,0.5714285714285714,24,4,0.16666666666666666,0.681075254069259,0.5386930383852135,20,11

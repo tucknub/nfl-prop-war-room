@@ -1,0 +1,5 @@
+period,role_family,seasons,season_weeks,weekly_median,weekly_maximum,zero_alert_weeks,active_weeks,weekly_mean
+pooled_untouched_2022_2024,rb_carry_share,2022|2023|2024,54,3.0,8,15,39,2.9074074074074074
+pooled_untouched_2022_2024,rb_opportunity_share,2022|2023|2024,54,4.0,11,16,38,3.4814814814814814
+pooled_untouched_2022_2024,wr_target_share,2022|2023|2024,54,0.0,0,54,0,0.0
+pooled_untouched_2022_2024,te_target_share,2022|2023|2024,54,0.0,0,54,0,0.0

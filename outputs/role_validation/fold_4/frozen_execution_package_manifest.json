@@ -1,0 +1,91 @@
+{
+  "manifest_type": "pre_result_frozen_fold4_execution_package",
+  "initial_execution_package_commit": "12cdb1bf34352392b6fba5a40c7cec82d532f4bc",
+  "initial_package_frozen_before_first_2024_data_access": true,
+  "frozen_before_first_2024_data_access": false,
+  "frozen_before_2024_result_access": true,
+  "prior_invalidated_precheck": {
+    "stage": "precheck",
+    "passed": false,
+    "error_type": "KeyError",
+    "error": "'season'",
+    "fold4_execution_invalidated": false
+  },
+  "checkpoint_tag": "pre-fold-4-checkpoint",
+  "checkpoint_commit": "603bd5159833e1ce11ca4ff261b0d88fd040ea73",
+  "execution_package_commit": "6446d4ef7fa554e20978c90fda6ddefbedafc4fa",
+  "candidate_config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "frozen_candidate_path": "outputs/role_validation/fold_4/frozen_role_change_fold4_candidate.yaml",
+  "frozen_candidate_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "protected_hashes": {
+    "release_gates": "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d",
+    "protocol": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+    "locked_decisions": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+  },
+  "files": {
+    "candidate_configuration": {
+      "path": "config/role_change_fold2_candidate.yaml",
+      "sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7"
+    },
+    "fold4_runner": {
+      "path": "scripts/run_fold4_validation.py",
+      "sha256": "42222ce2b7f841f12296e1783567aa27756efe02e0f7b8c4a4ae95cd32125b6e"
+    },
+    "fold4_evaluator": {
+      "path": "src/role_validation/fold4.py",
+      "sha256": "d646dab881db84976a3ca91f406a1e6afe8a3b56d8fd7c49fda69f7a8f56c002"
+    },
+    "fold4_report_generator": {
+      "path": "scripts/generate_fold4_report.py",
+      "sha256": "5480a925c19e5088ab9765389150789b73e0507e5a4449410c3cf03ffb95d95e"
+    },
+    "fold4_output_validator": {
+      "path": "scripts/validate_fold4_outputs.py",
+      "sha256": "63ebcb5ef359ccd64091a38bf5836facc793d3e866c4d6f3b4c6edfba7760109"
+    },
+    "fold4_staged_scope_validator": {
+      "path": "scripts/validate_fold4_staged_scope.py",
+      "sha256": "e934e29594affca07bd6de0e4f942c6b233e0bda559005b1065215ae163c70b0"
+    },
+    "fold4_notebook_builder": {
+      "path": "scripts/build_fold4_notebook.py",
+      "sha256": "2d052acffcf80f27a8020f2d5f30176a15179c1637af85c8814976814dddf435"
+    },
+    "fold4_execution_freezer": {
+      "path": "scripts/freeze_fold4_execution.py",
+      "sha256": "4ed1b77608d2fe73c702f8bc2d4f97b9ae4c4f9101f7108d055d2bdfd86440d2"
+    },
+    "shared_candidate_execution": {
+      "path": "src/role_validation/redevelopment.py",
+      "sha256": "bdd5be0dabc5e2b675a26bb53870589cce3a5b8570898a9aba467fd2d6991970"
+    },
+    "shared_partial_game_execution": {
+      "path": "src/role_validation/partial_game.py",
+      "sha256": "8625d11deeac691e5ce14de9df30fe21ab78df55dd9de5d24d6da762a7eac6e9"
+    },
+    "shared_season_scope_tests": {
+      "path": "tests/test_role_validation_redevelopment.py",
+      "sha256": "f76a3e022fe8b337541291672cf4c8bc9970c946f60c0a69fcaf05eb76dab9e8"
+    },
+    "fold4_tests": {
+      "path": "tests/test_role_validation_fold4.py",
+      "sha256": "f26cfcb5745b5a1a90ded0bf24f330213fcddf3dfb42b19aa3f3c84f1bad6747"
+    },
+    "protocol": {
+      "path": "ROLE_CHANGE_VALIDATION_PROTOCOL.md",
+      "sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe"
+    },
+    "locked_decisions": {
+      "path": "LOCKED_DECISIONS.md",
+      "sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00"
+    },
+    "release_gates": {
+      "path": "config/role_change_validation.yaml",
+      "sha256": "e6a64afa9dcec76cf2c0ef582640c575f0f74e6f799427ff4f114699b97a086d"
+    }
+  },
+  "created_at_utc": "2026-07-14T13:12:59.210032+00:00",
+  "fold4_results_read": false,
+  "fold4_executed": false,
+  "post_result_execution_code_changes_permitted": false
+}

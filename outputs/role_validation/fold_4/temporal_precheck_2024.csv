@@ -1,0 +1,7 @@
+check,passed
+canonical_season_is_2024,True
+trigger_timestamps_present,True
+confirmed_evidence_timestamp_present,True
+confirmed_evidence_after_trigger_game,True
+confirmed_evidence_before_next_game,True
+no_confirmed_and_suspected_overlap,True

@@ -1,0 +1,9 @@
+period,season,role_family,archived_status,frozen_before_holdout,interpretation
+redeveloped_2021,2021,rb_carry_share,POINT_GATES_PASS,False,development diagnostic; not untouched
+redeveloped_2021,2021,rb_opportunity_share,POINT_GATES_PASS,False,development diagnostic; not untouched
+untouched_2022,2022,rb_carry_share,FAILS_FOLD_2_POINT_GATES,True,preserved archived Fold 2 decision
+untouched_2022,2022,rb_opportunity_share,FAILS_FOLD_2_POINT_GATES,True,preserved archived Fold 2 decision
+untouched_2023,2023,rb_carry_share,PASSES_FOLD_3_POINT_GATES,True,preserved archived Fold 3 decision
+untouched_2023,2023,rb_opportunity_share,FAILS_FOLD_3_POINT_GATES,True,preserved archived Fold 3 decision
+untouched_2024,2024,rb_carry_share,FAILS_FOLD_4_POINT_GATES,True,Fold 4 locked point-gate decision
+untouched_2024,2024,rb_opportunity_share,FAILS_FOLD_4_POINT_GATES,True,Fold 4 locked point-gate decision

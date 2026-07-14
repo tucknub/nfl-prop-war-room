@@ -1,0 +1,9 @@
+check,passed
+canonical_grain_unique,True
+required_fields_complete,True
+identity_coverage_complete,True
+played_weeks_complete,True
+source_schema_and_games_complete,True
+identity_and_opportunity_joins_complete,True
+execution_hashes_verified,True
+temporal_precheck_passed,True

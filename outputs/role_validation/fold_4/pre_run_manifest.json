@@ -1,0 +1,72 @@
+{
+  "stage": "precheck",
+  "passed": true,
+  "evaluation_executed": false,
+  "test_season": 2024,
+  "source_seasons_physically_available": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "source_seasons_physically_opened": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "seasons_admitted_to_feature_generation": [
+    2024
+  ],
+  "seasons_admitted_to_alert_selection": [
+    2024
+  ],
+  "seasons_admitted_to_outcome_evaluation": [
+    2024
+  ],
+  "seasons_admitted_to_cross_season_reporting": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "post_2024_values_admitted": false,
+  "canonical_rows": 7390,
+  "canonical_duplicate_keys": 0,
+  "confirmed_partial_family_rows": 18,
+  "suspected_partial_family_rows": 73,
+  "repository": {
+    "branch": "role-change-validation-v1",
+    "head": "6446d4ef7fa554e20978c90fda6ddefbedafc4fa",
+    "checkpoint_tag": "pre-fold-4-checkpoint",
+    "checkpoint_commit": "603bd5159833e1ce11ca4ff261b0d88fd040ea73",
+    "execution_manifest_sha256": "77b07fb22ce8bdc834327fd62cec752ebe0548e2a7a4425ea6a31b4487c5fab3",
+    "config_integrity_checks": {
+      "sha256_matches_precommitted_fingerprint": true,
+      "document_matches_fold1_report": true,
+      "fold2_test_season_is_2022": true,
+      "fold2_was_unexecuted_when_frozen": true,
+      "post_2021_results_were_unused_when_frozen": true,
+      "release_gates_unchanged": true,
+      "baseline_resets_each_season": true,
+      "baseline_excludes_confirmation_games": true,
+      "equal_volume_within_family_season_week": true,
+      "primary_partial_policy_is_confirmed_excluded": true,
+      "byte_identical_to_fold2_frozen_copy": true,
+      "fold2_fingerprint_matches": true,
+      "byte_identical_to_fold3_frozen_copy": true,
+      "fold3_fingerprint_matches": true
+    },
+    "execution_files_verified": 15
+  }
+}

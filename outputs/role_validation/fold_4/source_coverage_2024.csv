@@ -1,0 +1,2 @@
+season,pbp_rows,pbp_games,schedule_games,regular_weeks,player_stat_rows,player_stats_game_id_missing_rate,roster_rows,snap_rows,injury_rows,scrimmage_plays,participation_play_coverage,carry_player_id_coverage,target_player_id_coverage,complete_schema_and_games
+2024,47274,272,272,18,18128,0.0,44473,25398,5954,33701,1.0,1.0,0.8928721394079362,True

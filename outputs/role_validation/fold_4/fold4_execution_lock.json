@@ -1,0 +1,11 @@
+{
+  "started_at_utc": "2026-07-14T13:14:25.146764+00:00",
+  "season": 2024,
+  "config_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+  "execution_package_commit": "6446d4ef7fa554e20978c90fda6ddefbedafc4fa",
+  "execution_manifest_sha256": "77b07fb22ce8bdc834327fd62cec752ebe0548e2a7a4425ea6a31b4487c5fab3",
+  "single_execution_authorized": true,
+  "completed": true,
+  "completed_at_utc": "2026-07-14T13:14:45.700613+00:00",
+  "alert_archive_sha256": "9eba028998d20ba50a0616d7aa7ffa5237025d6b53593002be723675e137cb25"
+}

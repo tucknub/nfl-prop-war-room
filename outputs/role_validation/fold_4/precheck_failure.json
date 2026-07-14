@@ -1,0 +1,7 @@
+{
+  "stage": "precheck",
+  "passed": false,
+  "error_type": "KeyError",
+  "error": "'season'",
+  "fold4_execution_invalidated": false
+}
