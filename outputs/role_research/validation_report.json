@@ -1,0 +1,225 @@
+{
+  "status": "PASS",
+  "canonical_profile": {
+    "rows": 50515,
+    "seasons": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "duplicate_keys": 0,
+    "required_missing_cells": 0,
+    "identity_coverage": 1.0,
+    "confirmed_partial_rows": 150,
+    "suspected_partial_rows": 532,
+    "public_primary_rows": 49949,
+    "latest_completed_season": 2024
+  },
+  "source_seasons_physically_opened_for_situational_build": [
+    2023,
+    2024,
+    2025
+  ],
+  "seasons_admitted_to_situational_outputs": [
+    2023,
+    2024
+  ],
+  "reconciliation": [
+    {
+      "context": "all_play",
+      "matched_rows": 11656,
+      "raw_absolute_difference": 0.0,
+      "denominator_absolute_difference": 0.0
+    },
+    {
+      "context": "normal_game",
+      "matched_rows": 11258,
+      "raw_absolute_difference": 0.0,
+      "denominator_absolute_difference": 0.0
+    }
+  ],
+  "output_hashes": {
+    "situational_sha256": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
+    "production_sha256": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
+    "opportunity_events_sha256": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc"
+  },
+  "checks": [
+    {
+      "check": "canonical_seasons",
+      "passed": true,
+      "observed": [
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "expected": [
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    },
+    {
+      "check": "latest_completed_season",
+      "passed": true,
+      "observed": 2024,
+      "expected": 2024
+    },
+    {
+      "check": "canonical_duplicate_keys",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "canonical_required_missing_cells",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "canonical_identity_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": 1.0
+    },
+    {
+      "check": "confirmed_partial_excluded",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "suspected_partial_visible",
+      "passed": true,
+      "observed": 532,
+      "expected": "> 0"
+    },
+    {
+      "check": "situational_seasons",
+      "passed": true,
+      "observed": [
+        2023,
+        2024
+      ],
+      "expected": [
+        2023,
+        2024
+      ]
+    },
+    {
+      "check": "production_seasons",
+      "passed": true,
+      "observed": [
+        2023,
+        2024
+      ],
+      "expected": [
+        2023,
+        2024
+      ]
+    },
+    {
+      "check": "event_seasons",
+      "passed": true,
+      "observed": [
+        2023,
+        2024
+      ],
+      "expected": [
+        2023,
+        2024
+      ]
+    },
+    {
+      "check": "situational_share_range",
+      "passed": true,
+      "observed": [
+        0.0175438596491228,
+        1.0
+      ],
+      "expected": "[0, 1]"
+    },
+    {
+      "check": "situational_numerator_le_denominator",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "situational_unique_grain",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "event_unique_grain",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "production_unique_grain",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "all_play_canonical_reconciliation",
+      "passed": true,
+      "observed": {
+        "context": "all_play",
+        "matched_rows": 11656,
+        "raw_absolute_difference": 0.0,
+        "denominator_absolute_difference": 0.0
+      },
+      "expected": "zero absolute count difference"
+    },
+    {
+      "check": "normal_game_canonical_reconciliation",
+      "passed": true,
+      "observed": {
+        "context": "normal_game",
+        "matched_rows": 11258,
+        "raw_absolute_difference": 0.0,
+        "denominator_absolute_difference": 0.0
+      },
+      "expected": "zero absolute count difference"
+    },
+    {
+      "check": "manifest_situational_sha256",
+      "passed": true,
+      "observed": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
+      "expected": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c"
+    },
+    {
+      "check": "manifest_production_sha256",
+      "passed": true,
+      "observed": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
+      "expected": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394"
+    },
+    {
+      "check": "manifest_opportunity_events_sha256",
+      "passed": true,
+      "observed": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc",
+      "expected": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc"
+    },
+    {
+      "check": "public_language_guardrail",
+      "passed": true,
+      "observed": [],
+      "expected": []
+    }
+  ]
+}

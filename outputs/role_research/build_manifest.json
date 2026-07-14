@@ -1,0 +1,30 @@
+{
+  "source_pbp": "C:\\Users\\tucka\\OneDrive\\Desktop\\NFL PRop Projection\\data\\raw\\pbp.csv",
+  "source_pbp_sha256": "3b7dfe911b842c990f5191f4a911aecac83fcac568eef0df33d720528f0ce32a",
+  "source_seasons_physically_opened": [
+    2023,
+    2024,
+    2025
+  ],
+  "seasons_admitted": [
+    2023,
+    2024
+  ],
+  "situational_rows": 117134,
+  "production_rows": 9185,
+  "opportunity_event_rows": 62751,
+  "situational_sha256": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
+  "production_sha256": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
+  "opportunity_events_sha256": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc",
+  "definitions": {
+    "normal_game": "Regulation plays excluding score-differential garbage time, kneels, and spikes; thresholds q3 >=24 and q4 >=17.",
+    "early_down": "Down 1 or 2.",
+    "passing_down": "Down 3 or 4.",
+    "short_yardage": "Down 3 or 4 with 2 or fewer yards to go.",
+    "two_minute": "Final 120 seconds of either half in regulation.",
+    "red_zone": "Opponent 20-yard line or closer.",
+    "inside_10": "Opponent 10-yard line or closer.",
+    "inside_5": "Opponent 5-yard line or closer.",
+    "end_zone": "Target air yards at least the remaining distance to the goal line."
+  }
+}
