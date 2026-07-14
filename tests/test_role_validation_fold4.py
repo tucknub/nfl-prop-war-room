@@ -8,6 +8,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from role_validation.fold2 import PRIMARY_POLICY, assert_temporal_integrity, method_results  # noqa: E402
 from role_validation.fold3 import cross_season_direction_results  # noqa: E402
@@ -21,6 +22,7 @@ from role_validation.fold4 import (  # noqa: E402
 )
 from role_validation.redevelopment import EXPECTED_METHODS, run_candidate  # noqa: E402
 from role_validation.synthetic import make_synthetic_player_week_data  # noqa: E402
+from run_fold4_validation import load_local_season  # noqa: E402
 
 
 def frozen_candidate() -> dict:
@@ -63,6 +65,20 @@ def test_fold4_config_is_byte_identical_to_prior_frozen_copies():
     )
     assert result["sha256"] == EXPECTED_CONFIG_SHA256
     assert all(result["checks"].values())
+
+
+def test_fold4_partition_loader_normalizes_season_from_nflverse_game_id(tmp_path):
+    path = tmp_path / "participation.csv"
+    pd.DataFrame(
+        {
+            "nflverse_game_id": ["2023_01_A_B", "2024_01_A_B", "2025_01_A_B"],
+            "play_id": [1, 2, 3],
+        }
+    ).to_csv(path, index=False)
+    selected, opened = load_local_season(path, 2024, chunksize=2)
+    assert selected["season"].astype(int).tolist() == [2024]
+    assert selected["play_id"].tolist() == [2]
+    assert opened == [2023, 2024, 2025]
 
 
 def test_fold4_active_family_scope_equal_volume_and_temporal_integrity():

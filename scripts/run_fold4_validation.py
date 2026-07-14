@@ -121,7 +121,10 @@ def load_local_season(
     for chunk in pd.read_csv(path, chunksize=chunksize, low_memory=False):
         values = _season_values(chunk, path)
         physically_opened.update(values.dropna().astype(int).unique().tolist())
-        selected.append(chunk.loc[values.eq(season)].copy())
+        selected_chunk = chunk.loc[values.eq(season)].copy()
+        if "season" not in selected_chunk:
+            selected_chunk["season"] = values.loc[selected_chunk.index].astype("Int64")
+        selected.append(selected_chunk)
     result = pd.concat(selected, ignore_index=True) if selected else pd.DataFrame()
     observed = set(pd.to_numeric(result["season"], errors="raise").astype(int).unique())
     if observed != {season}:
