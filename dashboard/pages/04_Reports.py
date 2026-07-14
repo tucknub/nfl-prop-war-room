@@ -54,7 +54,7 @@ elif report == "High-Value Opportunities":
     situational_context = st.selectbox("Field-position slice", ["inside_10", "inside_5", "end_zone"])
 
 if situational_context and season < 2023:
-    note("This focused report requires the 2023–2024 situational extract. Choose 2023 or 2024.", amber=True)
+    note("This focused report requires the 2023–2025 situational extract. Choose 2023, 2024, or 2025.", amber=True)
     result = pd.DataFrame()
 elif situational_context:
     result = league_situational_summary(season, end_week, window, situational_context, families)

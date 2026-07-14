@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "canonical_profile": {
-    "rows": 50515,
+    "rows": 57928,
     "seasons": [
       2018,
       2019,
@@ -9,15 +9,64 @@
       2021,
       2022,
       2023,
-      2024
+      2024,
+      2025
     ],
     "duplicate_keys": 0,
     "required_missing_cells": 0,
     "identity_coverage": 1.0,
-    "confirmed_partial_rows": 150,
-    "suspected_partial_rows": 532,
-    "public_primary_rows": 49949,
-    "latest_completed_season": 2024
+    "confirmed_partial_rows": 173,
+    "suspected_partial_rows": 584,
+    "public_primary_rows": 57339,
+    "latest_completed_season": 2025
+  },
+  "descriptive_2025_audit": {
+    "status": "PASS",
+    "season": 2025,
+    "completed_historical_data_only": true,
+    "canonical_rows": 7413,
+    "played_games": 272,
+    "played_weeks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "unique_players": 545,
+    "duplicate_canonical_keys": 0,
+    "required_missing_cells": 0,
+    "identity_coverage": 1.0,
+    "opportunity_to_identity_coverage": 1.0,
+    "participating_player_to_identity_coverage": 0.999606531575841,
+    "participation_play_coverage": 1.0,
+    "carry_player_id_coverage": 1.0,
+    "receiver_assignment_rate_of_valid_pass_attempts": 0.8907062798305357,
+    "quality_pass_rate": 1.0,
+    "qualifying_rate": 1.0,
+    "confirmed_partial_family_rows": 23,
+    "confirmed_partial_player_games": 20,
+    "suspected_partial_family_rows": 52,
+    "suspected_partial_player_games": 45,
+    "injury_pbp_identity_resolution_rate": 0.970620239390642,
+    "injury_report_timestamp_available": false,
+    "temporal_and_season_boundary_checks_passed": true,
+    "detector_or_betting_columns_present": [],
+    "canonical_sha256": "3c02f26718288adf36b9f7d0759c13722520314998c0d745f1ac76c96535cdfe",
+    "partial_status_sha256": "cfb20829157e3b9a52efe8ef55fb5b8ad412b517437f6790f8e28dfd2dd5976b"
   },
   "source_seasons_physically_opened_for_situational_build": [
     2023,
@@ -26,26 +75,27 @@
   ],
   "seasons_admitted_to_situational_outputs": [
     2023,
-    2024
+    2024,
+    2025
   ],
   "reconciliation": [
     {
       "context": "all_play",
-      "matched_rows": 11656,
+      "matched_rows": 17469,
       "raw_absolute_difference": 0.0,
       "denominator_absolute_difference": 0.0
     },
     {
       "context": "normal_game",
-      "matched_rows": 11258,
+      "matched_rows": 16873,
       "raw_absolute_difference": 0.0,
       "denominator_absolute_difference": 0.0
     }
   ],
   "output_hashes": {
-    "situational_sha256": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
-    "production_sha256": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
-    "opportunity_events_sha256": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc"
+    "situational_sha256": "aec6cd6a11ef36b35bc18ab3468ff6b561951164e75b13b845d5b6d220c88a5c",
+    "production_sha256": "45f2a601ebe02118c12f93e16dc312a06dacfc8ab8d7f59fec5f64aeb8f06ab2",
+    "opportunity_events_sha256": "9c67605493993ae74191f5ddd865a519afb431caac3611b92e083c90bbbf42d5"
   },
   "checks": [
     {
@@ -58,7 +108,8 @@
         2021,
         2022,
         2023,
-        2024
+        2024,
+        2025
       ],
       "expected": [
         2018,
@@ -67,14 +118,15 @@
         2021,
         2022,
         2023,
-        2024
+        2024,
+        2025
       ]
     },
     {
       "check": "latest_completed_season",
       "passed": true,
-      "observed": 2024,
-      "expected": 2024
+      "observed": 2025,
+      "expected": 2025
     },
     {
       "check": "canonical_duplicate_keys",
@@ -103,7 +155,7 @@
     {
       "check": "suspected_partial_visible",
       "passed": true,
-      "observed": 532,
+      "observed": 584,
       "expected": "> 0"
     },
     {
@@ -111,11 +163,13 @@
       "passed": true,
       "observed": [
         2023,
-        2024
+        2024,
+        2025
       ],
       "expected": [
         2023,
-        2024
+        2024,
+        2025
       ]
     },
     {
@@ -123,11 +177,13 @@
       "passed": true,
       "observed": [
         2023,
-        2024
+        2024,
+        2025
       ],
       "expected": [
         2023,
-        2024
+        2024,
+        2025
       ]
     },
     {
@@ -135,11 +191,13 @@
       "passed": true,
       "observed": [
         2023,
-        2024
+        2024,
+        2025
       ],
       "expected": [
         2023,
-        2024
+        2024,
+        2025
       ]
     },
     {
@@ -176,11 +234,113 @@
       "expected": 0
     },
     {
+      "check": "canonical_2025_rows",
+      "passed": true,
+      "observed": 7413,
+      "expected": 7413
+    },
+    {
+      "check": "canonical_2025_games",
+      "passed": true,
+      "observed": 272,
+      "expected": 272
+    },
+    {
+      "check": "canonical_2025_weeks",
+      "passed": true,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    },
+    {
+      "check": "2025_opportunity_join_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": 1.0
+    },
+    {
+      "check": "2025_participation_join_coverage",
+      "passed": true,
+      "observed": 0.999606531575841,
+      "expected": ">= 0.999"
+    },
+    {
+      "check": "2025_participation_play_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": 1.0
+    },
+    {
+      "check": "2025_confirmed_partial_evidence_policy",
+      "passed": true,
+      "observed": [
+        "EXPLICIT_PBP_INJURY_NO_OFFENSIVE_RETURN_AND_ROLE_DROP"
+      ],
+      "expected": [
+        "EXPLICIT_PBP_INJURY_NO_OFFENSIVE_RETURN_AND_ROLE_DROP"
+      ]
+    },
+    {
+      "check": "2025_suspected_partial_visible",
+      "passed": true,
+      "observed": 52,
+      "expected": 52
+    },
+    {
+      "check": "2025_no_detector_or_betting_columns",
+      "passed": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "check": "2025_temporal_and_season_boundary",
+      "passed": true,
+      "observed": true,
+      "expected": true
+    },
+    {
       "check": "all_play_canonical_reconciliation",
       "passed": true,
       "observed": {
         "context": "all_play",
-        "matched_rows": 11656,
+        "matched_rows": 17469,
         "raw_absolute_difference": 0.0,
         "denominator_absolute_difference": 0.0
       },
@@ -191,7 +351,7 @@
       "passed": true,
       "observed": {
         "context": "normal_game",
-        "matched_rows": 11258,
+        "matched_rows": 16873,
         "raw_absolute_difference": 0.0,
         "denominator_absolute_difference": 0.0
       },
@@ -200,20 +360,20 @@
     {
       "check": "manifest_situational_sha256",
       "passed": true,
-      "observed": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
-      "expected": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c"
+      "observed": "aec6cd6a11ef36b35bc18ab3468ff6b561951164e75b13b845d5b6d220c88a5c",
+      "expected": "aec6cd6a11ef36b35bc18ab3468ff6b561951164e75b13b845d5b6d220c88a5c"
     },
     {
       "check": "manifest_production_sha256",
       "passed": true,
-      "observed": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
-      "expected": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394"
+      "observed": "45f2a601ebe02118c12f93e16dc312a06dacfc8ab8d7f59fec5f64aeb8f06ab2",
+      "expected": "45f2a601ebe02118c12f93e16dc312a06dacfc8ab8d7f59fec5f64aeb8f06ab2"
     },
     {
       "check": "manifest_opportunity_events_sha256",
       "passed": true,
-      "observed": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc",
-      "expected": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc"
+      "observed": "9c67605493993ae74191f5ddd865a519afb431caac3611b92e083c90bbbf42d5",
+      "expected": "9c67605493993ae74191f5ddd865a519afb431caac3611b92e083c90bbbf42d5"
     },
     {
       "check": "public_language_guardrail",

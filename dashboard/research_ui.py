@@ -10,7 +10,7 @@ from research_data import percent, pp
 
 
 PUBLIC_SOURCE_NOTE = (
-    "Canonical player-week-role data: audited regular seasons 2018–2024. "
+    "Canonical player-week-role data: audited regular seasons 2018–2025. "
     "Confirmed partial games are excluded; suspected partial games remain visible and included."
 )
 
@@ -98,6 +98,10 @@ def inject_styles() -> None:
         [data-baseweb="tab"] { border-radius:0; padding-left:0; padding-right:0; font-weight:650; }
         [data-baseweb="tab"][aria-selected="true"] { color:var(--pw-blue); }
         .stAlert { border-radius:4px; }
+        @media (max-width: 1400px) {
+          .pw-change-row { grid-template-columns:minmax(180px,1.25fr) repeat(3,minmax(90px,.7fr)); }
+          .pw-change-row > .pw-factual { grid-column:1/-1; }
+        }
         @media (max-width: 900px) {
           .block-container { padding:1.1rem .9rem 5rem; }
           h1 { font-size:2.15rem; }
@@ -132,7 +136,7 @@ def sidebar_brand() -> None:
         )
 
 
-def page_intro(title: str, description: str, latest_season: int = 2024) -> None:
+def page_intro(title: str, description: str, latest_season: int = 2025) -> None:
     st.markdown(
         f'<div class="pw-intro"><div><h1>{escape(title)}</h1><p>{escape(description)}</p></div>'
         f'<div class="pw-season-note">Latest completed season: <strong>{latest_season}</strong></div></div>',

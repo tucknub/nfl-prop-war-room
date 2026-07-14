@@ -6,16 +6,67 @@
     2024,
     2025
   ],
+  "canonical_source_inputs": [
+    {
+      "path": "outputs\\role_validation\\fold_1_diagnostics\\canonical_role_2018_2021_enriched.csv.gz",
+      "sha256": "08d2632888807b139d9f0bc008786ea72e13918ce88b8382b0c23373f47b52d4",
+      "seasons_physically_opened": [
+        2018,
+        2019,
+        2020,
+        2021
+      ]
+    },
+    {
+      "path": "outputs\\role_validation\\fold_2\\canonical_role_2022_enriched.csv.gz",
+      "sha256": "33e08fd231b43a4a54fae8aadde055262bdb065b830527f9f0f7d24d959e727f",
+      "seasons_physically_opened": [
+        2022
+      ]
+    },
+    {
+      "path": "outputs\\role_validation\\fold_3\\canonical_role_2023_enriched.csv.gz",
+      "sha256": "18d100cdc2f94050bce00b6c99f1695da21240de8dbf249a8dbf327e10ccfc41",
+      "seasons_physically_opened": [
+        2023
+      ]
+    },
+    {
+      "path": "outputs\\role_validation\\fold_4\\canonical_role_2024_enriched.csv.gz",
+      "sha256": "d9ec692d821963fbeaf3e60c329508884d239dfa88932871df75b3fc322d9115",
+      "seasons_physically_opened": [
+        2024
+      ]
+    },
+    {
+      "path": "outputs\\role_research\\canonical_role_2025_descriptive.csv.gz",
+      "sha256": "3c02f26718288adf36b9f7d0759c13722520314998c0d745f1ac76c96535cdfe",
+      "seasons_physically_opened": [
+        2025
+      ]
+    }
+  ],
+  "canonical_seasons_physically_opened": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
   "seasons_admitted": [
     2023,
-    2024
+    2024,
+    2025
   ],
-  "situational_rows": 117134,
-  "production_rows": 9185,
-  "opportunity_event_rows": 62751,
-  "situational_sha256": "0ecac748315050306046af7a0d7d805999dc682f73658d407923ed6fb1d3723c",
-  "production_sha256": "1dfcacd983e07faf8dd459138aae61d07d257c55d890119a183a8a1678a31394",
-  "opportunity_events_sha256": "2f81a6e615944ff0c06818d9deccef67a614bc696a1a0f67bfd342d2186c80fc",
+  "situational_rows": 175827,
+  "production_rows": 13790,
+  "opportunity_event_rows": 93442,
+  "situational_sha256": "aec6cd6a11ef36b35bc18ab3468ff6b561951164e75b13b845d5b6d220c88a5c",
+  "production_sha256": "45f2a601ebe02118c12f93e16dc312a06dacfc8ab8d7f59fec5f64aeb8f06ab2",
+  "opportunity_events_sha256": "9c67605493993ae74191f5ddd865a519afb431caac3611b92e083c90bbbf42d5",
   "definitions": {
     "normal_game": "Regulation plays excluding score-differential garbage time, kneels, and spikes; thresholds q3 >=24 and q4 >=17.",
     "early_down": "Down 1 or 2.",

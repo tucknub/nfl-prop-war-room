@@ -4,13 +4,11 @@
 2. Go to Streamlit Community Cloud.
 3. Click Create app.
 4. Select the GitHub repo.
-5. Set main file path to `dashboard/Home.py`.
+5. Set main file path to `dashboard/Home.py` (the deployment entrypoint; `dashboard/app.py` is equivalent locally).
 6. Deploy.
-7. Confirm the app shows `HISTORICAL TEST ONLY` and Final Readiness `NO-GO`.
+7. Confirm the app opens the Role & Usage Research home page, defaults to completed 2025 data, and states that the 2026 season has not started.
 
 Preferred Streamlit Cloud main file path: `dashboard/Home.py`.
-Legacy-compatible path: `dashboard/app.py`.
+Equivalent local path: `dashboard/app.py`.
 
-This deployment is research-only unless Live Readiness becomes `GO`. Do not commit secrets, do not upload `.env`, and do not add Streamlit secrets unless they are required later and stored outside git.
-
-Receptions, Receiving Yards, Rushing Yards, Carries, Pass Attempts, Completions, and Passing Yards V1 are active built historical-test markets. Passing Yards includes a research-only projection board and no-odds line ladder. Current roster mapping remains NEEDS DATA. All remain NO-GO until real roster, role, injury, identity, and market odds gates pass.
+This deployment is descriptive role-and-usage research only. It does not publish detector conclusions, projections, picks, or betting recommendations. Do not commit secrets, upload `.env`, or add Streamlit secrets unless required later and stored outside Git.

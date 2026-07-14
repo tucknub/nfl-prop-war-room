@@ -44,7 +44,7 @@ end_week = max(available_weeks(season))
 summary = team_window_summary(season, team, role_family, end_week, window, context)
 section(ROLE_LABELS[role_family], f"Through Week {end_week} · {window_label} · {context}")
 if season >= 2023:
-    note("Situational splits are available for 2023–2024 and use same-game team opportunity denominators.")
+    note("Situational splits are available for 2023–2025 and use same-game team opportunity denominators.")
     situational = situational_team_summary(season, team, role_family, end_week, window)
     if not situational.empty:
         summary = summary.merge(situational, on=["player_id", "player_name", "position"], how="left")

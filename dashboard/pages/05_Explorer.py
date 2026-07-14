@@ -10,12 +10,12 @@ from research_ui import condition_box, inject_styles, note, page_intro, section,
 inject_styles()
 page_intro(
     "Usage Explorer",
-    "Guided play-level filters for 2023–2024 with the applied conditions, denominator definition, and sample shown every time.",
+    "Guided play-level filters for 2023–2025 with the applied conditions, denominator definition, and sample shown every time.",
 )
 events = load_opportunity_events()
 row1 = st.columns([1, 1, 1, 1, 1])
 with row1[0]:
-    season = st.selectbox("Season", [2024, 2023])
+    season = st.selectbox("Season", [2025, 2024, 2023])
 season_events = events[events["season"].eq(season)]
 teams = ["All"] + sorted(season_events["team"].dropna().astype(str).unique().tolist())
 with row1[1]:
@@ -87,4 +87,4 @@ else:
         "raw_opportunities": "Raw opportunities", "team_denominator": "Team denominator", "sample_games": "Sample games",
     })
     table(view[["Player", "Team", "Position", "Share", "Raw opportunities", "Team denominator", "Sample games"]], height=520)
-source_footer("The Explorer never reads 2025 rows; its committed event extract contains 2023–2024 only.")
+source_footer("Completed historical play-level data through 2025; no 2026 usage is shown.")

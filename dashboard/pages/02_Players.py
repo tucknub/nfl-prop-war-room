@@ -76,7 +76,7 @@ windows["Change vs prior"] = windows["Change vs prior"].map(pp)
 table(windows, height=220)
 
 if season >= 2023:
-    section("Situational usage", "Play-level splits are available for 2023–2024.")
+    section("Situational usage", "Play-level splits are available for 2023–2025.")
     situation = load_situational_data()
     situation = situation[
         situation["season"].eq(season) & situation["player_id"].astype(str).eq(player_id)
@@ -92,7 +92,7 @@ if season >= 2023:
         situ_summary["Context"] = situ_summary["context"].str.replace("_", " ").str.title()
         table(situ_summary[["Context", "Raw", "Denominator", "Share"]], height=360)
 
-section("Game log", "Opportunity facts with participation notes; production fields are available for 2023–2024.")
+section("Game log", "Opportunity facts with participation notes; production fields are available for 2023–2025.")
 game_log = profile.copy()
 game_log["Opponent"] = game_log.apply(lambda row: opponent_from_game_id(row["game_id"], row["team"]), axis=1)
 game_log["All-play share"] = game_log["metric_all"].map(percent)

@@ -23,15 +23,16 @@ non-default Research Admin page, labeled exactly:
 
 ## Data sources
 
-- Canonical audited player-week-team-role-family archives for 2018–2024.
-- A compact 2023–2024 situational opportunity extract generated from the local
+- Canonical audited player-week-team-role-family archives for 2018–2025.
+- A compact 2023–2025 situational opportunity extract generated from the local
   play-by-play source using same-game denominators.
-- A compact 2023–2024 game usage extract for carries, targets, receptions,
+- A compact 2023–2025 game usage extract for carries, targets, receptions,
   rushing yards, receiving yards, and touchdowns.
 
 The play-by-play storage file physically contained 2023, 2024, and 2025 rows.
-The builder records that fact and admits only 2023–2024 rows to the committed
-role-research outputs. No 2025 row enters the UI datasets.
+The builder records that fact and admits all three completed historical seasons
+to the committed descriptive outputs. The public UI defaults to 2025 and states
+that the 2026 NFL season has not started.
 
 ## Metric policy
 
@@ -43,7 +44,7 @@ role-research outputs. No 2025 row enters the UI datasets.
 - Team and league window denominators include every team game in the selected
   window, including games where a displayed player recorded zero opportunities.
 - Down, clock, game-state, and field-zone filters are available only for
-  2023–2024 and are labeled with that coverage.
+  2023–2025 and are labeled with that coverage.
 
 ## Reconciliation of pre-existing dashboard work
 

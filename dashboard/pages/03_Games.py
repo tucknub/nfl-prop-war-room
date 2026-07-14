@@ -38,7 +38,7 @@ usage = game_usage(season, week, game_id)
 teams = sorted(usage["team"].dropna().astype(str).unique().tolist()) if not usage.empty else []
 section("Usage detail", " vs ".join(teams) if len(teams) == 2 else game_id)
 if season < 2023:
-    note("Carry and target shares are available. Receptions and yardage fields begin in the committed 2023–2024 play-level extract.", amber=True)
+    note("Carry and target shares are available. Receptions and yardage fields begin in the committed 2023–2025 play-level extract.", amber=True)
 
 for team in teams:
     st.markdown(f"### {team}")

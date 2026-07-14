@@ -13,6 +13,7 @@ CANONICAL_FILES = (
     "outputs/role_validation/fold_2/canonical_role_2022_enriched.csv.gz",
     "outputs/role_validation/fold_3/canonical_role_2023_enriched.csv.gz",
     "outputs/role_validation/fold_4/canonical_role_2024_enriched.csv.gz",
+    "outputs/role_research/canonical_role_2025_descriptive.csv.gz",
 )
 SITUATIONAL_FILE = "outputs/role_research/situational_player_week.csv.gz"
 PRODUCTION_FILE = "outputs/role_research/game_player_usage.csv.gz"
@@ -61,7 +62,7 @@ def load_role_data() -> pd.DataFrame:
     frame = pd.concat(frames, ignore_index=True)
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype("Int64")
     frame["week"] = pd.to_numeric(frame["week"], errors="coerce").astype("Int64")
-    frame = frame[frame["season"].between(2018, 2024)].copy()
+    frame = frame[frame["season"].between(2018, 2025)].copy()
     frame["role_family_label"] = frame["role_family"].map(ROLE_LABELS).fillna(frame["role_family"])
     quality = _as_bool(frame["data_quality_pass"]) & _as_bool(frame["qualifying_game"])
     confirmed = _as_bool(frame.get("confirmed_partial_game", pd.Series(False, index=frame.index)))
@@ -459,7 +460,9 @@ def canonical_quality_profile(frame: pd.DataFrame | None = None) -> dict[str, ob
     data = load_role_data() if frame is None else frame
     required = [
         "season", "week", "player_id", "player_name", "team", "position", "role_family",
-        "metric_all", "metric_normal", "raw_opportunities_all", "team_opportunities_all",
+        "metric_all", "metric_normal", "raw_opportunities_all", "raw_opportunities_normal",
+        "team_opportunities_all", "team_opportunities_normal", "qualifying_game",
+        "data_quality_pass", "identity_resolved",
     ]
     return {
         "rows": int(len(data)),

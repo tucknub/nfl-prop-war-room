@@ -24,7 +24,7 @@ profile = canonical_quality_profile()
 section("Canonical data status")
 cols = st.columns(4)
 cols[0].metric("Rows", f"{profile['rows']:,}")
-cols[1].metric("Seasons", "2018–2024")
+cols[1].metric("Detector seasons", "2018–2024")
 cols[2].metric("Duplicate keys", profile["duplicate_keys"])
 cols[3].metric("Required missing cells", profile["required_missing_cells"])
 

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from dashboard.research_data import (  # noqa: E402
     KEY_COLUMNS,
+    available_seasons,
     canonical_quality_profile,
     explorer_usage,
     load_role_data,
@@ -24,10 +25,11 @@ from dashboard.research_data import (  # noqa: E402
 from scripts.build_role_research_data import build_context_rows  # noqa: E402
 
 
-def test_committed_canonical_data_is_unique_complete_and_ends_in_2024() -> None:
+def test_committed_canonical_data_is_unique_complete_and_ends_in_2025() -> None:
     profile = canonical_quality_profile()
-    assert profile["seasons"] == list(range(2018, 2025))
-    assert profile["latest_completed_season"] == 2024
+    assert profile["seasons"] == list(range(2018, 2026))
+    assert profile["latest_completed_season"] == 2025
+    assert available_seasons()[0] == 2025
     assert profile["duplicate_keys"] == 0
     assert profile["required_missing_cells"] == 0
     assert profile["identity_coverage"] == 1.0
@@ -44,9 +46,9 @@ def test_public_primary_policy_excludes_confirmed_and_keeps_suspected() -> None:
 
 
 def test_observable_changes_use_same_season_prior_games_only() -> None:
-    changes = observable_changes(2024, 18, baseline_games=4)
+    changes = observable_changes(2025, 18, baseline_games=4)
     assert not changes.empty
-    assert changes["season"].eq(2024).all()
+    assert changes["season"].eq(2025).all()
     assert changes["week"].le(18).all()
     assert changes["baseline_games"].between(2, 4).all()
     assert changes["recent_share"].between(0, 1).all()
@@ -56,7 +58,7 @@ def test_observable_changes_use_same_season_prior_games_only() -> None:
 def test_situational_archive_is_unique_bounded_and_has_valid_shares() -> None:
     frame = load_situational_data()
     key = ["season", "week", "game_id", "team", "player_id", "role_family", "context"]
-    assert sorted(frame["season"].unique().tolist()) == [2023, 2024]
+    assert sorted(frame["season"].unique().tolist()) == [2023, 2024, 2025]
     assert frame.duplicated(key).sum() == 0
     assert frame["team_opportunities"].gt(0).all()
     assert frame["raw_opportunities"].le(frame["team_opportunities"]).all()
@@ -65,7 +67,7 @@ def test_situational_archive_is_unique_bounded_and_has_valid_shares() -> None:
 
 def test_situational_all_and_normal_counts_reconcile_to_canonical() -> None:
     canonical = primary_rows()
-    canonical = canonical[canonical["season"].isin([2023, 2024])]
+    canonical = canonical[canonical["season"].isin([2023, 2024, 2025])]
     situational = load_situational_data()
     key = ["season", "week", "game_id", "team", "player_id", "role_family"]
     for context, suffix in [("all_play", "all"), ("normal_game", "normal")]:
@@ -78,18 +80,18 @@ def test_situational_all_and_normal_counts_reconcile_to_canonical() -> None:
 
 
 def test_team_window_uses_full_team_denominator() -> None:
-    canonical = team_window_summary(2024, "ARI", "rb_carry_share", 18, 4, "Normal game")
-    situational = situational_team_summary(2024, "ARI", "rb_carry_share", 18, 4)
+    canonical = team_window_summary(2025, "ARI", "rb_carry_share", 18, 4, "Normal game")
+    situational = situational_team_summary(2025, "ARI", "rb_carry_share", 18, 4)
     joined = canonical.merge(situational[["player_id", "normal_game"]], on="player_id", how="inner")
     assert (joined["share"] - joined["normal_game"]).abs().max() < 1e-12
 
 
 def test_explorer_player_filter_does_not_change_team_denominator_universe() -> None:
-    all_players, weekly = explorer_usage(2024, 1, 18, "rb_carry_share", team="ATL", normal_game=True)
+    all_players, weekly = explorer_usage(2025, 1, 18, "rb_carry_share", team="ATL", normal_game=True)
     assert not all_players.empty
     player_id = str(all_players.iloc[0]["player_id"])
     selected, selected_weekly = explorer_usage(
-        2024, 1, 18, "rb_carry_share", team="ATL", player_id=player_id, normal_game=True
+        2025, 1, 18, "rb_carry_share", team="ATL", player_id=player_id, normal_game=True
     )
     assert len(selected) == 1
     expected = weekly.loc[weekly["player_id"].astype(str).eq(player_id), "team_denominator"].sum()
@@ -99,7 +101,7 @@ def test_explorer_player_filter_does_not_change_team_denominator_universe() -> N
     )
 
 
-def test_builder_rejects_2025_and_uses_same_game_denominators() -> None:
+def test_builder_accepts_completed_2025_and_uses_same_game_denominators() -> None:
     rows = []
     for season, play_id, player_id, player_name, rush, passed in [
         (2024, 1, "rb1", "R. One", 1, 0),
@@ -124,12 +126,15 @@ def test_builder_rejects_2025_and_uses_same_game_denominators() -> None:
         {"season": 2024, "week": 1, "player_id": "rb1", "team": "A", "player_name": "R. One", "position": "RB"},
         {"season": 2024, "week": 1, "player_id": "rb2", "team": "A", "player_name": "R. Two", "position": "RB"},
         {"season": 2024, "week": 1, "player_id": "wr1", "team": "A", "player_name": "W. One", "position": "WR"},
+        {"season": 2025, "week": 1, "player_id": "rb1", "team": "A", "player_name": "R. One", "position": "RB"},
     ])
     situational, production, events = build_context_rows(pd.DataFrame(rows), identity)
-    assert set(situational["season"]) == {2024}
+    assert set(situational["season"]) == {2024, 2025}
     carry = situational[
-        situational["role_family"].eq("rb_carry_share") & situational["context"].eq("all_play")
+        situational["season"].eq(2024)
+        & situational["role_family"].eq("rb_carry_share")
+        & situational["context"].eq("all_play")
     ]
     assert set(carry["team_opportunities"]) == {2}
-    assert production["season"].eq(2024).all()
-    assert events["season"].eq(2024).all()
+    assert set(production["season"]) == {2024, 2025}
+    assert set(events["season"]) == {2024, 2025}

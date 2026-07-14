@@ -31,7 +31,7 @@ def _flag(frame: pd.DataFrame, column: str) -> pd.Series:
 
 def build_context_rows(pbp: pd.DataFrame, identity: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     frame = pbp.loc[
-        pd.to_numeric(pbp["season"], errors="coerce").between(2023, 2024)
+        pd.to_numeric(pbp["season"], errors="coerce").between(2023, 2025)
         & pbp["season_type"].eq("REG")
     ].copy()
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype(int)
@@ -160,7 +160,19 @@ def main() -> None:
         "receiving_yards", "rush_touchdown", "pass_touchdown",
     ]
     pbp = pd.read_csv(args.pbp, usecols=usecols, low_memory=False)
-    canonical = pd.concat([pd.read_csv(path, compression="infer", low_memory=False) for path in args.canonical])
+    canonical_parts = []
+    canonical_inputs = []
+    for path in args.canonical:
+        part = pd.read_csv(path, compression="infer", low_memory=False)
+        canonical_parts.append(part)
+        canonical_inputs.append({
+            "path": str(path),
+            "sha256": sha256(path),
+            "seasons_physically_opened": sorted(
+                pd.to_numeric(part["season"], errors="coerce").dropna().astype(int).unique().tolist()
+            ),
+        })
+    canonical = pd.concat(canonical_parts, ignore_index=True)
     identity = canonical[["season", "week", "player_id", "team", "player_name", "position"]].drop_duplicates(
         ["season", "week", "player_id", "team"]
     )
@@ -177,6 +189,10 @@ def main() -> None:
         "source_pbp": str(args.pbp.resolve()),
         "source_pbp_sha256": sha256(args.pbp),
         "source_seasons_physically_opened": sorted(pd.to_numeric(pbp["season"], errors="coerce").dropna().astype(int).unique().tolist()),
+        "canonical_source_inputs": canonical_inputs,
+        "canonical_seasons_physically_opened": sorted(
+            pd.to_numeric(canonical["season"], errors="coerce").dropna().astype(int).unique().tolist()
+        ),
         "seasons_admitted": sorted(situational["season"].unique().astype(int).tolist()),
         "situational_rows": int(len(situational)),
         "production_rows": int(len(production)),
