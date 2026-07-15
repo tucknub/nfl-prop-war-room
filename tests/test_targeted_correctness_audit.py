@@ -116,23 +116,20 @@ def test_explorer_reset_defaults_are_complete() -> None:
     }
 
 
-@pytest.mark.xfail(strict=True, reason="Known High: invalid player and team query values lack explicit invalid states")
 def test_invalid_state_handling_is_explicit() -> None:
     players = (ROOT / "dashboard" / "pages" / "02_Players.py").read_text(encoding="utf-8")
     teams = (ROOT / "dashboard" / "pages" / "01_Teams.py").read_text(encoding="utf-8")
-    assert "Invalid player" in players
-    assert "query_params" in teams and "Invalid team" in teams
+    assert "Player not found" in players
+    assert "query_params" in teams and "Team not found" in teams
 
 
-@pytest.mark.xfail(strict=True, reason="Known High: Home retains each player's latest row at or before selected week")
 def test_home_only_contains_selected_week() -> None:
     rows = observable_changes(2025, 18)
     assert rows["week"].eq(18).all()
 
 
-@pytest.mark.xfail(strict=True, reason="Known High: Explorer omits eligible zero-opportunity player-games")
 def test_explorer_zero_opportunity_games_reconcile() -> None:
-    result = pd.read_csv(OUT / "explorer_validation.csv")
+    result = pd.read_csv(OUT / "explorer_validation_after_fix.csv")
     assert not result["status"].eq("FAIL").any()
 
 

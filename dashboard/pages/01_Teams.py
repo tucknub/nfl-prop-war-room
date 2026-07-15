@@ -13,10 +13,16 @@ from research_ui import (
     ratio_text,
     role_noun,
     responsive_table,
+    resolve_query_choice,
     section,
     selection_summary,
     source_footer,
 )
+
+
+def _query_value(name: str) -> str:
+    value = st.query_params.get(name, "")
+    return value[0] if isinstance(value, list) and value else str(value)
 
 
 page_intro(
@@ -25,13 +31,38 @@ page_intro(
 )
 
 summary_slot = st.empty()
+seasons = available_seasons()
+requested_season_text = _query_value("season")
+requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
+resolved_season, invalid_season = resolve_query_choice(
+    seasons, requested_season, st.session_state.get("teams_season")
+)
+if invalid_season:
+    st.session_state.pop("teams_season", None)
+    st.warning(f"Season not found: {requested_season_text}")
+    st.link_button("Return to Teams", "/teams")
+    st.stop()
+if resolved_season is not None:
+    st.session_state["teams_season"] = resolved_season
+season = resolved_season
+season_rows = primary_rows()
+season_rows = season_rows[season_rows["season"].eq(season)]
+teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
+requested_team = _query_value("team")
+resolved_team, invalid_team = resolve_query_choice(
+    teams, requested_team, st.session_state.get("teams_team")
+)
+if invalid_team:
+    st.session_state.pop("teams_team", None)
+    st.warning(f"Team not found: {requested_team}")
+    st.link_button("Return to Teams", "/teams")
+    st.stop()
+if resolved_team is not None:
+    st.session_state["teams_team"] = resolved_team
 with st.expander("Change filters"):
     filters = st.columns(5)
     with filters[0]:
-        season = st.selectbox("Season", available_seasons(), key="teams_season")
-    season_rows = primary_rows()
-    season_rows = season_rows[season_rows["season"].eq(season)]
-    teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
+        season = st.selectbox("Season", seasons, key="teams_season")
     with filters[1]:
         team = st.selectbox("Team", teams, key="teams_team")
     with filters[2]:
@@ -40,11 +71,16 @@ with st.expander("Change filters"):
     with filters[3]:
         context = st.selectbox("Context", ["All plays", "Normal game"], index=1, key="teams_context")
     with filters[4]:
+        requested_family = _query_value("family")
+        if requested_family in ROLE_LABELS:
+            st.session_state["teams_family"] = requested_family
         role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family")
 
 end_week = max(available_weeks(season))
 summary = team_window_summary(season, team, role_family, end_week, window, context)
-situational = situational_team_summary(season, team, role_family, end_week, window) if season >= 2023 else pd.DataFrame()
+situational = situational_team_summary(
+    season, team, role_family, end_week, window, context
+) if season >= 2023 else pd.DataFrame()
 if not situational.empty:
     summary = summary.merge(situational, on=["player_id", "player_name", "position"], how="left")
 

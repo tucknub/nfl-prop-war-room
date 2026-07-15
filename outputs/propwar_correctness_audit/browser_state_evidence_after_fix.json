@@ -1,0 +1,70 @@
+{
+  "tested_app_url": "http://127.0.0.1:8511/",
+  "tested_at": "2026-07-14",
+  "viewports": [
+    "1440x900",
+    "390x844"
+  ],
+  "checks": [
+    {
+      "check": "Local Home selected-week results",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Home rendered 2025 Week 18 with 407 matching rows; stale older-week examples Alvin Kamara and Adam Thielen were absent."
+    },
+    {
+      "check": "Local valid direct player URL",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "player=00-0038555&season=2025&family=rb_carry_share rendered Tank Bigsby and RB carry share on desktop and 390x844."
+    },
+    {
+      "check": "Local invalid player URL",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "player=INVALID_PLAYER rendered an explicit Player not found message and Return to Players link without stale Tank Bigsby state."
+    },
+    {
+      "check": "Local valid direct team URL",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "team=BUF&season=2025&family=rb_carry_share rendered the BUF selection summary instead of stale ARI state."
+    },
+    {
+      "check": "Local invalid team URL",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "team=INVALID rendered an explicit Team not found message and Return to Teams link on desktop and 390x844."
+    },
+    {
+      "check": "Local Reports context control",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Red Zone Usage switched from Normal game to All plays; the selection summary and row count changed with the selected context."
+    },
+    {
+      "check": "Local Explorer filtered state and Reset",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Selecting ATL changed the summary to ATL with 419 opportunities across 34 player-games; Reset restored 2025 Weeks 1-18, all remaining conditions, RB carry share, and Normal game."
+    },
+    {
+      "check": "Local traded-player selector identity",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "Tank Bigsby profile summary showed PHI while the searchable selector label showed JAX; this pre-existing Medium issue is outside the five authorized High fixes."
+    },
+    {
+      "check": "Local public navigation",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "Navigation contained Home, Teams, Players, Games, Reports, and Explorer only; Research Admin remained absent."
+    },
+    {
+      "check": "Local browser and server errors",
+      "status": "PASS",
+      "severity": "No issue",
+      "evidence": "No visible error overlay or server exception occurred during the tested workflows. Streamlit logged one non-fatal existing widget-state warning when Explorer Reset restored its week range."
+    }
+  ]
+}

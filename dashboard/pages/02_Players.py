@@ -23,6 +23,7 @@ from research_ui import (
     page_intro,
     ratio_text,
     responsive_table,
+    resolve_query_choice,
     role_noun,
     section,
     selection_summary,
@@ -46,13 +47,23 @@ page_intro(
 )
 
 seasons = available_seasons()
-requested_season = int(_query_value("season")) if _query_value("season").isdigit() else seasons[0]
+requested_season_text = _query_value("season")
+requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
+resolved_season, invalid_season = resolve_query_choice(
+    seasons, requested_season, st.session_state.get("players_season")
+)
+if invalid_season:
+    st.session_state.pop("players_season", None)
+    st.warning(f"Season not found: {requested_season_text}")
+    st.link_button("Return to Players", "/players")
+    st.stop()
+if resolved_season is not None:
+    st.session_state["players_season"] = resolved_season
 summary_slot = st.empty()
 with st.expander("Change season"):
     season = st.selectbox(
         "Season",
         seasons,
-        index=seasons.index(requested_season) if requested_season in seasons else 0,
         key="players_season",
     )
 
@@ -64,23 +75,42 @@ labels = players.set_index(players["player_id"].astype(str)).apply(
     lambda row: f"{row['player_name']} · {row['team']} · {row['position']}", axis=1
 ).to_dict()
 requested_player = _query_value("player")
+resolved_player, invalid_player = resolve_query_choice(
+    player_options, requested_player, st.session_state.get("players_player")
+)
+if invalid_player:
+    st.session_state.pop("players_player", None)
+    st.session_state.pop("players_family", None)
+    st.warning(f"Player not found: {requested_player}")
+    st.link_button("Return to Players", "/players")
+    st.stop()
+if resolved_player is not None:
+    st.session_state["players_player"] = resolved_player
 selector_cols = st.columns([2.2, 1.2])
 with selector_cols[0]:
     player_id = st.selectbox(
         "Search player",
         player_options,
-        index=player_options.index(requested_player) if requested_player in player_options else 0,
         format_func=lambda value: labels.get(value, value),
         key="players_player",
     )
 family_rows = season_data[season_data["player_id"].astype(str).eq(player_id)]
 families = family_rows["role_family"].dropna().astype(str).unique().tolist()
 requested_family = _query_value("family")
+resolved_family, invalid_family = resolve_query_choice(
+    families, requested_family, st.session_state.get("players_family")
+)
+if invalid_family:
+    st.session_state.pop("players_family", None)
+    st.warning(f"Role family not found for {labels.get(player_id, player_id)}: {requested_family}")
+    st.link_button("Return to Players", "/players")
+    st.stop()
+if resolved_family is not None:
+    st.session_state["players_family"] = resolved_family
 with selector_cols[1]:
     role_family = st.selectbox(
         "Role family",
         families,
-        index=families.index(requested_family) if requested_family in families else 0,
         format_func=ROLE_LABELS.get,
         key="players_family",
     )

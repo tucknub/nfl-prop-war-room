@@ -1,23 +1,25 @@
 # Current Phase
 
-## Phase A — Targeted Correctness Audit
+## Phase A — Correctness Fixes
 
 **Status:** Active
 
 **Production deployment:** Not authorized
 
 **Audit baseline:** `8b759f18c34708300acf5e3ef84d0e4cbbbde597`
-**Audit branch:** `propwar-targeted-correctness-audit-v1`
+**Starting audit commit:** `e939b886c9b75d6a06eaf9bf95dc8ec1a1e093ad`
+
+**Working branch:** `propwar-correctness-fixes-v1`
 
 ## Objective
 
-Verify that public calculations, windows, rankings, links, filters, participation handling, session state, and cross-page values are correct before any additional workflow or visual redesign.
+Correct the five High findings from the targeted audit, rerun the unchanged audit samples, and reach zero unresolved Critical or High findings before any additional workflow or visual redesign.
 
 ## Allowed work
 
-- New audit scripts, tests, notebooks, and reports.
-- Project-control documentation under `docs/propwar/`.
-- Confirmed correctness fixes only when required to make the audit executable.
+- Confirmed corrections for selected-week integrity, situational denominators, Explorer eligibility, Report context selection, and player/team URL state.
+- Focused regression tests and after-fix validation artifacts.
+- This phase-status document.
 
 ## Prohibited work
 
@@ -29,4 +31,4 @@ Verify that public calculations, windows, rankings, links, filters, participatio
 
 ## Exit condition
 
-Phase A passes only when its reproducible audit is complete with no unresolved Critical or High issue and every gate in `PHASE_GATES.md` passes. After the audit commit, the only authorized next action is to wait for the user's screen-recording review.
+Phase A passes only when the corrected audit reports no unresolved Critical or High issue and every gate in `PHASE_GATES.md` passes. Passing does not authorize a redesign, merge, push, or deployment.

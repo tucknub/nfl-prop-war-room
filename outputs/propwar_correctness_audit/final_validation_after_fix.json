@@ -1,0 +1,146 @@
+{
+  "phase": "Phase A \u2014 Correctness Fixes",
+  "phase_status": "PASSED",
+  "production_status": "UNCHANGED",
+  "baseline_commit": "8b759f18c34708300acf5e3ef84d0e4cbbbde597",
+  "source_hashes": {
+    "opportunity_events": "9c67605493993ae74191f5ddd865a519afb431caac3611b92e083c90bbbf42d5",
+    "canonical_2025": "3c02f26718288adf36b9f7d0759c13722520314998c0d745f1ac76c96535cdfe",
+    "situational": "aec6cd6a11ef36b35bc18ab3468ff6b561951164e75b13b845d5b6d220c88a5c",
+    "production": "45f2a601ebe02118c12f93e16dc312a06dacfc8ab8d7f59fec5f64aeb8f06ab2",
+    "raw_pbp": "3b7dfe911b842c990f5191f4a911aecac83fcac568eef0df33d720528f0ce32a",
+    "raw_schedules": "30711db8aa6e2bbc8e7163a50e8b4eec66cf1af5e38379b85b213cf27862779a",
+    "raw_weekly": "023c0f9d4a61c6891a8efd8f8203f4ea494aef29b47343ad493f6c0c1b571403"
+  },
+  "sample_coverage": {
+    "rb_players": 10,
+    "wr_players": 10,
+    "te_players": 10,
+    "teams": 10,
+    "games": 10,
+    "home_rows": 25,
+    "reports": 7,
+    "explorer_cases": 18
+  },
+  "team_quality_checks": {
+    "duplicate_player_team_week_family_keys": 0,
+    "shares_above_100_percent": 0,
+    "zero_or_negative_denominators": 0,
+    "inconsistent_team_game_family_denominators": 0,
+    "numeric_sort_25_before_8_3": true,
+    "null_sort_last": true
+  },
+  "results": {
+    "calculation_rows": 1154,
+    "calculation_failures": 0,
+    "home_failures": 0,
+    "cross_page_failures": 0,
+    "link_state_failures": 2,
+    "explorer_failures": 0,
+    "language_failures": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 3
+  },
+  "acceptance_gates": {
+    "reproducible_audit": true,
+    "no_unresolved_critical": true,
+    "no_unresolved_high": true,
+    "windows_verified": true,
+    "shares_reconcile": true,
+    "home_reconciles": true,
+    "cross_page_agrees": true,
+    "links_resolve": true,
+    "explorer_correct": true,
+    "protected_files_unchanged": true
+  },
+  "findings": [
+    {
+      "id": "TRADED_SELECTOR_TEAM",
+      "severity": "Medium",
+      "page": "Players",
+      "evidence": "5 sampled multi-team players have a selector team that differs from the latest team.",
+      "impact": "The selector can name the former team while the selected profile summary names the current team.",
+      "likely_cause": "drop_duplicates(player_id) keeps the first season row for selector labels.",
+      "proposed_fix": "Use latest-week identity for selector labels and retain week-level team attribution in logs.",
+      "production_blocked": false
+    },
+    {
+      "id": "MISSING_TEAM_LINKS",
+      "severity": "Medium",
+      "page": "Home",
+      "evidence": "Home displays team text but renders no team link; Teams has no query-parameter URL contract.",
+      "impact": "Requested cross-page team navigation cannot be validated or used.",
+      "likely_cause": "Only player hrefs are implemented.",
+      "proposed_fix": "Add documented team deep links in a later authorized correctness-fix phase.",
+      "production_blocked": false
+    },
+    {
+      "id": "GAME_FIELDS_UNAVAILABLE",
+      "severity": "Medium",
+      "page": "Games",
+      "evidence": "Source schedules contain scores, and situational data contains inside-five counts, but the page does not display them; one-play production share is not implemented.",
+      "impact": "Several requested game facts cannot be checked in the public box score.",
+      "likely_cause": "The committed public game view intentionally omits schedule scores and several advanced fields.",
+      "proposed_fix": "Backlog the missing factual fields without changing definitions during Phase A.",
+      "production_blocked": false
+    },
+    {
+      "id": "EMPTY_CHART_WARNINGS",
+      "severity": "Low",
+      "page": "Players",
+      "evidence": "Live browser QA recorded no console errors but repeated Vega infinite-extent warnings for empty chart series.",
+      "impact": "No incorrect value was observed, but empty or sparse chart states generate noisy diagnostics and may render inconsistently.",
+      "likely_cause": "An empty series is still passed to the chart scale without an explicit empty-state branch.",
+      "proposed_fix": "Add an explicit no-series chart state in a later authorized correctness-fix phase.",
+      "production_blocked": false
+    }
+  ],
+  "limitations": [
+    "The committed opportunity-event extract is the independent play-level source used for share contexts.",
+    "Raw PBP and schedules are referenced through the recorded build-manifest source path and hashed.",
+    "Game score and one-play production share are not displayed by the deployed page."
+  ],
+  "production_commit": "8b759f18c34708300acf5e3ef84d0e4cbbbde597",
+  "audit_start_commit": "e939b886c9b75d6a06eaf9bf95dc8ec1a1e093ad",
+  "correctness_results": {
+    "critical_findings": 0,
+    "high_findings": 0,
+    "home_wrong_week_failures": 0,
+    "situational_denominator_failures": 0,
+    "explorer_zero_opportunity_failures": 0,
+    "report_context_failures": 0,
+    "invalid_player_team_state_failures": 0,
+    "cross_page_failures": 0
+  },
+  "original_audit_artifacts_unchanged": true,
+  "original_audit_artifact_sha256": {
+    "browser_state_evidence.json": "bd212016431c05dc3cf2f21458083a6ceae3afc60e1eb5ed5075800cc22c926b",
+    "calculation_discrepancies.csv": "59185a55cbb5ec6ea41c9cadd91aed993ae6f5b1ea835ae97d0fea2edeeada3c",
+    "COMMANDS_RUN.md": "aa461aa9ac52dc78db2d7a2317156ff460b9062236647b265959f4565ccdf4e8",
+    "cross_page_reconciliation.csv": "f2c789be26f9ea7aefdf957f43c2e044ab983b5ba066a13fb515cdfb94d69610",
+    "explorer_validation.csv": "e05fef31624392f388add3b0a1bf6fae690bbb4fc428e0f504555ae98df0cb2f",
+    "final_validation.json": "191f48feef279f37ef2a92fbd5fca24ff6b81b073ae42e7f15b455786e6a82ab",
+    "findings.csv": "d631bffcba4517b405af6dac5b5d467d8c6a64aff69f93019c23fcbdb08578cc",
+    "game_validation.csv": "e22182988babc787c09ea6500a62edb00bd1f086de8704d26fe06477a4e78273",
+    "home_validation.csv": "62b06474ca526c3236a91dc092ebb5fa968665c050e3f319b4a2b4482a22d4b7",
+    "link_state_validation.csv": "7d99baeb56bc163098341c10bce567748caa154f2a87b88a66a2c4c3191233d6",
+    "player_validation.csv": "0d111f2456c19a95e8f6df41ea061c375c2f59a55315457f894651af9039b6a4",
+    "protected_file_validation.json": "9ade964bc8f2050d1978ab8317cae1f1d1de3a8ce2b37251716178feb6ca932e",
+    "public_language_scan.csv": "97559b8ba71e7589dc9900dd562c4c50afeb23ff66b9bc110d2d030fe4a65440",
+    "report_validation.csv": "54c0c4da555689e652f2dd04191864344251e66a6ff2e62d69ffd0013b50cd1b",
+    "TARGETED_CORRECTNESS_AUDIT.md": "72731549f59ee3f55c0834650b8f5059a1100f384efd368933f7b13907b61f4b"
+  },
+  "before_results": {
+    "calculation_rows": 1014,
+    "calculation_failures": 71,
+    "home_failures": 6,
+    "cross_page_failures": 0,
+    "link_state_failures": 7,
+    "explorer_failures": 791,
+    "language_failures": 0,
+    "critical_findings": 0,
+    "high_findings": 5,
+    "medium_findings": 3
+  }
+}

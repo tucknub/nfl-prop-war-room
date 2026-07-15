@@ -108,7 +108,7 @@ def validate_explorer(final: dict) -> list[str]:
     if int(frame["status"].eq("FAIL").sum()) != final["results"]["explorer_failures"]:
         errors.append("Explorer failure count differs from final manifest")
     failures = frame[frame["status"].eq("FAIL")]
-    if failures.empty or not failures["likely_cause"].str.contains("zero-opportunity", na=False).all():
+    if not failures.empty and not failures["likely_cause"].str.contains("zero-opportunity", na=False).all():
         errors.append("Explorer discrepancies are not transparently reason-coded")
     return errors
 

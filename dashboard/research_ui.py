@@ -260,6 +260,19 @@ def nfl_week_axis_values() -> list[int]:
     return list(range(1, 19))
 
 
+def resolve_query_choice(
+    options: list[object],
+    requested: object | None,
+    session_value: object | None = None,
+) -> tuple[object | None, bool]:
+    """Resolve URL state before widget state, returning an explicit invalid flag."""
+    if requested not in {None, ""}:
+        return (requested, False) if requested in options else (None, True)
+    if session_value in options:
+        return session_value, False
+    return (options[0], False) if options else (None, False)
+
+
 def player_href(player_id: object, season: int, role_family: str) -> str:
     return f"/players?player={quote(str(player_id))}&season={season}&family={quote(role_family)}"
 

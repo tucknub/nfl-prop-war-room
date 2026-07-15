@@ -65,7 +65,9 @@ if situational_context and season < 2023:
     note("This report is available for completed 2023–2025 seasons.", amber=True)
     result = pd.DataFrame()
 elif situational_context:
-    result = league_situational_summary(season, end_week, window, situational_context, families)
+    result = league_situational_summary(
+        season, end_week, window, situational_context, families, overall_context=context
+    )
 else:
     result = league_window_summary(season, end_week, window, context, families)
 

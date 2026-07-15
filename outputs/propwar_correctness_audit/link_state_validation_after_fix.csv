@@ -1,0 +1,22 @@
+check,status,severity,evidence
+Home player links,PASS,No issue,/players?player=<id>&season=<season>&family=<family>
+Home team links,FAIL,Medium,No team link is rendered.
+Team player links,PASS,No issue,"Player ID, season, and family are encoded."
+Game player links,PASS,No issue,"Player ID, season, and family are encoded."
+Report player links,PASS,No issue,"Player ID, season, and family are encoded."
+Explorer player links,PASS,No issue,"Player ID, season, and family are encoded."
+Direct player URL,PASS,No issue,Valid player ID and family select the requested profile in a fresh session.
+Invalid player value,PASS,No issue,Invalid player queries clear stale state and render Player not found.
+Direct team URL,PASS,No issue,"Valid team, season, and family query parameters take precedence over stale session state."
+Invalid team value,PASS,No issue,Invalid team queries clear stale state and render Team not found.
+Research Admin navigation,PASS,No issue,Admin is absent from st.navigation.
+Local Home selected-week results,PASS,No issue,Home rendered 2025 Week 18 with 407 matching rows; stale older-week examples Alvin Kamara and Adam Thielen were absent.
+Local valid direct player URL,PASS,No issue,player=00-0038555&season=2025&family=rb_carry_share rendered Tank Bigsby and RB carry share on desktop and 390x844.
+Local invalid player URL,PASS,No issue,player=INVALID_PLAYER rendered an explicit Player not found message and Return to Players link without stale Tank Bigsby state.
+Local valid direct team URL,PASS,No issue,team=BUF&season=2025&family=rb_carry_share rendered the BUF selection summary instead of stale ARI state.
+Local invalid team URL,PASS,No issue,team=INVALID rendered an explicit Team not found message and Return to Teams link on desktop and 390x844.
+Local Reports context control,PASS,No issue,Red Zone Usage switched from Normal game to All plays; the selection summary and row count changed with the selected context.
+Local Explorer filtered state and Reset,PASS,No issue,"Selecting ATL changed the summary to ATL with 419 opportunities across 34 player-games; Reset restored 2025 Weeks 1-18, all remaining conditions, RB carry share, and Normal game."
+Local traded-player selector identity,FAIL,Medium,Tank Bigsby profile summary showed PHI while the searchable selector label showed JAX; this pre-existing Medium issue is outside the five authorized High fixes.
+Local public navigation,PASS,No issue,"Navigation contained Home, Teams, Players, Games, Reports, and Explorer only; Research Admin remained absent."
+Local browser and server errors,PASS,No issue,No visible error overlay or server exception occurred during the tested workflows. Streamlit logged one non-fatal existing widget-state warning when Explorer Reset restored its week range.

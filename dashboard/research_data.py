@@ -137,6 +137,93 @@ def _share_column(context: str) -> tuple[str, str, str]:
     return "raw_opportunities_all", "team_opportunities_all", "metric_all"
 
 
+def _event_opportunity_parts(events: pd.DataFrame, role_family: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return player-family numerator events and the matching team denominator universe."""
+    if role_family == "rb_carry_share":
+        denominator = events[events["opportunity_type"].eq("carry")]
+        numerator = denominator[denominator["position"].eq("RB")]
+    elif role_family == "rb_opportunity_share":
+        denominator = events[events["position"].eq("RB")]
+        numerator = denominator
+    elif role_family == "wr_target_share":
+        denominator = events[events["opportunity_type"].eq("target")]
+        numerator = denominator[denominator["position"].eq("WR")]
+    else:
+        denominator = events[events["opportunity_type"].eq("target")]
+        numerator = denominator[denominator["position"].eq("TE")]
+    return numerator, denominator
+
+
+def _situational_player_game_spine(
+    season: int,
+    end_week: int,
+    window: int | str,
+    contexts: Iterable[str],
+    role_families: Iterable[str],
+    *,
+    overall_context: str,
+    team: str | None = None,
+) -> pd.DataFrame:
+    """Build eligible player-games before joining context numerators.
+
+    Team context denominators come from the complete event universe. A player
+    remains on the spine with a zero numerator when their team has a valid
+    context denominator in an otherwise eligible game.
+    """
+    families = list(role_families)
+    eligible = primary_rows()
+    eligible = eligible[
+        eligible["season"].eq(season)
+        & eligible["week"].le(end_week)
+        & eligible["role_family"].isin(families)
+    ].copy()
+    if team is not None:
+        eligible = eligible[eligible["team"].eq(team)]
+    if eligible.empty:
+        return pd.DataFrame()
+    weeks = _window_weeks(eligible, end_week, window)
+    eligible = eligible[eligible["week"].isin(weeks)][
+        ["season", "week", "game_id", "team", "player_id", "player_name", "position", "role_family"]
+    ].drop_duplicates()
+    events = load_opportunity_events()
+    events = events[events["season"].eq(season) & events["week"].isin(weeks)].copy()
+    if team is not None:
+        events = events[events["team"].eq(team)]
+    if overall_context == "Normal game":
+        events = events[events["normal_game"]]
+
+    frames: list[pd.DataFrame] = []
+    join_keys = ["season", "week", "game_id", "team"]
+    for family in families:
+        family_eligible = eligible[eligible["role_family"].eq(family)]
+        if family_eligible.empty:
+            continue
+        for context in contexts:
+            context_events = events if context == "all_play" else events[events[context]]
+            numerator_events, denominator_events = _event_opportunity_parts(context_events, family)
+            denominators = denominator_events.groupby(join_keys, as_index=False).agg(
+                team_opportunities=("play_id", "nunique")
+            )
+            denominators = denominators[denominators["team_opportunities"].gt(0)]
+            if denominators.empty:
+                continue
+            numerators = numerator_events.groupby(join_keys + ["player_id"], as_index=False).agg(
+                raw_opportunities=("play_id", "nunique")
+            )
+            players = family_eligible[
+                ["season", "team", "player_id", "player_name", "position", "role_family"]
+            ].drop_duplicates()
+            player_games = denominators.merge(players, on=["season", "team"], how="inner")
+            player_games = player_games.merge(
+                numerators, on=join_keys + ["player_id"], how="left"
+            )
+            player_games["raw_opportunities"] = player_games["raw_opportunities"].fillna(0).astype(int)
+            player_games["context"] = context
+            player_games["role_family_label"] = player_games["role_family"].map(ROLE_LABELS)
+            frames.append(player_games)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
 def observable_changes(season: int, end_week: int, baseline_games: int = 4) -> pd.DataFrame:
     data = primary_rows()
     data = data[data["season"].eq(season) & data["week"].le(end_week)].copy()
@@ -144,6 +231,8 @@ def observable_changes(season: int, end_week: int, baseline_games: int = 4) -> p
     for _, group in data.groupby(["player_id", "team", "role_family"], sort=False):
         group = group.sort_values("week")
         current = group.iloc[-1]
+        if int(current["week"]) != int(end_week):
+            continue
         prior = group.iloc[:-1].tail(baseline_games)
         if len(prior) < 2:
             continue
@@ -231,27 +320,27 @@ def situational_team_summary(
     role_family: str,
     end_week: int,
     window: int | str,
+    overall_context: str = "All plays",
 ) -> pd.DataFrame:
-    data = load_situational_data()
-    data = data[
-        data["season"].eq(season) & data["team"].eq(team) & data["role_family"].eq(role_family)
-        & data["week"].le(end_week)
-    ].copy()
+    # Preserve the complete legacy context surface (including all_play and
+    # normal_game) while deriving every denominator from the event universe.
+    contexts = list(CONTEXT_LABELS)
+    data = _situational_player_game_spine(
+        season, end_week, window, contexts, [role_family], overall_context=overall_context, team=team
+    )
     if data.empty:
         return pd.DataFrame()
-    weeks = _window_weeks(data, end_week, window)
-    data = data[data["week"].isin(weeks)]
-    denominators = data.drop_duplicates(["season", "week", "game_id", "team", "role_family", "context"]).groupby(
-        "context", as_index=False
-    )["team_opportunities"].sum()
-    numerators = data.groupby(
+    summary = data.groupby(
         ["player_id", "player_name", "position", "context"], as_index=False
-    )["raw_opportunities"].sum()
-    joined = numerators.merge(denominators, on="context", how="left")
-    joined["share"] = joined["raw_opportunities"] / joined["team_opportunities"].replace(0, np.nan)
-    result = joined[["player_id", "player_name", "position"]].drop_duplicates().reset_index(drop=True)
-    for context in sorted(joined["context"].dropna().astype(str).unique().tolist()):
-        context_rows = joined[joined["context"].eq(context)][
+    ).agg(
+        raw_opportunities=("raw_opportunities", "sum"),
+        team_opportunities=("team_opportunities", "sum"),
+        sample_games=("game_id", "nunique"),
+    )
+    summary["share"] = summary["raw_opportunities"] / summary["team_opportunities"].replace(0, np.nan)
+    result = summary[["player_id", "player_name", "position"]].drop_duplicates().reset_index(drop=True)
+    for context in sorted(summary["context"].dropna().astype(str).unique().tolist()):
+        context_rows = summary[summary["context"].eq(context)][
             ["player_id", "raw_opportunities", "team_opportunities", "share"]
         ].rename(
             columns={
@@ -313,21 +402,20 @@ def league_situational_summary(
     window: int | str,
     context: str,
     role_families: Iterable[str] | None = None,
+    overall_context: str = "All plays",
 ) -> pd.DataFrame:
-    data = load_situational_data()
-    data = data[data["season"].eq(season) & data["week"].le(end_week) & data["context"].eq(context)].copy()
-    if role_families:
-        data = data[data["role_family"].isin(list(role_families))]
-    weeks = _window_weeks(data, end_week, window)
-    data = data[data["week"].isin(weeks)]
-    denominators = data.drop_duplicates(["season", "week", "game_id", "team", "role_family", "context"]).groupby(
-        ["team", "role_family"], as_index=False
-    )["team_opportunities"].sum()
+    families = list(role_families) if role_families else list(ROLE_LABELS)
+    data = _situational_player_game_spine(
+        season, end_week, window, [context], families, overall_context=overall_context
+    )
+    if data.empty:
+        return pd.DataFrame()
     summary = data.groupby(
         ["player_id", "player_name", "team", "position", "role_family", "role_family_label"], as_index=False
-    ).agg(raw_opportunities=("raw_opportunities", "sum"), sample_games=("week", "nunique"))
-    summary = summary.merge(denominators, on=["team", "role_family"], how="left").rename(
-        columns={"team_opportunities": "team_denominator"}
+    ).agg(
+        raw_opportunities=("raw_opportunities", "sum"),
+        team_denominator=("team_opportunities", "sum"),
+        sample_games=("game_id", "nunique"),
     )
     summary["share"] = summary["raw_opportunities"] / summary["team_denominator"].replace(0, np.nan)
     return summary.sort_values(["share", "raw_opportunities"], ascending=[False, False]).reset_index(drop=True)
@@ -367,32 +455,29 @@ def explorer_usage(
         events = events[events["normal_game"]]
     if team:
         events = events[events["team"].eq(team)]
-    if role_family == "rb_carry_share":
-        denominator = events[events["opportunity_type"].eq("carry")]
-        numerator = denominator[denominator["position"].eq("RB")]
-    elif role_family == "rb_opportunity_share":
-        denominator = events[events["position"].eq("RB")]
-        numerator = denominator
-    elif role_family == "wr_target_share":
-        denominator = events[events["opportunity_type"].eq("target")]
-        numerator = denominator[denominator["position"].eq("WR")]
-    else:
-        denominator = events[events["opportunity_type"].eq("target")]
-        numerator = denominator[denominator["position"].eq("TE")]
-    if player_id:
-        numerator = numerator[numerator["player_id"].astype(str).eq(str(player_id))]
+    numerator, denominator = _event_opportunity_parts(events, role_family)
     eligible = primary_rows()
-    eligible = eligible[eligible["role_family"].eq(role_family)][
-        ["season", "week", "player_id", "team"]
-    ].drop_duplicates()
-    numerator = numerator.merge(eligible.assign(_eligible=True), on=["season", "week", "player_id", "team"], how="inner")
+    eligible = eligible[
+        eligible["season"].eq(season)
+        & eligible["week"].between(start_week, end_week)
+        & eligible["role_family"].eq(role_family)
+    ][["season", "week", "game_id", "player_id", "player_name", "team", "position"]].drop_duplicates()
+    if team:
+        eligible = eligible[eligible["team"].eq(team)]
+    if player_id:
+        eligible = eligible[eligible["player_id"].astype(str).eq(str(player_id))]
     team_denoms = denominator.groupby(["season", "week", "game_id", "team"], as_index=False).agg(
         team_denominator=("play_id", "nunique")
     )
-    player_week = numerator.groupby(
-        ["season", "week", "game_id", "team", "player_id", "player_name", "position"], as_index=False
+    team_denoms = team_denoms[team_denoms["team_denominator"].gt(0)]
+    player_counts = numerator.groupby(
+        ["season", "week", "game_id", "team", "player_id"], as_index=False
     ).agg(raw_opportunities=("play_id", "nunique"))
-    player_week = player_week.merge(team_denoms, on=["season", "week", "game_id", "team"], how="left")
+    player_week = eligible.merge(team_denoms, on=["season", "week", "game_id", "team"], how="inner")
+    player_week = player_week.merge(
+        player_counts, on=["season", "week", "game_id", "team", "player_id"], how="left"
+    )
+    player_week["raw_opportunities"] = player_week["raw_opportunities"].fillna(0).astype(int)
     player_week["share"] = player_week["raw_opportunities"] / player_week["team_denominator"].replace(0, np.nan)
     summary = player_week.groupby(["player_id", "player_name", "team", "position"], as_index=False).agg(
         raw_opportunities=("raw_opportunities", "sum"), team_denominator=("team_denominator", "sum"),
