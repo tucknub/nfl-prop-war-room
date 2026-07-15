@@ -1,5 +1,27 @@
 # PropWar Release History
 
+## Control State and Searchability v1
+
+- Application commit: `c485f3c8124fbb898bb1dfca91f38d22d0d41fb5`
+- Previous production commit: `5083db142f09dbb02404e250c7a7fb1ff50f75fe`
+- Production push completed: 2026-07-15 16:19:29 EDT; the final documentation-only production commit is recorded in Git history immediately after this release entry.
+- Streamlit deployment: the running process initially mixed new page code with a stale imported `research_ui` module and raised an `ImportError`. The supported Streamlit Community Cloud **Reboot app** operation cleared the stale process; no application exception remained, so rollback was not required.
+- Rollback checkpoint: `production-streamlit-cloud-pre-control-state-v1`, verified locally and on origin to peel exactly to `5083db142f09dbb02404e250c7a7fb1ff50f75fe`.
+- Root cause: deep-link pages reapplied `st.query_params` to widget session state on every rerun while widget callbacks did not replace the URL value. A DAL-to-PHI change was therefore overwritten by stale `team=DAL`. The fix distinguishes first-load or genuinely changed URL state from ordinary widget reruns and updates query parameters from widget callbacks.
+- Searchability: high-cardinality team, player, and game controls now use **Search or select...** labels with the visible instruction **Open the list and start typing to filter options.** Canonical IDs remain the stored values; player labels include selected-week team and position, and game labels include the human-readable matchup and game ID.
+- Validation: 9 focused control-state tests passed; the complete repository suite reported 100 passed; Python compilation, seven-week replay, corrected targeted audit, cross-page, link/state, Explorer, public-language, leakage, protected-file/scope, and Git whitespace checks passed on the integrated production branch.
+- Live DAL to PHI: selecting PHI from a DAL deep link updated the rendered state to `PHI · 2025 · Last 2`; refresh and Back/Forward state checks passed, as did repeated MIN, BUF, SF, KC, and PHI team changes on desktop.
+- Live player search: typed Saquon Barkley selection remained stable after a role-family change; Tank Bigsby rendered with PHI, and Adam Thielen-PIT, Brandin Cooks-BUF, Tyler Lockett-LV, Nick Vannett-LA, and Marquez Valdes-Scantling-PIT labels passed.
+- Live game search: changing Week 17 to Week 18 and typing `WAS at PHI` selected `2025_18_WAS_PHI`; the rendered game and query state agreed.
+- Reports and Explorer: Game-Script Usage retained All plays and Last 2 after dependent changes. Explorer retained PHI, Leading, and Q2 together, then Reset restored the documented defaults without stale state.
+- Home controls: selected Week 14 and RB remained reflected in the rendered report without requiring a reload.
+- Mobile QA: exact 390x844 live Chromium checks exercised at least two controls on Home, Teams, Players, Games, Reports, and Explorer; all six routes passed with zero horizontal-overflow failures, control failures, console errors, page errors, or application exceptions.
+- Desktop QA: exact 1440x900 live Chromium checks exercised the same six routes plus repeated team and multi-team player selections; all routes passed with zero horizontal-overflow failures, control failures, console errors, page errors, or application exceptions.
+- Remaining Medium findings: the previously documented Games omissions for score, inside-five, and one-play production displays remain outside this release's scope.
+- Remaining Low finding: sparse supporting-page chart states may emit Vega infinite-extent warnings. No live exception or relevant console error was observed in this release QA.
+- Procedural note: one integrated validation command rewrote a tracked audit manifest with platform-specific raw-byte hashes. The manifest was restored to its committed values, the read-only protected-scope validator then passed with 12 protected files and four preserved output directories unchanged, and the worktree was clean before production push.
+- Project transition: Phase B2B - Live Calibrated Home Review remains active. Continue the user's live review now that the blocking selector-state and searchability defect is corrected; production deployment during Phase B2B is not automatically authorized.
+
 ## Weekly Role Report Calibration v1
 
 - Application commit: `87b267b30b9e2947e7ccbb9089a45f42c34eb39b`
