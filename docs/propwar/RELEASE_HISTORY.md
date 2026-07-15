@@ -1,5 +1,26 @@
 # PropWar Release History
 
+## Weekly Role Report Calibration v1
+
+- Application commit: `87b267b30b9e2947e7ccbb9089a45f42c34eb39b`
+- Previous production commit: `cec6244e0987ebfdc2e9c0138f0a707aec867887`
+- Production push completed: 2026-07-15 12:19:50 EDT; the final documentation-only production commit is recorded in Git history immediately after this release entry.
+- Streamlit deployment: the Git push completed successfully, but the running process initially retained stale imported modules. The supported Streamlit Community Cloud **Reboot app** operation was used, after which live Home served the calibrated application.
+- Rollback checkpoint: `production-streamlit-cloud-pre-weekly-calibration-v1`, verified locally and on origin to peel exactly to `cec6244e0987ebfdc2e9c0138f0a707aec867887`.
+- Validation: 25 focused calibration tests passed; the full repository suite reported 91 passed; Python compilation, seven-week replay, independent calibration validation, corrected targeted audit, cross-page, link/state, public-language, leakage, protected-file/scope, and Git whitespace checks passed on the integrated production branch.
+- Seven-week replay: 79 default cards and 425 technical matches across 2025 Weeks 2, 5, 8, 11, 14, 17, and 18; every default week contained 10–12 situations; wrong-week cards, duplicate primary player-weeks, share-reconciliation failures, future-leakage failures, and multi-team label failures were all zero.
+- Minnesota consolidation: live Week 8 displayed one Minnesota RB-opportunity situation with Aaron Jones primary and reciprocal evidence for Jordan Mason and Zavier Scott. Zavier Scott's technical Box Score Overstated qualification remained visible in expanded evidence.
+- Target-role allocation: live default Week 17 contained 12 situations, including WR and TE target-share situations; no player appeared twice and no team had more than two cards.
+- Early-season handling: live Week 2 displayed the one-game-baseline notice and all 10 cards used the explicit Week 1 baseline label.
+- Week 18 handling: Week 18 remained selectable but not default, with a visible caution covering rest decisions, playoff position, and end-of-season rotations.
+- Multi-team labels: live Week 18 player paths showed Adam Thielen—PIT, Brandin Cooks—BUF, Tyler Lockett—LV, Nick Vannett—LA, Marquez Valdes-Scantling—PIT, and Tank Bigsby—PHI.
+- Mobile QA: exact 390×844 live Chromium checks found 390px viewport, client, and document widths; zero horizontal overflow; zero clipped cards; readable Week 2, Week 8, and Week 18 notices/evidence; operable expanders; and hit-testable Player, Team, and Game links.
+- Desktop QA: exact 1440×900 live Chromium checks found zero horizontal overflow, zero clipped cards, readable category columns and consolidated evidence, matching card payloads, and no Home exception.
+- Route regression: Home, Teams, Players, Games, Reports, and Explorer loaded without exception; Research Admin remained absent from public navigation; direct player, team, and game states remained deterministic.
+- Remaining Medium findings: the previously documented Games omissions for score, inside-five, and one-play production displays remain outside this release's scope.
+- Remaining Low finding: sparse supporting-page chart states may emit Vega infinite-extent warnings. No calibrated Home exception was observed.
+- Project transition: Phase B2B — Live Calibrated Home Review is active. Production deployment during Phase B2B is not automatically authorized.
+
 ## Weekly Role Report v1
 
 - Production commit: `54f9f0f978f1a2c6782d02b3ed61b06b8c4f00a2`

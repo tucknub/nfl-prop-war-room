@@ -1,32 +1,32 @@
 # Current Phase
 
-## Phase B2A — Weekly Role Report Calibration
+## Phase B2B — Live Calibrated Home Review
 
 **Status:** Active
 
 **Production deployment:** Not automatically authorized
 
-**Weekly Role Report application:** `54f9f0f978f1a2c6782d02b3ed61b06b8c4f00a2`
+**Weekly Role Report application:** `87b267b30b9e2947e7ccbb9089a45f42c34eb39b`
 
-**Rollback checkpoint:** `production-streamlit-cloud-pre-weekly-role-report-v1`
+**Rollback checkpoint:** `production-streamlit-cloud-pre-weekly-calibration-v1`
 
-**Release source:** `propwar-weekly-role-report-v1` at `54f9f0f978f1a2c6782d02b3ed61b06b8c4f00a2`
+**Release source:** `propwar-weekly-role-report-calibration-v1` at `87b267b30b9e2947e7ccbb9089a45f42c34eb39b`
 
 ## Objective
 
-Calibrate the Weekly Role Report from direct user review: consolidate reciprocal team-role changes, preserve target-role capacity, label early-season and Week 18 context honestly, simplify evidence, and correct visible team-label defects without changing canonical statistical definitions.
+Have the user inspect the calibrated Weekly Role Report and decide whether Home now provides a useful weekly research experience before redesigning supporting pages or global visual identity.
 
 ## Deployment rule
 
-Production deployment is not authorized. Work must remain on `propwar-weekly-role-report-calibration-v1` until the user reviews the committed replay and QA evidence.
+Production deployment during Phase B2B is not automatically authorized. Further application changes require explicit user direction after live product review.
 
-## Phase B1 closure
+## Phase B2A closure
 
-Phase B1 closed after the Weekly Role Report reproduced 66 cards across the six fixed replay weeks, the full repository suite reported 82 passed, the corrected audit reported zero Critical or High findings, protected definitions remained unchanged, and the deployed Home passed live Week 2, Week 8, Week 18, evidence-link, route, 390×844, and 1440×900 verification.
+Phase B2A closed after the calibrated Weekly Role Report reproduced 79 default cards and 425 technical matches across 2025 Weeks 2, 5, 8, 11, 14, 17, and 18; the full repository suite reported 91 passed; the corrected audit reported zero Critical or High findings; protected definitions remained unchanged; and live Week 2, Week 8, Week 17, Week 18, evidence-link, route, 390×844, and 1440×900 verification passed.
 
 ## Constraints carried forward
 
-- Phase B2 production deployment is not automatically authorized.
+- Phase B2B production deployment is not automatically authorized.
 - The next action is the user's live product review; supporting-page or global visual redesign must not begin automatically.
 - Locked product decisions, detector rules, canonical definitions, frozen configurations, validation protocols, and release gates remain unchanged.
 - Remaining Medium and Low correctness findings stay documented until separately authorized.
