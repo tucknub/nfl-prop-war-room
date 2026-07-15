@@ -5,12 +5,15 @@ import streamlit as st
 
 from research_data import ROLE_LABELS, available_seasons, available_weeks
 from research_ui import (
+    enable_browser_history_sync,
     methodology_expander,
     page_intro,
+    initialize_query_control,
+    parse_int,
     render_weekly_report,
-    resolve_query_choice,
     selection_summary,
     source_footer,
+    update_query_from_widget,
 )
 from weekly_report import (
     DISPLAY_CATEGORIES,
@@ -31,46 +34,46 @@ def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: st
     return result.reset_index(drop=True)
 
 
-def _query_value(name: str) -> str:
-    value = st.query_params.get(name, "")
-    return value[0] if isinstance(value, list) and value else str(value)
-
-
 def render_home() -> None:
+    enable_browser_history_sync()
     page_intro(
         "This Week in NFL Roles",
         "A concise review of changed opportunity, abnormal game context, and opportunity that outpaced production.",
     )
 
     seasons = available_seasons()
-    requested_season_text = _query_value("season")
-    requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
-    season, invalid_season = resolve_query_choice(
-        seasons, requested_season, st.session_state.get("home_season")
+    season_state = initialize_query_control(
+        "home", "season", "home_season", seasons, parser=parse_int
     )
-    if invalid_season:
-        st.warning(f"Season not found: {requested_season_text}")
-        st.link_button("Return to Home", "/")
-        return
-    st.session_state["home_season"] = season
+    season = season_state.value
     weeks = available_weeks(int(season))
-    requested_week_text = _query_value("week")
-    requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
     default_week = default_home_week(int(season), weeks)
-    week, invalid_week = resolve_query_choice(
-        weeks, requested_week, st.session_state.get("home_week", default_week)
+    week_state = initialize_query_control(
+        "home", "week", "home_week", weeks, default=default_week, parser=parse_int
     )
-    if invalid_week:
-        st.warning(f"Week not found for {season}: {requested_week_text}")
-        st.link_button("Return to Home", "/")
-        return
-    st.session_state["home_week"] = week
+    week = week_state.value
 
     controls = st.columns([1, 1, 4])
     with controls[0]:
-        season = st.selectbox("Season", seasons, key="home_season")
+        season = st.selectbox(
+            "Season", seasons, key="home_season",
+            on_change=update_query_from_widget,
+            args=("season", "home_season"),
+            kwargs={"clear_query": ("week",)},
+        )
     with controls[1]:
-        week = st.selectbox("Week", weeks, key="home_week")
+        week = st.selectbox(
+            "Week", weeks, key="home_week",
+            on_change=update_query_from_widget,
+            args=("week", "home_week"),
+        )
+
+    if season_state.invalid_query or week_state.invalid_query:
+        if season_state.invalid_query:
+            st.warning("The requested season was not found. Select a valid season to continue.")
+        if week_state.invalid_query:
+            st.warning(f"The requested week was not found for {season}. Select a valid week to continue.")
+        return
 
     default_cards, all_matches = build_weekly_role_report(season, week)
     positions = ["All"] + sorted(all_matches["position"].dropna().astype(str).unique().tolist()) if not all_matches.empty else ["All"]

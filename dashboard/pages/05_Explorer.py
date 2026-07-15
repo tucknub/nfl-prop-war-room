@@ -4,7 +4,18 @@ import pandas as pd
 import streamlit as st
 
 from research_data import ROLE_LABELS, explorer_usage, load_opportunity_events
-from research_ui import condition_box, methodology_expander, page_intro, ratio_text, responsive_table, role_noun, section, selection_summary, source_footer
+from research_ui import (
+    condition_box,
+    methodology_expander,
+    page_intro,
+    ratio_text,
+    responsive_table,
+    role_noun,
+    searchable_selectbox,
+    section,
+    selection_summary,
+    source_footer,
+)
 
 
 def _reset_explorer() -> None:
@@ -38,17 +49,24 @@ with st.expander("Change filters"):
         season = st.selectbox("Season", [2025, 2024, 2023], key="explorer_season")
     season_events = events[events["season"].eq(season)]
     teams = ["All"] + sorted(season_events["team"].dropna().astype(str).unique().tolist())
+    if st.session_state.get("explorer_team") not in teams:
+        st.session_state["explorer_team"] = "All"
     with row1[1]:
-        team_choice = st.selectbox("Team", teams, key="explorer_team")
+        team_choice = searchable_selectbox(
+            "Search or select team", teams, key="explorer_team",
+            format_func=lambda value: "All teams" if value == "All" else value,
+        )
     players = season_events if team_choice == "All" else season_events[season_events["team"].eq(team_choice)]
     player_rows = players[["player_id", "player_name", "team", "position"]].drop_duplicates("player_id").sort_values("player_name")
     player_ids = ["All"] + player_rows["player_id"].astype(str).tolist()
     player_labels = player_rows.set_index(player_rows["player_id"].astype(str)).apply(
         lambda row: f"{row['player_name']} · {row['team']} · {row['position']}", axis=1
     ).to_dict()
+    if st.session_state.get("explorer_player") not in player_ids:
+        st.session_state["explorer_player"] = "All"
     with row1[2]:
-        player_choice = st.selectbox(
-            "Player", player_ids,
+        player_choice = searchable_selectbox(
+            "Search or select player", player_ids,
             format_func=lambda value: "All players" if value == "All" else player_labels.get(value, value),
             key="explorer_player",
         )

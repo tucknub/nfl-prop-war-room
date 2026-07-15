@@ -8,6 +8,15 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from control_state import (
+    ControlStateDecision,
+    enable_browser_history_sync,
+    initialize_query_control,
+    parse_int,
+    query_value,
+    resolve_control_state,
+    update_query_from_widget,
+)
 from research_data import percent, pp
 
 
@@ -309,6 +318,27 @@ def resolve_query_choice(
     if session_value in options:
         return session_value, False
     return (options[0], False) if options else (None, False)
+
+
+def searchable_selectbox(
+    label: str,
+    options: list[object],
+    *,
+    key: str,
+    format_func=None,
+    on_change=None,
+    args=None,
+    kwargs=None,
+):
+    """Render one consistent, visible search affordance for large option lists."""
+    select_kwargs = {"key": key}
+    if format_func is not None:
+        select_kwargs["format_func"] = format_func
+    if on_change is not None:
+        select_kwargs.update({"on_change": on_change, "args": args, "kwargs": kwargs})
+    value = st.selectbox(label, options, **select_kwargs)
+    st.caption("Open the list and start typing to filter options.")
+    return value
 
 
 def player_href(player_id: object, season: int, role_family: str) -> str:

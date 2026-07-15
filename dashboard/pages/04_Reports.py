@@ -42,6 +42,8 @@ with st.expander("Change filters"):
     sort_options = ["Share", "Raw opportunities"]
     if report == "Recent Usage Risers and Fallers":
         sort_options.insert(0, "Absolute change")
+    if st.session_state.get("reports_sort") not in {None, *sort_options}:
+        st.session_state["reports_sort"] = sort_options[0]
     with controls[4]:
         sort_by = st.selectbox("Sort by", sort_options, key="reports_sort")
 

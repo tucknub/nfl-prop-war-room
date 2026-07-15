@@ -14,18 +14,36 @@ from research_data import (
     player_profile,
     primary_rows,
 )
-from research_ui import methodology_expander, note, page_intro, ratio_text, responsive_table, resolve_query_choice, role_noun, section, selection_summary, source_footer
+from research_ui import (
+    enable_browser_history_sync,
+    initialize_query_control,
+    methodology_expander,
+    note,
+    page_intro,
+    parse_int,
+    ratio_text,
+    responsive_table,
+    role_noun,
+    searchable_selectbox,
+    section,
+    selection_summary,
+    source_footer,
+    update_query_from_widget,
+)
 
 
 def _whole(value: object) -> int:
     return 0 if pd.isna(value) else int(float(value))
 
 
-def _query_value(name: str) -> str:
-    value = st.query_params.get(name, "")
-    return value[0] if isinstance(value, list) and value else str(value)
+def _game_label(game_id: object) -> str:
+    parts = str(game_id).split("_")
+    if len(parts) >= 4:
+        return f"{parts[-2]} at {parts[-1]} · {game_id}"
+    return str(game_id)
 
 
+enable_browser_history_sync()
 page_intro(
     "Game Usage Box Score",
     "One-game player workload, team shares, recent comparison, and situational opportunity counts.",
@@ -33,49 +51,54 @@ page_intro(
 
 summary_slot = st.empty()
 seasons = available_seasons()
-requested_season_text = _query_value("season")
-requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
-resolved_season, invalid_season = resolve_query_choice(
-    seasons, requested_season, st.session_state.get("games_season")
+season_state = initialize_query_control(
+    "games", "season", "games_season", seasons, parser=parse_int
 )
-if invalid_season:
-    st.warning(f"Season not found: {requested_season_text}")
-    st.link_button("Return to Games", "/games")
-    st.stop()
-st.session_state["games_season"] = resolved_season
-season = int(resolved_season)
+season = int(season_state.value)
 weeks = available_weeks(season)
-requested_week_text = _query_value("week")
-requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
-resolved_week, invalid_week = resolve_query_choice(
-    weeks, requested_week, st.session_state.get("games_week", weeks[-1] if weeks else None)
+week_state = initialize_query_control(
+    "games", "week", "games_week", weeks,
+    default=weeks[-1] if weeks else None, parser=parse_int,
 )
-if invalid_week:
-    st.warning(f"Week not found for {season}: {requested_week_text}")
-    st.link_button("Return to Games", "/games")
-    st.stop()
-st.session_state["games_week"] = resolved_week
-week = int(resolved_week)
+week = int(week_state.value)
 rows = primary_rows()
 week_rows = rows[rows["season"].eq(season) & rows["week"].eq(week)]
 games = sorted(week_rows["game_id"].dropna().astype(str).unique().tolist())
-requested_game = _query_value("game")
-resolved_game, invalid_game = resolve_query_choice(
-    games, requested_game, st.session_state.get("games_game")
+game_state = initialize_query_control(
+    "games", "game", "games_game", games
 )
-if invalid_game:
-    st.warning(f"Game not found for {season} Week {week}: {requested_game}")
-    st.link_button("Return to Games", "/games")
-    st.stop()
-st.session_state["games_game"] = resolved_game
 with st.expander("Change game"):
     controls = st.columns([1, 1, 2.5])
     with controls[0]:
-        season = st.selectbox("Season", seasons, key="games_season")
+        season = st.selectbox(
+            "Season", seasons, key="games_season",
+            on_change=update_query_from_widget,
+            args=("season", "games_season"),
+            kwargs={"clear_query": ("week", "game")},
+        )
     with controls[1]:
-        week = st.selectbox("Week", weeks, key="games_week")
+        week = st.selectbox(
+            "Week", weeks, key="games_week",
+            on_change=update_query_from_widget,
+            args=("week", "games_week"),
+            kwargs={"clear_query": ("game",)},
+        )
     with controls[2]:
-        game_id = st.selectbox("Game", games, key="games_game")
+        game_id = searchable_selectbox(
+            "Search or select game", games, key="games_game",
+            format_func=_game_label,
+            on_change=update_query_from_widget,
+            args=("game", "games_game"),
+        )
+
+if season_state.invalid_query or week_state.invalid_query or game_state.invalid_query:
+    if season_state.invalid_query:
+        st.warning("The requested season was not found. Select a valid season to continue.")
+    if week_state.invalid_query:
+        st.warning("The requested week was not found. Select a valid week to continue.")
+    if game_state.invalid_query:
+        st.warning("The requested game was not found. Search for and select a valid game to continue.")
+    st.stop()
 
 usage = game_usage(season, week, game_id)
 teams = sorted(usage["team"].dropna().astype(str).unique().tolist()) if not usage.empty else []

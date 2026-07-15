@@ -5,78 +5,85 @@ import streamlit as st
 
 from research_data import ROLE_LABELS, available_seasons, available_weeks, primary_rows, situational_team_summary, team_window_summary
 from research_ui import (
+    enable_browser_history_sync,
     methodology_expander,
     note,
     numeric_percent,
     numeric_percent_sort,
     page_intro,
+    initialize_query_control,
+    parse_int,
+    query_value,
     ratio_text,
     role_noun,
     responsive_table,
-    resolve_query_choice,
+    searchable_selectbox,
     section,
     selection_summary,
     source_footer,
+    update_query_from_widget,
 )
 
 
-def _query_value(name: str) -> str:
-    value = st.query_params.get(name, "")
-    return value[0] if isinstance(value, list) and value else str(value)
-
-
+enable_browser_history_sync()
 page_intro(
     "Team Opportunity Map",
     "See who accounted for a team’s carries, running-back opportunities, and targets.",
 )
 
 summary_slot = st.empty()
+# query_params initialize deep links; widget callbacks replace them after user changes.
 seasons = available_seasons()
-requested_season_text = _query_value("season")
-requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
-resolved_season, invalid_season = resolve_query_choice(
-    seasons, requested_season, st.session_state.get("teams_season")
+season_state = initialize_query_control(
+    "teams", "season", "teams_season", seasons, parser=parse_int
 )
-if invalid_season:
-    st.session_state.pop("teams_season", None)
-    st.warning(f"Season not found: {requested_season_text}")
-    st.link_button("Return to Teams", "/teams")
-    st.stop()
-if resolved_season is not None:
-    st.session_state["teams_season"] = resolved_season
-season = resolved_season
+season = season_state.value
 season_rows = primary_rows()
 season_rows = season_rows[season_rows["season"].eq(season)]
 teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
-requested_team = _query_value("team")
-resolved_team, invalid_team = resolve_query_choice(
-    teams, requested_team, st.session_state.get("teams_team")
+team_state = initialize_query_control(
+    "teams", "team", "teams_team", teams
 )
-if invalid_team:
-    st.session_state.pop("teams_team", None)
-    st.warning(f"Team not found: {requested_team}")
-    st.link_button("Return to Teams", "/teams")
-    st.stop()
-if resolved_team is not None:
-    st.session_state["teams_team"] = resolved_team
+family_state = initialize_query_control(
+    "teams", "family", "teams_family", list(ROLE_LABELS), default="rb_carry_share"
+)
 with st.expander("Change filters"):
     filters = st.columns(5)
     with filters[0]:
-        season = st.selectbox("Season", seasons, key="teams_season")
+        season = st.selectbox(
+            "Season", seasons, key="teams_season",
+            on_change=update_query_from_widget,
+            args=("season", "teams_season"),
+            kwargs={"clear_query": ("week",)},
+        )
     with filters[1]:
-        team = st.selectbox("Team", teams, key="teams_team")
+        team = searchable_selectbox(
+            "Search or select team", teams, key="teams_team",
+            on_change=update_query_from_widget,
+            args=("team", "teams_team"),
+        )
     with filters[2]:
         window_label = st.selectbox("Window", ["Season", "Last 8", "Last 4", "Last 2"], index=2, key="teams_window")
     window = "Season" if window_label == "Season" else int(window_label.split()[-1])
     with filters[3]:
         context = st.selectbox("Context", ["All plays", "Normal game"], index=1, key="teams_context")
     with filters[4]:
-        requested_family = _query_value("family")
-        if requested_family in ROLE_LABELS:
-            st.session_state["teams_family"] = requested_family
-        role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family")
+        role_family = st.selectbox(
+            "Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family",
+            on_change=update_query_from_widget,
+            args=("family", "teams_family"),
+        )
 
-requested_week_text = _query_value("week")
+if season_state.invalid_query or team_state.invalid_query or family_state.invalid_query:
+    if season_state.invalid_query:
+        st.warning("The requested season was not found. Select a valid season to continue.")
+    if team_state.invalid_query:
+        st.warning("Team not found. Search for and select a valid team to continue.")
+    if family_state.invalid_query:
+        st.warning("The requested role family was not found. Select a valid role family to continue.")
+    st.stop()
+
+requested_week_text = query_value("week")
 requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
 season_weeks = available_weeks(season)
 if requested_week is not None and requested_week not in season_weeks:

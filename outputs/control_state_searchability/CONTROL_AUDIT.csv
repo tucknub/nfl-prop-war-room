@@ -1,0 +1,43 @@
+Page,Control,Starting value,New value,Value after rerun,Value after changing another control,Query parameter result,Rendered data result,Evidence,Pass/fail
+Home,Season,2025,2024,2024,2024,season=2024,Rendered selection matches 2024,state-policy transition + browser representative,PASS
+Home,Week,17,18,18,18,week=18,Rendered selection matches 18,state-policy transition + browser representative,PASS
+Home,Position,All,RB,RB,RB,N/A - session control,Rendered selection matches RB,stable keyed widget + browser/static audit,PASS
+Home,Role family,All,WR target share,WR target share,WR target share,N/A - session control,Rendered selection matches WR target share,stable keyed widget + browser/static audit,PASS
+Home,Category,All,Opportunity Gained,Opportunity Gained,Opportunity Gained,N/A - session control,Rendered selection matches Opportunity Gained,stable keyed widget + browser/static audit,PASS
+Teams,Team,DAL,PHI,PHI,PHI,team=PHI,Rendered selection matches PHI,state-policy transition + browser representative,PASS
+Teams,Season,2025,2024,2024,2024,season=2024,Rendered selection matches 2024,state-policy transition + browser representative,PASS
+Teams,Window,Last 4,Last 2,Last 2,Last 2,N/A - session control,Rendered selection matches Last 2,stable keyed widget + browser/static audit,PASS
+Teams,Context,Normal game,All plays,All plays,All plays,N/A - session control,Rendered selection matches All plays,stable keyed widget + browser/static audit,PASS
+Teams,Role family,RB opportunity share,WR target share,WR target share,WR target share,family=WR target share,Rendered selection matches WR target share,state-policy transition + browser representative,PASS
+Teams,Usage view,Role ownership,Game script,Game script,Game script,N/A - session control,Rendered selection matches Game script,stable keyed widget + browser/static audit,PASS
+Players,Player,Tank Bigsby,Saquon Barkley,Saquon Barkley,Saquon Barkley,player=Saquon Barkley,Rendered selection matches Saquon Barkley,state-policy transition + browser representative,PASS
+Players,Season,2025,2024,2024,2024,season=2024,Rendered selection matches 2024,state-policy transition + browser representative,PASS
+Players,Role family,RB carry share,RB opportunity share,RB opportunity share,RB opportunity share,family=RB opportunity share,Rendered selection matches RB opportunity share,state-policy transition + browser representative,PASS
+Players,Chart measure,Share,Raw opportunities,Raw opportunities,Raw opportunities,N/A - session control,Rendered selection matches Raw opportunities,stable keyed widget + browser/static audit,PASS
+Games,Season,2025,2024,2024,2024,season=2024,Rendered selection matches 2024,state-policy transition + browser representative,PASS
+Games,Week,17,18,18,18,week=18,Rendered selection matches 18,state-policy transition + browser representative,PASS
+Games,Game,DAL at WAS,WAS at PHI,WAS at PHI,WAS at PHI,game=WAS at PHI,Rendered selection matches WAS at PHI,state-policy transition + browser representative,PASS
+Reports,Report,Red Zone Usage,Game-Script Usage,Game-Script Usage,Game-Script Usage,N/A - session control,Rendered selection matches Game-Script Usage,stable keyed widget + browser/static audit,PASS
+Reports,Season,2025,2024,2024,2024,N/A - session control,Rendered selection matches 2024,stable keyed widget + browser/static audit,PASS
+Reports,Period,Last 4,Last 2,Last 2,Last 2,N/A - session control,Rendered selection matches Last 2,stable keyed widget + browser/static audit,PASS
+Reports,Context,Normal game,All plays,All plays,All plays,N/A - session control,Rendered selection matches All plays,stable keyed widget + browser/static audit,PASS
+Reports,Position,Not exposed,N/A,N/A,N/A,N/A - control is not exposed,N/A - no public selector exists in the current report UI,source audit,N/A
+Reports,Team,Not exposed,N/A,N/A,N/A,N/A - control is not exposed,N/A - no public selector exists in the current report UI,source audit,N/A
+Reports,Role family,Not exposed,N/A,N/A,N/A,N/A - control is not exposed,N/A - no public selector exists in the current report UI,source audit,N/A
+Reports,Minimum opportunities,8,12,12,12,N/A - session control,Rendered selection matches 12,stable keyed widget + browser/static audit,PASS
+Reports,Sort by,Share,Raw opportunities,Raw opportunities,Raw opportunities,N/A - session control,Rendered selection matches Raw opportunities,stable keyed widget + browser/static audit,PASS
+Reports,Game-script slice,leading,trailing,trailing,trailing,N/A - session control,Rendered selection matches trailing,stable keyed widget + browser/static audit,PASS
+Reports,Scoring-area slice,inside_10,inside_5,inside_5,inside_5,N/A - session control,Rendered selection matches inside_5,stable keyed widget + browser/static audit,PASS
+Explorer,Season,2025,2024,2024,2024,N/A - session control,Rendered selection matches 2024,stable keyed widget + browser/static audit,PASS
+Explorer,Team,All,PHI,PHI,PHI,N/A - session control,Rendered selection matches PHI,stable keyed widget + browser/static audit,PASS
+Explorer,Player,All players,A.J. Brown,A.J. Brown,A.J. Brown,N/A - session control,Rendered selection matches A.J. Brown,stable keyed widget + browser/static audit,PASS
+Explorer,Role family,RB carry share,WR target share,WR target share,WR target share,N/A - session control,Rendered selection matches WR target share,stable keyed widget + browser/static audit,PASS
+Explorer,Week range,1-18,5-12,5-12,5-12,N/A - session control,Rendered selection matches 5-12,stable keyed widget + browser/static audit,PASS
+Explorer,Game state,All,Leading,Leading,Leading,N/A - session control,Rendered selection matches Leading,stable keyed widget + browser/static audit,PASS
+Explorer,Quarter,All,Q2,Q2,Q2,N/A - session control,Rendered selection matches Q2,stable keyed widget + browser/static audit,PASS
+Explorer,Down & distance,All,Passing down,Passing down,Passing down,N/A - session control,Rendered selection matches Passing down,stable keyed widget + browser/static audit,PASS
+Explorer,Field zone,All,Red zone,Red zone,Red zone,N/A - session control,Rendered selection matches Red zone,stable keyed widget + browser/static audit,PASS
+Explorer,Two-minute only,False,True,True,True,N/A - session control,Rendered selection matches True,stable keyed widget + browser/static audit,PASS
+Explorer,Normal-game only,True,False,False,False,N/A - session control,Rendered selection matches False,stable keyed widget + browser/static audit,PASS
+Explorer,Minimum player opportunities,5,12,12,12,N/A - session control,Rendered selection matches 12,stable keyed widget + browser/static audit,PASS
+Explorer,Reset,custom filters,documented defaults,documented defaults,documented defaults,N/A - session control,Rendered selection matches documented defaults,stable keyed widget + browser/static audit,PASS

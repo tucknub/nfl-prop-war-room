@@ -17,60 +17,55 @@ from research_data import (
     team_window_summary,
 )
 from research_ui import (
+    enable_browser_history_sync,
     kpi_row,
+    initialize_query_control,
     methodology_expander,
     nfl_week_axis_values,
     note,
     page_intro,
+    parse_int,
+    query_value,
     ratio_text,
     responsive_table,
-    resolve_query_choice,
     role_noun,
+    searchable_selectbox,
     section,
     selection_summary,
     source_footer,
     table,
+    update_query_from_widget,
 )
-
-
-def _query_value(name: str) -> str:
-    value = st.query_params.get(name, "")
-    return value[0] if isinstance(value, list) and value else str(value)
 
 
 def _whole(value: object) -> int:
     return 0 if pd.isna(value) else int(float(value))
 
 
+enable_browser_history_sync()
 page_intro(
     "Player Role Profile",
     "Compare season and recent opportunity windows, then inspect weekly counts and context.",
 )
 
 seasons = available_seasons()
-requested_season_text = _query_value("season")
-requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
-resolved_season, invalid_season = resolve_query_choice(
-    seasons, requested_season, st.session_state.get("players_season")
+season_state = initialize_query_control(
+    "players", "season", "players_season", seasons, parser=parse_int
 )
-if invalid_season:
-    st.session_state.pop("players_season", None)
-    st.warning(f"Season not found: {requested_season_text}")
-    st.link_button("Return to Players", "/players")
-    st.stop()
-if resolved_season is not None:
-    st.session_state["players_season"] = resolved_season
 summary_slot = st.empty()
 with st.expander("Change season"):
     season = st.selectbox(
         "Season",
         seasons,
         key="players_season",
+        on_change=update_query_from_widget,
+        args=("season", "players_season"),
+        kwargs={"clear_query": ("player", "family", "week")},
     )
 
 data = primary_rows()
 season_data = data[data["season"].eq(season)]
-requested_week_text = _query_value("week")
+requested_week_text = query_value("week")
 requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
 season_weeks = sorted(season_data["week"].dropna().astype(int).unique().tolist())
 if requested_week is not None and requested_week not in season_weeks:
@@ -83,46 +78,43 @@ player_options = players["player_id"].astype(str).tolist()
 labels = players.set_index(players["player_id"].astype(str)).apply(
     lambda row: f"{row['player_name']} · {row['team']} · {row['position']}", axis=1
 ).to_dict()
-requested_player = _query_value("player")
-resolved_player, invalid_player = resolve_query_choice(
-    player_options, requested_player, st.session_state.get("players_player")
+player_state = initialize_query_control(
+    "players", "player", "players_player", player_options
 )
-if invalid_player:
-    st.session_state.pop("players_player", None)
-    st.session_state.pop("players_family", None)
-    st.warning(f"Player not found: {requested_player}")
-    st.link_button("Return to Players", "/players")
-    st.stop()
-if resolved_player is not None:
-    st.session_state["players_player"] = resolved_player
 selector_cols = st.columns([2.2, 1.2])
 with selector_cols[0]:
-    player_id = st.selectbox(
-        "Search player",
+    player_id = searchable_selectbox(
+        "Search or select player",
         player_options,
         format_func=lambda value: labels.get(value, value),
         key="players_player",
+        on_change=update_query_from_widget,
+        args=("player", "players_player"),
+        kwargs={"clear_query": ("family",)},
     )
 family_rows = season_data[season_data["player_id"].astype(str).eq(player_id)]
 families = family_rows["role_family"].dropna().astype(str).unique().tolist()
-requested_family = _query_value("family")
-resolved_family, invalid_family = resolve_query_choice(
-    families, requested_family, st.session_state.get("players_family")
+family_state = initialize_query_control(
+    "players", "family", "players_family", families
 )
-if invalid_family:
-    st.session_state.pop("players_family", None)
-    st.warning(f"Role family not found for {labels.get(player_id, player_id)}: {requested_family}")
-    st.link_button("Return to Players", "/players")
-    st.stop()
-if resolved_family is not None:
-    st.session_state["players_family"] = resolved_family
 with selector_cols[1]:
     role_family = st.selectbox(
         "Role family",
         families,
         format_func=ROLE_LABELS.get,
         key="players_family",
+        on_change=update_query_from_widget,
+        args=("family", "players_family"),
     )
+
+if season_state.invalid_query or player_state.invalid_query or family_state.invalid_query:
+    if season_state.invalid_query:
+        st.warning("The requested season was not found. Select a valid season to continue.")
+    if player_state.invalid_query:
+        st.warning("Player not found. Search for and select a valid player to continue.")
+    if family_state.invalid_query:
+        st.warning("The requested role family is unavailable for this player. Select a valid role family.")
+    st.stop()
 
 profile = player_profile(player_id, season, role_family)
 if requested_week is not None:

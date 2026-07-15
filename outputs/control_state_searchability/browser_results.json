@@ -1,0 +1,49 @@
+{
+  "before": {
+    "url_remained_dal": true,
+    "rendered_dal": true,
+    "attempted_selection": "PHI"
+  },
+  "mobile": {
+    "status": "PASS",
+    "viewport": "390x844",
+    "routes": [
+      "Home",
+      "Teams",
+      "Players",
+      "Games",
+      "Reports",
+      "Explorer"
+    ],
+    "overflow_failures": 0,
+    "control_failures": 0,
+    "exceptions": 0,
+    "failures": [],
+    "overflow_routes": [],
+    "console_errors": [],
+    "local_runtime_probe_404s": 12,
+    "page_errors": [],
+    "evidence": "6 routes; two-or-more controls exercised on each route; screenshots in outputs/control_state_searchability/screenshots."
+  },
+  "desktop": {
+    "status": "PASS",
+    "viewport": "1440x900",
+    "routes": [
+      "Home",
+      "Teams",
+      "Players",
+      "Games",
+      "Reports",
+      "Explorer"
+    ],
+    "overflow_failures": 0,
+    "control_failures": 0,
+    "exceptions": 0,
+    "failures": [],
+    "overflow_routes": [],
+    "console_errors": [],
+    "local_runtime_probe_404s": 10,
+    "page_errors": [],
+    "evidence": "6 routes; two-or-more controls exercised on each route; screenshots in outputs/control_state_searchability/screenshots."
+  }
+}
