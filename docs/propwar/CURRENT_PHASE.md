@@ -1,28 +1,28 @@
 # Current Phase
 
-## Phase B1 — Weekly Role Report
+## Phase B2 — Live Weekly Role Report Review
 
 **Status:** Active
 
 **Production deployment:** Not automatically authorized
 
-**Production checkpoint:** `009703cfaead7beaaef6ddf53202557b87bde744`
+**Weekly Role Report application:** `54f9f0f978f1a2c6782d02b3ed61b06b8c4f00a2`
 
-**Correctness application:** `78edeede7b0aac77daf2d7abca863993dd6a6920`
+**Rollback checkpoint:** `production-streamlit-cloud-pre-weekly-role-report-v1`
 
-**Working branch:** `propwar-weekly-role-report-v1`
+**Release source:** `propwar-weekly-role-report-v1` at `54f9f0f978f1a2c6782d02b3ed61b06b8c4f00a2`
 
 ## Objective
 
-Rebuild Home as a concise Weekly Role Report using verified descriptive data, deterministic screening rules, and direct Player, Team, and Game evidence links.
+Have the user inspect the deployed Weekly Role Report and determine whether it provides a clear weekly reason to use PropWar before redesigning the supporting pages or global visual identity.
 
-## Phase A closure
+## Phase B1 closure
 
-Phase A closed after the correctness audit reported zero unresolved Critical or High findings, the full repository suite reported 66 passed, and the corrected release passed live desktop and 390×844 verification.
+Phase B1 closed after the Weekly Role Report reproduced 66 cards across the six fixed replay weeks, the full repository suite reported 82 passed, the corrected audit reported zero Critical or High findings, protected definitions remained unchanged, and the deployed Home passed live Week 2, Week 8, Week 18, evidence-link, route, 390×844, and 1440×900 verification.
 
 ## Constraints carried forward
 
-- Phase B1 does not authorize a production deployment, merge, or push to the production branch.
-- Supporting-page changes are limited to the query-state behavior required by Home evidence links.
+- Phase B2 production deployment is not automatically authorized.
+- The next action is the user's live product review; supporting-page or global visual redesign must not begin automatically.
 - Locked product decisions, detector rules, canonical definitions, frozen configurations, validation protocols, and release gates remain unchanged.
 - Remaining Medium and Low correctness findings stay documented until separately authorized.
