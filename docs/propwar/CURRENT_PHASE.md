@@ -1,34 +1,27 @@
 # Current Phase
 
-## Phase A — Correctness Fixes
+## Phase B — Weekly Product Redesign
 
 **Status:** Active
 
-**Production deployment:** Not authorized
+**Production deployment:** Not automatically authorized
 
-**Audit baseline:** `8b759f18c34708300acf5e3ef84d0e4cbbbde597`
-**Starting audit commit:** `e939b886c9b75d6a06eaf9bf95dc8ec1a1e093ad`
+**Correctness release:** `78edeede7b0aac77daf2d7abca863993dd6a6920`
 
-**Working branch:** `propwar-correctness-fixes-v1`
+**Previous production:** `8b759f18c34708300acf5e3ef84d0e4cbbbde597`
+
+**Rollback checkpoint:** `production-streamlit-cloud-pre-correctness-v1`
 
 ## Objective
 
-Correct the five High findings from the targeted audit, rerun the unchanged audit samples, and reach zero unresolved Critical or High findings before any additional workflow or visual redesign.
+Rebuild the primary user journey around a concise Weekly Role Report using the completed screen-recording review and verified descriptive data.
 
-## Allowed work
+## Phase A closure
 
-- Confirmed corrections for selected-week integrity, situational denominators, Explorer eligibility, Report context selection, and player/team URL state.
-- Focused regression tests and after-fix validation artifacts.
-- This phase-status document.
+Phase A closed after the correctness audit reported zero unresolved Critical or High findings, the full repository suite reported 66 passed, and the corrected release passed live desktop and 390×844 verification.
 
-## Prohibited work
+## Constraints carried forward
 
-- Public page redesign or visual changes.
-- Detector research or rule changes.
-- Odds, betting recommendations, scores, or predictive claims.
-- Changes to canonical statistical definitions or historical validation artifacts.
-- Merge, production push, or deployment.
-
-## Exit condition
-
-Phase A passes only when the corrected audit reports no unresolved Critical or High issue and every gate in `PHASE_GATES.md` passes. Passing does not authorize a redesign, merge, push, or deployment.
+- Phase B does not automatically authorize a production deployment.
+- Locked product decisions, detector rules, canonical definitions, frozen configurations, validation protocols, and release gates remain unchanged.
+- Remaining Medium and Low correctness findings stay documented until separately authorized.
