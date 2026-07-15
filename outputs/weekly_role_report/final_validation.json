@@ -1,0 +1,91 @@
+{
+  "season": 2025,
+  "replay_weeks": [
+    2,
+    5,
+    8,
+    11,
+    14,
+    18
+  ],
+  "replay_week_count": 6,
+  "displayed_card_count": 66,
+  "technical_match_count": 354,
+  "duplicate_default_player_rows": 0,
+  "selected_week_failures": 0,
+  "share_reconciliation_failures": 0,
+  "weeks_with_default_volume_outside_8_to_15": 0,
+  "category_priority": [
+    "Box Score Overstated the Role",
+    "Opportunity Lost",
+    "Opportunity Gained",
+    "Strong Opportunity, Weak Production"
+  ],
+  "phase_status": "PASSED",
+  "production_status": "UNCHANGED",
+  "config": {
+    "baseline_games": 4,
+    "minimum_baseline_games": 2,
+    "early_season_week": 2,
+    "early_season_minimum_baseline_games": 1,
+    "maximum_default_cards": 12,
+    "maximum_cards_per_category": 3,
+    "minimum_share_change": 0.15,
+    "minimum_team_denominator": 10,
+    "minimum_baseline_share_for_loss": 0.25,
+    "minimum_baseline_raw_for_loss": 5,
+    "minimum_all_play_normal_gap": 0.1,
+    "minimum_outside_normal_opportunities": 2,
+    "minimum_strong_share": 0.25,
+    "minimum_useful_contexts": 2,
+    "maximum_yards_per_opportunity": 3.0,
+    "minimum_raw_opportunities": {
+      "rb_carry_share": 6,
+      "rb_opportunity_share": 8,
+      "wr_target_share": 5,
+      "te_target_share": 4
+    }
+  },
+  "status": "PASS",
+  "independent_output_validation": {
+    "status": "PASS",
+    "failures": [],
+    "required_artifact_count": 10,
+    "regenerated_default_cards": 66,
+    "archive_default_cards": 66
+  },
+  "test_results": {
+    "weekly_and_language_focused": "21 passed",
+    "complete_repository": "82 passed",
+    "preexisting_tests": "66 passed",
+    "new_weekly_report_tests": "16 passed",
+    "python_compilation": "PASS",
+    "corrected_targeted_audit": "PASS",
+    "cross_page_and_existing_output_validation": "PASS",
+    "critical_correctness_regressions": 0,
+    "high_correctness_regressions": 0
+  },
+  "browser_qa": {
+    "mobile_viewport": "390x844",
+    "mobile_document_width": 390,
+    "mobile_horizontal_overflow": false,
+    "mobile_first_card_fully_visible": true,
+    "mobile_bottom_safe_padding_px": 112,
+    "desktop_viewport": "1440x900",
+    "desktop_document_width": 1440,
+    "desktop_horizontal_overflow": false,
+    "desktop_category_columns": 2,
+    "player_link": "PASS",
+    "team_link": "PASS",
+    "game_link": "PASS",
+    "console_errors": 0
+  },
+  "protected_files": {
+    "status": "PASS",
+    "unexpected_changed_files": 0,
+    "project_blueprint_unchanged": true,
+    "locked_decisions_unchanged": true,
+    "detector_and_release_artifacts_unchanged": true,
+    "existing_correctness_audit_outputs_unchanged": true
+  }
+}

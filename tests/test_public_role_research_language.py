@@ -10,6 +10,7 @@ PUBLIC_FILES = [
     ROOT / "dashboard" / "home_page.py",
     ROOT / "dashboard" / "app.py",
     ROOT / "dashboard" / "research_ui.py",
+    ROOT / "dashboard" / "weekly_report.py",
     ROOT / "dashboard" / "pages" / "01_Teams.py",
     ROOT / "dashboard" / "pages" / "02_Players.py",
     ROOT / "dashboard" / "pages" / "03_Games.py",

@@ -3,87 +3,170 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from research_data import ROLE_LABELS, available_seasons, available_weeks, observable_changes, pp
-from research_ui import methodology_expander, overview, page_intro, render_change_rows, section, selection_summary, source_footer
+from research_data import ROLE_LABELS, available_seasons, available_weeks
+from research_ui import (
+    methodology_expander,
+    page_intro,
+    render_weekly_report,
+    resolve_query_choice,
+    selection_summary,
+    source_footer,
+)
+from weekly_report import (
+    DISPLAY_CATEGORIES,
+    build_weekly_role_report,
+)
 
 
-def _largest_change(frame: pd.DataFrame, families: set[str]) -> str:
-    rows = frame[frame["role_family"].isin(families) & frame["change"].gt(0)]
-    if rows.empty:
-        return "—"
-    row = rows.sort_values("change", ascending=False).iloc[0]
-    return f"{row['player_name']} {pp(row['change'])}"
+def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: str) -> pd.DataFrame:
+    result = frame.copy()
+    if position != "All":
+        result = result[result["position"].eq(position)]
+    if family != "All":
+        result = result[result["role_family"].eq(family)]
+    if category != "All":
+        result = result[result["category"].eq(category)]
+    return result.reset_index(drop=True)
+
+
+def _query_value(name: str) -> str:
+    value = st.query_params.get(name, "")
+    return value[0] if isinstance(value, list) and value else str(value)
 
 
 def render_home() -> None:
     page_intro(
-        "Weekly Observable Changes",
-        "Recent player opportunity shares compared with each player’s prior qualifying games.",
+        "This Week in NFL Roles",
+        "A concise review of changed opportunity, abnormal game context, and opportunity that outpaced production.",
     )
 
-    summary_slot = st.empty()
+    seasons = available_seasons()
+    requested_season_text = _query_value("season")
+    requested_season = int(requested_season_text) if requested_season_text.isdigit() else None
+    season, invalid_season = resolve_query_choice(
+        seasons, requested_season, st.session_state.get("home_season")
+    )
+    if invalid_season:
+        st.warning(f"Season not found: {requested_season_text}")
+        st.link_button("Return to Home", "/")
+        return
+    st.session_state["home_season"] = season
+    weeks = available_weeks(int(season))
+    requested_week_text = _query_value("week")
+    requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+    week, invalid_week = resolve_query_choice(
+        weeks, requested_week, st.session_state.get("home_week", weeks[-1] if weeks else None)
+    )
+    if invalid_week:
+        st.warning(f"Week not found for {season}: {requested_week_text}")
+        st.link_button("Return to Home", "/")
+        return
+    st.session_state["home_week"] = week
+
+    controls = st.columns([1, 1, 4])
+    with controls[0]:
+        season = st.selectbox("Season", seasons, key="home_season")
+    with controls[1]:
+        week = st.selectbox("Week", weeks, key="home_week")
+
+    default_cards, all_matches = build_weekly_role_report(season, week)
+    positions = ["All"] + sorted(all_matches["position"].dropna().astype(str).unique().tolist()) if not all_matches.empty else ["All"]
+    families = ["All"] + list(ROLE_LABELS)
+    categories = ["All"] + DISPLAY_CATEGORIES
+    selected_position = st.session_state.get("home_position", "All")
+    selected_family = st.session_state.get("home_family", "All")
+    selected_category = st.session_state.get("home_category", "All")
+    if selected_position not in positions:
+        selected_position = "All"
+    if selected_family not in families:
+        selected_family = "All"
+    if selected_category not in categories:
+        selected_category = "All"
+
+    visible_cards = _apply_filters(default_cards, selected_position, selected_family, selected_category)
+    active_filters = [
+        selected_position if selected_position != "All" else "All positions",
+        ROLE_LABELS[selected_family] if selected_family != "All" else "All role families",
+        selected_category if selected_category != "All" else "All categories",
+    ]
+    selection_summary(
+        f"{season} · Week {week}",
+        " · ".join(active_filters),
+        f"{len(visible_cards)} situations · {visible_cards['category'].nunique() if not visible_cards.empty else 0} categories",
+    )
+
+    render_weekly_report(visible_cards, DISPLAY_CATEGORIES)
+
     with st.expander("Change filters"):
-        controls = st.columns(5)
-        with controls[0]:
-            season = st.selectbox("Season", available_seasons(), key="home_season")
-        weeks = available_weeks(season)
-        with controls[1]:
-            week = st.selectbox("Week", weeks, index=len(weeks) - 1, key="home_week")
-        all_changes = observable_changes(season, week)
-        positions = ["All"] + sorted(all_changes["position"].dropna().astype(str).unique().tolist())
-        with controls[2]:
-            position = st.selectbox("Position", positions, key="home_position")
-        family_options = ["All"] + list(ROLE_LABELS)
-        with controls[3]:
-            family = st.selectbox(
+        filter_columns = st.columns(3)
+        with filter_columns[0]:
+            st.selectbox("Position", positions, index=positions.index(selected_position), key="home_position")
+        with filter_columns[1]:
+            st.selectbox(
                 "Role family",
-                family_options,
+                families,
+                index=families.index(selected_family),
                 format_func=lambda value: "All role families" if value == "All" else ROLE_LABELS[value],
                 key="home_family",
             )
-        with controls[4]:
-            direction = st.selectbox("Direction", ["All", "Increase", "Decrease"], key="home_direction")
+        with filter_columns[2]:
+            st.selectbox("Category", categories, index=categories.index(selected_category), key="home_category")
 
-    changes = all_changes.copy()
-    if position != "All":
-        changes = changes[changes["position"].eq(position)]
-    if family != "All":
-        changes = changes[changes["role_family"].eq(family)]
-    if direction == "Increase":
-        changes = changes[changes["change"].gt(0)]
-    elif direction == "Decrease":
-        changes = changes[changes["change"].lt(0)]
-
-    family_text = "All role families" if family == "All" else ROLE_LABELS[family]
-    selection_summary(
-        f"{season} · Week {week}",
-        f"{position if position != 'All' else 'All positions'} · {family_text} · {direction}",
-        f"{len(changes)} matching rows",
-        target=summary_slot,
-    )
-    overview(
-        [
-            ("What changed", f"{len(changes)} rows"),
-            ("RB carry increase", _largest_change(changes, {"rb_carry_share"})),
-            ("Target-share increase", _largest_change(changes, {"wr_target_share", "te_target_share"})),
-            (
-                "Abnormal context",
-                f"{int(changes['partial_game_note'].astype(str).str.contains('Suspected', case=False).sum())} suspected"
-                if not changes.empty else "0 suspected",
-            ),
-        ]
-    )
-
-    section("Largest changes", "Descriptive ranking by absolute percentage-point change.")
-    show_more = st.toggle("Show up to 20 rows", value=False, key="home_show_more")
-    render_change_rows(changes, limit=20 if show_more else 10)
+    with st.expander("View all qualifying results"):
+        all_visible = _apply_filters(all_matches, selected_position, selected_family, selected_category)
+        st.caption(
+            "Technical category matches are shown here before the one-player, one-primary-category presentation rule."
+        )
+        if all_visible.empty:
+            st.info("No situations meet the documented screening rules for these filters.")
+        else:
+            display = all_visible[
+                [
+                    "category",
+                    "player_name",
+                    "team",
+                    "position",
+                    "role_family_label",
+                    "current_raw",
+                    "current_denominator",
+                    "current_share",
+                    "baseline_share",
+                    "share_change",
+                    "baseline_games",
+                    "secondary_categories",
+                ]
+            ].copy()
+            display.columns = [
+                "Category",
+                "Player",
+                "Team",
+                "Position",
+                "Role family",
+                "Raw",
+                "Denominator",
+                "Current share",
+                "Baseline share",
+                "Change",
+                "Baseline games",
+                "All qualifying categories",
+            ]
+            st.dataframe(
+                display,
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "Current share": st.column_config.NumberColumn(format="%.1%%"),
+                    "Baseline share": st.column_config.NumberColumn(format="%.1%%"),
+                    "Change": st.column_config.NumberColumn(format="%+.1%%"),
+                },
+            )
 
     methodology_expander(
         [
-            "The recent game is compared with up to four prior qualifying games in the same season.",
-            "Shares use player opportunities divided by the matching team opportunity count.",
-            "Confirmed partial games are excluded; suspected partial games remain visible.",
-            "Rankings describe historical usage only and do not claim that a change will continue.",
+            "Selected-week shares use player opportunities divided by the matching same-team opportunity count.",
+            "The baseline sums counts from up to four earlier qualifying games in the same season before division.",
+            "Confirmed partial games are excluded; suspected partial games remain included and labeled.",
+            "Category assignment is deterministic and descriptive. It does not claim that usage will continue.",
         ]
     )
     source_footer("Completed historical data through 2025; the 2026 NFL season has not started.")

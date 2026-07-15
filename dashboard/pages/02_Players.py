@@ -116,11 +116,20 @@ with selector_cols[1]:
     )
 
 profile = player_profile(player_id, season, role_family)
+requested_week_text = _query_value("week")
+requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+season_weeks = sorted(season_data["week"].dropna().astype(int).unique().tolist())
+if requested_week is not None and requested_week not in season_weeks:
+    st.warning(f"Week not found for {season}: {requested_week_text}")
+    st.link_button("Return to Players", "/players")
+    st.stop()
+if requested_week is not None:
+    profile = profile[profile["week"].le(requested_week)].copy()
 if profile.empty:
     st.info("No player rows match the selected filters.")
     st.stop()
 player = profile.iloc[-1]
-end_week = int(profile["week"].max())
+end_week = requested_week if requested_week is not None else int(profile["week"].max())
 selection_summary(
     f"{player['player_name']} · {player['team']} · {player['position']}",
     f"{season} · {ROLE_LABELS[role_family]}",

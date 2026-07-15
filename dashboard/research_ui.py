@@ -102,6 +102,33 @@ def inject_styles() -> None:
         .pw-card details { width:100%; }
         .pw-card details summary { cursor:pointer; color:var(--pw-blue); font-size:.77rem; font-weight:740; }
         .pw-card details p { color:#40536a; font-size:.72rem; line-height:1.4; margin:.45rem 0 0; }
+        .pw-report-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin:.7rem 0 1rem; }
+        .pw-report-category { border:1px solid var(--pw-line); border-left:4px solid var(--pw-blue); border-radius:8px; padding:.65rem; min-width:0; }
+        .pw-report-category.lost { border-left-color:#66758a; }
+        .pw-report-category.overstated { border-left-color:#7255b5; }
+        .pw-report-category.weak-production { border-left-color:#087f83; }
+        .pw-report-heading { display:flex; align-items:center; gap:.45rem; margin:0 0 .5rem; padding:0!important; color:var(--pw-ink); font-size:.96rem!important; line-height:1.2!important; font-weight:800; letter-spacing:-.01em; }
+        .pw-report-icon { display:inline-flex; align-items:center; justify-content:center; width:1.45rem; height:1.45rem; border:1px solid currentColor; border-radius:50%; color:var(--pw-blue); font-size:.75rem; flex:0 0 auto; }
+        .lost .pw-report-icon { color:#66758a; }
+        .overstated .pw-report-icon { color:#7255b5; }
+        .weak-production .pw-report-icon { color:#087f83; }
+        .pw-report-cards { display:grid; gap:.55rem; }
+        .pw-report-card { border:1px solid #cbd5e1; border-radius:7px; background:#fff; padding:.7rem; min-width:0; }
+        .pw-report-identity { color:var(--pw-ink); font-size:.84rem; font-weight:790; }
+        .pw-report-identity span { color:var(--pw-muted); font-size:.72rem; font-weight:650; }
+        .pw-report-headline { color:#263a51; font-size:.82rem; line-height:1.35; margin:.18rem 0 .55rem; }
+        .pw-report-evidence { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.4rem; }
+        .pw-report-evidence div { min-width:0; }
+        .pw-report-evidence span { display:block; color:var(--pw-muted); font-size:.61rem; line-height:1.2; }
+        .pw-report-evidence strong { display:block; color:var(--pw-ink); font-size:.76rem; font-variant-numeric:tabular-nums; margin-top:.09rem; }
+        .pw-report-explanation { color:#40536a; font-size:.7rem; line-height:1.38; margin:.55rem 0 .4rem; }
+        .pw-report-context { color:#53667b; font-size:.66rem; line-height:1.35; margin:.35rem 0; }
+        .pw-report-card details { border-top:1px solid #e1e7ee; margin-top:.45rem; padding-top:.35rem; }
+        .pw-report-card summary { color:#40536a; cursor:pointer; font-size:.67rem; font-weight:720; }
+        .pw-report-card details p { color:#53667b; font-size:.65rem; line-height:1.4; margin:.35rem 0 0; }
+        .pw-report-links { display:flex; flex-wrap:wrap; gap:.4rem 1rem; border-top:1px solid #e1e7ee; margin-top:.5rem; padding-top:.45rem; }
+        .pw-report-links a { color:var(--pw-blue)!important; text-decoration:none!important; font-size:.68rem; font-weight:760; }
+        .pw-report-empty { color:var(--pw-muted); font-size:.74rem; padding:.55rem .1rem; }
         .pw-kpis { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--pw-line); border-radius:10px; margin:.6rem 0 .75rem; overflow:hidden; }
         .pw-kpi { padding:.68rem .75rem; border-right:1px solid var(--pw-line); }
         .pw-kpi:last-child { border-right:0; }
@@ -135,6 +162,7 @@ def inject_styles() -> None:
           .pw-kpis { grid-template-columns:1fr 1fr; }
           .pw-kpi:nth-child(2) { border-right:0; }
           .pw-kpi:nth-child(-n+2) { border-bottom:1px solid var(--pw-line); }
+          .pw-report-grid { grid-template-columns:1fr; gap:.55rem; }
         }
         @media (max-width:520px) {
           [data-testid="stHeader"] { height:2.35rem; }
@@ -155,6 +183,12 @@ def inject_styles() -> None:
           .pw-card-head { padding:.62rem .65rem .48rem; }
           .pw-card-metric { padding:.46rem .65rem; }
           .pw-card-note,.pw-card-actions { padding:.46rem .65rem; }
+          .pw-report-category { padding:.5rem; }
+          .pw-report-card { padding:.6rem; }
+          .pw-report-heading { font-size:.9rem!important; margin-bottom:.4rem; }
+          .pw-report-evidence { grid-template-columns:1fr 1fr; gap:.38rem .7rem; }
+          .pw-report-headline { font-size:.79rem; }
+          .pw-report-links { justify-content:space-between; gap:.35rem; }
           .pw-kpi { padding:.56rem .62rem; }
           .pw-source { display:block; line-height:1.45; }
           [data-testid="stVegaLiteChart"] { margin-left:-.25rem; margin-right:-.25rem; }
@@ -358,6 +392,58 @@ def render_change_rows(frame: pd.DataFrame, limit: int = 10) -> None:
         )
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
+
+
+def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
+    category_meta = {
+        "Opportunity Gained": ("gained", "↗"),
+        "Opportunity Lost": ("lost", "↘"),
+        "Box Score Overstated the Role": ("overstated", "≠"),
+        "Strong Opportunity, Weak Production": ("weak-production", "◇"),
+    }
+    html = ['<div class="pw-report-grid">']
+    for category in categories:
+        modifier, icon = category_meta[category]
+        rows = frame[frame["category"].eq(category)] if not frame.empty else frame
+        html.append(
+            f'<section class="pw-report-category {modifier}"><h2 class="pw-report-heading">'
+            f'<span class="pw-report-icon" aria-hidden="true">{icon}</span>{escape(category)}</h2>'
+            '<div class="pw-report-cards">'
+        )
+        if rows.empty:
+            html.append('<div class="pw-report-empty">No situations met the documented screening rules.</div>')
+        for _, row in rows.iterrows():
+            note = "Suspected partial game remains included." if bool(row.get("suspected_partial_game", False)) else "No participation exclusion applied."
+            context = str(row.get("context_summary", "")).strip()
+            context_text = f"Useful contexts: {context}." if context else "Context counts remain available in the game review."
+            html.append(
+                '<article class="pw-report-card">'
+                f'<div class="pw-report-identity">{escape(str(row["player_name"]))} '
+                f'<span>· {escape(str(row["team"]))} · {escape(str(row["position"]))} · {escape(str(row["role_family_label"]))}</span></div>'
+                f'<p class="pw-report-headline">{escape(str(row["headline"]))}</p>'
+                '<div class="pw-report-evidence">'
+                f'<div><span>Selected week</span><strong>{int(row["current_raw"])} / {int(row["current_denominator"])} · {percent(row["current_share"])}</strong></div>'
+                f'<div><span>Prior baseline</span><strong>{int(row["baseline_raw"])} / {int(row["baseline_denominator"])} · {percent(row["baseline_share"])}</strong></div>'
+                f'<div><span>Difference</span><strong>{pp(row["share_change"])}</strong></div>'
+                f'<div><span>All play</span><strong>{int(row["all_play_raw"])} / {int(row["all_play_denominator"])} · {percent(row["all_play_share"])}</strong></div>'
+                '</div>'
+                f'<p class="pw-report-explanation">{escape(str(row["explanation"]))}</p>'
+                f'<div class="pw-report-context">{escape(context_text)} Baseline: {int(row["baseline_games"])} qualifying game{"s" if int(row["baseline_games"]) != 1 else ""}.</div>'
+                '<details><summary>More evidence</summary>'
+                f'<p>{escape(note)} {escape(str(row["category_reason"]))}</p></details>'
+                '<nav class="pw-report-links" aria-label="Evidence links">'
+                f'<a href="{escape(str(row["player_href"]))}" target="_self">Player Profile</a>'
+                f'<a href="{escape(str(row["team_href"]))}" target="_self">Team Role Breakdown</a>'
+                f'<a href="{escape(str(row["game_href"]))}" target="_self">Game Usage Review</a>'
+                '</nav></article>'
+            )
+        html.append("</div></section>")
+    html.append("</div>")
+    return "".join(html)
+
+
+def render_weekly_report(frame: pd.DataFrame, categories: list[str]) -> None:
+    st.markdown(weekly_report_html(frame, categories), unsafe_allow_html=True)
 
 
 def condition_box(conditions: str, baseline: str, sample: str) -> None:

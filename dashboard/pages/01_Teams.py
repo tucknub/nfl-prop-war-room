@@ -76,7 +76,14 @@ with st.expander("Change filters"):
             st.session_state["teams_family"] = requested_family
         role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family")
 
-end_week = max(available_weeks(season))
+requested_week_text = _query_value("week")
+requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+season_weeks = available_weeks(season)
+if requested_week is not None and requested_week not in season_weeks:
+    st.warning(f"Week not found for {season}: {requested_week_text}")
+    st.link_button("Return to Teams", "/teams")
+    st.stop()
+end_week = requested_week if requested_week is not None else max(season_weeks)
 summary = team_window_summary(season, team, role_family, end_week, window, context)
 situational = situational_team_summary(
     season, team, role_family, end_week, window, context
