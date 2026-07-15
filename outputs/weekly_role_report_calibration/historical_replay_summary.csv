@@ -1,0 +1,8 @@
+season,week,situation_card_count,technical_candidate_count,qualified_situation_count,consolidated_individual_count,reciprocal_situation_count,displayed_backfield,displayed_target,maximum_same_team_cards,early_season_notice,week_18_warning,context_fact_count
+2025,2,10,59,27,13,3,8,2,2,"Early-season sample: Week 2 comparisons use Week 1 only, so the baseline is one previous game.",,16
+2025,5,12,41,25,14,2,9,3,1,,,21
+2025,8,11,50,29,14,2,9,2,2,,,16
+2025,11,10,76,34,13,3,6,4,1,,,18
+2025,14,12,62,30,14,2,8,4,2,,,20
+2025,17,12,59,33,15,3,8,4,2,,,16
+2025,18,12,78,40,14,2,7,5,2,,"Week 18 caution: rest decisions, playoff position, and end-of-season rotations can affect usage.",16

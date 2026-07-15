@@ -11,6 +11,7 @@ from research_data import (
     load_situational_data,
     opponent_from_game_id,
     player_profile,
+    player_selector_rows,
     player_window_table,
     primary_rows,
     team_window_summary,
@@ -69,7 +70,15 @@ with st.expander("Change season"):
 
 data = primary_rows()
 season_data = data[data["season"].eq(season)]
-players = season_data[["player_id", "player_name", "team", "position"]].drop_duplicates("player_id").sort_values("player_name")
+requested_week_text = _query_value("week")
+requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+season_weeks = sorted(season_data["week"].dropna().astype(int).unique().tolist())
+if requested_week is not None and requested_week not in season_weeks:
+    st.warning(f"Week not found for {season}: {requested_week_text}")
+    st.link_button("Return to Players", "/players")
+    st.stop()
+selector_week = requested_week if requested_week is not None else (max(season_weeks) if season_weeks else None)
+players = player_selector_rows(season_data, selector_week)
 player_options = players["player_id"].astype(str).tolist()
 labels = players.set_index(players["player_id"].astype(str)).apply(
     lambda row: f"{row['player_name']} · {row['team']} · {row['position']}", axis=1
@@ -116,13 +125,6 @@ with selector_cols[1]:
     )
 
 profile = player_profile(player_id, season, role_family)
-requested_week_text = _query_value("week")
-requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
-season_weeks = sorted(season_data["week"].dropna().astype(int).unique().tolist())
-if requested_week is not None and requested_week not in season_weeks:
-    st.warning(f"Week not found for {season}: {requested_week_text}")
-    st.link_button("Return to Players", "/players")
-    st.stop()
 if requested_week is not None:
     profile = profile[profile["week"].le(requested_week)].copy()
 if profile.empty:

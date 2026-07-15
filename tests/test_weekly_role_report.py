@@ -12,7 +12,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "dashboard"))
 
-from research_data import primary_rows  # noqa: E402
+from research_data import load_production_data, load_situational_data, player_selector_rows, primary_rows  # noqa: E402
 from research_ui import resolve_query_choice, weekly_report_html  # noqa: E402
 from weekly_report import (  # noqa: E402
     CATEGORY_GAINED,
@@ -23,13 +23,15 @@ from weekly_report import (  # noqa: E402
     DISPLAY_CATEGORIES,
     WEEKLY_REPORT_CONFIG,
     build_weekly_role_report,
+    default_home_week,
     game_href,
     player_href,
+    report_period_notice,
     team_href,
 )
 
 
-REPLAY_WEEKS = [2, 5, 8, 11, 14, 18]
+REPLAY_WEEKS = [2, 5, 8, 11, 14, 17, 18]
 
 
 def _reports() -> list[tuple[int, pd.DataFrame, pd.DataFrame]]:
@@ -97,7 +99,7 @@ def test_minimum_opportunity_and_category_rules_are_literal() -> None:
         assert overstated["outside_normal_opportunities"].ge(WEEKLY_REPORT_CONFIG.minimum_outside_normal_opportunities).all()
         weak = matches[matches["category"].eq(CATEGORY_WEAK_PRODUCTION)]
         assert weak["current_share"].ge(WEEKLY_REPORT_CONFIG.minimum_strong_share).all()
-        assert weak["yards_per_opportunity"].le(WEEKLY_REPORT_CONFIG.maximum_yards_per_opportunity).all()
+        assert weak["production_rate"].le(WEEKLY_REPORT_CONFIG.maximum_role_specific_production_rate).all()
         assert weak["useful_contexts"].ge(WEEKLY_REPORT_CONFIG.minimum_useful_contexts).all()
 
 
@@ -119,8 +121,18 @@ def test_category_priority_and_default_deduplication_are_deterministic() -> None
         assert not cards["player_id"].duplicated().any()
         for _, row in cards.iterrows():
             technical = matches[matches["player_id"].eq(row["player_id"])]
-            expected = min(technical["category"], key=priority.get)
-            assert row["category"] == expected
+            if row["situation_type"] == "reciprocal_transfer":
+                assert row["category"] == CATEGORY_GAINED
+                assert CATEGORY_GAINED in technical["category"].tolist()
+            else:
+                expected = min(technical["category"], key=priority.get)
+                assert row["category"] == expected
+        member_ids = [
+            player_id
+            for values in cards["situation_member_ids"].str.split(" | ", regex=False)
+            for player_id in values
+        ]
+        assert len(member_ids) == len(set(member_ids))
 
 
 def test_replay_volume_is_reviewable_and_sections_are_capped() -> None:
@@ -191,7 +203,8 @@ def test_mobile_and_desktop_use_one_identical_card_payload() -> None:
     assert html.count('<article class="pw-report-card">') == len(cards)
     for _, row in cards.iterrows():
         assert html.count(escape(str(row["player_href"]))) == 1
-        assert html.count(escape(str(row["team_href"]))) == 1
+    for href, count in cards["team_href"].value_counts().items():
+        assert html.count(escape(str(href))) == count
     for href, count in cards["game_href"].value_counts().items():
         assert html.count(escape(str(href))) == count
 
@@ -203,3 +216,144 @@ def test_home_copy_and_public_navigation_remain_within_scope() -> None:
     assert "Weekly Observable Changes" not in home
     assert "View all qualifying results" in home
     assert 'title="Research Admin"' not in app
+
+
+def test_reciprocal_team_role_changes_are_consolidated_and_minnesota_week_eight_is_one_situation() -> None:
+    cards, matches = build_weekly_role_report(2025, 8)
+    min_card = cards[
+        cards["team"].eq("MIN") & cards["role_family"].eq("rb_opportunity_share")
+    ]
+    assert len(min_card) == 1
+    row = min_card.iloc[0]
+    assert row["situation_type"] == "reciprocal_transfer"
+    assert row["player_name"] == "Aaron Jones"
+    assert set(row["situation_member_names"].split(" | ")) == {
+        "Aaron Jones", "Jordan Mason", "Zavier Scott",
+    }
+    assert int(row["situation_member_count"]) == 3
+    min_technical = matches[
+        matches["team"].eq("MIN") & matches["role_family"].eq("rb_opportunity_share")
+    ]
+    assert {CATEGORY_GAINED, CATEGORY_LOST, CATEGORY_OVERSTATED}.issubset(set(min_technical["category"]))
+
+
+def test_no_team_exceeds_two_default_situations_and_team_family_is_unique() -> None:
+    for _, cards, _ in _reports():
+        assert cards.groupby("team").size().le(WEEKLY_REPORT_CONFIG.maximum_cards_per_team).all()
+        assert not cards.duplicated(["team", "role_family"]).any()
+
+
+def test_role_group_allocation_reserves_target_capacity_when_both_groups_qualify() -> None:
+    for _, cards, _ in _reports():
+        qualified = cards.attrs["qualified_situation_counts"]
+        for category in DISPLAY_CATEGORIES:
+            qualified_groups = {
+                group for group in ["backfield", "target"] if qualified.get((category, group), 0) > 0
+            }
+            displayed_groups = set(cards.loc[cards["category"].eq(category), "role_group"])
+            if qualified_groups == {"backfield", "target"} and len(cards[cards["category"].eq(category)]) >= 2:
+                assert displayed_groups == qualified_groups
+
+
+def test_early_season_and_week_eighteen_notices_and_default_week() -> None:
+    assert report_period_notice(2) == (
+        "info", "Early-season sample: Week 2 comparisons use Week 1 only, so the baseline is one previous game."
+    )
+    assert "two prior games" in report_period_notice(3)[1]
+    assert "rest decisions" in report_period_notice(18)[1]
+    assert default_home_week(2025, range(1, 19)) == 17
+    assert default_home_week(2025, range(1, 17)) == 16
+    cards, _ = build_weekly_role_report(2025, 2)
+    changed = cards[cards["category"].isin([CATEGORY_GAINED, CATEGORY_LOST])]
+    assert changed["explanation"].str.contains("Week 2 share", regex=False).all()
+    assert changed["explanation"].str.contains("Week 1", regex=False).all()
+
+
+def test_card_labels_and_collapsed_all_plays_suppression() -> None:
+    cards, _ = build_weekly_role_report(2025, 17)
+    html = weekly_report_html(cards, DISPLAY_CATEGORIES)
+    assert "Normal-game share" in html
+    assert "Selected week</span>" not in html
+    assert "All play</span>" not in html
+    hidden = cards[~cards["show_all_play_prominently"]]
+    assert not hidden.empty
+    for _, row in hidden.iterrows():
+        article = html.split(f'>{escape(str(row["player_name"]))} ', 1)[1].split("</article>", 1)[0]
+        collapsed = article.split("<details>", 1)[0]
+        assert "All-plays share" not in collapsed
+        assert "All-plays share" in article
+
+
+def test_context_facts_are_real_counts_limited_and_meet_documented_minimums() -> None:
+    source = load_situational_data()
+    for week, cards, _ in _reports():
+        for _, row in cards.iterrows():
+            facts = row["context_facts"]
+            assert len(facts) <= WEEKLY_REPORT_CONFIG.maximum_context_facts
+            for fact in facts:
+                expected = source[
+                    source["season"].eq(2025) & source["week"].eq(week)
+                    & source["player_id"].astype(str).eq(str(row["player_id"]))
+                    & source["team"].eq(row["team"])
+                    & source["role_family"].eq(row["role_family"])
+                    & source["context"].eq(fact["context"])
+                ].iloc[0]
+                assert int(fact["raw"]) == int(expected["raw_opportunities"])
+                assert int(fact["denominator"]) == int(expected["team_opportunities"])
+                minimum_raw, minimum_denominator = WEEKLY_REPORT_CONFIG.context_minimum_map[fact["context"]]
+                assert int(fact["raw"]) >= minimum_raw
+                assert int(fact["denominator"]) >= minimum_denominator
+
+
+def test_role_specific_production_metrics_reconcile() -> None:
+    production = load_production_data()
+    all_matches = pd.concat([matches for _, _, matches in _reports()], ignore_index=True)
+    weak = all_matches[all_matches["category"].eq(CATEGORY_WEAK_PRODUCTION)]
+    assert set(weak["production_metric_label"]).issubset({
+        "Yards per carry", "Yards per touch", "Receiving yards per target",
+    })
+    for _, row in weak.iterrows():
+        game = production[
+            production["player_id"].astype(str).eq(str(row["player_id"]))
+            & production["game_id"].eq(row["game_id"])
+        ].iloc[0]
+        if row["role_family"] == "rb_carry_share":
+            denominator = game["carries"]
+            yards = game["rushing_yards"]
+            label = "Yards per carry"
+        elif row["role_family"] == "rb_opportunity_share":
+            denominator = game["carries"] + game["receptions"]
+            yards = game["rushing_yards"] + game["receiving_yards"]
+            label = "Yards per touch"
+        else:
+            denominator = game["targets"]
+            yards = game["receiving_yards"]
+            label = "Receiving yards per target"
+        assert row["production_metric_label"] == label
+        assert np.isclose(row["production_rate"], yards / denominator)
+
+
+def test_zavier_scott_week_eight_primary_technical_category_is_overstated() -> None:
+    _, matches = build_weekly_role_report(2025, 8)
+    zavier = matches[
+        matches["player_name"].eq("Zavier Scott")
+        & matches["role_family"].eq("rb_opportunity_share")
+    ]
+    assert set(zavier["category"]) == {CATEGORY_OVERSTATED, CATEGORY_LOST}
+    row = zavier[zavier["category"].eq(CATEGORY_OVERSTATED)].iloc[0]
+    assert (row["current_raw"], row["current_denominator"]) == (0, 14)
+    assert (row["all_play_raw"], row["all_play_denominator"]) == (4, 18)
+    assert np.isclose(row["all_play_normal_gap"], 4 / 18)
+    assert row["individual_primary_category"] == CATEGORY_OVERSTATED
+
+
+def test_multi_team_selector_labels_use_the_requested_time_boundary() -> None:
+    season_data = primary_rows().loc[lambda frame: frame["season"].eq(2025)]
+    latest = player_selector_rows(season_data, 18).set_index("player_id")
+    expected = {
+        "00-0030035": "PIT", "00-0031236": "BUF", "00-0032211": "LV",
+        "00-0032394": "LA", "00-0034272": "PIT", "00-0038555": "PHI",
+    }
+    assert latest.loc[list(expected), "team"].to_dict() == expected
+    week_one = player_selector_rows(season_data, 1).set_index("player_id")
+    assert week_one.loc["00-0038555", "team"] == "JAX"

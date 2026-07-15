@@ -1,6 +1,6 @@
 # Current Phase
 
-## Phase B2 — Live Weekly Role Report Review
+## Phase B2A — Weekly Role Report Calibration
 
 **Status:** Active
 
@@ -14,7 +14,11 @@
 
 ## Objective
 
-Have the user inspect the deployed Weekly Role Report and determine whether it provides a clear weekly reason to use PropWar before redesigning the supporting pages or global visual identity.
+Calibrate the Weekly Role Report from direct user review: consolidate reciprocal team-role changes, preserve target-role capacity, label early-season and Week 18 context honestly, simplify evidence, and correct visible team-label defects without changing canonical statistical definitions.
+
+## Deployment rule
+
+Production deployment is not authorized. Work must remain on `propwar-weekly-role-report-calibration-v1` until the user reviews the committed replay and QA evidence.
 
 ## Phase B1 closure
 

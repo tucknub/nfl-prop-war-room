@@ -126,6 +126,34 @@ def available_weeks(season: int, frame: pd.DataFrame | None = None) -> list[int]
     return sorted(data.loc[data["season"].eq(season), "week"].dropna().astype(int).unique().tolist())
 
 
+def player_selector_rows(season_data: pd.DataFrame, through_week: int | None = None) -> pd.DataFrame:
+    """Return one canonical selector identity per player at the requested time boundary.
+
+    A traded player remains one GSIS identity.  The visible team comes from the
+    latest valid row at or before ``through_week``; without a boundary it comes
+    from the latest valid row in the selected season.  Players whose first row
+    is later than a direct-link boundary remain searchable using their first
+    season row instead of disappearing from the selector.
+    """
+    columns = ["player_id", "player_name", "team", "position", "week"]
+    data = season_data[columns].dropna(subset=["player_id", "week"]).copy()
+    if data.empty:
+        return data.drop(columns="week")
+    data["player_id"] = data["player_id"].astype(str)
+    data["week"] = pd.to_numeric(data["week"], errors="coerce")
+    rows: list[pd.Series] = []
+    for _, group in data.sort_values(["week", "team", "player_name"], kind="stable").groupby("player_id", sort=False):
+        eligible = group if through_week is None else group[group["week"].le(through_week)]
+        rows.append((eligible.iloc[-1] if not eligible.empty else group.iloc[0]))
+    return (
+        pd.DataFrame(rows)[columns]
+        .drop_duplicates("player_id", keep="last")
+        .drop(columns="week")
+        .sort_values(["player_name", "player_id"], kind="stable")
+        .reset_index(drop=True)
+    )
+
+
 def _window_weeks(data: pd.DataFrame, end_week: int, window: int | str) -> list[int]:
     weeks = sorted(data.loc[data["week"].le(end_week), "week"].dropna().astype(int).unique().tolist())
     return weeks if window == "Season" else weeks[-int(window):]

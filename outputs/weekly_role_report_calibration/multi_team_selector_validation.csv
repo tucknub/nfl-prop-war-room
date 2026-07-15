@@ -1,0 +1,7 @@
+player_id,player_name,week_18_selector_team,expected_week_18_team,week_18_pass,week_1_selector_team
+00-0030035,Adam Thielen,PIT,PIT,True,MIN
+00-0031236,Brandin Cooks,BUF,BUF,True,NO
+00-0032211,Tyler Lockett,LV,LV,True,TEN
+00-0032394,Nick Vannett,LA,LA,True,MIN
+00-0034272,Marquez Valdes-Scantling,PIT,PIT,True,SF
+00-0038555,Tank Bigsby,PHI,PHI,True,JAX

@@ -1,0 +1,57 @@
+season,week,category,role_group,technical_candidate_count,qualified_situation_count,displayed_situation_count
+2025,2,Opportunity Gained,backfield,20,12,2
+2025,2,Opportunity Gained,target,5,5,1
+2025,2,Opportunity Lost,backfield,16,2,2
+2025,2,Opportunity Lost,target,5,4,1
+2025,2,Box Score Overstated the Role,backfield,5,2,2
+2025,2,Box Score Overstated the Role,target,0,0,0
+2025,2,"Strong Opportunity, Weak Production",backfield,8,2,2
+2025,2,"Strong Opportunity, Weak Production",target,0,0,0
+2025,5,Opportunity Gained,backfield,13,9,2
+2025,5,Opportunity Gained,target,4,4,1
+2025,5,Opportunity Lost,backfield,11,5,2
+2025,5,Opportunity Lost,target,2,1,1
+2025,5,Box Score Overstated the Role,backfield,4,2,2
+2025,5,Box Score Overstated the Role,target,1,1,1
+2025,5,"Strong Opportunity, Weak Production",backfield,6,3,3
+2025,5,"Strong Opportunity, Weak Production",target,0,0,0
+2025,8,Opportunity Gained,backfield,11,8,2
+2025,8,Opportunity Gained,target,9,9,1
+2025,8,Opportunity Lost,backfield,10,4,3
+2025,8,Opportunity Lost,target,0,0,0
+2025,8,Box Score Overstated the Role,backfield,13,6,3
+2025,8,Box Score Overstated the Role,target,0,0,0
+2025,8,"Strong Opportunity, Weak Production",backfield,6,1,1
+2025,8,"Strong Opportunity, Weak Production",target,1,1,1
+2025,11,Opportunity Gained,backfield,27,15,2
+2025,11,Opportunity Gained,target,6,6,1
+2025,11,Opportunity Lost,backfield,19,2,1
+2025,11,Opportunity Lost,target,4,3,2
+2025,11,Box Score Overstated the Role,backfield,4,1,1
+2025,11,Box Score Overstated the Role,target,0,0,0
+2025,11,"Strong Opportunity, Weak Production",backfield,13,4,2
+2025,11,"Strong Opportunity, Weak Production",target,3,3,1
+2025,14,Opportunity Gained,backfield,18,9,2
+2025,14,Opportunity Gained,target,4,4,1
+2025,14,Opportunity Lost,backfield,20,6,2
+2025,14,Opportunity Lost,target,1,1,1
+2025,14,Box Score Overstated the Role,backfield,6,4,2
+2025,14,Box Score Overstated the Role,target,1,1,1
+2025,14,"Strong Opportunity, Weak Production",backfield,10,3,2
+2025,14,"Strong Opportunity, Weak Production",target,2,2,1
+2025,17,Opportunity Gained,backfield,15,8,2
+2025,17,Opportunity Gained,target,11,10,1
+2025,17,Opportunity Lost,backfield,8,2,1
+2025,17,Opportunity Lost,target,5,4,2
+2025,17,Box Score Overstated the Role,backfield,8,4,3
+2025,17,Box Score Overstated the Role,target,0,0,0
+2025,17,"Strong Opportunity, Weak Production",backfield,11,4,2
+2025,17,"Strong Opportunity, Weak Production",target,1,1,1
+2025,18,Opportunity Gained,backfield,30,17,2
+2025,18,Opportunity Gained,target,10,10,1
+2025,18,Opportunity Lost,backfield,11,0,0
+2025,18,Opportunity Lost,target,4,4,3
+2025,18,Box Score Overstated the Role,backfield,7,5,3
+2025,18,Box Score Overstated the Role,target,0,0,0
+2025,18,"Strong Opportunity, Weak Production",backfield,14,3,2
+2025,18,"Strong Opportunity, Weak Production",target,2,1,1

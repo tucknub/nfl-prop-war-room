@@ -15,6 +15,8 @@ from research_ui import (
 from weekly_report import (
     DISPLAY_CATEGORIES,
     build_weekly_role_report,
+    default_home_week,
+    report_period_notice,
 )
 
 
@@ -54,8 +56,9 @@ def render_home() -> None:
     weeks = available_weeks(int(season))
     requested_week_text = _query_value("week")
     requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+    default_week = default_home_week(int(season), weeks)
     week, invalid_week = resolve_query_choice(
-        weeks, requested_week, st.session_state.get("home_week", weeks[-1] if weeks else None)
+        weeks, requested_week, st.session_state.get("home_week", default_week)
     )
     if invalid_week:
         st.warning(f"Week not found for {season}: {requested_week_text}")
@@ -94,6 +97,11 @@ def render_home() -> None:
         " · ".join(active_filters),
         f"{len(visible_cards)} situations · {visible_cards['category'].nunique() if not visible_cards.empty else 0} categories",
     )
+
+    period_notice = report_period_notice(int(week))
+    if period_notice:
+        notice_type, notice_text = period_notice
+        getattr(st, notice_type)(notice_text)
 
     render_weekly_report(visible_cards, DISPLAY_CATEGORIES)
 

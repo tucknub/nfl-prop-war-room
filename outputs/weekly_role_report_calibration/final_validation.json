@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "season": 2025,
+  "weeks": [
+    2,
+    5,
+    8,
+    11,
+    14,
+    17,
+    18
+  ],
+  "default_2025_week": 17,
+  "displayed_cards": 79,
+  "technical_candidates": 425,
+  "minimum_weekly_cards": 10,
+  "maximum_weekly_cards": 12,
+  "maximum_same_team_cards": 2,
+  "wrong_week_cards": 0,
+  "duplicate_primary_player_weeks": 0,
+  "share_reconciliation_failures": 0,
+  "minnesota_week8_consolidated": true,
+  "zavier_primary_category": "Box Score Overstated the Role",
+  "multi_team_label_failures": 0,
+  "config": {
+    "baseline_games": 4,
+    "minimum_baseline_games": 2,
+    "early_season_week": 2,
+    "early_season_minimum_baseline_games": 1,
+    "maximum_default_cards": 12,
+    "maximum_cards_per_category": 3,
+    "maximum_cards_per_team": 2,
+    "minimum_share_change": 0.15,
+    "minimum_team_denominator": 10,
+    "minimum_baseline_share_for_loss": 0.25,
+    "minimum_baseline_raw_for_loss": 5,
+    "minimum_all_play_normal_gap": 0.1,
+    "material_all_play_difference": 0.05,
+    "minimum_outside_normal_opportunities": 2,
+    "minimum_strong_share": 0.25,
+    "minimum_useful_contexts": 2,
+    "maximum_role_specific_production_rate": 3.0,
+    "maximum_context_facts": 2,
+    "context_minimums": [
+      [
+        "inside_5",
+        1,
+        1
+      ],
+      [
+        "red_zone",
+        2,
+        2
+      ],
+      [
+        "passing_down",
+        2,
+        5
+      ],
+      [
+        "early_down",
+        3,
+        8
+      ]
+    ],
+    "minimum_raw_opportunities": [
+      [
+        "rb_carry_share",
+        6
+      ],
+      [
+        "rb_opportunity_share",
+        8
+      ],
+      [
+        "wr_target_share",
+        5
+      ],
+      [
+        "te_target_share",
+        4
+      ]
+    ]
+  },
+  "independent_validation": {
+    "status": "PASS",
+    "failures": [],
+    "regenerated_cards": 79,
+    "archive_cards": 79
+  }
+}

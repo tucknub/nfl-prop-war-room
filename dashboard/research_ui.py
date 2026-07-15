@@ -123,9 +123,13 @@ def inject_styles() -> None:
         .pw-report-evidence strong { display:block; color:var(--pw-ink); font-size:.76rem; font-variant-numeric:tabular-nums; margin-top:.09rem; }
         .pw-report-explanation { color:#40536a; font-size:.7rem; line-height:1.38; margin:.55rem 0 .4rem; }
         .pw-report-context { color:#53667b; font-size:.66rem; line-height:1.35; margin:.35rem 0; }
+        .pw-report-context:empty { display:none; }
+        .pw-report-context-fact { display:flex; justify-content:space-between; gap:.75rem; padding:.12rem 0; }
+        .pw-report-context-fact strong { color:var(--pw-ink); font-variant-numeric:tabular-nums; }
         .pw-report-card details { border-top:1px solid #e1e7ee; margin-top:.45rem; padding-top:.35rem; }
         .pw-report-card summary { color:#40536a; cursor:pointer; font-size:.67rem; font-weight:720; }
         .pw-report-card details p { color:#53667b; font-size:.65rem; line-height:1.4; margin:.35rem 0 0; }
+        .pw-report-card details ul { color:#53667b; font-size:.65rem; line-height:1.45; margin:.35rem 0 0; padding-left:1rem; }
         .pw-report-links { display:flex; flex-wrap:wrap; gap:.4rem 1rem; border-top:1px solid #e1e7ee; margin-top:.5rem; padding-top:.45rem; }
         .pw-report-links a { color:var(--pw-blue)!important; text-decoration:none!important; font-size:.68rem; font-weight:760; }
         .pw-report-empty { color:var(--pw-muted); font-size:.74rem; padding:.55rem .1rem; }
@@ -414,23 +418,58 @@ def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
             html.append('<div class="pw-report-empty">No situations met the documented screening rules.</div>')
         for _, row in rows.iterrows():
             note = "Suspected partial game remains included." if bool(row.get("suspected_partial_game", False)) else "No participation exclusion applied."
-            context = str(row.get("context_summary", "")).strip()
-            context_text = f"Useful contexts: {context}." if context else "Context counts remain available in the game review."
+            baseline_games = int(row["baseline_games"])
+            baseline_label = (
+                "Week 1 baseline · one previous game"
+                if int(row["week"]) == 2
+                else f"Prior baseline · {baseline_games} previous games"
+            )
+            all_play_line = ""
+            if bool(row.get("show_all_play_prominently", False)):
+                all_play_line = (
+                    f'<div><span>All-plays share</span><strong>{int(row["all_play_raw"])} / '
+                    f'{int(row["all_play_denominator"])} · {percent(row["all_play_share"])}</strong></div>'
+                )
+            context_facts = row.get("context_facts", tuple())
+            context_html = "".join(
+                f'<div class="pw-report-context-fact"><span>{escape(str(fact["label"]))}</span>'
+                f'<strong>{int(fact["raw"])} of {int(fact["denominator"])}</strong></div>'
+                for fact in context_facts
+            )
+            hidden_all_play = "" if all_play_line else (
+                f' All-plays share: {int(row["all_play_raw"])} of {int(row["all_play_denominator"])} '
+                f'({percent(row["all_play_share"])}).'
+            )
+            member_details = row.get("situation_member_details", tuple())
+            member_html = ""
+            if str(row.get("situation_type", "")) == "reciprocal_transfer":
+                member_html = '<p><strong>Individual evidence</strong></p><ul>' + "".join(
+                    '<li>'
+                    f'<strong>{escape(str(member["player_name"]))}</strong> · {escape(str(member["category"]))}: '
+                    f'{int(member["current_raw"])} of {int(member["current_denominator"])} normal-game '
+                    f'({percent(member["current_share"])}); prior {int(member["baseline_raw"])} of '
+                    f'{int(member["baseline_denominator"])} ({percent(member["baseline_share"])}); '
+                    f'all plays {int(member["all_play_raw"])} of {int(member["all_play_denominator"])} '
+                    f'({percent(member["all_play_share"])}).</li>'
+                    for member in member_details
+                ) + '</ul>'
+            full_context = str(row.get("context_detail", "")).strip()
+            context_detail = f" Complete situational counts: {escape(full_context)}." if full_context else ""
             html.append(
                 '<article class="pw-report-card">'
                 f'<div class="pw-report-identity">{escape(str(row["player_name"]))} '
                 f'<span>· {escape(str(row["team"]))} · {escape(str(row["position"]))} · {escape(str(row["role_family_label"]))}</span></div>'
                 f'<p class="pw-report-headline">{escape(str(row["headline"]))}</p>'
                 '<div class="pw-report-evidence">'
-                f'<div><span>Selected week</span><strong>{int(row["current_raw"])} / {int(row["current_denominator"])} · {percent(row["current_share"])}</strong></div>'
-                f'<div><span>Prior baseline</span><strong>{int(row["baseline_raw"])} / {int(row["baseline_denominator"])} · {percent(row["baseline_share"])}</strong></div>'
-                f'<div><span>Difference</span><strong>{pp(row["share_change"])}</strong></div>'
-                f'<div><span>All play</span><strong>{int(row["all_play_raw"])} / {int(row["all_play_denominator"])} · {percent(row["all_play_share"])}</strong></div>'
+                f'<div><span>Normal-game share</span><strong>{int(row["current_raw"])} / {int(row["current_denominator"])} · {percent(row["current_share"])}</strong></div>'
+                f'<div><span>{baseline_label}</span><strong>{int(row["baseline_raw"])} / {int(row["baseline_denominator"])} · {percent(row["baseline_share"])}</strong></div>'
+                f'{all_play_line}'
                 '</div>'
                 f'<p class="pw-report-explanation">{escape(str(row["explanation"]))}</p>'
-                f'<div class="pw-report-context">{escape(context_text)} Baseline: {int(row["baseline_games"])} qualifying game{"s" if int(row["baseline_games"]) != 1 else ""}.</div>'
+                f'<div class="pw-report-context">{context_html}</div>'
                 '<details><summary>More evidence</summary>'
-                f'<p>{escape(note)} {escape(str(row["category_reason"]))}</p></details>'
+                f'<p>{escape(note)} {escape(str(row["category_reason"]))}{hidden_all_play}{context_detail}</p>'
+                f'{member_html}</details>'
                 '<nav class="pw-report-links" aria-label="Evidence links">'
                 f'<a href="{escape(str(row["player_href"]))}" target="_self">Player Profile</a>'
                 f'<a href="{escape(str(row["team_href"]))}" target="_self">Team Role Breakdown</a>'
