@@ -1,0 +1,93 @@
+{
+  "phase": "B3 Supplemental Gap Audit",
+  "phase_status": "PASSED",
+  "production_status": "UNCHANGED",
+  "existing_b3_commit": "b0ba36213ca7c5c45938e1146f8fdc9a5dd2cc35",
+  "current_season_default": 2025,
+  "latest_available_week": 18,
+  "home_default_week": 17,
+  "data_status": {
+    "status": "AVAILABLE",
+    "label": "Data through 2025 Week 18",
+    "season": 2025,
+    "week": 18,
+    "completed_games": 16,
+    "refresh_timestamp": null
+  },
+  "role_fingerprint": {
+    "rb_contexts": [
+      "early_down",
+      "passing_down",
+      "two_minute",
+      "red_zone",
+      "inside_5"
+    ],
+    "target_contexts": [
+      "early_down",
+      "passing_down",
+      "two_minute",
+      "red_zone",
+      "inside_5",
+      "end_zone"
+    ],
+    "maximum_contexts": 6
+  },
+  "down_and_distance": {
+    "exact_numeric_fields": "UNAVAILABLE_IN_COMMITTED_PUBLIC_EVENT_EXTRACT",
+    "grouped_advanced_research_flags": [
+      "early_down",
+      "passing_down",
+      "short_yardage"
+    ],
+    "player_expander": "DEFERRED_INTENTIONALLY"
+  },
+  "evidence_chain": {
+    "home_to_player_context": true,
+    "home_to_team_context": true,
+    "home_to_game_context": true,
+    "ordinary_direct_visit_suppresses_context": true,
+    "explorer_preset": true,
+    "explorer_reset": true
+  },
+  "advanced_research_presets": {
+    "count": 6,
+    "distinct_signatures": 6,
+    "optional_short_yardage_preset": "DEFERRED_INTENTIONALLY"
+  },
+  "browser_qa": {
+    "mobile": "PASS",
+    "desktop": "PASS",
+    "horizontal_overflow_failures": 0,
+    "application_exceptions": 0,
+    "relevant_console_errors": 0
+  },
+  "correctness_regressions": {
+    "critical": 0,
+    "high": 0,
+    "candidate_selection_changed": false,
+    "category_assignment_changed": false,
+    "wrong_week_or_future_leakage": 0
+  },
+  "tests_and_validators": {
+    "focused_supporting": "18 passed",
+    "complete_repository": "118 passed",
+    "pre_existing_repository_tests": "115 passed",
+    "new_supplemental_tests": "3 passed",
+    "python_compilation": "PASS",
+    "seven_week_replay": "79 displayed cards; 425 technical candidates",
+    "corrected_targeted_audit": "PASS",
+    "cross_page_validator": "PASS",
+    "link_state_validator": "PASS",
+    "advanced_research_validator": "PASS",
+    "public_language_guardrail": "PASS",
+    "leakage_subset": "3 passed, 22 deselected",
+    "worktree_scope_validator": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "protected_files": {
+    "status": "PASS",
+    "files_checked": 12,
+    "preserved_output_directories": 5,
+    "unexpected_changed_paths": 0
+  }
+}
