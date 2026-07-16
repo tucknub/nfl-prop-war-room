@@ -1,0 +1,46 @@
+{
+  "mobile": {
+    "status": "PASS",
+    "viewport": "390x844",
+    "dimensions": {
+      "width": 390,
+      "client": 390,
+      "scroll": 390,
+      "overflow": 0
+    },
+    "routes": [
+      "Home",
+      "Teams",
+      "Players",
+      "Games",
+      "Reports",
+      "Explorer"
+    ],
+    "overflow_failures": [],
+    "workflow_failures": [],
+    "console_errors": [],
+    "page_errors": []
+  },
+  "desktop": {
+    "status": "PASS",
+    "viewport": "1440x900",
+    "dimensions": {
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440,
+      "overflow": 0
+    },
+    "routes": [
+      "Home",
+      "Teams",
+      "Players",
+      "Games",
+      "Reports",
+      "Explorer"
+    ],
+    "overflow_failures": [],
+    "workflow_failures": [],
+    "console_errors": [],
+    "page_errors": []
+  }
+}

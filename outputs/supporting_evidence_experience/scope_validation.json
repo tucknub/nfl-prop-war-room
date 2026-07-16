@@ -1,0 +1,152 @@
+{
+  "status": "PASS",
+  "baseline_commit": "6c93e26100fb3c077cf2f9a936dea79ceb9ec254",
+  "mode": "staged",
+  "changed_files": [
+    "dashboard/home_page.py",
+    "dashboard/pages/01_Teams.py",
+    "dashboard/pages/02_Players.py",
+    "dashboard/pages/03_Games.py",
+    "dashboard/pages/04_Reports.py",
+    "dashboard/pages/05_Explorer.py",
+    "dashboard/research_ui.py",
+    "dashboard/supporting_evidence.py",
+    "outputs/supporting_evidence_experience/COMMANDS_RUN.md",
+    "outputs/supporting_evidence_experience/DATA_AVAILABILITY.md",
+    "outputs/supporting_evidence_experience/DESIGN_DECISIONS.md",
+    "outputs/supporting_evidence_experience/EVIDENCE_PATH_WALKTHROUGHS.md",
+    "outputs/supporting_evidence_experience/EXPLORER_PRESET_VALIDATION.csv",
+    "outputs/supporting_evidence_experience/GAME_PAGE_VALIDATION.csv",
+    "outputs/supporting_evidence_experience/HOME_WORDING_AUDIT.csv",
+    "outputs/supporting_evidence_experience/PLAYER_PAGE_VALIDATION.csv",
+    "outputs/supporting_evidence_experience/REPORT_PAGE_VALIDATION.csv",
+    "outputs/supporting_evidence_experience/TEAM_PAGE_VALIDATION.csv",
+    "outputs/supporting_evidence_experience/browser_results.json",
+    "outputs/supporting_evidence_experience/desktop_qa.md",
+    "outputs/supporting_evidence_experience/final_validation.json",
+    "outputs/supporting_evidence_experience/mobile_qa.md",
+    "outputs/supporting_evidence_experience/scope_validation.json",
+    "outputs/supporting_evidence_experience/screenshots/desktop_explorer.png",
+    "outputs/supporting_evidence_experience/screenshots/desktop_games.png",
+    "outputs/supporting_evidence_experience/screenshots/desktop_home.png",
+    "outputs/supporting_evidence_experience/screenshots/desktop_players.png",
+    "outputs/supporting_evidence_experience/screenshots/desktop_reports.png",
+    "outputs/supporting_evidence_experience/screenshots/desktop_teams.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_explorer_presets.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_game_summary.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_home_to_game.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_home_to_player.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_home_to_team.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_player_chart.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_player_summary.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_reports.png",
+    "outputs/supporting_evidence_experience/screenshots/mobile_team_hierarchy.png",
+    "scripts/run_supporting_evidence_audit.py",
+    "scripts/run_supporting_evidence_browser_qa.py",
+    "scripts/validate_supporting_evidence_experience.py",
+    "tests/test_supporting_evidence_experience.py"
+  ],
+  "unexpected_files": [],
+  "protected_files": [
+    {
+      "path": "docs/propwar/PROJECT_BLUEPRINT.md",
+      "baseline_sha256": "5d8896f6aebf6f3fe525cd548b531722531811d8405583e800d445c4768df1ec",
+      "current_sha256": "5d8896f6aebf6f3fe525cd548b531722531811d8405583e800d445c4768df1ec",
+      "unchanged": true
+    },
+    {
+      "path": "docs/propwar/LOCKED_DECISIONS.md",
+      "baseline_sha256": "737d4b83458c10eca0fb1fd6a1c987a79fa06caf0dc9baedf07570b977fdc2ed",
+      "current_sha256": "737d4b83458c10eca0fb1fd6a1c987a79fa06caf0dc9baedf07570b977fdc2ed",
+      "unchanged": true
+    },
+    {
+      "path": "LOCKED_DECISIONS.md",
+      "baseline_sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00",
+      "current_sha256": "57da1e3ebed077bd52709fb3331eb99e719c056e9e840d8c6913b512d7e4ba00",
+      "unchanged": true
+    },
+    {
+      "path": "ROLE_CHANGE_VALIDATION_PROTOCOL.md",
+      "baseline_sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+      "current_sha256": "b9fcc357e98388bb15c2d7ae853620f8ccd6c2e60e491a6cfcb990bbfbfcadbe",
+      "unchanged": true
+    },
+    {
+      "path": "dashboard/research_data.py",
+      "baseline_sha256": "44a9c5a5102f0eb77834484f4151f37ed1f2ae7560597bc2e602db60cde8872a",
+      "current_sha256": "44a9c5a5102f0eb77834484f4151f37ed1f2ae7560597bc2e602db60cde8872a",
+      "unchanged": true
+    },
+    {
+      "path": "dashboard/weekly_report.py",
+      "baseline_sha256": "cc92c837e02d211aa986c8eb6b776fb153ac5222f5c26eee42e349ba84c2832f",
+      "current_sha256": "cc92c837e02d211aa986c8eb6b776fb153ac5222f5c26eee42e349ba84c2832f",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/release_gate_integrity.json",
+      "baseline_sha256": "476c8ccbe99fd33ad4f35ca31c5eddcc5983f4f20f8b3da740fdd4a2ca3a2833",
+      "current_sha256": "476c8ccbe99fd33ad4f35ca31c5eddcc5983f4f20f8b3da740fdd4a2ca3a2833",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/fold_2/frozen_role_change_fold2_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "current_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/fold_2/frozen_config_fingerprint.json",
+      "baseline_sha256": "20ec2560a649715ea605661dcae7c744eba04c79d62f0ac198b88e77d42fe679",
+      "current_sha256": "20ec2560a649715ea605661dcae7c744eba04c79d62f0ac198b88e77d42fe679",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/fold_3/frozen_role_change_fold3_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "current_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/fold_4/frozen_role_change_fold4_candidate.yaml",
+      "baseline_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "current_sha256": "4dcf389a1f8fcdd11a9277305a8372fadaabaa830185e07eff5d8fbb274a81c7",
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation/fold_4/frozen_execution_package_manifest.json",
+      "baseline_sha256": "097ae21a836b064e575f118943c7860b48a5a2b22d9cdbd5f3094fb3fe751bab",
+      "current_sha256": "097ae21a836b064e575f118943c7860b48a5a2b22d9cdbd5f3094fb3fe751bab",
+      "unchanged": true
+    }
+  ],
+  "preserved_output_directories": [
+    {
+      "path": "outputs/propwar_correctness_audit",
+      "changed_files": [],
+      "unchanged": true
+    },
+    {
+      "path": "outputs/weekly_role_report",
+      "changed_files": [],
+      "unchanged": true
+    },
+    {
+      "path": "outputs/weekly_role_report_calibration",
+      "changed_files": [],
+      "unchanged": true
+    },
+    {
+      "path": "outputs/control_state_searchability",
+      "changed_files": [],
+      "unchanged": true
+    },
+    {
+      "path": "outputs/role_validation",
+      "changed_files": [],
+      "unchanged": true
+    }
+  ],
+  "failures": []
+}

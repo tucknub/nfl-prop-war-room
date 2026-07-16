@@ -372,8 +372,9 @@ def render_mobile_cards(cards: list[dict[str, object]]) -> None:
         if card.get("note"):
             html.append(f'<div class="pw-card-note">{escape(str(card["note"]))}</div>')
         href = card.get("href")
+        links = card.get("links", [])
         details = card.get("details")
-        if href or details:
+        if href or links or details:
             html.append('<div class="pw-card-actions">')
             if details:
                 html.append(
@@ -381,6 +382,10 @@ def render_mobile_cards(cards: list[dict[str, object]]) -> None:
                 )
             if href:
                 html.append(f'<a class="pw-card-link" href="{escape(str(href))}" target="_self">Open player →</a>')
+            for link in links:
+                html.append(
+                    f'<a class="pw-card-link" href="{escape(str(link[1]))}" target="_self">{escape(str(link[0]))}</a>'
+                )
             html.append("</div>")
         html.append("</article>")
     html.append("</div></div>")
@@ -447,7 +452,10 @@ def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
         if rows.empty:
             html.append('<div class="pw-report-empty">No situations met the documented screening rules.</div>')
         for _, row in rows.iterrows():
-            note = "Suspected partial game remains included." if bool(row.get("suspected_partial_game", False)) else "No participation exclusion applied."
+            participation_note = (
+                '<p><strong>Participation note:</strong> Suspected partial-game row remains included.</p>'
+                if bool(row.get("suspected_partial_game", False)) else ""
+            )
             baseline_games = int(row["baseline_games"])
             baseline_label = (
                 "Week 1 baseline · one previous game"
@@ -498,7 +506,7 @@ def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
                 f'<p class="pw-report-explanation">{escape(str(row["explanation"]))}</p>'
                 f'<div class="pw-report-context">{context_html}</div>'
                 '<details><summary>More evidence</summary>'
-                f'<p>{escape(note)} {escape(str(row["category_reason"]))}{hidden_all_play}{context_detail}</p>'
+                f'{participation_note}<p>{hidden_all_play}{context_detail}</p>'
                 f'{member_html}</details>'
                 '<nav class="pw-report-links" aria-label="Evidence links">'
                 f'<a href="{escape(str(row["player_href"]))}" target="_self">Player Profile</a>'

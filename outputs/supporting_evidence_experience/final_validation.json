@@ -1,0 +1,69 @@
+{
+  "phase": "B3 — Supporting Evidence Experience",
+  "phase_status": "PASSED",
+  "production_status": "UNCHANGED",
+  "baseline_commit": "6c93e26100fb3c077cf2f9a936dea79ceb9ec254",
+  "calculation_validation": "PASS",
+  "home_candidate_selection_unchanged": true,
+  "home_cards": 79,
+  "weekly_replay": {
+    "status": "PASS",
+    "weeks": [2, 5, 8, 11, 14, 17, 18],
+    "displayed_cards": 79,
+    "technical_candidates": 425,
+    "wrong_week_cards": 0,
+    "duplicate_primary_player_weeks": 0,
+    "share_reconciliation_failures": 0
+  },
+  "validation_rows": {
+    "team": 162,
+    "player": 60,
+    "game": 32,
+    "report_questions": 6,
+    "explorer_presets": 6
+  },
+  "data_availability": {
+    "final_scores": "UNAVAILABLE_OMITTED",
+    "inside_five_opportunities": "AVAILABLE_DISPLAYED",
+    "end_zone_targets": "AVAILABLE_DISPLAYED",
+    "one_play_production_concentration": "UNAVAILABLE_OMITTED",
+    "longest_play": "UNAVAILABLE_OMITTED",
+    "player_team_game_totals": "AVAILABLE_DISPLAYED",
+    "unsupported_fields_fabricated": false
+  },
+  "browser_qa": {
+    "browser_first_evidence_paths": "PASS",
+    "mobile_390x844": "PASS",
+    "desktop_1440x900": "PASS",
+    "horizontal_overflow_failures": 0,
+    "workflow_failures": 0,
+    "console_errors": 0,
+    "page_errors": 0
+  },
+  "tests": {
+    "focused_supporting_and_regression": "61 passed",
+    "complete_repository": "115 passed",
+    "pre_existing_repository_tests": "100 passed",
+    "new_supporting_tests": "15 passed",
+    "leakage_link_subset": "5 passed, 20 deselected",
+    "correctness_fix_regressions": "7 passed",
+    "python_compilation": "PASS",
+    "corrected_targeted_audit": "PASS",
+    "cross_page_validator": "PASS",
+    "link_state_validator": "PASS",
+    "explorer_validator": "PASS",
+    "public_language_guardrail": "PASS"
+  },
+  "correctness_regressions": {
+    "critical": 0,
+    "high": 0,
+    "wrong_week": 0,
+    "future_leakage": 0,
+    "share_reconciliation": 0,
+    "selector_reversion": 0,
+    "fabricated_fields": 0
+  },
+  "protected_files": "PASS",
+  "preserved_audit_outputs": "PASS",
+  "git_whitespace": "PASS"
+}
