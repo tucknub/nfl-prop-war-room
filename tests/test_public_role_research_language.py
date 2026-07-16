@@ -55,13 +55,22 @@ def test_public_files_exclude_prohibited_product_language() -> None:
 
 def test_public_navigation_excludes_research_admin() -> None:
     app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
-    for title in ["Home", "Teams", "Players", "Games", "Reports", "Explorer"]:
+    for title in ["Home", "Teams", "Players", "Games", "Reports", "Advanced Research"]:
         assert f'title="{title}"' in app
+    assert 'title="Explorer"' not in app
     assert "90_Admin_Research.py" not in app
     assert 'title="Research Admin"' not in app
     assert (ROOT / "dashboard" / "pages" / "90_Admin_Research.py").exists()
     for retired_page in ["Signal_Command_Center", "Matchup_Board", "Position_Signal_Boards", "Blocked_Review"]:
         assert retired_page not in app
+
+
+def test_advanced_research_navigation_label_preserves_route_and_heading() -> None:
+    app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
+    explorer = (ROOT / "dashboard" / "pages" / "05_Explorer.py").read_text(encoding="utf-8")
+    assert 'st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer")' in app
+    assert 'title="Explorer"' not in app
+    assert 'page_intro("Advanced Research"' in explorer
 
 
 def test_admin_has_exact_nonvalidation_label() -> None:

@@ -97,8 +97,9 @@ def test_cross_page_values_agree_for_identical_filters() -> None:
 def test_default_completed_season_and_public_navigation() -> None:
     assert available_seasons()[0] == 2025
     app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
-    for title in ["Home", "Teams", "Players", "Games", "Reports", "Explorer"]:
+    for title in ["Home", "Teams", "Players", "Games", "Reports", "Advanced Research"]:
         assert f'title="{title}"' in app
+    assert 'title="Explorer"' not in app
     assert 'title="Research Admin"' not in app
 
 
