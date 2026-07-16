@@ -150,11 +150,10 @@ for team in teams:
 with st.expander("Technical game details"):
     st.code(str(game_id))
     st.caption("Final score is omitted because it is not present in the committed validated public extract.")
-    st.caption("Longest-play and one-play production concentration are omitted because the committed event extract has no yards-gained field.")
 
 methodology_expander([
     "All-play and normal-game shares use player counts divided by matching team counts.",
     "Prior comparison uses up to four earlier qualifying games in the same season.",
     "Inside-five counts come from the committed play-level opportunity extract.",
 ])
-source_footer("Unavailable score and longest-play fields are not inferred or fabricated.")
+source_footer("Only fields present in the validated public usage data are shown.")
