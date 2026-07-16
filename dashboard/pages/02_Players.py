@@ -15,7 +15,7 @@ from research_ui import (
     responsive_table, role_noun, searchable_selectbox, section, selection_summary,
     source_footer, update_query_from_widget,
 )
-from supporting_evidence import player_role_sentence
+from supporting_evidence import home_evidence_message, player_role_sentence, role_fingerprint_contexts
 
 
 def _whole(value: object) -> int:
@@ -66,6 +66,17 @@ if profile.empty:
 player = profile.iloc[-1]
 end_week = requested_week if requested_week is not None else int(profile["week"].max())
 selection_summary(f"{player['player_name']} · {player['team']} · {player['position']}", f"{season} · {ROLE_LABELS[role_family]}", f"{profile['week'].nunique()} qualifying games through Week {end_week}", target=summary_slot)
+
+if (
+    query_value("origin") == "home"
+    and query_value("focus") == player_id
+    and query_value("focus_family") == role_family
+):
+    origin_message = home_evidence_message(
+        season, end_week, player_id, role_family, team=str(player["team"])
+    )
+    if origin_message:
+        note(origin_message)
 
 windows = player_window_table(profile, end_week)
 window_index = windows.set_index("Window")
@@ -140,10 +151,10 @@ if missing_weeks: status.append("Team played; no qualifying player row: " + ", "
 if status: note(" · ".join(status))
 
 if season >= 2023:
-    section("Current role breakdown", "Team ownership in useful game situations.")
+    section("Role fingerprint", "Up to six useful contexts that describe the player's assignment.")
     situation = load_situational_data()
     situation = situation[(situation["season"].eq(season)) & (situation["week"].le(end_week)) & situation["player_id"].astype(str).eq(player_id) & situation["role_family"].eq(role_family)]
-    situation = situation[situation["context"].isin(["early_down", "passing_down", "two_minute", "red_zone", "inside_10", "inside_5", "end_zone"])]
+    situation = situation[situation["context"].isin(role_fingerprint_contexts(role_family))]
     situ = situation.groupby("context", as_index=False).agg(Raw=("raw_opportunities", "sum"), Denominator=("team_opportunities", "sum"), Games=("game_id", "nunique")) if not situation.empty else pd.DataFrame()
     if not situ.empty:
         situ = situ[situ["Denominator"].gt(0)].copy()

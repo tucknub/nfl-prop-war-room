@@ -56,6 +56,14 @@ EXPLORER_PRESETS: dict[str, dict[str, object]] = {
     },
 }
 
+ROLE_FINGERPRINT_CONTEXTS = (
+    "early_down",
+    "passing_down",
+    "two_minute",
+    "red_zone",
+    "inside_5",
+)
+
 
 def _names_text(names: list[str]) -> str:
     if not names:
@@ -91,6 +99,99 @@ def apply_home_wording(frame: pd.DataFrame) -> pd.DataFrame:
             if lost else str(row.get("explanation", ""))
         )
     return result
+
+
+def role_fingerprint_contexts(role_family: str) -> tuple[str, ...]:
+    """Return the compact, public Player-page contexts for one role family."""
+    contexts = list(ROLE_FINGERPRINT_CONTEXTS)
+    if role_family in {"wr_target_share", "te_target_share"}:
+        contexts.append("end_zone")
+    return tuple(contexts)
+
+
+def validated_data_status(frame: pd.DataFrame | None = None) -> dict[str, object]:
+    """Describe the latest fully populated committed season-week without inventing refresh metadata."""
+    if frame is None:
+        from research_data import primary_rows
+
+        frame = primary_rows()
+    required = {"season", "week", "game_id", "game_partition_complete"}
+    if frame.empty or not required.issubset(frame.columns):
+        return {
+            "status": "UNAVAILABLE",
+            "label": None,
+            "season": None,
+            "week": None,
+            "completed_games": 0,
+            "refresh_timestamp": None,
+        }
+    games = (
+        frame[list(required)]
+        .dropna(subset=["season", "week", "game_id"])
+        .groupby(["season", "week", "game_id"], as_index=False)
+        .agg(game_partition_complete=("game_partition_complete", "all"))
+    )
+    weekly = (
+        games.groupby(["season", "week"], as_index=False)
+        .agg(
+            all_games_complete=("game_partition_complete", "all"),
+            completed_games=("game_id", "nunique"),
+        )
+    )
+    complete = weekly[weekly["all_games_complete"]].sort_values(["season", "week"])
+    if complete.empty:
+        return {
+            "status": "UNAVAILABLE",
+            "label": None,
+            "season": None,
+            "week": None,
+            "completed_games": 0,
+            "refresh_timestamp": None,
+        }
+    latest = complete.iloc[-1]
+    season, week = int(latest["season"]), int(latest["week"])
+    return {
+        "status": "AVAILABLE",
+        "label": f"Data through {season} Week {week}",
+        "season": season,
+        "week": week,
+        "completed_games": int(latest["completed_games"]),
+        "refresh_timestamp": None,
+    }
+
+
+def validated_data_status_label() -> str | None:
+    value = validated_data_status().get("label")
+    return str(value) if value else None
+
+
+def home_evidence_message(
+    season: int,
+    week: int,
+    focus_player_id: str,
+    role_family: str,
+    *,
+    team: str | None = None,
+    game_id: str | None = None,
+) -> str | None:
+    """Recover the exact factual Home headline for an explicitly marked evidence link."""
+    if not focus_player_id or not role_family:
+        return None
+    from weekly_report import build_weekly_role_report
+
+    cards, _ = build_weekly_role_report(int(season), int(week))
+    cards = apply_home_wording(cards)
+    matches = cards[
+        cards["player_id"].astype(str).eq(str(focus_player_id))
+        & cards["role_family"].astype(str).eq(str(role_family))
+    ]
+    if team is not None:
+        matches = matches[matches["team"].astype(str).eq(str(team))]
+    if game_id is not None:
+        matches = matches[matches["game_id"].astype(str).eq(str(game_id))]
+    if len(matches) != 1:
+        return None
+    return f"From Home Week {int(week)}: {matches.iloc[0]['headline']}"
 
 
 def home_selection_signature(frame: pd.DataFrame) -> list[tuple[object, ...]]:

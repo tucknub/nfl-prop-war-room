@@ -90,7 +90,11 @@ def main() -> int:
     for week in WALKTHROUGH_WEEKS:
         selected_players.extend(report_cache[week][0].head(4)[["player_id", "player_name", "team", "role_family"]].to_dict("records"))
     player_rows: list[dict[str, object]] = []
-    for item in {(str(row["player_id"]), str(row["player_name"]), str(row["team"]), str(row["role_family"])) for row in selected_players}:
+    selected_player_keys = {
+        (str(row["player_id"]), str(row["player_name"]), str(row["team"]), str(row["role_family"]))
+        for row in selected_players
+    }
+    for item in sorted(selected_player_keys):
         player_id, player_name, team, family = item
         profile = player_profile(player_id, 2025, family)
         if profile.empty:

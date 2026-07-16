@@ -18,6 +18,7 @@ from control_state import (
     update_query_from_widget,
 )
 from research_data import percent, pp
+from supporting_evidence import validated_data_status_label
 
 
 PUBLIC_SOURCE_NOTE = "Historical regular-season role and opportunity data through 2025."
@@ -222,9 +223,10 @@ def sidebar_brand() -> None:
 
 
 def page_intro(title: str, description: str, latest_season: int = 2025) -> None:
+    data_status = validated_data_status_label() or f"Latest completed season: {latest_season}"
     st.markdown(
         f'<div class="pw-intro"><div><h1>{escape(title)}</h1><p>{escape(description)}</p></div>'
-        f'<div class="pw-season-note">Latest completed season: <strong>{latest_season}</strong></div></div>',
+        f'<div class="pw-season-note">{escape(data_status)}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -452,6 +454,13 @@ def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
         if rows.empty:
             html.append('<div class="pw-report-empty">No situations met the documented screening rules.</div>')
         for _, row in rows.iterrows():
+            origin_params = (
+                f"&origin=home&focus={quote(str(row['player_id']))}"
+                f"&focus_family={quote(str(row['role_family']))}"
+            )
+            player_href = f"{row['player_href']}{origin_params}"
+            team_href = f"{row['team_href']}{origin_params}"
+            game_href = f"{row['game_href']}{origin_params}"
             participation_note = (
                 '<p><strong>Participation note:</strong> Suspected partial-game row remains included.</p>'
                 if bool(row.get("suspected_partial_game", False)) else ""
@@ -509,9 +518,9 @@ def weekly_report_html(frame: pd.DataFrame, categories: list[str]) -> str:
                 f'{participation_note}<p>{hidden_all_play}{context_detail}</p>'
                 f'{member_html}</details>'
                 '<nav class="pw-report-links" aria-label="Evidence links">'
-                f'<a href="{escape(str(row["player_href"]))}" target="_self">Player Profile</a>'
-                f'<a href="{escape(str(row["team_href"]))}" target="_self">Team Role Breakdown</a>'
-                f'<a href="{escape(str(row["game_href"]))}" target="_self">Game Usage Review</a>'
+                f'<a href="{escape(player_href)}" target="_self">Player Profile</a>'
+                f'<a href="{escape(team_href)}" target="_self">Team Role Breakdown</a>'
+                f'<a href="{escape(game_href)}" target="_self">Game Usage Review</a>'
                 '</nav></article>'
             )
         html.append("</div></section>")

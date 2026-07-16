@@ -19,6 +19,7 @@ ALLOWED = [
     "dashboard/pages/04_Reports.py", "dashboard/pages/05_Explorer.py",
     "tests/test_supporting_evidence_experience.py", "scripts/run_supporting_evidence_audit.py",
     "scripts/run_supporting_evidence_browser_qa.py",
+    "scripts/run_supporting_evidence_supplemental_audit.py",
     "scripts/validate_supporting_evidence_experience.py", "outputs/supporting_evidence_experience/*",
 ]
 PROTECTED = [
@@ -43,6 +44,10 @@ REQUIRED = [
     "REPORT_PAGE_VALIDATION.csv", "EXPLORER_PRESET_VALIDATION.csv",
     "EVIDENCE_PATH_WALKTHROUGHS.md", "mobile_qa.md", "desktop_qa.md",
     "final_validation.json", "COMMANDS_RUN.md",
+]
+SUPPLEMENTAL_REQUIRED = [
+    "GAP_MATRIX.md", "THIRTY_SECOND_USABILITY_AUDIT.csv", "DATA_STATUS_AUDIT.md",
+    "mobile_qa.md", "desktop_qa.md", "final_validation.json", "COMMANDS_RUN.md",
 ]
 SCREENSHOTS = [
     "mobile_home_to_team.png", "mobile_home_to_player.png", "mobile_home_to_game.png",
@@ -75,6 +80,12 @@ def main() -> int:
     args = parser.parse_args()
     failures: list[str] = []
     failures.extend(f"missing artifact: {name}" for name in REQUIRED if not (OUT / name).exists())
+    supplemental = OUT / "supplemental_gap_audit"
+    failures.extend(
+        f"missing supplemental artifact: {name}"
+        for name in SUPPLEMENTAL_REQUIRED
+        if not (supplemental / name).exists()
+    )
     failures.extend(f"missing screenshot: {name}" for name in SCREENSHOTS if not (OUT / "screenshots" / name).exists())
     for name in ["HOME_WORDING_AUDIT.csv", "TEAM_PAGE_VALIDATION.csv", "PLAYER_PAGE_VALIDATION.csv", "GAME_PAGE_VALIDATION.csv", "REPORT_PAGE_VALIDATION.csv", "EXPLORER_PRESET_VALIDATION.csv"]:
         path = OUT / name

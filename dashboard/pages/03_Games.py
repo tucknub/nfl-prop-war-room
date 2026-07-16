@@ -11,10 +11,10 @@ from research_data import (
 )
 from research_ui import (
     enable_browser_history_sync, initialize_query_control, methodology_expander, note,
-    page_intro, parse_int, ratio_text, responsive_table, role_noun, searchable_selectbox,
+    page_intro, parse_int, query_value, ratio_text, responsive_table, role_noun, searchable_selectbox,
     section, selection_summary, source_footer, update_query_from_widget,
 )
-from supporting_evidence import game_team_totals, matchup_from_game_id
+from supporting_evidence import game_team_totals, home_evidence_message, matchup_from_game_id
 
 
 def _whole(value: object) -> int:
@@ -56,6 +56,16 @@ usage = game_usage(season, week, game_id)
 matchup, away, home = matchup_from_game_id(game_id)
 teams = [team for team in [away, home] if team in set(usage["team"].astype(str))] if not usage.empty else []
 selection_summary(matchup, f"Week {week} · {season} regular season", f"{len(usage)} player rows", target=summary_slot)
+if query_value("origin") == "home":
+    origin_message = home_evidence_message(
+        season,
+        week,
+        query_value("focus"),
+        query_value("focus_family"),
+        game_id=game_id,
+    )
+    if origin_message:
+        note(origin_message)
 if season < 2023:
     note("Production and situational counts are available for completed 2023–2025 seasons.", amber=True)
 

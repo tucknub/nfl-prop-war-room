@@ -41,12 +41,11 @@
     "page_errors": 0
   },
   "tests": {
-    "focused_supporting_and_regression": "61 passed",
-    "complete_repository": "115 passed",
-    "pre_existing_repository_tests": "100 passed",
-    "new_supporting_tests": "15 passed",
-    "leakage_link_subset": "5 passed, 20 deselected",
-    "correctness_fix_regressions": "7 passed",
+    "focused_supporting": "18 passed",
+    "complete_repository": "118 passed",
+    "pre_existing_repository_tests": "115 passed",
+    "new_supplemental_tests": "3 passed",
+    "leakage_subset": "3 passed, 22 deselected",
     "python_compilation": "PASS",
     "corrected_targeted_audit": "PASS",
     "cross_page_validator": "PASS",

@@ -18,7 +18,8 @@ from research_ui import weekly_report_html  # noqa: E402
 from supporting_evidence import (  # noqa: E402
     EXPLORER_PRESETS, REPORT_DEFINITIONS, active_filter_summary, apply_explorer_preset,
     apply_home_wording, game_team_totals, home_selection_signature, matchup_from_game_id,
-    player_role_sentence, role_leader, situational_leader,
+    home_evidence_message, player_role_sentence, role_fingerprint_contexts, role_leader,
+    situational_leader, validated_data_status,
 )
 from weekly_report import DISPLAY_CATEGORIES, build_weekly_role_report  # noqa: E402
 
@@ -49,6 +50,27 @@ def test_home_expanded_evidence_omits_no_issue_audit_copy() -> None:
     assert "No participation exclusion applied" not in html
     assert "Selected-week normal-game share materially" not in html
     assert "Suspected partial-game row remains included" in html or not cards["suspected_partial_game"].any()
+
+
+def test_home_evidence_links_are_explicit_and_context_reuses_verified_headline() -> None:
+    cards, _ = build_weekly_role_report(2025, 17)
+    revised = apply_home_wording(cards)
+    html = weekly_report_html(revised, DISPLAY_CATEGORIES)
+    row = revised.iloc[0]
+    assert "origin=home" in html and f"focus={row['player_id']}" in html
+    message = home_evidence_message(
+        2025,
+        17,
+        str(row["player_id"]),
+        str(row["role_family"]),
+        team=str(row["team"]),
+        game_id=str(row["game_id"]),
+    )
+    assert message == f"From Home Week 17: {row['headline']}"
+    assert home_evidence_message(2025, 17, "invalid", str(row["role_family"])) is None
+    for page in ["01_Teams.py", "02_Players.py"]:
+        source = (ROOT / "dashboard/pages" / page).read_text(encoding="utf-8")
+        assert 'query_value("focus_family") == role_family' in source
 
 
 def test_role_leader_reconciles_and_suppresses_zero_denominators() -> None:
@@ -88,6 +110,27 @@ def test_player_page_handles_sparse_chart_and_week_bounds() -> None:
     assert "Fewer than two qualifying weekly points" in source
     assert "domain=[1, 18]" in source
     assert "Week 0" not in source
+
+
+def test_player_role_fingerprint_is_compact_and_contextual() -> None:
+    rb_contexts = role_fingerprint_contexts("rb_opportunity_share")
+    target_contexts = role_fingerprint_contexts("wr_target_share")
+    assert len(rb_contexts) == 5
+    assert len(target_contexts) == 6
+    assert "inside_10" not in rb_contexts and "inside_10" not in target_contexts
+    assert "end_zone" not in rb_contexts and "end_zone" in target_contexts
+    source = (ROOT / "dashboard/pages/02_Players.py").read_text(encoding="utf-8")
+    assert 'section("Role fingerprint"' in source
+    assert 'isin(role_fingerprint_contexts(role_family))' in source
+
+
+def test_validated_data_status_uses_complete_game_partitions_without_refresh_claim() -> None:
+    status = validated_data_status()
+    assert status["status"] == "AVAILABLE"
+    assert (status["season"], status["week"]) == (2025, 18)
+    assert status["completed_games"] == 16
+    assert status["label"] == "Data through 2025 Week 18"
+    assert status["refresh_timestamp"] is None
 
 
 def test_all_six_multi_team_selector_identities_remain_correct() -> None:

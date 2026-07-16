@@ -13,7 +13,7 @@ from research_ui import (
     responsive_table, role_noun, searchable_selectbox, section, selection_summary,
     source_footer, update_query_from_widget,
 )
-from supporting_evidence import role_leader, situational_leader
+from supporting_evidence import home_evidence_message, role_leader, situational_leader
 
 
 def _combined_family_summary(season: int, team: str, family: str, end_week: int, window: int | str, context: str) -> pd.DataFrame:
@@ -77,6 +77,12 @@ selection_summary(
     f"Through Week {end_week} · {len(summary)} players",
     target=summary_slot,
 )
+if query_value("origin") == "home" and query_value("focus_family") == role_family:
+    origin_message = home_evidence_message(
+        season, end_week, query_value("focus"), role_family, team=team
+    )
+    if origin_message:
+        note(origin_message)
 
 target_parts = [family_summaries[name] for name in ("wr_target_share", "te_target_share") if not family_summaries[name].empty]
 all_targets = pd.concat(target_parts, ignore_index=True) if target_parts else pd.DataFrame()
