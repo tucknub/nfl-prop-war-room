@@ -1,7 +1,0 @@
-report,question,rows,distinct_question,raw_denominator_present,shares_reconcile,high_value_merged,pass
-Backfield Control,"Who controls carries, total RB opportunities, passing downs, and scoring-area work?",248,True,True,True,True,True
-Target Hierarchy,Who controls normal-game and all-play targets?,318,True,True,True,True,True
-Scoring-Area Usage,"Who receives red-zone, inside-10, inside-five, and end-zone opportunities?",520,True,True,True,True,True
-Role Movement,Whose recent team opportunity share differs most from the prior period?,566,True,True,True,True,True
-Opportunity Versus Production,Whose production was unusually low or high relative to documented workload?,566,True,True,True,True,True
-Game-Script Usage,"How did opportunity change while leading, trailing, or in close games?",566,True,True,True,True,True

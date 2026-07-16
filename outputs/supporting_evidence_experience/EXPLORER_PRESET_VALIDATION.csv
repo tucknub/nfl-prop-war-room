@@ -1,7 +1,0 @@
-preset,role_family,game_state,down_distance,field_zone,two_minute,normal_game,players,player_games,zero_opportunity_rows,shares_reconcile,pass
-Targets while trailing,wr_target_share,Trailing,All,All,False,False,260,2046,643,True,True
-Normal-game red-zone usage,rb_opportunity_share,All,All,Red zone,False,True,160,1435,591,True,True
-Two-minute targets,wr_target_share,All,All,All,True,False,262,2388,1473,True,True
-Inside-five RB opportunities,rb_opportunity_share,All,All,Inside 5,False,False,150,985,566,True,True
-Early-down carry ownership,rb_carry_share,All,Early down,All,False,False,164,1565,341,True,True
-Passing-down RB opportunities,rb_opportunity_share,All,Passing down,All,False,False,164,1524,595,True,True

@@ -3,167 +3,210 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from research_data import (
-    ROLE_LABELS, available_seasons, available_weeks, primary_rows,
-    situational_team_summary, team_window_summary,
-)
+from research_data import ROLE_LABELS, available_seasons, available_weeks, primary_rows, situational_team_summary, team_window_summary
 from research_ui import (
-    enable_browser_history_sync, initialize_query_control, methodology_expander,
-    note, numeric_percent_sort, page_intro, parse_int, query_value, ratio_text,
-    responsive_table, role_noun, searchable_selectbox, section, selection_summary,
-    source_footer, update_query_from_widget,
+    enable_browser_history_sync,
+    methodology_expander,
+    note,
+    numeric_percent,
+    numeric_percent_sort,
+    page_intro,
+    initialize_query_control,
+    parse_int,
+    query_value,
+    ratio_text,
+    role_noun,
+    responsive_table,
+    searchable_selectbox,
+    section,
+    selection_summary,
+    source_footer,
+    update_query_from_widget,
 )
-from supporting_evidence import home_evidence_message, role_leader, situational_leader
-
-
-def _combined_family_summary(season: int, team: str, family: str, end_week: int, window: int | str, context: str) -> pd.DataFrame:
-    result = team_window_summary(season, team, family, end_week, window, context)
-    situation = situational_team_summary(season, team, family, end_week, window, context) if season >= 2023 else pd.DataFrame()
-    if not result.empty and not situation.empty:
-        result = result.merge(situation, on=["player_id", "player_name", "position"], how="left")
-    return result
 
 
 enable_browser_history_sync()
-page_intro("Team Role Breakdown", "Who currently controls each offensive role on this team?")
-summary_slot = st.empty()
+page_intro(
+    "Team Opportunity Map",
+    "See who accounted for a team’s carries, running-back opportunities, and targets.",
+)
 
+summary_slot = st.empty()
+# query_params initialize deep links; widget callbacks replace them after user changes.
 seasons = available_seasons()
-season_state = initialize_query_control("teams", "season", "teams_season", seasons, parser=parse_int)
-season = int(season_state.value)
+season_state = initialize_query_control(
+    "teams", "season", "teams_season", seasons, parser=parse_int
+)
+season = season_state.value
 season_rows = primary_rows()
 season_rows = season_rows[season_rows["season"].eq(season)]
 teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
-team_state = initialize_query_control("teams", "team", "teams_team", teams)
-family_state = initialize_query_control("teams", "family", "teams_family", list(ROLE_LABELS), default="rb_carry_share")
-
+team_state = initialize_query_control(
+    "teams", "team", "teams_team", teams
+)
+family_state = initialize_query_control(
+    "teams", "family", "teams_family", list(ROLE_LABELS), default="rb_carry_share"
+)
 with st.expander("Change filters"):
-    controls = st.columns(5)
-    with controls[0]:
-        season = st.selectbox("Season", seasons, key="teams_season", on_change=update_query_from_widget, args=("season", "teams_season"), kwargs={"clear_query": ("week",)})
-    with controls[1]:
-        team = searchable_selectbox("Search or select team", teams, key="teams_team", on_change=update_query_from_widget, args=("team", "teams_team"))
-    with controls[2]:
+    filters = st.columns(5)
+    with filters[0]:
+        season = st.selectbox(
+            "Season", seasons, key="teams_season",
+            on_change=update_query_from_widget,
+            args=("season", "teams_season"),
+            kwargs={"clear_query": ("week",)},
+        )
+    with filters[1]:
+        team = searchable_selectbox(
+            "Search or select team", teams, key="teams_team",
+            on_change=update_query_from_widget,
+            args=("team", "teams_team"),
+        )
+    with filters[2]:
         window_label = st.selectbox("Window", ["Season", "Last 8", "Last 4", "Last 2"], index=2, key="teams_window")
-    with controls[3]:
+    window = "Season" if window_label == "Season" else int(window_label.split()[-1])
+    with filters[3]:
         context = st.selectbox("Context", ["All plays", "Normal game"], index=1, key="teams_context")
-    with controls[4]:
-        role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family", on_change=update_query_from_widget, args=("family", "teams_family"))
+    with filters[4]:
+        role_family = st.selectbox(
+            "Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family",
+            on_change=update_query_from_widget,
+            args=("family", "teams_family"),
+        )
 
 if season_state.invalid_query or team_state.invalid_query or family_state.invalid_query:
-    # query_params initialize deep links; invalid values remain explicit and recoverable.
-    if season_state.invalid_query: st.warning("The requested season was not found.")
-    if team_state.invalid_query: st.warning("Team not found. Search for and select a valid team.")
-    if family_state.invalid_query: st.warning("The requested role family was not found.")
+    if season_state.invalid_query:
+        st.warning("The requested season was not found. Select a valid season to continue.")
+    if team_state.invalid_query:
+        st.warning("Team not found. Search for and select a valid team to continue.")
+    if family_state.invalid_query:
+        st.warning("The requested role family was not found. Select a valid role family to continue.")
     st.stop()
 
-window = "Season" if window_label == "Season" else int(window_label.split()[-1])
-week_text = query_value("week")
-requested_week = int(week_text) if week_text.isdigit() else None
-weeks = available_weeks(season)
-if requested_week is not None and requested_week not in weeks:
-    st.warning(f"Week not found for {season}: {week_text}")
+requested_week_text = query_value("week")
+requested_week = int(requested_week_text) if requested_week_text.isdigit() else None
+season_weeks = available_weeks(season)
+if requested_week is not None and requested_week not in season_weeks:
+    st.warning(f"Week not found for {season}: {requested_week_text}")
+    st.link_button("Return to Teams", "/teams")
     st.stop()
-end_week = requested_week if requested_week is not None else max(weeks)
+end_week = requested_week if requested_week is not None else max(season_weeks)
+summary = team_window_summary(season, team, role_family, end_week, window, context)
+situational = situational_team_summary(
+    season, team, role_family, end_week, window, context
+) if season >= 2023 else pd.DataFrame()
+if not situational.empty:
+    summary = summary.merge(situational, on=["player_id", "player_name", "position"], how="left")
 
-family_summaries = {
-    family: _combined_family_summary(season, team, family, end_week, window, context)
-    for family in ROLE_LABELS
-}
-summary = family_summaries[role_family]
 selection_summary(
     f"{team} · {season} · {window_label}",
     f"{context} · {ROLE_LABELS[role_family]}",
     f"Through Week {end_week} · {len(summary)} players",
     target=summary_slot,
 )
-if query_value("origin") == "home" and query_value("focus_family") == role_family:
-    origin_message = home_evidence_message(
-        season, end_week, query_value("focus"), role_family, team=team
-    )
-    if origin_message:
-        note(origin_message)
 
-target_parts = [family_summaries[name] for name in ("wr_target_share", "te_target_share") if not family_summaries[name].empty]
-all_targets = pd.concat(target_parts, ignore_index=True) if target_parts else pd.DataFrame()
-leader_specs = [
-    ("Backfield", role_leader(family_summaries["rb_carry_share"], label="Carry leader")),
-    ("Backfield", role_leader(family_summaries["rb_opportunity_share"], label="RB opportunity leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "passing_down", "Passing-down leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "red_zone", "Red-zone leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "inside_5", "Inside-five leader")),
-    ("Receiving", role_leader(family_summaries["wr_target_share"], label="WR target-share leader")),
-    ("Receiving", role_leader(family_summaries["te_target_share"], label="TE target-share leader")),
-    ("Receiving", role_leader(all_targets, label="Overall target leader") if not all_targets.empty else None),
-    ("Receiving", situational_leader(all_targets, "red_zone", "Red-zone target leader") if not all_targets.empty else None),
-    ("Receiving", situational_leader(all_targets, "end_zone", "End-zone target leader") if not all_targets.empty else None),
-]
-leader_rows, leader_cards = [], []
-for group, leader in leader_specs:
-    if leader is None:
-        continue
-    comparison = f"{leader['change'] * 100:+.1f} pp vs prior window" if pd.notna(leader["change"]) else "No prior comparison"
-    leader_rows.append({"Group": group, "Role": leader["label"], "Player": leader["player_name"], "Count": leader["raw"], "Denominator": leader["denominator"], "Share": leader["share"] * 100, "Comparison": comparison})
-    leader_cards.append({
-        "title": leader["label"], "subtitle": f"{leader['player_name']} · {leader['position']} · {group}",
-        "metrics": [("Ownership", ratio_text(leader["raw"], leader["denominator"]), context), ("Recent comparison", comparison, window_label)],
-        "href": f"/players?player={leader['player_id']}&season={season}&week={end_week}",
-    })
+view_mode = st.segmented_control(
+    "Usage view",
+    ["Role ownership", "Game script", "Scoring area"],
+    default="Role ownership",
+    label_visibility="collapsed",
+    key="teams_view",
+)
 
-section("Role hierarchy at a glance", "Backfield and receiving leaders for the selected window.")
-if leader_rows:
-    responsive_table(pd.DataFrame(leader_rows), leader_cards, key="teams_leaders", height=410, percent_columns=["Share"], label="View complete leader table")
-else:
-    st.info("No valid team denominators are available for this selection.")
-
-movement = summary.dropna(subset=["change"]).copy() if not summary.empty else pd.DataFrame()
-if not movement.empty:
-    movement["absolute_change"] = movement["change"].abs()
-    movement = movement.sort_values(["absolute_change", "raw_opportunities", "player_name"], ascending=[False, False, True])
-    section("Recent movement", "Largest count-weighted changes versus the prior matching window.")
-    move_rows, move_cards = [], []
-    for _, row in movement.head(6).iterrows():
-        move_rows.append({"Player": row["player_name"], "Position": row["position"], "Change": row["change"] * 100, "Count": row["raw_opportunities"], "Denominator": row["team_denominator"], "Share": row["share"] * 100})
-        move_cards.append({"title": row["player_name"], "subtitle": f"{row['position']} · {ROLE_LABELS[role_family]}", "metrics": [("Share change", f"{row['change'] * 100:+.1f} pp", "Versus prior matching window", True), ("Current ownership", ratio_text(row["raw_opportunities"], row["team_denominator"], role_noun(role_family)), context)], "href": f"/players?player={row['player_id']}&season={season}&family={role_family}&week={end_week}"})
-    responsive_table(pd.DataFrame(move_rows), move_cards, key="teams_movement", height=300, percent_columns=["Change", "Share"], label="View movement table")
-
-view_mode = st.segmented_control("Usage view", ["Role ownership", "Game script", "Scoring area"], default="Role ownership", label_visibility="collapsed", key="teams_view")
 if season < 2023 and view_mode != "Role ownership":
     note("Situational views are available for completed 2023–2025 seasons.", amber=True)
     view_mode = "Role ownership"
 
-section(view_mode, f"Complete {ROLE_LABELS[role_family].lower()} hierarchy.")
+context_groups = {
+    "Game script": [
+        ("early_down", "Early down"),
+        ("passing_down", "Passing down"),
+        ("two_minute", "Two minute"),
+        ("short_yardage", "Short yardage"),
+    ],
+    "Scoring area": [
+        ("red_zone", "Red zone"),
+        ("inside_10", "Inside 10"),
+        ("inside_5", "Inside 5"),
+        ("end_zone", "End-zone targets"),
+    ],
+}
+
+section(view_mode, f"{ROLE_LABELS[role_family]} · numeric sorting uses underlying percentage values.")
 if summary.empty:
     st.info("No team rows match the selected filters.")
 else:
-    contexts = {
-        "Game script": [("early_down", "Early down"), ("passing_down", "Passing down"), ("two_minute", "Two minute"), ("short_yardage", "Short yardage")],
-        "Scoring area": [("red_zone", "Red zone"), ("inside_10", "Inside 10"), ("inside_5", "Inside five"), ("end_zone", "End-zone targets")],
-    }
-    cards, rows_out = [], []
-    for rank, (_, row) in enumerate(summary.iterrows(), start=1):
-        if view_mode == "Role ownership":
-            metrics = [("Ownership", ratio_text(row["raw_opportunities"], row["team_denominator"], role_noun(role_family)), context), ("Prior comparison", f"{row['change'] * 100:+.1f} pp" if pd.notna(row["change"]) else "—", f"{window_label} versus prior window"), ("Sample", f"{int(row['sample_games'])} games", "Qualifying games")]
-            rows_out.append({"Rank": rank, "Player": row["player_name"], "Position": row["position"], "Raw": row["raw_opportunities"], "Denominator": row["team_denominator"], "Share": row["share"] * 100, "Change": row["change"] * 100 if pd.notna(row["change"]) else pd.NA})
-        else:
-            metrics, output = [], {"Rank": rank, "Player": row["player_name"], "Position": row["position"]}
-            for source, label in contexts[view_mode]:
-                raw, denominator = row.get(f"{source}_raw"), row.get(f"{source}_denominator")
-                if pd.notna(denominator) and float(denominator) > 0:
-                    metrics.append((label, ratio_text(raw, denominator, role_noun(role_family)), "Same-team context"))
-                    output[f"{label} count"] = f"{int(raw)} / {int(denominator)}"
-                    output[f"{label} share"] = float(raw) / float(denominator) * 100
-            rows_out.append(output)
-        cards.append({"rank": f"#{rank}", "title": row["player_name"], "subtitle": f"{team} · {row['position']}", "metrics": metrics, "href": f"/players?player={row['player_id']}&season={season}&family={role_family}&week={end_week}"})
-    display = pd.DataFrame(rows_out)
-    pct = [column for column in display if column in {"Share", "Change"} or column.endswith(" share")]
-    if pct:
-        display = numeric_percent_sort(display, pct[0])
-    responsive_table(display, cards, key=f"teams_{view_mode.lower().replace(' ', '_')}", height=520, percent_columns=pct)
+    cards: list[dict[str, object]] = []
+    if view_mode == "Role ownership":
+        display = summary[[
+            "player_name", "position", "share", "raw_opportunities", "team_denominator", "sample_games", "change"
+        ]].rename(
+            columns={
+                "player_name": "Player", "position": "Position", "raw_opportunities": "Raw",
+                "team_denominator": "Denominator", "sample_games": "Games",
+            }
+        )
+        display = numeric_percent(display, "share", "Share")
+        display = numeric_percent(display, "change", "Change")
+        display = numeric_percent_sort(display, "Share")
+        display = display[["Player", "Position", "Share", "Raw", "Denominator", "Games", "Change"]]
+        for rank, (_, row) in enumerate(summary.iterrows(), start=1):
+            cards.append(
+                {
+                    "rank": f"#{rank}",
+                    "title": row["player_name"],
+                    "subtitle": f"{team} · {row['position']}",
+                    "metrics": [
+                        (ROLE_LABELS[role_family], ratio_text(row["raw_opportunities"], row["team_denominator"], role_noun(role_family)), context),
+                        ("Recent comparison", f"{row['change'] * 100:+.1f} pp" if pd.notna(row["change"]) else "—", f"{window_label} versus prior window", True),
+                        ("Sample", f"{int(row['sample_games'])} games", "Qualifying games"),
+                    ],
+                    "href": f"/players?player={row['player_id']}&season={season}&family={role_family}",
+                }
+            )
+        responsive_table(display, cards, key="teams_ownership", height=500, percent_columns=["Share", "Change"])
+    else:
+        contexts = [item for item in context_groups[view_mode] if item[0] in summary]
+        table_columns = ["Player", "Position"]
+        display = summary[["player_name", "position"]].rename(columns={"player_name": "Player", "position": "Position"}).copy()
+        for source, label in contexts:
+            display[f"{label} count"] = summary.apply(
+                lambda row: f"{int(row[f'{source}_raw'])} / {int(row[f'{source}_denominator'])}"
+                if pd.notna(row.get(f"{source}_raw")) and pd.notna(row.get(f"{source}_denominator")) else "—",
+                axis=1,
+            )
+            display[f"{label} share"] = pd.to_numeric(summary[source], errors="coerce") * 100.0
+            table_columns += [f"{label} count", f"{label} share"]
+        sort_column = f"{contexts[0][1]} share" if contexts else None
+        if sort_column:
+            display = numeric_percent_sort(display, sort_column)
+        for _, row in summary.iterrows():
+            metrics = []
+            for source, label in contexts:
+                metrics.append(
+                    (
+                        label,
+                        ratio_text(row.get(f"{source}_raw"), row.get(f"{source}_denominator"), role_noun(role_family)),
+                        "Same-team, same-window denominator",
+                    )
+                )
+            cards.append(
+                {
+                    "title": row["player_name"],
+                    "subtitle": f"{team} · {row['position']}",
+                    "metrics": metrics,
+                    "href": f"/players?player={row['player_id']}&season={season}&family={role_family}",
+                }
+            )
+        percent_columns = [column for column in table_columns if column.endswith(" share")]
+        responsive_table(display[table_columns], cards, key=f"teams_{view_mode.lower().replace(' ', '_')}", height=520, percent_columns=percent_columns)
 
-methodology_expander([
-    "Every percentage uses the player count divided by the matching same-team denominator.",
-    "Window comparisons sum raw counts before division.",
-    "Zero denominators are suppressed rather than displayed as leaders.",
-])
-source_footer("Historical role ownership only; no future depth-chart claim is made.")
+methodology_expander(
+    [
+        "Every percentage is shown with its player count and matching team denominator.",
+        "Window shares sum raw opportunities and team opportunities before division.",
+        "Normal game excludes defined abnormal game contexts; all plays retains them.",
+        "Sorting uses numeric percentage columns, not formatted text.",
+    ]
+)
+source_footer("Shares describe historical opportunity ownership, not future depth-chart status.")

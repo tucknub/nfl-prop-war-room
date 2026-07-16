@@ -15,7 +15,6 @@ from research_ui import (
     source_footer,
     update_query_from_widget,
 )
-from supporting_evidence import apply_home_wording
 from weekly_report import (
     DISPLAY_CATEGORIES,
     build_weekly_role_report,
@@ -77,8 +76,6 @@ def render_home() -> None:
         return
 
     default_cards, all_matches = build_weekly_role_report(season, week)
-    default_cards = apply_home_wording(default_cards)
-    all_matches = apply_home_wording(all_matches)
     positions = ["All"] + sorted(all_matches["position"].dropna().astype(str).unique().tolist()) if not all_matches.empty else ["All"]
     families = ["All"] + list(ROLE_LABELS)
     categories = ["All"] + DISPLAY_CATEGORIES
@@ -110,10 +107,6 @@ def render_home() -> None:
         getattr(st, notice_type)(notice_text)
 
     render_weekly_report(visible_cards, DISPLAY_CATEGORIES)
-
-    st.caption(
-        "Normal-game share removes defined late-game and abnormal contexts that can distort workload."
-    )
 
     with st.expander("Change filters"):
         filter_columns = st.columns(3)
