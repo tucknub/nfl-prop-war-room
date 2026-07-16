@@ -1,32 +1,32 @@
 # Current Phase
 
-## Phase B2B - Live Calibrated Home Review
+## Phase B3B — Live Supporting Experience Review
 
 **Status:** Active
 
-**Production deployment:** Not automatically authorized
+**Production deployment:** Not automatically authorized during review
 
-**Control State and Searchability application:** `c485f3c8124fbb898bb1dfca91f38d22d0d41fb5`
+**Supporting Evidence Experience production commit:** `71c585c686434a4b4bacd8d622749c3938c3d912`
 
-**Rollback checkpoint:** `production-streamlit-cloud-pre-control-state-v1`
+**Advanced Research navigation fix:** `5acce8f4f6f27481a930719a2f9e45082ca4c8be`
 
-**Release source:** `propwar-control-state-searchability-v1` at `c485f3c8124fbb898bb1dfca91f38d22d0d41fb5`
+**Rollback checkpoint:** `production-streamlit-cloud-pre-advanced-research-label-v1`
 
 ## Objective
 
-Continue the user's live review of the calibrated Weekly Role Report now that the blocking selector-state and searchability defect has been corrected.
+Conduct the user's live review of the Supporting Evidence Experience before authorizing visual-identity work or additional product features.
 
 ## Deployment rule
 
-Production deployment during Phase B2B is not automatically authorized. Further application changes require explicit user direction after live product review.
+Production deployment during Phase B3B is not automatically authorized. Application changes require explicit user direction after live product review.
 
-## Phase B2C closure
+## Phase B3 release state
 
-Phase B2C closed after 42 public controls were audited; 9 focused tests and the complete 100-test repository suite passed; DAL changed to PHI without reverting; high-cardinality team, player, and game selectors exposed visible type-to-filter guidance; exact live 390x844 and 1440x900 checks passed on all six public routes with no horizontal overflow, control failures, console errors, page errors, or application exceptions; and protected definitions remained unchanged.
+The Supporting Evidence Experience is active in production. The public sidebar now labels the existing `/explorer` route **Advanced Research**, matching the page heading while preserving its presets, filters, Reset behavior, zero-opportunity eligibility, and query-state behavior.
 
 ## Constraints carried forward
 
-- Phase B2B production deployment is not automatically authorized.
-- The next action is the user's live product review; supporting-page or global visual redesign must not begin automatically.
-- Locked product decisions, detector rules, canonical definitions, frozen configurations, validation protocols, and release gates remain unchanged.
-- Remaining Medium and Low correctness findings stay documented until separately authorized.
+- Do not begin the visual-identity phase or add product features automatically.
+- Exact down-and-distance support remains deferred.
+- Fields absent from trusted public data sources remain unavailable and must not be fabricated.
+- Locked product decisions, detector rules, canonical definitions, frozen configurations, validation protocols, release gates, and Weekly Role Report screening rules remain unchanged.

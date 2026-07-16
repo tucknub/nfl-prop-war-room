@@ -1,5 +1,20 @@
 # PropWar Release History
 
+## Advanced Research Navigation Label v1
+
+- Supporting Evidence Experience production commit: `71c585c686434a4b4bacd8d622749c3938c3d912`.
+- Navigation fix commit: `5acce8f4f6f27481a930719a2f9e45082ca4c8be`.
+- Rollback checkpoint: `production-streamlit-cloud-pre-advanced-research-label-v1`, verified locally and on origin to peel exactly to `71c585c686434a4b4bacd8d622749c3938c3d912`.
+- Public change: the sidebar label changed from **Explorer** to **Advanced Research**. The internal `05_Explorer.py` filename, `/explorer` URL, page heading, calculations, presets, filters, Reset behavior, and query-state behavior were unchanged.
+- Validation: focused navigation and Supporting Evidence Experience tests passed; the complete repository suite reported 119 passed; Python compilation, corrected targeted audit, cross-page, link/state, Advanced Research, public-language, protected-file/scope, and Git whitespace checks passed.
+- B3 functional QA: Home, Team Role Breakdown, Player Role Profile, Role Fingerprint, Game Usage Review, Reports, and Advanced Research remained functional; Home evidence links and selector persistence remained intact.
+- Advanced Research QA: all six presets produced their documented filter summaries, Reset restored `All teams · RB carry share · Normal game`, `2025 · Weeks 1–18`, and `Minimum 5`, and the existing zero-opportunity validator passed.
+- Mobile QA: exact 390×844 portrait checks found the **Advanced Research** sidebar label, no **Explorer** label, a working direct `/explorer` route, the matching page heading, no horizontal overflow, and no application exception.
+- Desktop QA: exact 1440×900 checks found matching 1440px client and document widths, the **Advanced Research** sidebar label and page heading, all other public navigation labels unchanged, no horizontal overflow, and no application exception.
+- Deployment activation: the new label appeared after the production push without another Streamlit reboot; no rollback was required.
+- Deferred scope: exact down-and-distance support remains deferred. Final scores, one-play production concentration, longest play, and any other fields without a trusted validated public source remain unavailable and were not fabricated.
+- Project transition: Phase B3B — Live Supporting Experience Review is active. Continue user review before visual work or new features; production deployment is not automatically authorized during review.
+
 ## Control State and Searchability v1
 
 - Application commit: `c485f3c8124fbb898bb1dfca91f38d22d0d41fb5`
