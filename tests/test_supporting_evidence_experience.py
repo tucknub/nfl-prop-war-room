@@ -154,7 +154,15 @@ def test_inside_five_is_displayed_only_from_validated_source() -> None:
     page = (ROOT / "dashboard/pages/03_Games.py").read_text(encoding="utf-8")
     assert 'context_values("inside_5")' in page
     assert "Final score is omitted" in page
-    assert "one-play production concentration are omitted" in page
+    assert "Only fields present in the validated public usage data are shown." in page
+    for removed_wording in (
+        "Longest-play and one-play production concentration are omitted",
+        "Unavailable score and longest-play fields are not inferred or fabricated",
+        "one-play production concentration are omitted",
+    ):
+        assert removed_wording not in page
+    for blocked_term in ("longest-play", "one-play"):
+        assert blocked_term not in page.lower()
     assert "page_intro(\"Game Usage Review\"" in page
 
 
