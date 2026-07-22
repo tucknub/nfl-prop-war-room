@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/apply-usability-phase1.yml"
 
+# Temporary branch-only helper. Remove before review or merge.
 permissions:
   contents: write
 
