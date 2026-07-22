@@ -7,6 +7,8 @@ import pandas as pd
 
 from src.operations.current_role_pipeline import (
     build_current_role_outputs,
+    build_identity_table,
+    build_snap_spine,
     detect_completed_regular_weeks,
     validate_current_role_build,
     write_current_role_build,
@@ -420,3 +422,13 @@ def test_published_partition_independent_validation(tmp_path: Path) -> None:
 
     report = validate_published_role_outputs(SEASON, tmp_path)
     assert report["status"] == "PASS", report["checks"]
+
+
+def test_resolved_snap_rows_are_not_reported_unresolved() -> None:
+    identity = build_identity_table(player_stats(), rosters(), SEASON, 1)
+    spine, unresolved, coverage = build_snap_spine(
+        snap_counts(), identity, SEASON, 1, [GAME_1]
+    )
+    assert unresolved.empty
+    assert len(spine) == len(snap_counts())
+    assert coverage["resolved_snap_rows"].sum() == coverage["snap_rows"].sum()

@@ -416,7 +416,7 @@ def build_snap_spine(
 
     direct["position"] = direct["position"].fillna(direct.get("position_snap")).fillna("").astype(str).str.upper().str.strip()
     direct["player_name"] = direct["player_name"].fillna(direct.get("player"))
-    direct["identity_resolved"] = direct["identity_resolved"].fillna(False)
+    direct["identity_resolved"] = direct["identity_resolved"].fillna(False).astype(bool)
     unresolved = direct.loc[direct["player_id"].isna() | ~direct["identity_resolved"]].copy()
     spine = direct.loc[
         direct["player_id"].notna() & direct["identity_resolved"]
