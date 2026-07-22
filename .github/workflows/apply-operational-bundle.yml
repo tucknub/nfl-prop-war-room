@@ -1,0 +1,38 @@
+name: Apply Operational Readiness Bundle
+
+on:
+  push:
+    branches:
+      - propwar-2026-operational-readiness
+    paths:
+      - ".ops/operational_readiness_bundle.tar.gz.b64"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply audited source bundle
+        run: |
+          set -euo pipefail
+          bundle=".ops/operational_readiness_bundle.tar.gz.b64"
+          test -f "$bundle"
+          base64 --decode "$bundle" > /tmp/operational_readiness_bundle.tar.gz
+          tar -xzf /tmp/operational_readiness_bundle.tar.gz
+          rm -f "$bundle" .github/workflows/apply-operational-bundle.yml
+          rmdir .ops 2>/dev/null || true
+
+      - name: Commit atomic branch update
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Build 2026 current-season role operations"
+          git push origin HEAD:propwar-2026-operational-readiness
