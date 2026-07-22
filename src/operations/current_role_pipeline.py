@@ -671,10 +671,20 @@ def build_current_role_outputs(
     opportunity_players = events[["season", "week", "game_id", "team", "player_id"]].drop_duplicates()
     opportunity_identity_rate = float(events["identity_resolved"].fillna(False).mean())
     snap_identity_rate = float(snap_coverage["resolved_snap_rows"].sum() / snap_coverage["snap_rows"].sum())
+    report_positions = set(ROLE_FAMILIES)
+    resolved_report_snap_rows = int(spine["position"].isin(report_positions).sum())
+    unresolved_report_snap_rows = int(
+        unresolved_snaps["position"].fillna("").astype(str).str.upper().str.strip().isin(report_positions).sum()
+    )
+    report_snap_rows = resolved_report_snap_rows + unresolved_report_snap_rows
+    report_snap_identity_rate = (
+        float(resolved_report_snap_rows / report_snap_rows) if report_snap_rows else 1.0
+    )
     join_coverage = pd.DataFrame(
         [
             {"season": season, "join": "opportunity_to_identity", "rows": len(events), "matched_rows": int(events["identity_resolved"].fillna(False).sum()), "coverage_rate": opportunity_identity_rate},
-            {"season": season, "join": "snap_to_identity", "rows": int(snap_coverage["snap_rows"].sum()), "matched_rows": int(snap_coverage["resolved_snap_rows"].sum()), "coverage_rate": snap_identity_rate},
+            {"season": season, "join": "snap_to_identity_all_offense", "rows": int(snap_coverage["snap_rows"].sum()), "matched_rows": int(snap_coverage["resolved_snap_rows"].sum()), "coverage_rate": snap_identity_rate},
+            {"season": season, "join": "snap_to_identity_report_positions", "rows": report_snap_rows, "matched_rows": resolved_report_snap_rows, "coverage_rate": report_snap_identity_rate},
             {"season": season, "join": "opportunity_to_snap_spine", "rows": len(opportunity_players), "matched_rows": len(opportunity_players) - missing_event_snap, "coverage_rate": event_snap_rate},
         ]
     )
@@ -690,8 +700,11 @@ def build_current_role_outputs(
                 "expected_game_teams": len(expected_game_teams),
                 "unresolved_event_rows": len(unresolved_events),
                 "unresolved_snap_rows": len(unresolved_snaps),
+                "report_snap_rows": report_snap_rows,
+                "unresolved_report_snap_rows": unresolved_report_snap_rows,
                 "opportunity_identity_coverage": opportunity_identity_rate,
                 "snap_identity_coverage": snap_identity_rate,
+                "report_snap_identity_coverage": report_snap_identity_rate,
                 "opportunity_to_snap_coverage": event_snap_rate,
                 "partial_game_evidence_mode": "manual_overrides_only",
             }
@@ -714,6 +727,7 @@ def build_current_role_outputs(
             "Current-season participation data is unavailable in-season and is not used.",
             "Current-season nflverse injury data is unavailable; partial-game exclusions require a manual reviewed override.",
             "Snap counts are required before a completed week can publish.",
+            "RB, WR, and TE snap identity coverage gates publication; all-offense coverage remains a diagnostic.",
             "Only consecutive fully completed regular-season weeks are admitted.",
         ],
     }
@@ -749,7 +763,8 @@ def validate_current_role_build(build: CurrentRoleBuild) -> list[dict[str, objec
     add("production_unique_grain", not build.production.duplicated(["season", "week", "game_id", "team", "player_id"]).any(), int(build.production.duplicated(["season", "week", "game_id", "team", "player_id"]).sum()), 0)
     add("situational_share_range", build.situational.empty or build.situational["share"].between(0, 1).all(), None if build.situational.empty else [float(build.situational["share"].min()), float(build.situational["share"].max())], "[0, 1]")
     add("opportunity_identity_coverage", float(build.source_coverage.iloc[0]["opportunity_identity_coverage"]) == 1.0, float(build.source_coverage.iloc[0]["opportunity_identity_coverage"]), 1.0)
-    add("snap_identity_coverage", float(build.source_coverage.iloc[0]["snap_identity_coverage"]) >= 0.99, float(build.source_coverage.iloc[0]["snap_identity_coverage"]), ">= 0.99")
+    add("all_offense_snap_identity_coverage", float(build.source_coverage.iloc[0]["snap_identity_coverage"]) >= 0.95, float(build.source_coverage.iloc[0]["snap_identity_coverage"]), ">= 0.95 diagnostic floor")
+    add("report_snap_identity_coverage", float(build.source_coverage.iloc[0]["report_snap_identity_coverage"]) >= 0.99, float(build.source_coverage.iloc[0]["report_snap_identity_coverage"]), ">= 0.99")
     add("opportunity_to_snap_coverage", float(build.source_coverage.iloc[0]["opportunity_to_snap_coverage"]) >= 0.995, float(build.source_coverage.iloc[0]["opportunity_to_snap_coverage"]), ">= 0.995")
     return checks
 

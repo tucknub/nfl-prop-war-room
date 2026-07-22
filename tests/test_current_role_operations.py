@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -432,3 +433,26 @@ def test_resolved_snap_rows_are_not_reported_unresolved() -> None:
     assert unresolved.empty
     assert len(spine) == len(snap_counts())
     assert coverage["resolved_snap_rows"].sum() == coverage["snap_rows"].sum()
+
+
+def test_report_snap_identity_is_the_publication_gate() -> None:
+    build = build_current_role_outputs(
+        season=SEASON,
+        through_week=1,
+        completed_game_ids=[GAME_1],
+        pbp=pbp(),
+        player_stats=player_stats(),
+        rosters_weekly=rosters(),
+        snap_counts=snap_counts(),
+        schedules=schedules(),
+    )
+    coverage = build.source_coverage.copy()
+    coverage.loc[:, "snap_identity_coverage"] = 0.98
+    coverage.loc[:, "report_snap_identity_coverage"] = 1.0
+    checks = {item["check"]: item for item in validate_current_role_build(replace(build, source_coverage=coverage))}
+    assert checks["all_offense_snap_identity_coverage"]["passed"]
+    assert checks["report_snap_identity_coverage"]["passed"]
+
+    coverage.loc[:, "report_snap_identity_coverage"] = 0.98
+    checks = {item["check"]: item for item in validate_current_role_build(replace(build, source_coverage=coverage))}
+    assert not checks["report_snap_identity_coverage"]["passed"]
