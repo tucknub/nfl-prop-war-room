@@ -1,0 +1,37 @@
+name: Verify Live 2026 Operations Deployment
+
+on:
+  pull_request:
+    paths:
+      - "scripts/verify_live_2026_operations.py"
+      - ".github/workflows/verify-live-2026-operations.yml"
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install browser verifier
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Verify public Streamlit deployment
+        run: python scripts/verify_live_2026_operations.py
+
+      - name: Upload live verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-2026-operations-verification
+          path: outputs/live_2026_operations_verification
+          if-no-files-found: warn
