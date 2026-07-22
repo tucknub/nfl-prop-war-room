@@ -25,7 +25,7 @@ def frame_diagnostics(page: Page) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     for frame in page.frames:
         try:
-            text = frame.locator("body").inner_text(timeout=5000)[:2500]
+            text = frame.locator("body").inner_text(timeout=5000)[:5000]
         except Exception as exc:
             text = f"<body unavailable: {exc}>"
         diagnostics.append({"url": frame.url, "body": text})
@@ -53,7 +53,8 @@ def verify_page(
     heading: str,
     required: tuple[str, ...],
     forbidden: tuple[str, ...] = (),
-    wait_seconds: int = 45,
+    heading_wait_seconds: int = 45,
+    content_wait_seconds: int = 15,
 ) -> dict[str, object]:
     name = path.strip("/") or "home"
     url = LIVE + path
@@ -66,13 +67,20 @@ def verify_page(
 
     woke_app = wake_if_sleeping(page)
     frame: Frame | None = None
-    for _ in range(wait_seconds):
+    for _ in range(heading_wait_seconds):
         frame = find_frame(page, heading)
         if frame is not None:
             break
         if wake_if_sleeping(page):
             woke_app = True
         time.sleep(1)
+
+    if frame is not None:
+        for _ in range(content_wait_seconds):
+            text = frame.locator("body").inner_text()
+            if all(value in text for value in required):
+                break
+            time.sleep(1)
 
     page.screenshot(path=str(SHOTS / f"{name}.png"), full_page=True)
     diagnostics = frame_diagnostics(page)
@@ -113,7 +121,8 @@ def main() -> int:
             "/",
             "Know what changed before researching what happens next.",
             ("Backfield Control", "Target Hierarchy", "Role Movement", "Open Reports"),
-            wait_seconds=150,
+            heading_wait_seconds=150,
+            content_wait_seconds=30,
         )
         results = [home]
         if home["status"] == "PASS":
@@ -124,7 +133,8 @@ def main() -> int:
                     "NFL Role Intelligence",
                     ("Backfield Control", "Target Hierarchy", "Role Movement", "All-play evidence", "Complete report"),
                     ("Scoring-Area Usage", "Game-Script Usage", "Opportunity Versus Production"),
-                    wait_seconds=60,
+                    heading_wait_seconds=60,
+                    content_wait_seconds=240,
                 )
             )
             results.append(
@@ -133,7 +143,8 @@ def main() -> int:
                     "/methodology",
                     "Methodology",
                     ("Launch report contract", "Calculation authority", "Report boundaries", "Missing and unavailable data"),
-                    wait_seconds=60,
+                    heading_wait_seconds=60,
+                    content_wait_seconds=30,
                 )
             )
         browser.close()
