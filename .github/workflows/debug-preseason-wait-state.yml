@@ -1,0 +1,60 @@
+name: Debug Preseason Wait State
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/debug-preseason-wait-state.yml"
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Capture wait-state diagnostics
+        continue-on-error: true
+        run: |
+          python - <<'PY' > /tmp/wait-state-diagnostic.txt 2>&1
+          import json
+          import sys
+          import numpy as np
+          import pandas as pd
+          from tests.test_current_role_operations import pbp, schedules, SEASON
+          from src.operations.current_role_pipeline import detect_completed_regular_weeks
+
+          empty = pd.DataFrame(columns=pbp().columns)
+          gate = detect_completed_regular_weeks(empty, schedules(), SEASON)
+          print('python', sys.version)
+          print('numpy', np.__version__)
+          print('pandas', pd.__version__)
+          print('through_week', repr(gate.through_week))
+          print('completed_game_ids', repr(gate.completed_game_ids))
+          print('completed_weeks', repr(gate.completed_weeks))
+          print('blocked_weeks', repr(gate.blocked_weeks))
+          print('blocked_types', [type(value).__name__ for value in gate.blocked_weeks])
+          print('json', json.dumps({'blocked_weeks': list(gate.blocked_weeks)}))
+          PY
+          python -m pytest -vv tests/test_current_role_operations.py::test_completion_gate_waits_when_no_game_is_complete > /tmp/wait-state-pytest.txt 2>&1
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preseason-wait-state-diagnostics
+          path: |
+            /tmp/wait-state-diagnostic.txt
+            /tmp/wait-state-pytest.txt
+          if-no-files-found: warn
