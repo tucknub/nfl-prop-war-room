@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/verify-2026-preseason-no-publish.yml"
 
+# Verification-only workflow. It must never be merged into production.
 jobs:
   verify-preseason:
     runs-on: ubuntu-latest
