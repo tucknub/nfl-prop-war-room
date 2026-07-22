@@ -1,0 +1,67 @@
+name: Apply Snap Boolean Resolution Fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-snap-boolean-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+        with:
+          ref: propwar-2026-operational-readiness
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Patch Boolean resolution and regression test
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          pipeline = Path('src/operations/current_role_pipeline.py')
+          text = pipeline.read_text(encoding='utf-8')
+          old = '    direct["identity_resolved"] = direct["identity_resolved"].fillna(False)\n'
+          new = '    direct["identity_resolved"] = direct["identity_resolved"].fillna(False).astype(bool)\n'
+          if old not in text:
+              raise SystemExit('identity_resolved normalization pattern not found')
+          pipeline.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          tests = Path('tests/test_current_role_operations.py')
+          text = tests.read_text(encoding='utf-8')
+          old_import = '''from src.operations.current_role_pipeline import (\n    build_current_role_outputs,\n    detect_completed_regular_weeks,\n    validate_current_role_build,\n    write_current_role_build,\n)\n'''
+          new_import = '''from src.operations.current_role_pipeline import (\n    build_current_role_outputs,\n    build_identity_table,\n    build_snap_spine,\n    detect_completed_regular_weeks,\n    validate_current_role_build,\n    write_current_role_build,\n)\n'''
+          if old_import not in text:
+              raise SystemExit('test import pattern not found')
+          text = text.replace(old_import, new_import, 1)
+          if 'test_resolved_snap_rows_are_not_reported_unresolved' not in text:
+              text += '''\n\ndef test_resolved_snap_rows_are_not_reported_unresolved() -> None:\n    identity = build_identity_table(player_stats(), rosters(), SEASON, 1)\n    spine, unresolved, coverage = build_snap_spine(\n        snap_counts(), identity, SEASON, 1, [GAME_1]\n    )\n    assert unresolved.empty\n    assert len(spine) == len(snap_counts())\n    assert coverage["resolved_snap_rows"].sum() == coverage["snap_rows"].sum()\n'''
+          tests.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify targeted tests
+        run: python -m pytest -q tests/test_current_role_operations.py
+
+      - name: Commit source fix
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/operations/current_role_pipeline.py tests/test_current_role_operations.py
+          git commit -m "Normalize snap identity resolution as Boolean"
+          git push origin HEAD:propwar-2026-operational-readiness
