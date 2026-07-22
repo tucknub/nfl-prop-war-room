@@ -1,0 +1,52 @@
+name: Apply Role Spine Coverage Fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-role-spine-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+        with:
+          ref: propwar-2026-operational-readiness
+          fetch-depth: 0
+
+      - name: Patch snap spine and regression test
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          pipeline = Path('src/operations/current_role_pipeline.py')
+          text = pipeline.read_text(encoding='utf-8')
+          old = '''    spine = direct.loc[\n        direct["player_id"].notna() & direct["identity_resolved"] & direct["position"].isin(ROLE_FAMILIES)\n    ].copy()\n'''
+          new = '''    spine = direct.loc[\n        direct["player_id"].notna() & direct["identity_resolved"]\n    ].copy()\n'''
+          if old not in text:
+              raise SystemExit('snap spine pattern not found')
+          pipeline.write_text(text.replace(old, new), encoding='utf-8')
+
+          tests = Path('tests/test_current_role_operations.py')
+          text = tests.read_text(encoding='utf-8')
+          marker = 'def test_current_role_build_validates_and_writes_deterministically'
+          if 'test_non_role_opportunity_reconciles_to_full_snap_spine' not in text:
+              block = '''def test_non_role_opportunity_reconciles_to_full_snap_spine() -> None:\n    quarterback = {\n        "season": SEASON,\n        "week": 1,\n        "season_type": "REG",\n        "game_id": GAME_1,\n        "player_id": "A-QB1",\n        "player_name": "AAA Quarterback",\n        "player_display_name": "AAA Quarterback",\n        "position": "QB",\n        "team": "AAA",\n        "carries": 1,\n        "targets": 0,\n    }\n    roster_qb = {\n        "season": SEASON,\n        "week": 1,\n        "game_type": "REG",\n        "gsis_id": "A-QB1",\n        "full_name": "AAA Quarterback",\n        "team": "AAA",\n        "position": "QB",\n        "status": "ACT",\n        "pfr_id": "AQB1",\n    }\n    snap_qb = {\n        "season": SEASON,\n        "week": 1,\n        "game_type": "REG",\n        "game_id": GAME_1,\n        "pfr_player_id": "AQB1",\n        "player": "AAA Quarterback",\n        "position": "QB",\n        "team": "AAA",\n        "offense_snaps": 50,\n        "offense_pct": "100%",\n    }\n    plays = pbp()\n    play_index = plays.index[plays["posteam"].eq("AAA") & plays["rush_attempt"].eq(1)][0]\n    plays.loc[play_index, "rusher_player_id"] = "A-QB1"\n    plays.loc[play_index, "rusher_player_name"] = "AAA Quarterback"\n    result = build_current_role_outputs(\n        season=SEASON,\n        through_week=1,\n        completed_game_ids=[GAME_1],\n        pbp=plays,\n        player_stats=pd.concat([player_stats(), pd.DataFrame([quarterback])], ignore_index=True),\n        rosters_weekly=pd.concat([rosters(), pd.DataFrame([roster_qb])], ignore_index=True),\n        snap_counts=pd.concat([snap_counts(), pd.DataFrame([snap_qb])], ignore_index=True),\n        schedules=schedules(),\n    )\n    assert not result.canonical["player_id"].eq("A-QB1").any()\n    coverage = result.join_coverage.loc[\n        result.join_coverage["join"].eq("opportunity_to_snap_spine"), "coverage_rate"\n    ].iloc[0]\n    assert coverage == 1.0\n\n\n'''
+              text = text.replace(marker, block + marker)
+              tests.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify targeted tests
+        run: python -m pytest -q tests/test_current_role_operations.py
+
+      - name: Commit source fix
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/operations/current_role_pipeline.py tests/test_current_role_operations.py
+          git commit -m "Reconcile all offensive opportunity players to snap spine"
+          git push origin HEAD:propwar-2026-operational-readiness
