@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "status": "PRESEASON",
+  "generated_at_utc": "2026-07-22T00:00:00Z",
+  "published_through_week": null,
+  "completed_games": 0,
+  "message": "2026 current-season role data will publish after the first fully completed regular-season week passes every source, identity, snap-count, and validation gate.",
+  "source_status": [],
+  "operational_policy": {
+    "publication_grain": "consecutive fully completed regular-season weeks",
+    "participation_data": "not used in-season because the current source is post-season only",
+    "injury_data": "not inferred from an unavailable current source",
+    "partial_game_handling": "manual reviewed overrides only",
+    "snap_counts_required": true,
+    "stale_cache_default": "blocked",
+    "atomic_publication": true
+  }
+}

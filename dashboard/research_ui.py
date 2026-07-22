@@ -21,7 +21,7 @@ from research_data import percent, pp
 from supporting_evidence import validated_data_status_label
 
 
-PUBLIC_SOURCE_NOTE = "Historical regular-season role and opportunity data through 2025."
+PUBLIC_SOURCE_NOTE = "Regular-season role and opportunity data; current-season weeks appear only after validation."
 
 
 def configure_page(title: str) -> None:

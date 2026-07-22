@@ -11,6 +11,7 @@ if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
 from research_ui import inject_styles  # noqa: E402
+from research_data import operational_status_text  # noqa: E402
 from home_page import render_home  # noqa: E402
 
 
@@ -20,6 +21,7 @@ def render_launch_home() -> None:
         "PropWar turns documented offensive opportunities into three transparent NFL role reports. "
         "Every share remains attached to its raw player count and matching same-team denominator."
     )
+    st.info(operational_status_text())
     report_columns = st.columns(3)
     report_copy = (
         (

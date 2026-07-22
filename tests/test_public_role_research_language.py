@@ -78,12 +78,17 @@ def test_admin_has_exact_nonvalidation_label() -> None:
     assert "Experimental Shadow Research — Not Validated" in admin
 
 
-def test_public_copy_marks_2025_complete_and_2026_not_started() -> None:
+def test_public_copy_uses_dynamic_operational_status_and_seasons() -> None:
     home = (ROOT / "dashboard" / "home_page.py").read_text(encoding="utf-8")
+    app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
+    reports = (ROOT / "dashboard" / "pages" / "04_Reports.py").read_text(encoding="utf-8")
     explorer = (ROOT / "dashboard" / "pages" / "05_Explorer.py").read_text(encoding="utf-8")
-    assert "Completed historical data through 2025" in home
-    assert "2026 NFL season has not started" in home
-    assert '[2025, 2024, 2023]' in explorer
+    assert "operational_status_text" in home
+    assert "operational_status_text" in app
+    assert "operational_status_text" in reports
+    assert "available_seasons()" in explorer
+    assert '[2025, 2024, 2023]' not in explorer
+    assert "2026 NFL season has not started" not in home
 
 
 def test_no_fixed_jets_or_team_logo_element_is_defined() -> None:

@@ -9,6 +9,7 @@ from launch_contract import (
     REPORT_METHODS,
     REPORT_ORDER,
 )
+from research_data import operational_status_text
 from research_ui import page_intro, section, source_footer
 from supporting_evidence import validated_data_status
 
@@ -69,6 +70,18 @@ PropWar displays only fields supported by the committed data and validated defin
 """
 )
 
+section("Current-season operations", "New weeks publish only after every required gate passes.")
+st.markdown(
+    """
+- Only consecutive, fully completed regular-season weeks are eligible to publish.
+- Play-by-play, schedules, weekly rosters, player statistics, and offensive snap counts are required.
+- Current-season participation data is not estimated when it is unavailable during the season.
+- Current injury information is not inferred from an unavailable source. A confirmed partial-game exclusion requires a reviewed manual record.
+- New files are built and validated in staging. A failed source, join, or validation gate leaves the prior published partition active.
+- Each published season has a manifest, file hashes, join coverage, source coverage, and a public freshness status.
+"""
+)
+
 section("Reproducibility", "Every conclusion must be traceable to the same underlying rows.")
 st.markdown(
     """
@@ -76,4 +89,4 @@ The Team, Player, Game, Reports, and Advanced Research surfaces are expected to 
 """
 )
 
-source_footer("Methodology applies to completed historical data currently available in the application.")
+source_footer(operational_status_text())

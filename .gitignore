@@ -10,3 +10,8 @@ data/raw/
 *.zip
 NFL Prop Projection BACKUPS/
 outputs/receptions_simulation_distribution.csv
+
+# Current-season role research operational scratch space
+data/cache/role_research/
+outputs/role_research/.staging/
+outputs/run_reports/role_research/
