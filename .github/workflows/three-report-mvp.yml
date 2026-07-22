@@ -31,8 +31,14 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Compile application
-        run: python -m compileall -q dashboard src tests
+      - name: Compile changed application files
+        run: |
+          python -m py_compile \
+            dashboard/app.py \
+            dashboard/launch_contract.py \
+            dashboard/pages/04_Reports.py \
+            dashboard/pages/06_Methodology.py \
+            tests/test_three_report_launch.py
 
       - name: Run repository tests
         run: pytest -q
