@@ -1,0 +1,43 @@
+name: Apply Validation Detail Fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-validation-detail-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+        with:
+          ref: propwar-2026-operational-readiness
+          fetch-depth: 0
+
+      - name: Include failed validation checks in assertion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/operations/current_role_pipeline.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    if validation["status"] != "PASS":\n        raise AssertionError("Current-season role output validation failed")\n'''
+          new = '''    if validation["status"] != "PASS":\n        failed = [item for item in validation_checks if not item["passed"]]\n        raise AssertionError(f"Current-season role output validation failed: {failed}")\n'''
+          if old not in text:
+              raise SystemExit('validation assertion pattern not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Compile source
+        run: python -m compileall -q src/operations
+
+      - name: Commit diagnostic improvement
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/operations/current_role_pipeline.py
+          git commit -m "Expose failed current-season validation checks"
+          git push origin HEAD:propwar-2026-operational-readiness
