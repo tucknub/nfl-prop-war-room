@@ -47,6 +47,21 @@ jobs:
           path: pytest.log
           if-no-files-found: error
 
+      - name: Package branch for browser QA
+        if: steps.repository_tests.outcome == 'success'
+        run: |
+          zip -qr three-report-branch-source.zip . \
+            -x '.git/*' \
+            -x 'three-report-branch-source.zip'
+
+      - name: Upload branch source
+        if: steps.repository_tests.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-report-branch-source
+          path: three-report-branch-source.zip
+          if-no-files-found: error
+
       - name: Enforce test result
         if: steps.repository_tests.outcome == 'failure'
         run: |
