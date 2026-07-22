@@ -419,7 +419,7 @@ def build_snap_spine(
     direct["identity_resolved"] = direct["identity_resolved"].fillna(False)
     unresolved = direct.loc[direct["player_id"].isna() | ~direct["identity_resolved"]].copy()
     spine = direct.loc[
-        direct["player_id"].notna() & direct["identity_resolved"] & direct["position"].isin(ROLE_FAMILIES)
+        direct["player_id"].notna() & direct["identity_resolved"]
     ].copy()
     spine["player_id"] = spine["player_id"].map(normalize_id)
     spine = spine[

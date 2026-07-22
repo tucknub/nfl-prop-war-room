@@ -259,6 +259,64 @@ def test_current_role_build_includes_zero_opportunity_snap_player() -> None:
     assert result.canonical["data_quality_pass"].all()
 
 
+def test_non_role_opportunity_reconciles_to_full_snap_spine() -> None:
+    quarterback = {
+        "season": SEASON,
+        "week": 1,
+        "season_type": "REG",
+        "game_id": GAME_1,
+        "player_id": "A-QB1",
+        "player_name": "AAA Quarterback",
+        "player_display_name": "AAA Quarterback",
+        "position": "QB",
+        "team": "AAA",
+        "carries": 1,
+        "targets": 0,
+    }
+    roster_qb = {
+        "season": SEASON,
+        "week": 1,
+        "game_type": "REG",
+        "gsis_id": "A-QB1",
+        "full_name": "AAA Quarterback",
+        "team": "AAA",
+        "position": "QB",
+        "status": "ACT",
+        "pfr_id": "AQB1",
+    }
+    snap_qb = {
+        "season": SEASON,
+        "week": 1,
+        "game_type": "REG",
+        "game_id": GAME_1,
+        "pfr_player_id": "AQB1",
+        "player": "AAA Quarterback",
+        "position": "QB",
+        "team": "AAA",
+        "offense_snaps": 50,
+        "offense_pct": "100%",
+    }
+    plays = pbp()
+    play_index = plays.index[plays["posteam"].eq("AAA") & plays["rush_attempt"].eq(1)][0]
+    plays.loc[play_index, "rusher_player_id"] = "A-QB1"
+    plays.loc[play_index, "rusher_player_name"] = "AAA Quarterback"
+    result = build_current_role_outputs(
+        season=SEASON,
+        through_week=1,
+        completed_game_ids=[GAME_1],
+        pbp=plays,
+        player_stats=pd.concat([player_stats(), pd.DataFrame([quarterback])], ignore_index=True),
+        rosters_weekly=pd.concat([rosters(), pd.DataFrame([roster_qb])], ignore_index=True),
+        snap_counts=pd.concat([snap_counts(), pd.DataFrame([snap_qb])], ignore_index=True),
+        schedules=schedules(),
+    )
+    assert not result.canonical["player_id"].eq("A-QB1").any()
+    coverage = result.join_coverage.loc[
+        result.join_coverage["join"].eq("opportunity_to_snap_spine"), "coverage_rate"
+    ].iloc[0]
+    assert coverage == 1.0
+
+
 def test_current_role_build_validates_and_writes_deterministically(tmp_path: Path) -> None:
     result = build()
     checks = validate_current_role_build(result)
