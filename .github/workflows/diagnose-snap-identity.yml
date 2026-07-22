@@ -1,0 +1,127 @@
+name: Diagnose Snap Identity Coverage
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-snap-identity.yml"
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Measure snap identity coverage by position
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import pandas as pd
+
+          from src.operations.current_role_pipeline import (
+              ROLE_FAMILIES,
+              build_identity_table,
+              build_snap_spine,
+              detect_completed_regular_weeks,
+          )
+          from src.operations.nflverse_current import load_current_nflverse_sources
+
+          cache = Path('/tmp/propwar-role-cache')
+          frames, source_status = load_current_nflverse_sources(
+              2025,
+              cache_dir=cache,
+              refresh=True,
+              allow_stale_cache=False,
+          )
+          gate = detect_completed_regular_weeks(
+              frames['pbp'],
+              frames['schedules'],
+              2025,
+              requested_through_week=1,
+          )
+          assert gate.through_week == 1, gate
+          identity = build_identity_table(
+              frames['player_stats'],
+              frames['rosters_weekly'],
+              2025,
+              1,
+          )
+          spine, unresolved, coverage = build_snap_spine(
+              frames['snap_counts'],
+              identity,
+              2025,
+              1,
+              gate.completed_game_ids,
+          )
+
+          report_positions = set(ROLE_FAMILIES)
+          resolved_by_position = (
+              spine.groupby('position').size().sort_values(ascending=False).to_dict()
+              if not spine.empty else {}
+          )
+          unresolved_by_position = (
+              unresolved.assign(position=unresolved['position'].fillna('').astype(str).str.upper().str.strip())
+              .groupby('position').size().sort_values(ascending=False).to_dict()
+              if not unresolved.empty else {}
+          )
+          resolved_report = int(spine['position'].isin(report_positions).sum())
+          unresolved_report = int(unresolved['position'].fillna('').astype(str).str.upper().str.strip().isin(report_positions).sum())
+          report_total = resolved_report + unresolved_report
+          report_rate = resolved_report / report_total if report_total else 1.0
+          all_resolved = int(coverage['resolved_snap_rows'].sum())
+          all_rows = int(coverage['snap_rows'].sum())
+          all_rate = all_resolved / all_rows if all_rows else 1.0
+
+          examples = []
+          if not unresolved.empty:
+              columns = [
+                  column for column in (
+                      'season', 'week', 'game_id', 'team', 'player', 'position',
+                      'position_snap', 'pfr_id', 'normalized_name', 'match_method',
+                  ) if column in unresolved.columns
+              ]
+              examples = unresolved[columns].head(50).fillna('').to_dict('records')
+
+          payload = {
+              'all_offense': {
+                  'resolved': all_resolved,
+                  'rows': all_rows,
+                  'coverage_rate': all_rate,
+              },
+              'report_positions': {
+                  'positions': sorted(report_positions),
+                  'resolved': resolved_report,
+                  'unresolved': unresolved_report,
+                  'rows': report_total,
+                  'coverage_rate': report_rate,
+              },
+              'resolved_by_position': {str(k): int(v) for k, v in resolved_by_position.items()},
+              'unresolved_by_position': {str(k): int(v) for k, v in unresolved_by_position.items()},
+              'unresolved_examples': examples,
+              'source_status': source_status.fillna('').to_dict('records'),
+          }
+          output = Path('/tmp/snap-identity-diagnostic.json')
+          output.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(payload, indent=2))
+          PY
+
+      - name: Upload diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-identity-diagnostic
+          path: /tmp/snap-identity-diagnostic.json
+          if-no-files-found: error
