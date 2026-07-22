@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - "dashboard/**"
-      - "scripts/run_three_report_browser_qa*.py"
+      - "scripts/run_three_report_launch_browser_qa.py"
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/three-report-mvp.yml"
@@ -89,7 +89,7 @@ jobs:
         id: browser_qa
         if: steps.repository_tests.outcome == 'success'
         continue-on-error: true
-        run: python scripts/run_three_report_browser_qa_v5.py
+        run: python scripts/run_three_report_launch_browser_qa.py
 
       - name: Upload browser QA
         if: always() && steps.repository_tests.outcome == 'success'
