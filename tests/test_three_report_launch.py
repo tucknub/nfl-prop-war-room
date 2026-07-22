@@ -49,6 +49,7 @@ def test_navigation_exposes_reports_and_methodology() -> None:
 def test_reports_page_declares_all_play_authority() -> None:
     source = (DASHBOARD / "pages" / "04_Reports.py").read_text(encoding="utf-8")
     assert "ALL_PLAY_AUTHORITY_NOTICE" in source
+    assert 'st.markdown(f"## {selected_report}")' in source
     assert '"All plays"' in source
     assert '"Normal game"' in source
     assert "Opportunity Versus Production" not in source

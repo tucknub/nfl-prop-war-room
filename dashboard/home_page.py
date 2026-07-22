@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from research_data import ROLE_LABELS, available_seasons, available_weeks
+from research_data import ROLE_LABELS, available_seasons, available_weeks, operational_status_text
 from research_ui import (
     enable_browser_history_sync,
     methodology_expander,
@@ -187,4 +187,4 @@ def render_home() -> None:
             "Category assignment is deterministic and descriptive. It does not claim that usage will continue.",
         ]
     )
-    source_footer("Completed historical data through 2025; the 2026 NFL season has not started.")
+    source_footer(operational_status_text())

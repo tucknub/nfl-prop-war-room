@@ -129,7 +129,7 @@ if not movement.empty:
 
 view_mode = st.segmented_control("Usage view", ["Role ownership", "Game script", "Scoring area"], default="Role ownership", label_visibility="collapsed", key="teams_view")
 if season < 2023 and view_mode != "Role ownership":
-    note("Situational views are available for completed 2023–2025 seasons.", amber=True)
+    note("Situational views are available from 2023 onward for published seasons.", amber=True)
     view_mode = "Role ownership"
 
 section(view_mode, f"Complete {ROLE_LABELS[role_family].lower()} hierarchy.")

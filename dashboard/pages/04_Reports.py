@@ -10,7 +10,12 @@ from launch_contract import (
     REPORT_METHODS,
     REPORT_ORDER,
 )
-from research_data import available_seasons, available_weeks, league_window_summary
+from research_data import (
+    available_seasons,
+    available_weeks,
+    league_window_summary,
+    operational_status_text,
+)
 from research_ui import (
     methodology_expander,
     page_intro,
@@ -239,6 +244,7 @@ page_intro(
     "Three evidence-backed reports generated from documented offensive opportunities.",
 )
 st.info(ALL_PLAY_AUTHORITY_NOTICE)
+st.caption(operational_status_text())
 
 selected_report = st.segmented_control(
     "Report",
@@ -299,6 +305,4 @@ else:
     _render_table(selected_report, rows, season, end_week)
 
 methodology_expander(list(REPORT_METHODS[selected_report]))
-source_footer(
-    "Descriptive historical research only. No market pricing, picks, projections, or claim that a documented role will continue."
-)
+source_footer(operational_status_text())

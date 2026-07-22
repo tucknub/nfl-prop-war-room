@@ -67,7 +67,7 @@ if query_value("origin") == "home":
     if origin_message:
         note(origin_message)
 if season < 2023:
-    note("Production and situational counts are available for completed 2023–2025 seasons.", amber=True)
+    note("Production and situational counts are available from 2023 onward for published seasons.", amber=True)
 
 situational = load_situational_data()
 situational = situational[situational["season"].eq(season) & situational["week"].eq(week) & situational["game_id"].eq(game_id)]

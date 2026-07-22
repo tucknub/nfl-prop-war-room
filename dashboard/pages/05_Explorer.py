@@ -3,7 +3,14 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from research_data import ROLE_LABELS, explorer_usage, load_opportunity_events
+from research_data import (
+    ROLE_LABELS,
+    available_seasons,
+    available_weeks,
+    explorer_usage,
+    load_opportunity_events,
+    operational_status_text,
+)
 from research_ui import (
     condition_box, methodology_expander, page_intro, ratio_text, responsive_table,
     role_noun, searchable_selectbox, section, selection_summary, source_footer,
@@ -11,9 +18,14 @@ from research_ui import (
 from supporting_evidence import EXPLORER_PRESETS, active_filter_summary, apply_explorer_preset
 
 
+DEFAULT_SEASON = available_seasons()[0]
+_DEFAULT_WEEKS = available_weeks(DEFAULT_SEASON)
+DEFAULT_WEEK_RANGE = (_DEFAULT_WEEKS[0], _DEFAULT_WEEKS[-1])
+
+
 EXPLORER_DEFAULTS = {
-    "explorer_season": 2025, "explorer_team": "All", "explorer_player": "All",
-    "explorer_family": "rb_carry_share", "explorer_weeks": (1, 18),
+    "explorer_season": DEFAULT_SEASON, "explorer_team": "All", "explorer_player": "All",
+    "explorer_family": "rb_carry_share", "explorer_weeks": DEFAULT_WEEK_RANGE,
     "explorer_game_state": "All", "explorer_quarter": "All", "explorer_down": "All",
     "explorer_zone": "All", "explorer_two_minute": False, "explorer_normal": True,
     "explorer_minimum": 5,
@@ -28,6 +40,8 @@ def _reset_explorer() -> None:
         "explorer_zone": "All", "explorer_two_minute": False, "explorer_normal": True,
         "explorer_minimum": 5,
     }
+    defaults["explorer_season"] = DEFAULT_SEASON
+    defaults["explorer_weeks"] = DEFAULT_WEEK_RANGE
     for key, value in defaults.items(): st.session_state[key] = value
 
 
@@ -47,7 +61,10 @@ with st.expander("Start with a verified preset"):
 
 with st.expander("Change filters"):
     row1 = st.columns(5)
-    with row1[0]: season = st.selectbox("Season", [2025, 2024, 2023], key="explorer_season")
+    seasons = available_seasons()
+    if st.session_state.get("explorer_season") not in seasons:
+        st.session_state["explorer_season"] = seasons[0]
+    with row1[0]: season = st.selectbox("Season", seasons, key="explorer_season")
     season_events = events[events["season"].eq(season)]
     teams = ["All"] + sorted(season_events["team"].dropna().astype(str).unique().tolist())
     if st.session_state.get("explorer_team") not in teams: st.session_state["explorer_team"] = "All"
@@ -60,6 +77,14 @@ with st.expander("Change filters"):
     with row1[2]: player_choice = searchable_selectbox("Search or select player", player_ids, format_func=lambda value: "All players" if value == "All" else labels.get(value, value), key="explorer_player")
     with row1[3]: role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="explorer_family")
     weeks = sorted(season_events["week"].dropna().astype(int).unique().tolist())
+    selected_weeks = st.session_state.get("explorer_weeks")
+    if (
+        not isinstance(selected_weeks, (tuple, list))
+        or len(selected_weeks) != 2
+        or selected_weeks[0] not in weeks
+        or selected_weeks[1] not in weeks
+    ):
+        st.session_state["explorer_weeks"] = (weeks[0], weeks[-1])
     with row1[4]: week_range = st.select_slider("Week range", options=weeks, value=(weeks[0], weeks[-1]), key="explorer_weeks")
     row2 = st.columns(6)
     with row2[0]: game_state = st.selectbox("Game state", ["All", "Leading", "Trailing", "Close"], key="explorer_game_state")
@@ -107,6 +132,6 @@ else:
 methodology_expander([
     "The team denominator is filtered by the same game-state, down, field-position, and clock conditions.",
     "Selecting one player changes numerator rows without changing the team denominator universe.",
-    "Reset restores the documented 2025, Weeks 1–18, normal-game carry-share defaults.",
+    "Reset restores the latest published season, its full available week range, normal-game carry-share defaults.",
 ])
-source_footer("Completed historical play-level data through 2025; no 2026 usage is shown.")
+source_footer(operational_status_text())

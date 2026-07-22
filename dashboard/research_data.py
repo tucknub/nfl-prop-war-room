@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import json
 from pathlib import Path
 from typing import Iterable
 
@@ -8,16 +9,16 @@ import numpy as np
 import pandas as pd
 
 
-CANONICAL_FILES = (
+HISTORICAL_CANONICAL_FILES = (
     "outputs/role_validation/fold_1_diagnostics/canonical_role_2018_2021_enriched.csv.gz",
     "outputs/role_validation/fold_2/canonical_role_2022_enriched.csv.gz",
     "outputs/role_validation/fold_3/canonical_role_2023_enriched.csv.gz",
     "outputs/role_validation/fold_4/canonical_role_2024_enriched.csv.gz",
     "outputs/role_research/canonical_role_2025_descriptive.csv.gz",
 )
-SITUATIONAL_FILE = "outputs/role_research/situational_player_week.csv.gz"
-PRODUCTION_FILE = "outputs/role_research/game_player_usage.csv.gz"
-EVENTS_FILE = "outputs/role_research/opportunity_events.csv.gz"
+HISTORICAL_SITUATIONAL_FILE = "outputs/role_research/situational_player_week.csv.gz"
+HISTORICAL_PRODUCTION_FILE = "outputs/role_research/game_player_usage.csv.gz"
+HISTORICAL_EVENTS_FILE = "outputs/role_research/opportunity_events.csv.gz"
 ROLE_LABELS = {
     "rb_carry_share": "RB carry share",
     "rb_opportunity_share": "RB opportunity share",
@@ -56,13 +57,74 @@ def _as_bool(series: pd.Series) -> pd.Series:
     return series.fillna("").astype(str).str.strip().str.lower().isin({"1", "true", "yes"})
 
 
+def _existing_paths(relative_paths: Iterable[str]) -> list[Path]:
+    return [repo_root() / path for path in relative_paths if (repo_root() / path).exists()]
+
+
+def canonical_paths() -> list[Path]:
+    historical = _existing_paths(HISTORICAL_CANONICAL_FILES)
+    live = sorted((repo_root() / "outputs" / "role_research").glob("canonical_role_*_live.csv.gz"))
+    return historical + live
+
+
+def supplemental_paths(base_file: str, live_pattern: str) -> list[Path]:
+    paths = _existing_paths([base_file])
+    paths.extend(sorted((repo_root() / "outputs" / "role_research").glob(live_pattern)))
+    return paths
+
+
+def _concat_csv(paths: Iterable[Path], *, key: list[str] | None = None) -> pd.DataFrame:
+    frames = [pd.read_csv(path, compression="infer", low_memory=False) for path in paths]
+    if not frames:
+        return pd.DataFrame()
+    frame = pd.concat(frames, ignore_index=True, sort=False)
+    if key and set(key).issubset(frame.columns):
+        frame = frame.drop_duplicates(key, keep="last")
+    return frame
+
+
+@lru_cache(maxsize=1)
+def load_operational_status() -> dict[str, object]:
+    status_files = sorted((repo_root() / "outputs" / "role_research").glob("role_research_status_*.json"))
+    if not status_files:
+        return {
+            "status": "HISTORICAL_ONLY",
+            "season": 2025,
+            "published_through_week": 18,
+            "generated_at_utc": None,
+            "message": "Completed historical data is available through the 2025 regular season.",
+        }
+    candidates = []
+    for path in status_files:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            continue
+        payload["_path"] = str(path)
+        candidates.append(payload)
+    if not candidates:
+        return {"status": "STATUS_UNAVAILABLE", "message": "Operational status could not be read."}
+    return max(candidates, key=lambda item: int(item.get("season") or 0))
+
+
+def operational_status_text() -> str:
+    status = load_operational_status()
+    state = str(status.get("status") or "UNKNOWN")
+    season = status.get("season")
+    through = status.get("published_through_week")
+    if state == "PUBLISHED" and through is not None:
+        return f"{season} current-season data published through Week {through}."
+    return str(status.get("message") or f"{season} current-season data status: {state}.")
+
+
 @lru_cache(maxsize=1)
 def load_role_data() -> pd.DataFrame:
-    frames = [pd.read_csv(repo_root() / path, compression="gzip", low_memory=False) for path in CANONICAL_FILES]
-    frame = pd.concat(frames, ignore_index=True)
+    frame = _concat_csv(canonical_paths(), key=["season", "week", "player_id", "team", "role_family"])
+    if frame.empty:
+        raise RuntimeError("No canonical role-research files are available.")
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype("Int64")
     frame["week"] = pd.to_numeric(frame["week"], errors="coerce").astype("Int64")
-    frame = frame[frame["season"].between(2018, 2025)].copy()
+    frame = frame[frame["season"].ge(2018)].copy()
     frame["role_family_label"] = frame["role_family"].map(ROLE_LABELS).fillna(frame["role_family"])
     quality = _as_bool(frame["data_quality_pass"]) & _as_bool(frame["qualifying_game"])
     confirmed = _as_bool(frame.get("confirmed_partial_game", pd.Series(False, index=frame.index)))
@@ -80,8 +142,10 @@ def load_role_data() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_situational_data() -> pd.DataFrame:
-    path = repo_root() / SITUATIONAL_FILE
-    frame = pd.read_csv(path, compression="gzip", low_memory=False)
+    frame = _concat_csv(
+        supplemental_paths(HISTORICAL_SITUATIONAL_FILE, "situational_player_week_*_live.csv.gz"),
+        key=["season", "week", "game_id", "team", "player_id", "role_family", "context"],
+    )
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype("Int64")
     frame["week"] = pd.to_numeric(frame["week"], errors="coerce").astype("Int64")
     frame["role_family_label"] = frame["role_family"].map(ROLE_LABELS)
@@ -95,7 +159,10 @@ def load_situational_data() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_production_data() -> pd.DataFrame:
-    frame = pd.read_csv(repo_root() / PRODUCTION_FILE, compression="gzip", low_memory=False)
+    frame = _concat_csv(
+        supplemental_paths(HISTORICAL_PRODUCTION_FILE, "game_player_usage_*_live.csv.gz"),
+        key=["season", "week", "game_id", "team", "player_id"],
+    )
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype("Int64")
     frame["week"] = pd.to_numeric(frame["week"], errors="coerce").astype("Int64")
     return frame
@@ -103,7 +170,10 @@ def load_production_data() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_opportunity_events() -> pd.DataFrame:
-    frame = pd.read_csv(repo_root() / EVENTS_FILE, compression="gzip", low_memory=False)
+    frame = _concat_csv(
+        supplemental_paths(HISTORICAL_EVENTS_FILE, "opportunity_events_*_live.csv.gz"),
+        key=["season", "week", "game_id", "play_id", "team", "player_id", "opportunity_type"],
+    )
     frame["season"] = pd.to_numeric(frame["season"], errors="coerce").astype("Int64")
     frame["week"] = pd.to_numeric(frame["week"], errors="coerce").astype("Int64")
     for column in CONTEXT_LABELS:
