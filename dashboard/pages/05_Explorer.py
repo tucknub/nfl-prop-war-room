@@ -34,12 +34,14 @@ EXPLORER_DEFAULTS = {
 
 def _reset_explorer() -> None:
     defaults = {
-        "explorer_season": DEFAULT_SEASON, "explorer_team": "All", "explorer_player": "All",
-        "explorer_family": "rb_carry_share", "explorer_weeks": DEFAULT_WEEK_RANGE,
+        "explorer_season": 2025, "explorer_team": "All", "explorer_player": "All",
+        "explorer_family": "rb_carry_share", "explorer_weeks": (1, 18),
         "explorer_game_state": "All", "explorer_quarter": "All", "explorer_down": "All",
         "explorer_zone": "All", "explorer_two_minute": False, "explorer_normal": True,
         "explorer_minimum": 5,
     }
+    defaults["explorer_season"] = DEFAULT_SEASON
+    defaults["explorer_weeks"] = DEFAULT_WEEK_RANGE
     for key, value in defaults.items(): st.session_state[key] = value
 
 
