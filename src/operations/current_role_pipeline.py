@@ -163,7 +163,10 @@ def detect_completed_regular_weeks(
         checks["home_scrimmage_plays"] = 0
         checks["away_scrimmage_plays"] = 0
         checks["complete"] = False
-        return CompletionGate(season, None, (), (), tuple(sorted(checks["week"].dropna().astype(int).unique())), checks)
+        blocked_weeks = tuple(
+            int(value) for value in sorted(checks["week"].dropna().astype(int).unique())
+        )
+        return CompletionGate(season, None, (), (), blocked_weeks, checks)
 
     plays = plays.loc[pd.to_numeric(plays.get("season"), errors="coerce").eq(season)].copy()
     plays["week"] = pd.to_numeric(plays["week"], errors="coerce").astype("Int64")

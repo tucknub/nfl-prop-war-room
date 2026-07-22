@@ -229,6 +229,9 @@ def test_completion_gate_waits_when_no_game_is_complete() -> None:
     assert gate.through_week is None
     assert gate.completed_game_ids == ()
     assert gate.completed_weeks == ()
+    assert gate.blocked_weeks
+    assert all(type(value) is int for value in gate.blocked_weeks)
+    json.dumps({"blocked_weeks": list(gate.blocked_weeks)})
 
 
 def build() -> object:
