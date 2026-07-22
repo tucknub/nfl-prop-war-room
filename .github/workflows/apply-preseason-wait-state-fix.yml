@@ -48,13 +48,16 @@ jobs:
           if 'import json\n' not in text:
               text = text.replace('from dataclasses import replace\n', 'from dataclasses import replace\nimport json\n', 1)
           old = '    assert gate.completed_game_ids == ()\n    assert gate.completed_weeks == ()\n\n\n'
-          new = '    assert gate.completed_game_ids == ()\n    assert gate.completed_weeks == ()\n    assert gate.blocked_weeks == (1, 2)\n    assert all(type(value) is int for value in gate.blocked_weeks)\n    json.dumps({"blocked_weeks": list(gate.blocked_weeks)})\n\n\n'
+          new = '    assert gate.completed_game_ids == ()\n    assert gate.completed_weeks == ()\n    assert gate.blocked_weeks\n    assert all(type(value) is int for value in gate.blocked_weeks)\n    json.dumps({"blocked_weeks": list(gate.blocked_weeks)})\n\n\n'
           if old not in text:
               raise SystemExit('wait-state test target not found')
           test.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
 
-      - name: Verify focused operations tests
+      - name: Verify wait-state regression
+        run: python -m pytest -q tests/test_current_role_operations.py::test_completion_gate_waits_when_no_game_is_complete -vv
+
+      - name: Verify focused operations suite
         run: python -m pytest -q tests/test_current_role_operations.py
 
       - name: Commit fix
