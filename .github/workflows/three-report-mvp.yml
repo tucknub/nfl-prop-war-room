@@ -41,4 +41,20 @@ jobs:
             tests/test_three_report_launch.py
 
       - name: Run repository tests
-        run: pytest -q
+        id: repository_tests
+        continue-on-error: true
+        run: pytest -q > pytest.log 2>&1
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-report-pytest-log
+          path: pytest.log
+          if-no-files-found: error
+
+      - name: Enforce test result
+        if: steps.repository_tests.outcome == 'failure'
+        run: |
+          tail -n 200 pytest.log
+          exit 1
