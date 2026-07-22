@@ -47,6 +47,7 @@ def _load_report(
         normal = normal[
             [
                 "player_id",
+                "team",
                 "role_family",
                 "raw_opportunities",
                 "team_denominator",
@@ -59,7 +60,7 @@ def _load_report(
                 "share": "normal_share",
             }
         )
-        result = result.merge(normal, on=["player_id", "role_family"], how="left")
+        result = result.merge(normal, on=["player_id", "team", "role_family"], how="left")
     else:
         result["normal_raw"] = pd.NA
         result["normal_denominator"] = pd.NA
