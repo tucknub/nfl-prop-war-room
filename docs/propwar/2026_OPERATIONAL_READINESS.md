@@ -34,7 +34,8 @@ An incomplete Monday game, delayed source partition, or missing team blocks that
 - Name fallback is allowed only when the normalized name is unique.
 - Every completed game-team must have an offensive snap partition.
 - Opportunity-player identity coverage must equal 100%.
-- Snap identity coverage must be at least 99%.
+- RB, WR, and TE snap identity coverage must be at least 99%; these are the public report positions.
+- All-offense snap identity coverage is retained as a diagnostic and must remain at least 95% to catch catastrophic source or join failures.
 - Opportunity-to-snap coverage must be at least 99.5%.
 
 ## Publication behavior
