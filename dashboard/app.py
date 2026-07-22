@@ -14,6 +14,40 @@ from research_ui import inject_styles  # noqa: E402
 from home_page import render_home  # noqa: E402
 
 
+def render_launch_home() -> None:
+    st.title("Know what changed before researching what happens next.")
+    st.write(
+        "PropWar turns documented offensive opportunities into three transparent NFL role reports. "
+        "Every share remains attached to its raw player count and matching same-team denominator."
+    )
+    report_columns = st.columns(3)
+    report_copy = (
+        (
+            "Backfield Control",
+            "Carries and total RB opportunities. See who actually controls each backfield.",
+        ),
+        (
+            "Target Hierarchy",
+            "WR and TE targets. See how each team's documented passing work is distributed.",
+        ),
+        (
+            "Role Movement",
+            "Current window versus the prior matching window. See which roles changed most.",
+        ),
+    )
+    for column, (title, description) in zip(report_columns, report_copy):
+        with column:
+            with st.container(border=True):
+                st.markdown(f"### {title}")
+                st.write(description)
+                st.link_button("Open Reports", "/reports", use_container_width=True)
+    st.caption(
+        "Descriptive historical research only. No odds, picks, projections, or claim that a role will persist."
+    )
+    st.divider()
+    render_home()
+
+
 def main() -> None:
     st.set_page_config(page_title="PropWar: NFL Role Intelligence", page_icon="PW", layout="wide")
     inject_styles()
@@ -25,7 +59,7 @@ def main() -> None:
 
     pages = {
         "Role Intelligence": [
-            st.Page(render_home, title="Home", icon=":material/home:", url_path="", default=True),
+            st.Page(render_launch_home, title="Home", icon=":material/home:", url_path="", default=True),
             st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
             st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
             st.Page("pages/02_Players.py", title="Players", icon=":material/person_search:", url_path="players"),
