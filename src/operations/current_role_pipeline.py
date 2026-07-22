@@ -794,5 +794,6 @@ def write_current_role_build(build: CurrentRoleBuild, output_dir: Path) -> dict[
     paths["manifest"].write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     paths["validation"].write_text(json.dumps(validation, indent=2) + "\n", encoding="utf-8")
     if validation["status"] != "PASS":
-        raise AssertionError("Current-season role output validation failed")
+        failed = [item for item in validation_checks if not item["passed"]]
+        raise AssertionError(f"Current-season role output validation failed: {failed}")
     return {key: str(path) for key, path in paths.items()}
