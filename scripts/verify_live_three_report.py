@@ -32,6 +32,21 @@ def frame_diagnostics(page: Page) -> list[dict[str, str]]:
     return diagnostics
 
 
+def wake_if_sleeping(page: Page) -> bool:
+    try:
+        text = page.locator("body").inner_text(timeout=5000)
+    except Exception:
+        return False
+    if "gone to sleep due to inactivity" not in text:
+        return False
+    control = page.get_by_text("Yes, get this app back up!", exact=True)
+    if control.count():
+        control.first.click()
+        page.wait_for_timeout(3000)
+        return True
+    return False
+
+
 def verify_page(
     page: Page,
     path: str,
@@ -43,16 +58,20 @@ def verify_page(
     name = path.strip("/") or "home"
     url = LIVE + path
     navigation_error = ""
+    woke_app = False
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=45000)
     except Exception as exc:
         navigation_error = str(exc)
 
+    woke_app = wake_if_sleeping(page)
     frame: Frame | None = None
     for _ in range(wait_seconds):
         frame = find_frame(page, heading)
         if frame is not None:
             break
+        if wake_if_sleeping(page):
+            woke_app = True
         time.sleep(1)
 
     page.screenshot(path=str(SHOTS / f"{name}.png"), full_page=True)
@@ -64,6 +83,7 @@ def verify_page(
             "status": "FAIL",
             "reason": "expected heading not found",
             "navigation_error": navigation_error,
+            "woke_app": woke_app,
             "frames": diagnostics,
         }
 
@@ -77,6 +97,7 @@ def verify_page(
         "missing": missing,
         "unexpected": unexpected,
         "navigation_error": navigation_error,
+        "woke_app": woke_app,
         "frames": diagnostics,
         "status": "PASS" if not missing and not unexpected else "FAIL",
     }
@@ -92,7 +113,7 @@ def main() -> int:
             "/",
             "Know what changed before researching what happens next.",
             ("Backfield Control", "Target Hierarchy", "Role Movement", "Open Reports"),
-            wait_seconds=90,
+            wait_seconds=150,
         )
         results = [home]
         if home["status"] == "PASS":
@@ -103,7 +124,7 @@ def main() -> int:
                     "NFL Role Intelligence",
                     ("Backfield Control", "Target Hierarchy", "Role Movement", "All-play evidence", "Complete report"),
                     ("Scoring-Area Usage", "Game-Script Usage", "Opportunity Versus Production"),
-                    wait_seconds=45,
+                    wait_seconds=60,
                 )
             )
             results.append(
@@ -112,7 +133,7 @@ def main() -> int:
                     "/methodology",
                     "Methodology",
                     ("Launch report contract", "Calculation authority", "Report boundaries", "Missing and unavailable data"),
-                    wait_seconds=45,
+                    wait_seconds=60,
                 )
             )
         browser.close()
