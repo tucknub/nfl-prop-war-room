@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "dashboard/**"
+      - "scripts/run_three_report_browser_qa.py"
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/three-report-mvp.yml"
@@ -29,10 +30,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest playwright
+
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
 
       - name: Compile application
-        run: python -m compileall -q dashboard src tests
+        run: python -m compileall -q dashboard src scripts/run_three_report_browser_qa.py tests
 
       - name: Run repository tests
         id: repository_tests
@@ -62,8 +66,48 @@ jobs:
           path: three-report-branch-source.zip
           if-no-files-found: error
 
+      - name: Start Streamlit
+        if: steps.repository_tests.outcome == 'success'
+        run: |
+          mkdir -p outputs/three_report_browser_qa
+          nohup streamlit run dashboard/Home.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8514 \
+            > outputs/three_report_browser_qa/streamlit.log 2>&1 &
+          echo $! > outputs/three_report_browser_qa/streamlit.pid
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8514/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat outputs/three_report_browser_qa/streamlit.log
+          exit 1
+
+      - name: Run browser QA
+        id: browser_qa
+        if: steps.repository_tests.outcome == 'success'
+        continue-on-error: true
+        run: python scripts/run_three_report_browser_qa.py
+
+      - name: Upload browser QA
+        if: always() && steps.repository_tests.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-report-browser-qa
+          path: outputs/three_report_browser_qa
+          if-no-files-found: error
+
       - name: Enforce test result
         if: steps.repository_tests.outcome == 'failure'
         run: |
           tail -n 200 pytest.log
+          exit 1
+
+      - name: Enforce browser QA result
+        if: steps.browser_qa.outcome == 'failure'
+        run: |
+          cat outputs/three_report_browser_qa/browser_results.json || true
+          tail -n 200 outputs/three_report_browser_qa/streamlit.log || true
           exit 1
