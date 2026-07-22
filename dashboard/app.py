@@ -42,7 +42,7 @@ def render_launch_home() -> None:
                 st.write(description)
                 st.link_button("Open Reports", "/reports", use_container_width=True)
     st.caption(
-        "Descriptive historical research only. No odds, picks, projections, or claim that a role will persist."
+        "Descriptive historical research only. No market pricing, picks, projections, or claim that a role will continue."
     )
     st.divider()
     render_home()
