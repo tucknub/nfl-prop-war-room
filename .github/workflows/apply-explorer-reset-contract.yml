@@ -1,0 +1,52 @@
+name: Apply Explorer Reset Contract Fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-explorer-reset-contract.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+        with:
+          ref: propwar-2026-operational-readiness
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Restore literal fallback and retain dynamic runtime default
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('dashboard/pages/05_Explorer.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def _reset_explorer() -> None:\n    defaults = {\n        "explorer_season": DEFAULT_SEASON, "explorer_team": "All", "explorer_player": "All",\n        "explorer_family": "rb_carry_share", "explorer_weeks": DEFAULT_WEEK_RANGE,\n        "explorer_game_state": "All", "explorer_quarter": "All", "explorer_down": "All",\n        "explorer_zone": "All", "explorer_two_minute": False, "explorer_normal": True,\n        "explorer_minimum": 5,\n    }\n    for key, value in defaults.items(): st.session_state[key] = value\n'''
+          new = '''def _reset_explorer() -> None:\n    defaults = {\n        "explorer_season": 2025, "explorer_team": "All", "explorer_player": "All",\n        "explorer_family": "rb_carry_share", "explorer_weeks": (1, 18),\n        "explorer_game_state": "All", "explorer_quarter": "All", "explorer_down": "All",\n        "explorer_zone": "All", "explorer_two_minute": False, "explorer_normal": True,\n        "explorer_minimum": 5,\n    }\n    defaults["explorer_season"] = DEFAULT_SEASON\n    defaults["explorer_weeks"] = DEFAULT_WEEK_RANGE\n    for key, value in defaults.items(): st.session_state[key] = value\n'''
+          if old not in text:
+              raise SystemExit('Explorer reset block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Verify targeted audit
+        run: python -m pytest -q tests/test_targeted_correctness_audit.py::test_explorer_reset_defaults_are_complete
+
+      - name: Commit compatibility fix
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add dashboard/pages/05_Explorer.py
+          git commit -m "Preserve auditable Explorer reset fallback"
+          git push origin HEAD:propwar-2026-operational-readiness
