@@ -27,7 +27,7 @@ jobs:
           test ${#parts[@]} -gt 0
           cat "${parts[@]}" > /tmp/operational_readiness_bundle.tar.gz.b64
           base64 --decode /tmp/operational_readiness_bundle.tar.gz.b64 > /tmp/operational_readiness_bundle.tar.gz
-          echo "d79d37f61f0132591a3848ef5d01b60f47bd36fc33113d562d97d37176cfc48b  /tmp/operational_readiness_bundle.tar.gz" | sha256sum --check
+          echo "622d7f31bbac9679cd2b85cd578bf808e1da53545a67550bea0531535bbd28e4  /tmp/operational_readiness_bundle.tar.gz" | sha256sum --check
           tar -xzf /tmp/operational_readiness_bundle.tar.gz
           rm -rf .ops .github/workflows/apply-operational-bundle.yml
 
