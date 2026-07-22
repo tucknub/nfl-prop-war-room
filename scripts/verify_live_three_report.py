@@ -25,7 +25,7 @@ def frame_diagnostics(page: Page) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     for frame in page.frames:
         try:
-            text = frame.locator("body").inner_text(timeout=5000)[:2000]
+            text = frame.locator("body").inner_text(timeout=5000)[:2500]
         except Exception as exc:
             text = f"<body unavailable: {exc}>"
         diagnostics.append({"url": frame.url, "body": text})
@@ -38,25 +38,22 @@ def verify_page(
     heading: str,
     required: tuple[str, ...],
     forbidden: tuple[str, ...] = (),
+    wait_seconds: int = 45,
 ) -> dict[str, object]:
     name = path.strip("/") or "home"
     url = LIVE + path
-    frame: Frame | None = None
-    navigation_errors: list[str] = []
+    navigation_error = ""
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    except Exception as exc:
+        navigation_error = str(exc)
 
-    for attempt in range(1, 4):
-        try:
-            page.goto(url, wait_until="domcontentloaded", timeout=90000)
-        except Exception as exc:
-            navigation_errors.append(f"attempt {attempt}: {exc}")
-        for _ in range(30):
-            frame = find_frame(page, heading)
-            if frame is not None:
-                break
-            time.sleep(1)
+    frame: Frame | None = None
+    for _ in range(wait_seconds):
+        frame = find_frame(page, heading)
         if frame is not None:
             break
-        page.reload(wait_until="domcontentloaded", timeout=90000)
+        time.sleep(1)
 
     page.screenshot(path=str(SHOTS / f"{name}.png"), full_page=True)
     diagnostics = frame_diagnostics(page)
@@ -66,7 +63,7 @@ def verify_page(
             "heading": heading,
             "status": "FAIL",
             "reason": "expected heading not found",
-            "navigation_errors": navigation_errors,
+            "navigation_error": navigation_error,
             "frames": diagnostics,
         }
 
@@ -79,7 +76,7 @@ def verify_page(
         "frame_url": frame.url,
         "missing": missing,
         "unexpected": unexpected,
-        "navigation_errors": navigation_errors,
+        "navigation_error": navigation_error,
         "frames": diagnostics,
         "status": "PASS" if not missing and not unexpected else "FAIL",
     }
@@ -90,33 +87,40 @@ def main() -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        results = [
-            verify_page(
-                page,
-                "/",
-                "Know what changed before researching what happens next.",
-                ("Backfield Control", "Target Hierarchy", "Role Movement", "Open Reports"),
-            ),
-            verify_page(
-                page,
-                "/reports",
-                "NFL Role Intelligence",
-                ("Backfield Control", "Target Hierarchy", "Role Movement", "All-play evidence", "Complete report"),
-                ("Scoring-Area Usage", "Game-Script Usage", "Opportunity Versus Production"),
-            ),
-            verify_page(
-                page,
-                "/methodology",
-                "Methodology",
-                ("Launch report contract", "Calculation authority", "Report boundaries", "Missing and unavailable data"),
-            ),
-        ]
+        home = verify_page(
+            page,
+            "/",
+            "Know what changed before researching what happens next.",
+            ("Backfield Control", "Target Hierarchy", "Role Movement", "Open Reports"),
+            wait_seconds=90,
+        )
+        results = [home]
+        if home["status"] == "PASS":
+            results.append(
+                verify_page(
+                    page,
+                    "/reports",
+                    "NFL Role Intelligence",
+                    ("Backfield Control", "Target Hierarchy", "Role Movement", "All-play evidence", "Complete report"),
+                    ("Scoring-Area Usage", "Game-Script Usage", "Opportunity Versus Production"),
+                    wait_seconds=45,
+                )
+            )
+            results.append(
+                verify_page(
+                    page,
+                    "/methodology",
+                    "Methodology",
+                    ("Launch report contract", "Calculation authority", "Report boundaries", "Missing and unavailable data"),
+                    wait_seconds=45,
+                )
+            )
         browser.close()
 
     payload = {
         "live_url": LIVE,
         "results": results,
-        "status": "PASS" if all(result["status"] == "PASS" for result in results) else "FAIL",
+        "status": "PASS" if len(results) == 3 and all(result["status"] == "PASS" for result in results) else "FAIL",
     }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "results.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
