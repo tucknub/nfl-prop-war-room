@@ -1,0 +1,39 @@
+name: Verify Live Three Report Deployment
+
+on:
+  push:
+    branches:
+      - post-merge-live-verification
+    paths:
+      - "scripts/verify_live_three_report.py"
+      - ".github/workflows/verify-live-three-report.yml"
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Verify public Streamlit deployment
+        run: python scripts/verify_live_three_report.py
+
+      - name: Upload live verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-three-report-verification
+          path: outputs/live_three_report_verification
+          if-no-files-found: warn
