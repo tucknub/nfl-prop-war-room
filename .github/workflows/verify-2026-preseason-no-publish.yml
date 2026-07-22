@@ -6,6 +6,7 @@ on:
       - ".github/workflows/verify-2026-preseason-no-publish.yml"
 
 # Verification-only workflow. It must never be merged into production.
+# Final production verification target: 9f0b63f1.
 jobs:
   verify-preseason:
     runs-on: ubuntu-latest
