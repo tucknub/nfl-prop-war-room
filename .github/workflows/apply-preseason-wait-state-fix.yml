@@ -1,0 +1,66 @@
+name: Apply Preseason Wait State Fix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-preseason-wait-state-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix-2026-preseason-wait-state
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Patch wait-state serialization and regression test
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          pipeline = Path('src/operations/current_role_pipeline.py')
+          text = pipeline.read_text(encoding='utf-8')
+          old = '        return CompletionGate(season, None, (), (), tuple(sorted(checks["week"].dropna().astype(int).unique())), checks)\n'
+          new = '        blocked_weeks = tuple(\n            int(value) for value in sorted(checks["week"].dropna().astype(int).unique())\n        )\n        return CompletionGate(season, None, (), (), blocked_weeks, checks)\n'
+          if old not in text:
+              raise SystemExit('pipeline wait-state target not found')
+          pipeline.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test = Path('tests/test_current_role_operations.py')
+          text = test.read_text(encoding='utf-8')
+          if 'import json\n' not in text:
+              text = text.replace('from dataclasses import replace\n', 'from dataclasses import replace\nimport json\n', 1)
+          old = '    assert gate.completed_game_ids == ()\n    assert gate.completed_weeks == ()\n\n\n'
+          new = '    assert gate.completed_game_ids == ()\n    assert gate.completed_weeks == ()\n    assert gate.blocked_weeks == (1, 2)\n    assert all(type(value) is int for value in gate.blocked_weeks)\n    json.dumps({"blocked_weeks": list(gate.blocked_weeks)})\n\n\n'
+          if old not in text:
+              raise SystemExit('wait-state test target not found')
+          test.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Verify focused operations tests
+        run: python -m pytest -q tests/test_current_role_operations.py
+
+      - name: Commit fix
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/operations/current_role_pipeline.py tests/test_current_role_operations.py
+          git commit -m "Fix preseason wait-state serialization"
+          git push origin HEAD:fix-2026-preseason-wait-state
