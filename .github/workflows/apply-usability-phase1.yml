@@ -1,0 +1,189 @@
+name: Apply PropWar Usability Phase 1
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apply-usability-phase1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out usability branch
+        uses: actions/checkout@v4
+        with:
+          ref: propwar-usability-phase-1
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Apply shared UI and QA changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          ui = Path("dashboard/research_ui.py")
+          text = ui.read_text(encoding="utf-8")
+          replacements = [
+              (
+                  '        #MainMenu, [data-testid="stDecoration"], [data-testid="stStatusWidget"] { display:none !important; }\n',
+                  '        #MainMenu, footer, #viewerBadge_link, [data-testid="stDecoration"], [data-testid="stStatusWidget"],\n        [data-testid="stToolbar"], [data-testid="stHeaderActionElements"], [data-testid="stAppDeployButton"] {\n          display:none !important;\n        }\n',
+              ),
+              (
+                  '        .pw-brand span { color:#9fc0e8; font-size:.69rem; letter-spacing:.07em; }\n',
+                  '        .pw-brand span { color:#9fc0e8; font-size:.69rem; letter-spacing:.07em; }\n        .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }\n        .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }\n        .pw-home-hero h1 { font-size:clamp(2.3rem,4vw,4.2rem)!important; font-weight:820; line-height:.98!important; margin:0 0 .6rem!important; padding:0!important; }\n        .pw-home-hero p { max-width:760px; color:var(--pw-muted); font-size:1.02rem; line-height:1.5; margin:0; }\n        .pw-status-line { display:flex; align-items:flex-start; gap:.7rem; padding:.62rem .75rem; border:1px solid #cbd9ef; border-radius:8px; background:#f7faff; margin:.75rem 0 .9rem; }\n        .pw-status-line strong { color:var(--pw-ink); font-size:.78rem; white-space:nowrap; }\n        .pw-status-line span { color:#40536a; font-size:.79rem; line-height:1.4; }\n',
+              ),
+              (
+                  '        .pw-overview strong { display:block; margin-top:.12rem; color:var(--pw-ink); font-size:1rem; font-variant-numeric:tabular-nums; }\n',
+                  '        .pw-overview strong { display:block; margin-top:.12rem; color:var(--pw-ink); font-size:1rem; line-height:1.25; white-space:normal; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }\n',
+              ),
+              (
+                  '        [data-testid="stLinkButton"] a[kind="primary"] { background:var(--pw-blue)!important; color:#fff!important; }\n',
+                  '        [data-testid="stLinkButton"] a[kind="primary"] { background:var(--pw-blue)!important; color:#fff!important; }\n        .pw-primary-link { display:flex; align-items:center; justify-content:center; min-height:2.45rem; padding:.45rem .75rem; border:1px solid var(--pw-blue); border-radius:6px; background:var(--pw-blue); color:#fff!important; font-size:.86rem; font-weight:760; text-decoration:none!important; text-align:center; }\n        .pw-primary-link:hover { background:#074edb; border-color:#074edb; }\n',
+              ),
+              (
+                  '          .pw-intro h1 { font-size:2rem!important; line-height:1.04!important; }\n',
+                  '          .pw-intro h1 { font-size:2rem!important; line-height:1.04!important; }\n          .pw-home-hero h1 { font-size:2.55rem!important; line-height:1.02!important; }\n          .pw-home-hero p { font-size:.92rem; }\n',
+              ),
+              (
+                  '          .pw-intro h1 { font-size:1.82rem!important; line-height:1.06!important; max-width:100%; }\n',
+                  '          .pw-intro h1 { font-size:1.82rem!important; line-height:1.06!important; max-width:100%; }\n          .pw-home-hero { margin-top:.05rem; }\n          .pw-home-hero>span { font-size:.64rem; margin-bottom:.35rem; }\n          .pw-home-hero h1 { font-size:2.08rem!important; line-height:1.02!important; }\n          .pw-home-hero p { font-size:.84rem; line-height:1.4; }\n          .pw-status-line { display:block; padding:.55rem .62rem; }\n          .pw-status-line strong { display:block; margin-bottom:.12rem; }\n',
+              ),
+              (
+                  '          [data-testid="stSidebarCollapsedControl"] button { width:2.4rem; height:2.4rem; }\n',
+                  '          [data-testid="stSidebarCollapsedControl"] button { width:auto; min-width:4.6rem; height:2.4rem; padding:0 .65rem; }\n          [data-testid="stSidebarCollapsedControl"] button::after { content:"Menu"; margin-left:.3rem; font-size:.76rem; font-weight:760; color:var(--pw-ink); }\n',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f"research_ui target missing: {old[:70]!r}")
+              text = text.replace(old, new, 1)
+          ui.write_text(text, encoding="utf-8")
+
+          browser = Path("scripts/run_three_report_launch_browser_qa.py")
+          text = browser.read_text(encoding="utf-8")
+          text = text.replace(
+              'HOME_HEADING = "Know what changed before researching what happens next."',
+              'HOME_HEADING = "What changed in NFL roles?"',
+              1,
+          )
+          text = text.replace(
+              'METHODOLOGY_COPY = (\n    "All-play raw counts and same-team denominators are the methodology authority",\n    "Backfield Control",\n    "Target Hierarchy",\n    "Role Movement",\n    "Report boundaries",\n    "What each report does—and does not—claim",\n    "Missing and unavailable data",\n)',
+              'METHODOLOGY_COPY = (\n    "All-play raw counts and same-team denominators are the methodology authority",\n    "How to read a report",\n    "Backfield Control",\n    "Target Hierarchy",\n    "Role Movement",\n    "Plain-language terms",\n    "Report boundaries",\n    "Missing and unavailable data",\n)',
+              1,
+          )
+          marker = '\n\ndef validate_player_href(href: str | None) -> bool:\n'
+          helper = '\n\ndef validate_report_href(href: str | None, report: str) -> bool:\n    if not href:\n        return False\n    parsed = urlsplit(href)\n    query = parse_qs(parsed.query)\n    return parsed.path.endswith("/reports") and query.get("report", [""])[0] == report\n'
+          if marker not in text:
+              raise SystemExit("browser helper insertion target missing")
+          text = text.replace(marker, helper + marker, 1)
+          text = text.replace(
+              '    check("Open Reports" in home_text, f"{name}: Home missing report CTA", failures)\n    page.screenshot(path=str(SHOTS / f"{name}_home.png"), full_page=True)\n',
+              '    check("View Backfield Control" in home_text, f"{name}: Home missing direct report CTA", failures)\n    home_cta = first_visible(page.get_by_role("link", name="View Backfield Control", exact=True))\n    home_href = home_cta.get_attribute("href") if home_cta is not None else None\n    check(\n        validate_report_href(home_href, "Backfield Control"),\n        f"{name}: invalid direct report link: {home_href}",\n        failures,\n    )\n    page.screenshot(path=str(SHOTS / f"{name}_home.png"), full_page=True)\n',
+              1,
+          )
+          text = text.replace(
+              'check("Answer first" in text, f"{name}: {report} missing Answer first", failures)',
+              'check("Top findings" in text, f"{name}: {report} missing top findings", failures)',
+              1,
+          )
+          text = text.replace(
+              'check("Player evidence" in text, f"{name}: {report} missing player evidence link", failures)',
+              'check("View player evidence" in text, f"{name}: {report} missing player evidence link", failures)',
+              1,
+          )
+          text = text.replace(
+              'check("Team evidence" in text, f"{name}: {report} missing team evidence link", failures)',
+              'check("View team evidence" in text, f"{name}: {report} missing team evidence link", failures)',
+              1,
+          )
+          text = text.replace(
+              'page.get_by_role("link", name="Player evidence", exact=True)',
+              'page.get_by_role("link", name="View player evidence", exact=True)',
+              1,
+          )
+          browser.write_text(text, encoding="utf-8")
+
+          test = Path("tests/test_usability_phase1.py")
+          test.write_text('''from __future__ import annotations
+
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DASHBOARD = ROOT / "dashboard"
+
+
+def test_home_routes_directly_to_each_report() -> None:
+    source = (DASHBOARD / "app.py").read_text(encoding="utf-8")
+    assert "What changed in NFL roles?" in source
+    assert 'href="/reports?report={quote(title)}"' in source
+    assert "View {title}</a>" in source
+    assert "Open Reports" not in source
+
+
+def test_reports_default_to_answers_before_advanced_controls() -> None:
+    source = (DASHBOARD / "pages" / "04_Reports.py").read_text(encoding="utf-8")
+    assert 'with st.expander("Customize report")' in source
+    assert 'expanded=True' not in source
+    assert 'section("Top findings"' in source
+    assert '"Time period"' in source
+    assert '"Minimum opportunities to appear"' in source
+    assert '"Team share"' in source
+    assert 'st.query_params.get("report"' in source
+
+
+def test_complete_report_uses_compact_default_and_optional_evidence() -> None:
+    source = (DASHBOARD / "pages" / "04_Reports.py").read_text(encoding="utf-8")
+    assert "compact_columns = [" in source
+    assert 'with st.expander("Show all evidence columns")' in source
+    assert '"Opportunities"' in source
+    assert '"Team total"' in source
+    assert '"Typical-game share"' in source
+
+
+def test_methodology_is_scannable_without_a_wide_contract_table() -> None:
+    source = (DASHBOARD / "pages" / "06_Methodology.py").read_text(encoding="utf-8")
+    assert 'section("How to read a report"' in source
+    assert 'section("Plain-language terms"' in source
+    assert 'with st.expander("Calculation details")' in source
+    assert "st.dataframe" not in source
+    assert "overview(" in source
+
+
+def test_mobile_menu_and_hosted_chrome_cleanup_are_present() -> None:
+    source = (DASHBOARD / "research_ui.py").read_text(encoding="utf-8")
+    assert '[data-testid="stToolbar"]' in source
+    assert "#viewerBadge_link" in source
+    assert 'content:"Menu"' in source
+    assert ".pw-home-hero" in source
+    assert ".pw-status-line" in source
+''', encoding="utf-8")
+          PY
+
+      - name: Verify focused contracts
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m py_compile \
+            dashboard/app.py \
+            dashboard/home_page.py \
+            dashboard/pages/04_Reports.py \
+            dashboard/pages/06_Methodology.py \
+            dashboard/research_ui.py \
+            scripts/run_three_report_launch_browser_qa.py \
+            tests/test_usability_phase1.py
+          python -m pytest -q tests/test_usability_phase1.py tests/test_three_report_launch.py
+
+      - name: Commit usability changes
+        run: |
+          git config user.name "propwar-usability"
+          git config user.email "actions@users.noreply.github.com"
+          git add dashboard/research_ui.py scripts/run_three_report_launch_browser_qa.py tests/test_usability_phase1.py
+          git commit -m "Improve PropWar usability and mobile clarity"
+          git push origin HEAD:propwar-usability-phase-1
