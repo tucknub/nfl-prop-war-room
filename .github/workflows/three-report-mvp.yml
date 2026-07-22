@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
 
       - name: Install dependencies
@@ -31,14 +31,8 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Compile changed application files
-        run: |
-          python -m py_compile \
-            dashboard/app.py \
-            dashboard/launch_contract.py \
-            dashboard/pages/04_Reports.py \
-            dashboard/pages/06_Methodology.py \
-            tests/test_three_report_launch.py
+      - name: Compile application
+        run: python -m compileall -q dashboard src tests
 
       - name: Run repository tests
         id: repository_tests
