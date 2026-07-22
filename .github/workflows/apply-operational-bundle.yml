@@ -35,9 +35,10 @@ jobs:
           base64 --decode /tmp/operational_readiness_bundle.tar.gz.b64 > /tmp/operational_readiness_bundle.tar.gz
           echo "622d7f31bbac9679cd2b85cd578bf808e1da53545a67550bea0531535bbd28e4  /tmp/operational_readiness_bundle.tar.gz" | sha256sum --check
           tar -xzf /tmp/operational_readiness_bundle.tar.gz
-          rm -rf .ops .github/workflows/apply-operational-bundle.yml
+          rm -rf .ops
+          rm -f .github/workflows/role-research-operations.yml
 
-      - name: Commit atomic branch update
+      - name: Commit atomic source update
         run: |
           git config user.name "propwar-operations"
           git config user.email "actions@users.noreply.github.com"
