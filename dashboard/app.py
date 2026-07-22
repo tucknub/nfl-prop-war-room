@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 import streamlit as st
 
@@ -10,41 +11,57 @@ DASHBOARD_DIR = Path(__file__).resolve().parent
 if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
-from research_ui import inject_styles  # noqa: E402
+from research_ui import inject_styles, section  # noqa: E402
 from research_data import operational_status_text  # noqa: E402
 from home_page import render_home  # noqa: E402
 
 
+REPORT_CARDS = (
+    (
+        "Backfield Control",
+        "See which running backs own their team's carries and total backfield opportunities.",
+    ),
+    (
+        "Target Hierarchy",
+        "See how documented WR and TE targets are distributed within each offense.",
+    ),
+    (
+        "Role Movement",
+        "See which player roles gained or lost the most share versus the prior period.",
+    ),
+)
+
+
 def render_launch_home() -> None:
-    st.title("Know what changed before researching what happens next.")
-    st.write(
-        "PropWar turns documented offensive opportunities into three transparent NFL role reports. "
-        "Every share remains attached to its raw player count and matching same-team denominator."
+    st.markdown(
+        """
+        <section class="pw-home-hero">
+          <span>PROP WAR · NFL ROLE INTELLIGENCE</span>
+          <h1>What changed in NFL roles?</h1>
+          <p>Start with a clear answer, then inspect the player counts, team totals, and supporting evidence behind it.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
     )
-    st.info(operational_status_text())
+    st.markdown(
+        f'<div class="pw-status-line"><strong>Data status</strong><span>{operational_status_text()}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    section("Choose a report", "Each report answers one research question without odds, picks, or projections.")
     report_columns = st.columns(3)
-    report_copy = (
-        (
-            "Backfield Control",
-            "Carries and total RB opportunities. See who actually controls each backfield.",
-        ),
-        (
-            "Target Hierarchy",
-            "WR and TE targets. See how each team's documented passing work is distributed.",
-        ),
-        (
-            "Role Movement",
-            "Current window versus the prior matching window. See which roles changed most.",
-        ),
-    )
-    for column, (title, description) in zip(report_columns, report_copy):
+    for column, (title, description) in zip(report_columns, REPORT_CARDS):
         with column:
             with st.container(border=True):
                 st.markdown(f"### {title}")
                 st.write(description)
-                st.link_button("Open Reports", "/reports", use_container_width=True)
+                st.markdown(
+                    f'<a class="pw-primary-link" href="/reports?report={quote(title)}">View {title}</a>',
+                    unsafe_allow_html=True,
+                )
+
     st.caption(
-        "Descriptive historical research only. No market pricing, picks, projections, or claim that a role will continue."
+        "Historical and current-season role research only. Every percentage remains attached to its player count and team total."
     )
     st.divider()
     render_home()
