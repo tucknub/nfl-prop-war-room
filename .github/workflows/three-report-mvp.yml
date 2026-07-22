@@ -8,6 +8,7 @@ on:
     paths:
       - "dashboard/**"
       - "scripts/run_three_report_browser_qa.py"
+      - "scripts/run_three_report_browser_qa_v2.py"
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/three-report-mvp.yml"
@@ -36,7 +37,7 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Compile application
-        run: python -m compileall -q dashboard src scripts/run_three_report_browser_qa.py tests
+        run: python -m compileall -q dashboard src scripts/run_three_report_browser_qa.py scripts/run_three_report_browser_qa_v2.py tests
 
       - name: Run repository tests
         id: repository_tests
@@ -89,7 +90,7 @@ jobs:
         id: browser_qa
         if: steps.repository_tests.outcome == 'success'
         continue-on-error: true
-        run: python scripts/run_three_report_browser_qa.py
+        run: python scripts/run_three_report_browser_qa_v2.py
 
       - name: Upload browser QA
         if: always() && steps.repository_tests.outcome == 'success'
@@ -109,5 +110,6 @@ jobs:
         if: steps.browser_qa.outcome == 'failure'
         run: |
           cat outputs/three_report_browser_qa/browser_results.json || true
+          cat outputs/three_report_browser_qa/browser_crash.json || true
           tail -n 200 outputs/three_report_browser_qa/streamlit.log || true
           exit 1
