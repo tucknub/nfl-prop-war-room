@@ -254,6 +254,7 @@ selected_report = st.segmented_control(
 )
 if selected_report is None:
     selected_report = REPORT_ORDER[0]
+st.markdown(f"## {selected_report}")
 st.caption(REPORT_DEFINITIONS[selected_report])
 
 sort_options = ["Share", "Raw opportunities"]
