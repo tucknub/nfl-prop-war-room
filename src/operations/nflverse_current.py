@@ -72,8 +72,6 @@ def _to_pandas_selected(frame: object, columns: list[str]) -> pd.DataFrame:
     return frame[columns]
 
 
-
-
 def _mtime_utc(path: Path) -> str | None:
     if not path.exists():
         return None
@@ -191,7 +189,7 @@ def load_current_nflverse_sources(
                 "cache_mtime_utc": result.cache_mtime_utc,
                 "fetched_at_utc": result.fetched_at_utc,
                 "nflreadpy_version": _package_version("nflreadpy"),
-                "error": result.error,
+                "error": result.error or "",
             }
         )
     return frames, pd.DataFrame(rows)
