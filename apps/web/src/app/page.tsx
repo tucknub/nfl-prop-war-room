@@ -22,13 +22,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </div>
 
       {data.status === "published" ? (
-        <>
+        <div className="dashboard-grid">
           <LeadFinding finding={data.leadFinding} />
           <RoleChangeFeed findings={data.findings} />
           <ReportLinks reports={data.reportLinks} />
-        </>
+        </div>
       ) : (
-        <HomeState data={data} />
+        <div className="state-grid">
+          <HomeState data={data} />
+          <ReportLinks reports={data.reportLinks} />
+        </div>
       )}
 
       <footer className="page-footer">

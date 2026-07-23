@@ -19,10 +19,18 @@ const reportLabels: Record<ReportFamily, string> = {
   role_movement: "Role Movement",
 };
 
+const findingLabels: Record<FeedFinding["kind"], string> = {
+  backfield_increase: "Backfield gain",
+  target_share_increase: "Target-share gain",
+  role_decline: "Role decline",
+  concentrated_role: "Concentrated role",
+  committee_formation: "Committee forming",
+};
+
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
-const signedPoints = (value: number) =>
-  `${value > 0 ? "+" : ""}${value.toFixed(1)} percentage points`;
+const signedPoints = (value: number, compact = false) =>
+  `${value > 0 ? "+" : ""}${value.toFixed(1)}${compact ? " pp" : " percentage points"}`;
 
 function findingTone(finding: FeedFinding) {
   if (finding.kind === "role_decline" || finding.kind === "committee_formation") {
@@ -86,56 +94,111 @@ export function LeadFinding({ finding }: { finding: FeedFinding }) {
     return null;
   }
 
+  const movement = finding.movement;
+
   return (
-    <article className="lead-finding" aria-labelledby="lead-finding-heading">
-      <div className="lead-copy">
-        <div className="finding-family">
-          <span className="family-index">01</span>
-          <span>{reportLabels[finding.reportFamily]}</span>
-        </div>
-        <div className="player-identity">
-          <span className="player-initials" aria-hidden="true">
-            {finding.player.name
-              .split(" ")
-              .map((part) => part[0])
-              .join("")}
-          </span>
-          <span>
-            <strong>{finding.player.name}</strong>
-            <small>
-              {finding.player.team} · {finding.player.position} ·{" "}
-              {finding.roleFamily}
-            </small>
-          </span>
-        </div>
-        <h1 id="lead-finding-heading">{finding.headline}</h1>
-        <Link className="evidence-link" href={finding.evidenceHref}>
-          Open supporting evidence
-          <ArrowUpRightIcon />
-        </Link>
+    <article className="dashboard-panel lead-panel" aria-labelledby="lead-finding-heading">
+      <div className="panel-heading">
+        <span className="panel-icon panel-icon-gain" aria-hidden="true">
+          <TrendUpIcon />
+        </span>
+        <span className="panel-label">Lead finding</span>
+        <span className="panel-context">{reportLabels[finding.reportFamily]}</span>
       </div>
 
-      <div
-        className="lead-comparison"
-        aria-label="Previous and current role evidence"
-      >
-        <ShareEvidence
-          evidence={finding.movement.previous}
-          label="Previous"
-          tone="prior"
-        />
-        <span className="comparison-divider" aria-hidden="true" />
-        <ShareEvidence
-          evidence={finding.movement.current}
-          label="Current"
-          tone="gain"
-        />
-        <div className="lead-change">
-          <span>Change</span>
-          <strong>
-            {signedPoints(finding.movement.percentagePointChange)}
-          </strong>
+      <div className="lead-body">
+        <div className="lead-story">
+          <div className="lead-player">
+            <span className="player-initials" aria-hidden="true">
+              {finding.player.name
+                .split(" ")
+                .map((part) => part[0])
+                .join("")}
+            </span>
+            <span>
+              <strong>{finding.player.name}</strong>
+              <small>
+                {finding.player.team} · {finding.player.position} · {finding.roleFamily}
+              </small>
+            </span>
+          </div>
+
+          <h1 id="lead-finding-heading">{finding.headline}</h1>
+
+          <Link className="primary-action" href={finding.evidenceHref}>
+            Open supporting evidence
+            <ArrowRightIcon />
+          </Link>
         </div>
+
+        <div className="lead-shift" aria-label="Previous and current role evidence">
+          <div className="lead-change">
+            <span>Weekly change</span>
+            <strong>{signedPoints(movement.percentagePointChange)}</strong>
+          </div>
+          <div className="lead-evidence-pair">
+            <ShareEvidence evidence={movement.previous} label="Previous" tone="prior" />
+            <span className="evidence-arrow" aria-hidden="true">
+              <ArrowRightIcon />
+            </span>
+            <ShareEvidence evidence={movement.current} label="Current" tone="gain" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CompactFindingRow({ finding }: { finding: FeedFinding }) {
+  const tone = findingTone(finding);
+
+  return (
+    <article className={`compact-finding compact-finding-${tone}`}>
+      <span className={`trend-badge trend-badge-${tone}`} aria-hidden="true">
+        <TrendIcon finding={finding} />
+      </span>
+
+      <div className="compact-identity">
+        <strong>{finding.player.name}</strong>
+        <small>
+          {finding.player.team} · {finding.player.position} · {findingLabels[finding.kind]}
+        </small>
+      </div>
+
+      <div className="compact-transition">
+        {finding.movement ? (
+          <>
+            <ShareEvidence
+              evidence={finding.movement.previous}
+              label="Previous"
+              tone="prior"
+              compact
+            />
+            <span className="row-arrow" aria-hidden="true">
+              <ArrowRightIcon />
+            </span>
+          </>
+        ) : (
+          <span className="current-only">One-week evidence</span>
+        )}
+        <ShareEvidence
+          evidence={finding.current}
+          label="Current"
+          tone={tone}
+          compact
+        />
+      </div>
+
+      <div className={`compact-change compact-change-${tone}`}>
+        <strong>
+          {finding.movement
+            ? signedPoints(finding.movement.percentagePointChange, true)
+            : "Concentrated"}
+        </strong>
+        <Link href={finding.evidenceHref} aria-label={`Open evidence for ${finding.player.name}`}>
+          Evidence
+          <ArrowUpRightIcon />
+        </Link>
       </div>
     </article>
   );
@@ -146,83 +209,48 @@ export function RoleChangeFeed({
 }: {
   findings: readonly FeedFinding[];
 }) {
+  const movementFindings = findings.slice(0, 3);
+  const patternFindings = findings.slice(3);
+
   return (
-    <section className="feed-section" aria-labelledby="role-change-feed-heading">
-      <div className="section-heading">
-        <div>
-          <span className="section-kicker">Weekly evidence</span>
-          <h2 id="role-change-feed-heading">Role-change feed</h2>
+    <>
+      <section
+        className="dashboard-panel movement-panel"
+        aria-labelledby="role-change-feed-heading"
+      >
+        <div className="panel-heading">
+          <span className="panel-icon panel-icon-gain" aria-hidden="true">
+            <TrendUpIcon />
+          </span>
+          <h2 id="role-change-feed-heading">Role movement feed</h2>
+          <Link href="/reports/movement" className="panel-link">
+            View all
+          </Link>
         </div>
-        <Link href="/reports/movement" className="section-link">
-          View all movement
-          <ArrowRightIcon />
-        </Link>
-      </div>
 
-      <div className="feed-list">
-        {findings.map((finding, index) => {
-          const tone = findingTone(finding);
-          return (
-            <article className={`feed-row feed-row-${tone}`} key={finding.id}>
-              <div className="feed-order" aria-hidden="true">
-                {String(index + 2).padStart(2, "0")}
-              </div>
+        <div className="compact-list">
+          {movementFindings.map((finding) => (
+            <CompactFindingRow finding={finding} key={finding.id} />
+          ))}
+        </div>
+      </section>
 
-              <div className={`trend-marker trend-marker-${tone}`}>
-                <TrendIcon finding={finding} />
-                <span>{reportLabels[finding.reportFamily]}</span>
-              </div>
+      <section className="dashboard-panel patterns-panel" aria-labelledby="role-patterns-heading">
+        <div className="panel-heading">
+          <span className="panel-icon panel-icon-amber" aria-hidden="true">
+            <MinusIcon />
+          </span>
+          <h2 id="role-patterns-heading">Role shape changes</h2>
+          <span className="panel-context">Concentration and committees</span>
+        </div>
 
-              <div className="feed-summary">
-                <div className="feed-player">
-                  <strong>{finding.player.name}</strong>
-                  <span>
-                    {finding.player.team} · {finding.player.position}
-                  </span>
-                </div>
-                <h3>{finding.headline}</h3>
-                <span className="role-family">{finding.roleFamily}</span>
-              </div>
-
-              <div className="feed-evidence">
-                {finding.movement ? (
-                  <ShareEvidence
-                    evidence={finding.movement.previous}
-                    label="Previous"
-                    tone="prior"
-                    compact
-                  />
-                ) : (
-                  <span className="no-prior">Current role concentration</span>
-                )}
-                <ShareEvidence
-                  evidence={finding.current}
-                  label="Current"
-                  tone={tone}
-                  compact
-                />
-              </div>
-
-              <div className="feed-action">
-                {finding.movement ? (
-                  <span className={`movement-value movement-value-${tone}`}>
-                    {signedPoints(finding.movement.percentagePointChange)}
-                  </span>
-                ) : (
-                  <span className="movement-value movement-value-concentration">
-                    Concentrated role
-                  </span>
-                )}
-                <Link href={finding.evidenceHref} aria-label={`Open evidence for ${finding.player.name}`}>
-                  Evidence
-                  <ArrowUpRightIcon />
-                </Link>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
+        <div className="pattern-list">
+          {patternFindings.map((finding) => (
+            <CompactFindingRow finding={finding} key={finding.id} />
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -232,17 +260,19 @@ export function ReportLinks({
   reports: readonly ReportLink[];
 }) {
   return (
-    <aside className="report-rail" aria-labelledby="report-rail-heading">
-      <div className="report-rail-intro">
-        <span className="section-kicker">Three reports</span>
-        <h2 id="report-rail-heading">Follow the evidence</h2>
+    <aside className="dashboard-panel reports-panel" aria-labelledby="report-panel-heading">
+      <div className="panel-heading">
+        <span className="panel-icon panel-icon-gain" aria-hidden="true">
+          <ArrowRightIcon />
+        </span>
+        <h2 id="report-panel-heading">Evidence reports</h2>
+        <span className="panel-context">Three report families</span>
       </div>
-      <div className="report-links">
+
+      <div className="report-list">
         {reports.map((report, index) => (
           <Link href={report.href} key={report.family}>
-            <span className="report-number">
-              {String(index + 1).padStart(2, "0")}
-            </span>
+            <span className="report-index">{String(index + 1).padStart(2, "0")}</span>
             <span>
               <strong>{report.label}</strong>
               <small>{report.description}</small>
@@ -250,6 +280,11 @@ export function ReportLinks({
             <ArrowRightIcon />
           </Link>
         ))}
+      </div>
+
+      <div className="report-footer">
+        <span>Every share includes its matching raw count.</span>
+        <Link href="/methodology">How we present evidence</Link>
       </div>
     </aside>
   );

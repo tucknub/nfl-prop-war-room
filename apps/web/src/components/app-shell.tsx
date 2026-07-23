@@ -30,6 +30,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <DesktopNavigation />
 
           <div className="header-tools">
+            <Link
+              className="search-trigger"
+              href="/search"
+              aria-label="Search players and teams"
+            >
+              <SearchIcon />
+              <span>Search players or teams</span>
+              <kbd>/</kbd>
+            </Link>
             <div
               className="freshness-indicator"
               aria-label="Design fixture for the 2025 season through Week 18"
@@ -40,15 +49,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <small>Design fixture</small>
               </span>
             </div>
-            <Link
-              className="search-trigger"
-              href="/search"
-              aria-label="Search players and teams"
-            >
-              <SearchIcon />
-              <span>Search players or teams</span>
-              <kbd>/</kbd>
-            </Link>
           </div>
         </div>
       </header>

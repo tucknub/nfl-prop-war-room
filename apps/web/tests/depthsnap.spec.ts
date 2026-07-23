@@ -76,12 +76,20 @@ test("desktop feed exposes findings, evidence, navigation, and screenshot", asyn
     .boundingBox();
   expect(leadBox).not.toBeNull();
   expect(leadBox?.y).toBeLessThan(900);
+  expect(leadBox?.width).toBeLessThan(760);
+  await expect(
+    page.getByRole("heading", { name: "Role movement feed" }),
+  ).toBeVisible();
 
   await expectEveryShareHasRawEvidence(page);
   await expect(
-    page.getByText("+26.5 percentage points", { exact: true }),
+    page.getByText("+26.5 pp", { exact: true }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  const desktopHeight = await page.evaluate(
+    () => document.documentElement.scrollHeight,
+  );
+  expect(desktopHeight).toBeLessThanOrEqual(1000);
 
   await page
     .getByRole("link", { name: "Open supporting evidence" })
@@ -135,9 +143,13 @@ test("mobile feed uses the bottom navigation without overflow", async ({
   ).toBeVisible();
   await expectEveryShareHasRawEvidence(page);
   await expect(
-    page.getByText("+26.5 percentage points", { exact: true }),
+    page.getByText("+26.5 pp", { exact: true }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  const mobileHeight = await page.evaluate(
+    () => document.documentElement.scrollHeight,
+  );
+  expect(mobileHeight).toBeLessThanOrEqual(1800);
 
   await page.screenshot({
     path: path.join(screenshotDirectory, "mobile-home.png"),
