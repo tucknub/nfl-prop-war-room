@@ -2,6 +2,8 @@
 
 Status: **Normative for Phase 4A and the later Python export bridge**
 
+Contract-freeze documentation head: `e99037643eb22d8682d43a93b3e6457693e05cb9`
+
 This file freezes decisions that must be settled before runtime schemas, manifests, and public loaders are implemented. Codex may refine implementation details, but it must not silently change these product or data-contract decisions.
 
 ## Pre-handoff audit findings
