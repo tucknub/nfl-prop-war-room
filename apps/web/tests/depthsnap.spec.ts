@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const screenshotDirectory = path.join(
   process.cwd(),
@@ -50,7 +50,16 @@ async function expectEveryShareHasRawEvidence(page: Page) {
   }
 }
 
-test("desktop feed exposes findings, evidence, navigation, and screenshot", async ({
+async function expectInViewport(locator: Locator, viewportHeight: number) {
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box?.y).toBeGreaterThanOrEqual(0);
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(
+    viewportHeight,
+  );
+}
+
+test("desktop composes the approved four-module dashboard at 1440 by 900", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -62,34 +71,93 @@ test("desktop feed exposes findings, evidence, navigation, and screenshot", asyn
   await expect(
     page.getByText("NFL Role Intelligence", { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Marcus Hale took control of the team backfield.",
-    }),
-  ).toBeVisible();
   await expect(page.getByText(/synthetic records/i)).toBeVisible();
 
-  const leadBox = await page
-    .getByRole("heading", {
-      name: "Marcus Hale took control of the team backfield.",
-    })
-    .boundingBox();
-  expect(leadBox).not.toBeNull();
-  expect(leadBox?.y).toBeLessThan(900);
-  expect(leadBox?.width).toBeLessThan(760);
+  const heroHeading = page.getByRole("heading", {
+    name: "Marcus Hale took control of the team backfield.",
+  });
+  const movementHeading = page.getByRole("heading", {
+    name: "Role Movement Feed",
+  });
+  const teamHeading = page.getByRole("heading", { name: "Team Snapshot" });
+  const leaderboardHeading = page.getByRole("heading", {
+    name: "Report Leaderboard",
+  });
+
+  await expect(heroHeading).toBeVisible();
+  await expect(movementHeading).toBeVisible();
+  await expect(teamHeading).toBeVisible();
+  await expect(leaderboardHeading).toBeVisible();
+  await expectInViewport(heroHeading, 900);
+  await expectInViewport(movementHeading, 900);
+  await expectInViewport(teamHeading, 900);
+  await expectInViewport(leaderboardHeading, 900);
+
+  const heroPanel = page.locator(".lead-panel");
+  const heroMedia = page.getByTestId("lead-media");
+  await expect(heroMedia).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Role movement feed" }),
+    heroMedia.getByRole("img", {
+      name: "Fictional football running back carrying the ball",
+    }),
+  ).toBeVisible();
+  const heroBox = await heroPanel.boundingBox();
+  const mediaBox = await heroMedia.boundingBox();
+  expect(heroBox).not.toBeNull();
+  expect(mediaBox).not.toBeNull();
+  const mediaRatio = (mediaBox?.width ?? 0) / (heroBox?.width ?? 1);
+  expect(mediaRatio).toBeGreaterThanOrEqual(0.35);
+  expect(mediaRatio).toBeLessThanOrEqual(0.5);
+
+  await expect(page.getByTestId("movement-row")).toHaveCount(3);
+  await expect(page.getByText("+26.5 pp", { exact: true })).toBeVisible();
+
+  const teamSnapshot = page.getByTestId("team-snapshot");
+  await expect(teamSnapshot.getByText("JT", { exact: true })).toBeVisible();
+  await expect(
+    teamSnapshot.getByText("Jacksonville Tide", { exact: true }),
+  ).toBeVisible();
+  await expect(teamSnapshot.getByText("Week 18", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("RB1", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("RB2", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("WR1", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("TE1", { exact: true })).toBeVisible();
+  await expect(
+    teamSnapshot.getByText("Biggest documented movement", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    teamSnapshot.getByRole("link", { name: "Future team report" }),
   ).toBeVisible();
 
-  await expectEveryShareHasRawEvidence(page);
+  const leaderboard = page.getByTestId("report-leaderboard");
+  const backfieldTab = leaderboard.getByRole("tab", {
+    name: "Backfield Control",
+  });
+  await expect(backfieldTab).toHaveAttribute("aria-selected", "true");
   await expect(
-    page.getByText("+26.5 pp", { exact: true }),
+    leaderboard.getByRole("tab", { name: "Target Hierarchy" }),
   ).toBeVisible();
+  await expect(
+    leaderboard.getByRole("tab", { name: "Role Movement" }),
+  ).toBeVisible();
+  await expect(leaderboard.getByTestId("leaderboard-row")).toHaveCount(5);
+  await expect(leaderboard.getByText(/role score/i)).toHaveCount(0);
+  await expectEveryShareHasRawEvidence(page);
+
+  const targetTab = leaderboard.getByRole("tab", {
+    name: "Target Hierarchy",
+  });
+  await targetTab.click();
+  await expect(targetTab).toHaveAttribute("aria-selected", "true");
+  await expect(leaderboard.getByText("Theo Lane", { exact: true })).toBeVisible();
+  await expect(leaderboard.getByTestId("leaderboard-row")).toHaveCount(5);
+  await backfieldTab.click();
+
   await expectNoHorizontalOverflow(page);
   const desktopHeight = await page.evaluate(
     () => document.documentElement.scrollHeight,
   );
-  expect(desktopHeight).toBeLessThanOrEqual(1000);
+  expect(desktopHeight).toBeLessThanOrEqual(900);
 
   await page
     .getByRole("link", { name: "Open supporting evidence" })
@@ -113,14 +181,13 @@ test("desktop feed exposes findings, evidence, navigation, and screenshot", asyn
 
   await page.screenshot({
     path: path.join(screenshotDirectory, "desktop-home.png"),
-    fullPage: true,
     animations: "disabled",
   });
 
   expect(errors).toEqual([]);
 });
 
-test("mobile feed uses the bottom navigation without overflow", async ({
+test("mobile uses the required module order and keeps navigation clear", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -128,11 +195,37 @@ test("mobile feed uses the bottom navigation without overflow", async ({
 
   await page.goto("/");
 
-  await expect(
-    page.getByRole("heading", {
-      name: "Marcus Hale took control of the team backfield.",
-    }),
-  ).toBeVisible();
+  const hero = page.locator(".lead-panel");
+  const movement = page.locator(".movement-panel");
+  const team = page.getByTestId("team-snapshot");
+  const leaderboard = page.getByTestId("report-leaderboard");
+  const heroMedia = page.getByTestId("lead-media");
+  const movementRows = page.getByTestId("movement-row");
+
+  await expect(hero).toBeVisible();
+  await expect(heroMedia).toBeVisible();
+  const mobileMediaBox = await heroMedia.boundingBox();
+  expect(mobileMediaBox).not.toBeNull();
+  expect(mobileMediaBox?.height).toBeGreaterThanOrEqual(140);
+  await expect(movementRows).toHaveCount(3);
+
+  const heroBox = await hero.boundingBox();
+  const movementBox = await movement.boundingBox();
+  const teamBox = await team.boundingBox();
+  const leaderboardBox = await leaderboard.boundingBox();
+  expect(heroBox).not.toBeNull();
+  expect(movementBox).not.toBeNull();
+  expect(teamBox).not.toBeNull();
+  expect(leaderboardBox).not.toBeNull();
+  expect((heroBox?.y ?? 0) + (heroBox?.height ?? 0)).toBeLessThanOrEqual(
+    movementBox?.y ?? 0,
+  );
+  expect((movementBox?.y ?? 0) + (movementBox?.height ?? 0)).toBeLessThanOrEqual(
+    teamBox?.y ?? 0,
+  );
+  expect((teamBox?.y ?? 0) + (teamBox?.height ?? 0)).toBeLessThanOrEqual(
+    leaderboardBox?.y ?? 0,
+  );
 
   const mobileNavigation = page.getByRole("navigation", {
     name: "Mobile navigation",
@@ -141,15 +234,21 @@ test("mobile feed uses the bottom navigation without overflow", async ({
   await expect(
     mobileNavigation.getByRole("link", { name: "Search" }),
   ).toBeVisible();
-  await expectEveryShareHasRawEvidence(page);
-  await expect(
-    page.getByText("+26.5 pp", { exact: true }),
-  ).toBeVisible();
-  await expectNoHorizontalOverflow(page);
-  const mobileHeight = await page.evaluate(
-    () => document.documentElement.scrollHeight,
+  const navBox = await mobileNavigation.boundingBox();
+  const lastMovementBox = await movementRows.last().boundingBox();
+  expect(navBox).not.toBeNull();
+  expect(lastMovementBox).not.toBeNull();
+  expect(navBox?.y).toBeGreaterThanOrEqual(
+    (lastMovementBox?.y ?? 0) + (lastMovementBox?.height ?? 0),
   );
-  expect(mobileHeight).toBeLessThanOrEqual(1800);
+
+  const mobileClearance = await page.locator(".page-shell").evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingBottom),
+  );
+  expect(mobileClearance).toBeGreaterThanOrEqual(112);
+
+  await expectEveryShareHasRawEvidence(page);
+  await expectNoHorizontalOverflow(page);
 
   await page.screenshot({
     path: path.join(screenshotDirectory, "mobile-home.png"),
@@ -162,6 +261,10 @@ test("mobile feed uses the bottom navigation without overflow", async ({
   await expect(page.getByRole("heading", { name: "Teams" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
+  const routeClearance = await page.locator(".page-shell").evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingBottom),
+  );
+  expect(routeClearance).toBeGreaterThanOrEqual(112);
   expect(errors).toEqual([]);
 });
 
@@ -190,7 +293,12 @@ test("empty state is explicit on desktop and mobile", async ({ page }) => {
       name: "No completed week is published yet",
     }),
   ).toBeVisible();
+  await expect(page.locator("[data-share-evidence]")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
+  const mobileClearance = await page.locator(".page-shell").evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingBottom),
+  );
+  expect(mobileClearance).toBeGreaterThanOrEqual(112);
   await page.screenshot({
     path: path.join(screenshotDirectory, "mobile-empty.png"),
     fullPage: true,

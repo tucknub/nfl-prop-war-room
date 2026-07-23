@@ -39,18 +39,18 @@ export default function Loading() {
           <SkeletonRows count={3} />
         </section>
 
-        <section className="dashboard-panel patterns-panel skeleton-panel">
+        <section className="dashboard-panel team-panel skeleton-panel">
           <div className="skeleton-panel-heading">
             <span className="skeleton skeleton-label" />
           </div>
-          <SkeletonRows count={2} />
+          <SkeletonRows count={4} />
         </section>
 
-        <section className="dashboard-panel reports-panel skeleton-panel">
+        <section className="dashboard-panel leaderboard-panel skeleton-panel">
           <div className="skeleton-panel-heading">
             <span className="skeleton skeleton-label" />
           </div>
-          <SkeletonRows count={3} />
+          <SkeletonRows count={5} />
         </section>
       </div>
       <span className="sr-only">Loading findings</span>

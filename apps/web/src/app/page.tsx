@@ -1,10 +1,12 @@
 import { HomeState } from "@/components/home-state";
-import {
-  LeadFinding,
-  ReportLinks,
-  RoleChangeFeed,
-} from "@/components/role-ui";
+import { ReportLeaderboard } from "@/components/report-leaderboard";
+import { LeadFinding, RoleChangeFeed } from "@/components/role-ui";
+import { TeamSnapshot } from "@/components/team-snapshot";
 import { getHomeFixture } from "@/data/home.fixture";
+import {
+  reportLeaderboardFixture,
+  teamSnapshotFixture,
+} from "@/data/home.presentation.fixture";
 
 type HomePageProps = {
   searchParams: Promise<{ state?: string }>;
@@ -23,14 +25,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       {data.status === "published" ? (
         <div className="dashboard-grid">
-          <LeadFinding finding={data.leadFinding} />
+          <LeadFinding finding={data.leadFinding} week={data.throughWeek} />
           <RoleChangeFeed findings={data.findings} />
-          <ReportLinks reports={data.reportLinks} />
+          <TeamSnapshot data={teamSnapshotFixture} />
+          <ReportLeaderboard data={reportLeaderboardFixture} />
         </div>
       ) : (
         <div className="state-grid">
           <HomeState data={data} />
-          <ReportLinks reports={data.reportLinks} />
         </div>
       )}
 
