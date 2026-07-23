@@ -4,20 +4,33 @@ import {
   ReportsIcon,
   TrendUpIcon,
 } from "@/components/icons";
-import {
-  backfieldReportFixture,
-  movementReportFixture,
-  targetReportFixture,
-} from "@/data/reports.fixture";
+import type { ReportsIndexBundle } from "@/lib/data-contract";
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 const points = (value: number) =>
   `${value > 0 ? "+" : ""}${value.toFixed(1)} pp`;
+type ReportsIndexModule = ReportsIndexBundle["modules"][number];
+type CurrentOverviewModule = Extract<ReportsIndexModule, { kind: "current" }>;
+type MovementOverviewModule = Extract<ReportsIndexModule, { kind: "movement" }>;
 
-export function ReportsOverview() {
-  const backfield = backfieldReportFixture.views[0].rows[0];
-  const target = targetReportFixture.views[0].rows[0];
-  const movement = movementReportFixture.views[0].rows[0];
+export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
+  const backfieldModule = data.modules.find(
+    (module) =>
+      module.kind === "current" &&
+      module.family === "backfield_control",
+  ) as CurrentOverviewModule | undefined;
+  const targetModule = data.modules.find(
+    (module) =>
+      module.kind === "current" &&
+      module.family === "target_hierarchy",
+  ) as CurrentOverviewModule | undefined;
+  const movementModule = data.modules.find(
+    (module) => module.kind === "movement",
+  ) as MovementOverviewModule | undefined;
+  if (!backfieldModule || !targetModule || !movementModule) return null;
+  const backfield = backfieldModule.row;
+  const target = targetModule.row;
+  const movement = movementModule.row;
 
   return (
     <>
@@ -28,7 +41,7 @@ export function ReportsOverview() {
             <span>Backfield Control</span>
             <strong>01</strong>
           </div>
-          <h2>Who owns each team’s documented RB opportunities?</h2>
+          <h2>{backfieldModule.question}</h2>
           <div className="overview-player">
             <span className="overview-rank">1</span>
             <span>
@@ -43,10 +56,8 @@ export function ReportsOverview() {
               </small>
             </span>
           </div>
-          <p>
-            Player opportunities stay paired with the matching team RB total.
-          </p>
-          <Link href="/reports/backfield">
+          <p>{backfieldModule.description}</p>
+          <Link href={backfieldModule.href}>
             Open Backfield Control
             <ArrowRightIcon />
           </Link>
@@ -58,7 +69,7 @@ export function ReportsOverview() {
             <span>Target Hierarchy</span>
             <strong>02</strong>
           </div>
-          <h2>Who owns each team’s documented WR and TE targets?</h2>
+          <h2>{targetModule.question}</h2>
           <div className="overview-player">
             <span className="overview-rank">1</span>
             <span>
@@ -73,8 +84,8 @@ export function ReportsOverview() {
               </small>
             </span>
           </div>
-          <p>WR and TE target evidence uses the supplied team target total.</p>
-          <Link href="/reports/targets">
+          <p>{targetModule.description}</p>
+          <Link href={targetModule.href}>
             Open Target Hierarchy
             <ArrowRightIcon />
           </Link>
@@ -86,7 +97,7 @@ export function ReportsOverview() {
             <span>Role Movement</span>
             <strong>03</strong>
           </div>
-          <h2>Whose documented role changed most between supplied periods?</h2>
+          <h2>{movementModule.question}</h2>
           <div className="overview-movement">
             <span>
               <small>Previous</small>
@@ -110,7 +121,7 @@ export function ReportsOverview() {
               <strong>{points(movement.movement.percentagePointChange)}</strong>
             </span>
           </div>
-          <Link href="/reports/movement">
+          <Link href={movementModule.href}>
             Open Role Movement
             <ArrowRightIcon />
           </Link>
@@ -122,7 +133,7 @@ export function ReportsOverview() {
           <span>All-play authority</span>
           <h2 id="reports-authority-title">Exact counts stay attached to every share.</h2>
           <p>
-            The published fixture supplies both the player count and its matching
+            The published bundle supplies both the player count and its matching
             team denominator. DepthSnap formats those values without rebuilding
             report membership or authority order.
           </p>
@@ -131,7 +142,7 @@ export function ReportsOverview() {
           <span>Supporting context</span>
           <h2>Typical-game evidence stays secondary.</h2>
           <p>
-            When the fixture supplies a typical-game window, it is labeled as
+            When the bundle supplies a typical-game window, it is labeled as
             supporting context rather than replacing the authoritative all-play
             result.
           </p>

@@ -18,7 +18,8 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
           title={bundle.team.name}
           description={bundle.suppliedSummary}
           fixtureNotice={bundle.fixtureNotice}
-          meta={`${bundle.season} · through Week ${bundle.throughWeek}`}
+          dataMode={bundle.dataMode}
+          meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
         />
         <IdentityState status={bundle.status} subject={bundle.team.name} />
       </div>
@@ -33,7 +34,8 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
         title={bundle.team.name}
         description={bundle.suppliedSummary}
         fixtureNotice={bundle.fixtureNotice}
-        meta={`${bundle.season} · through Week ${bundle.throughWeek}`}
+        dataMode={bundle.dataMode}
+        meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
       >
         <nav className="dossier-report-links" aria-label={`${bundle.team.name} reports`}>
           <Link href={`/reports/backfield?team=${bundle.team.id}`}>Backfield</Link>
@@ -47,7 +49,7 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
         <div>
           <span>{bundle.team.abbreviation}</span>
           <h2>Current role structure</h2>
-          <p>{bundle.team.conference} · {bundle.team.division} · fixture identity</p>
+          <p>{bundle.team.conference} · {bundle.team.division} · supplied identity</p>
         </div>
         {lead ? (
           <div className="team-lead-evidence">

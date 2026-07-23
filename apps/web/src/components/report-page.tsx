@@ -1,10 +1,11 @@
+import { ContractFailure } from "@/components/contract-failure";
 import { FixtureNotice } from "@/components/fixture-notice";
 import { ReportExperience } from "@/components/report-experience";
 import { ReportLoading } from "@/components/report-loading";
 import { ReportState } from "@/components/report-state";
-import { getReportFixture } from "@/data/reports.fixture";
+import { loadReportData } from "@/lib/data-loader";
 import { parseReportQuery } from "@/lib/report-query";
-import type { ReportSearchParams } from "@/lib/report-types";
+import type { ReportFixture, ReportSearchParams } from "@/lib/report-types";
 import type { ReportFamily } from "@/lib/types";
 
 export async function ReportPage({
@@ -20,7 +21,15 @@ export async function ReportPage({
     return <ReportLoading />;
   }
 
-  const data = getReportFixture(family, params.state);
+  const result = await loadReportData(family, params.state);
+  if (!result.ok) {
+    return (
+      <div className="page-shell report-page-shell">
+        <ContractFailure failure={result.failure} />
+      </div>
+    );
+  }
+  const data = result.data as unknown as ReportFixture;
 
   return (
     <div className="page-shell report-page-shell">
@@ -34,7 +43,10 @@ export async function ReportPage({
         <div className="report-page">
           <header className="report-header">
             <div className="report-title-block">
-              <span>Report · 2025 Week {data.throughWeek}</span>
+              <span>
+                Report · {data.season}
+                {data.throughWeek ? ` Week ${data.throughWeek}` : ""}
+              </span>
               <h1>{data.title}</h1>
               <p>{data.question}</p>
             </div>

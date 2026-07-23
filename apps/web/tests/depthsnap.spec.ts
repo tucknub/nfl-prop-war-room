@@ -163,7 +163,7 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
     .getByRole("link", { name: "Open supporting evidence" })
     .click();
   await expect(page).toHaveURL(
-    /\/reports\/backfield\?player=fixture-marcus-hale$/,
+    /\/reports\/backfield\?player=player-marcus-hale$/,
   );
   await expect(
     page.getByRole("heading", { name: "Backfield Control" }),

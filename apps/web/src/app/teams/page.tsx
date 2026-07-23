@@ -1,8 +1,8 @@
+import { ContractFailure } from "@/components/contract-failure";
 import { IdentityLoading, IdentityPageHeader, IdentityState } from "@/components/identity-primitives";
 import { TeamDirectory } from "@/components/team-directory";
-import { identityFixtureMetadata } from "@/data/identity.fixture";
-import { teamDirectoryRecords } from "@/data/identity-data";
-import type { IdentitySearchParams } from "@/lib/identity-types";
+import { loadTeamsIndexData } from "@/lib/data-loader";
+import type { IdentitySearchParams, TeamDirectoryRecord } from "@/lib/identity-types";
 
 export default async function TeamsPage({
   searchParams,
@@ -11,22 +11,33 @@ export default async function TeamsPage({
 }) {
   const params = await searchParams;
   if (params.state === "loading") return <IdentityLoading title="team directory" />;
-  const unavailable = params.state === "unavailable";
-  const unpublished = params.state === "unpublished";
+  const result = await loadTeamsIndexData(params.state);
+  if (!result.ok) {
+    return (
+      <div className="page-shell identity-page-shell directory-page">
+        <ContractFailure failure={result.failure} />
+      </div>
+    );
+  }
+  const data = result.data;
   return (
     <div className="page-shell identity-page-shell directory-page">
       <h2 className="sr-only">Teams</h2>
       <IdentityPageHeader
         eyebrow="Teams"
         title="Team role structure"
-        description="Locate a fixture team, scan its supplied role leaders, and open one coherent evidence dossier."
-        fixtureNotice={identityFixtureMetadata.fixtureNotice}
-        meta={`${identityFixtureMetadata.season} · through Week ${identityFixtureMetadata.throughWeek}`}
+        description="Locate a supplied team, scan its role leaders, and open one coherent evidence dossier."
+        fixtureNotice={data.fixtureNotice}
+        dataMode={data.dataMode}
+        meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}
       />
-      {unavailable || unpublished ? (
-        <IdentityState status={unavailable ? "unavailable" : "no_published_week"} subject="the team directory" />
+      {data.status !== "published" ? (
+        <IdentityState status={data.status} subject="the team directory" />
       ) : (
-        <TeamDirectory records={teamDirectoryRecords} initialQuery={params.q ?? ""} />
+        <TeamDirectory
+          records={data.teams as unknown as readonly TeamDirectoryRecord[]}
+          initialQuery={params.q ?? ""}
+        />
       )}
     </div>
   );

@@ -357,6 +357,7 @@ export function ReportExperience({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const pendingParams = useRef(searchParams.toString());
   const [selectedRow, setSelectedRow] = useState<ResultRow | null>(null);
   const [copied, setCopied] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -396,14 +397,19 @@ export function ReportExperience({
     setFiltersOpen(window.matchMedia("(min-width: 721px)").matches);
   }, []);
 
+  useEffect(() => {
+    pendingParams.current = searchParams.toString();
+  }, [searchParams]);
+
   const updateParam = (name: string, value: string, defaultValue?: string) => {
-    const next = new URLSearchParams(searchParams.toString());
+    const next = new URLSearchParams(pendingParams.current);
     if (!value || value === defaultValue) {
       next.delete(name);
     } else {
       next.set(name, value);
     }
     next.delete("page");
+    pendingParams.current = next.toString();
     router.push(`${pathname}${next.size ? `?${next.toString()}` : ""}`);
   };
 
@@ -415,6 +421,7 @@ export function ReportExperience({
     if (initialQuery.sort !== data.defaultSort) {
       next.set("sort", initialQuery.sort);
     }
+    pendingParams.current = next.toString();
     router.push(`${pathname}${next.size ? `?${next.toString()}` : ""}`);
   };
 
@@ -445,7 +452,11 @@ export function ReportExperience({
         <div className="report-freshness">
           <StatusIcon />
           <span>
-            <strong>Published fixture</strong>
+            <strong>
+              {data.dataMode === "export"
+                ? "Published export"
+                : "Published fixture"}
+            </strong>
             <small>Generated {new Date(data.generatedAt).toLocaleDateString("en-US")}</small>
           </span>
         </div>
@@ -581,7 +592,7 @@ export function ReportExperience({
             <h2 id="no-match-title">No supplied rows match this view</h2>
             <p>
               The report is published, but the current team and position
-              filters return no fixture rows.
+              filters return no supplied rows.
             </p>
             <button type="button" onClick={resetFilters}>
               Reset filters
@@ -634,7 +645,7 @@ export function ReportExperience({
       )}
 
       <footer className="report-footer">
-        <span>Authority rank and labels are fixture supplied.</span>
+        <span>Authority rank and labels are bundle supplied.</span>
         <div>
           <Link href="/methodology">Methodology</Link>
           <Link href="/data-status">Data status</Link>

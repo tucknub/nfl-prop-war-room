@@ -14,6 +14,7 @@ export function IdentityPageHeader({
   title,
   description,
   fixtureNotice,
+  dataMode,
   meta,
   children,
 }: {
@@ -21,6 +22,7 @@ export function IdentityPageHeader({
   title: string;
   description: string;
   fixtureNotice: string;
+  dataMode?: "fixture" | "export";
   meta: string;
   children?: React.ReactNode;
 }) {
@@ -34,7 +36,7 @@ export function IdentityPageHeader({
           <p>{description}</p>
         </div>
         <div className="identity-header-meta">
-          <span>Fixture status</span>
+          <span>{dataMode === "export" ? "Export status" : "Fixture status"}</span>
           <strong>{meta}</strong>
         </div>
         {children}
@@ -64,8 +66,8 @@ export function IdentityState({
       </h2>
       <p>
         {unpublished
-          ? "A completed validated fixture week has not been published. No estimated shares are shown."
-          : "The fixture bundle could not be read. No stale or fabricated evidence is shown."}
+          ? "A completed validated week has not been published. No estimated shares are shown."
+          : "The selected bundle could not be read. No stale or fabricated evidence is shown."}
       </p>
       <div className="identity-state-actions">
         <Link href="/data-status">Open Data Status</Link>

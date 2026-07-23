@@ -6,8 +6,22 @@ import {
   MobileNavigation,
 } from "@/components/navigation";
 import { GlobalSearchShortcut } from "@/components/global-search-shortcut";
+import { loadStatusData } from "@/lib/data-loader";
 
-export function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({ children }: { children: ReactNode }) {
+  const statusResult = await loadStatusData();
+  const status = statusResult.ok ? statusResult.data : null;
+  const freshnessLabel =
+    status?.status === "published" && status.throughWeek
+      ? `${status.season} · Week ${status.throughWeek}`
+      : status?.status === "no_published_week"
+        ? `${status.season} · No published week`
+        : "Data unavailable";
+  const modeLabel = status
+    ? status.dataMode === "fixture"
+      ? "Design fixture"
+      : "Validated export"
+    : "Contract check";
   return (
     <div className="app-shell">
       <GlobalSearchShortcut />
@@ -43,12 +57,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
             <div
               className="freshness-indicator"
-              aria-label="Design fixture for the 2025 season through Week 18"
+              aria-label={`${modeLabel}: ${freshnessLabel}`}
             >
               <StatusIcon />
               <span>
-                <strong>2025 · Week 18</strong>
-                <small>Design fixture</small>
+                <strong>{freshnessLabel}</strong>
+                <small>{modeLabel}</small>
               </span>
             </div>
           </div>

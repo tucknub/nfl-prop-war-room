@@ -33,6 +33,7 @@ export type IdentityBundleStatus =
 export type IdentityBundleMetadata = {
   schemaVersion: "depthsnap.identity.fixture.v1";
   fixture: true;
+  dataMode?: "fixture" | "export";
   fixtureNotice: string;
   status: IdentityBundleStatus;
   season: number;

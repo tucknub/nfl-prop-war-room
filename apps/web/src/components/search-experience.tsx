@@ -46,7 +46,7 @@ export function SearchExperience({
 
   return (
     <div className="global-search">
-      <label htmlFor="global-identity-search">Search fixture identities</label>
+      <label htmlFor="global-identity-search">Search supplied identities</label>
       <div className="global-search-input">
         <span aria-hidden="true">⌕</span>
         <input
@@ -67,7 +67,7 @@ export function SearchExperience({
       </div>
       <p className="search-help">Exact and prefix matches appear first. Use ↑ ↓ and Enter to navigate.</p>
       <div className="search-result-heading">
-        <span>{query ? `${results.length} matching identities` : "Fixture identities"}</span>
+        <span>{query ? `${results.length} matching identities` : "Supplied identities"}</span>
         <span>Teams and players only</span>
       </div>
       {results.length ? (

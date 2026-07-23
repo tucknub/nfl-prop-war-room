@@ -90,7 +90,7 @@ export function TeamDirectory({
       ) : (
         <section className="directory-empty" role="status">
           <p className="identity-eyebrow">No matching filters</p>
-          <h2>No fixture teams match “{query}”</h2>
+          <h2>No supplied teams match “{query}”</h2>
           <p>Adjust the team search or reset it to see all supplied identities.</p>
           <button type="button" onClick={() => setQuery("")}>Reset team search</button>
         </section>

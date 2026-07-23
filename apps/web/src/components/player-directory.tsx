@@ -86,7 +86,7 @@ export function PlayerDirectory({
                 <span>{record.player.team} · {record.player.position}</span>
               </div>
               <div className="player-memberships">
-                {record.memberships.length ? record.memberships.map((item) => <span key={item.family}>{item.label}</span>) : <span>Identity fixture</span>}
+                {record.memberships.length ? record.memberships.map((item) => <span key={item.family}>{item.label}</span>) : <span>Supplied identity</span>}
               </div>
               {record.currentEvidence ? <ShareEvidence evidence={record.currentEvidence} compact /> : <p className="no-current-evidence">No current share supplied</p>}
               <div className="player-directory-movement">
@@ -105,7 +105,7 @@ export function PlayerDirectory({
         <section className="directory-empty" role="status">
           <p className="identity-eyebrow">No matching filters</p>
           <h2>No players match the current directory view</h2>
-          <p>Reset the supplied identity filters to return to the full fixture directory.</p>
+          <p>Reset the supplied identity filters to return to the full directory.</p>
           <button type="button" onClick={reset}>Reset player filters</button>
         </section>
       )}

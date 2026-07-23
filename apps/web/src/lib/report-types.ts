@@ -63,6 +63,7 @@ export type ReportSummary = {
 export type ReportMetadata = {
   schemaVersion: "depthsnap.report.fixture.v1";
   fixture: true;
+  dataMode?: "fixture" | "export";
   fixtureNotice: string;
   reportFamily: ReportFamily;
   title: string;

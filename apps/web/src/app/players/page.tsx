@@ -1,8 +1,8 @@
+import { ContractFailure } from "@/components/contract-failure";
 import { IdentityLoading, IdentityPageHeader, IdentityState } from "@/components/identity-primitives";
 import { PlayerDirectory } from "@/components/player-directory";
-import { identityFixtureMetadata, teams } from "@/data/identity.fixture";
-import { playerDirectoryRecords } from "@/data/identity-data";
-import type { IdentitySearchParams } from "@/lib/identity-types";
+import { loadPlayersIndexData } from "@/lib/data-loader";
+import type { IdentitySearchParams, PlayerDirectoryRecord } from "@/lib/identity-types";
 
 export default async function PlayersPage({
   searchParams,
@@ -11,23 +11,31 @@ export default async function PlayersPage({
 }) {
   const params = await searchParams;
   if (params.state === "loading") return <IdentityLoading title="player directory" />;
-  const unavailable = params.state === "unavailable";
-  const unpublished = params.state === "unpublished";
+  const result = await loadPlayersIndexData(params.state);
+  if (!result.ok) {
+    return (
+      <div className="page-shell identity-page-shell directory-page">
+        <ContractFailure failure={result.failure} />
+      </div>
+    );
+  }
+  const data = result.data;
   return (
     <div className="page-shell identity-page-shell directory-page">
       <IdentityPageHeader
         eyebrow="Players"
         title="Player role evidence"
         description="Find a player and read the latest supplied share, raw counts, report memberships, and movement context."
-        fixtureNotice={identityFixtureMetadata.fixtureNotice}
-        meta={`${identityFixtureMetadata.season} · through Week ${identityFixtureMetadata.throughWeek}`}
+        fixtureNotice={data.fixtureNotice}
+        dataMode={data.dataMode}
+        meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}
       />
-      {unavailable || unpublished ? (
-        <IdentityState status={unavailable ? "unavailable" : "no_published_week"} subject="the player directory" />
+      {data.status !== "published" ? (
+        <IdentityState status={data.status} subject="the player directory" />
       ) : (
         <PlayerDirectory
-          records={playerDirectoryRecords}
-          teams={teams.map((team) => team.id)}
+          records={data.players as unknown as readonly PlayerDirectoryRecord[]}
+          teams={data.teamOptions}
           initialQuery={params.q ?? ""}
           initialTeam={params.team ?? "ALL"}
           initialPosition={params.position ?? "ALL"}

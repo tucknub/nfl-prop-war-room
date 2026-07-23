@@ -113,11 +113,11 @@ test("global search prioritizes supplied identities and supports keyboard naviga
   await page.goto("/");
   await page.getByRole("link", { name: "Search players and teams" }).click();
   await expect(page).toHaveURL(/\/search\?focus=1/);
-  await expect(page.getByRole("combobox", { name: "Search fixture identities" })).toBeFocused();
+  await expect(page.getByRole("combobox", { name: "Search supplied identities" })).toBeFocused();
   await page.goto("/");
   await page.keyboard.press("/");
   await expect(page).toHaveURL(/\/search\?focus=1/);
-  const input = page.getByRole("combobox", { name: "Search fixture identities" });
+  const input = page.getByRole("combobox", { name: "Search supplied identities" });
   await expect(input).toBeFocused();
   await input.fill("mar");
   await expect(page.getByRole("option").first()).toContainText("Marcus Hale");
@@ -151,15 +151,15 @@ test("identity states distinguish loading, unpublished, unavailable, filters, an
   await capture(page, "phase3-desktop-unavailable-player.png");
 
   await page.goto("/teams/unknown-team");
-  await expect(page.getByRole("heading", { name: "This team identity is not in the fixture bundle" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This team identity is not in the selected bundle" })).toBeVisible();
   await capture(page, "phase3-desktop-unknown-team.png");
   await page.goto("/players/player-unknown");
-  await expect(page.getByRole("heading", { name: "This player identity is not in the fixture bundle" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This player identity is not in the selected bundle" })).toBeVisible();
   await capture(page, "phase3-desktop-unknown-player.png");
 
   await page.goto("/teams");
   await page.getByLabel("Search teams").fill("no such team");
-  await expect(page.getByRole("heading", { name: /No fixture teams match/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /No supplied teams match/ })).toBeVisible();
   await page.getByRole("button", { name: "Reset team search" }).click();
   await expect(page.locator(".team-directory-item")).toHaveCount(8);
 });

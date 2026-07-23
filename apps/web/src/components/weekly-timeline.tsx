@@ -56,7 +56,7 @@ export function WeeklyTimeline({
           </table>
         </>
       ) : (
-        <p className="identity-inline-empty">No weekly chronology was supplied for this fixture identity.</p>
+        <p className="identity-inline-empty">No weekly chronology was supplied for this identity.</p>
       )}
     </section>
   );

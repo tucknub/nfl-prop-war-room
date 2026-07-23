@@ -6,7 +6,7 @@ export default function PlayerNotFound() {
       <section className="identity-state identity-not-found">
         <span className="identity-state-mark" aria-hidden="true">?</span>
         <p className="identity-eyebrow">Player not found</p>
-        <h1>This player identity is not in the fixture bundle</h1>
+        <h1>This player identity is not in the selected bundle</h1>
         <p>Use the player directory or global search to open a stable supplied identity.</p>
         <div className="identity-state-actions">
           <Link href="/players">Open Players</Link>

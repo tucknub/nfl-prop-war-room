@@ -18,9 +18,10 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
         <IdentityPageHeader
           eyebrow="Player dossier"
           title={bundle.player.name}
-          description="Supplied role evidence across the fixture season."
+          description="Supplied role evidence across the selected season."
           fixtureNotice={bundle.fixtureNotice}
-          meta={`${bundle.season} · through Week ${bundle.throughWeek}`}
+          dataMode={bundle.dataMode}
+          meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
         />
         <IdentityState status={bundle.status} subject={bundle.player.name} />
       </div>
@@ -34,7 +35,8 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
         title={bundle.player.name}
         description="The supplied season story for this player’s documented role."
         fixtureNotice={bundle.fixtureNotice}
-        meta={`${bundle.season} · through Week ${bundle.throughWeek}`}
+        dataMode={bundle.dataMode}
+        meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
       >
         <nav className="dossier-report-links" aria-label={`${bundle.player.name} evidence links`}>
           <Link href={bundle.currentTeam.href}>Team dossier</Link>
