@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "apps/web/**"
+      - "docs/depthsnap/**"
       - "docs/propwar/NEXTJS_PUBLIC_APP_MIGRATION.md"
       - ".github/workflows/depthsnap-web.yml"
   workflow_dispatch:
