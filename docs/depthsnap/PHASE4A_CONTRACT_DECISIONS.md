@@ -4,6 +4,19 @@ Status: **Normative for Phase 4A and the later Python export bridge**
 
 This file freezes decisions that must be settled before runtime schemas, manifests, and public loaders are implemented. Codex may refine implementation details, but it must not silently change these product or data-contract decisions.
 
+## Pre-handoff audit findings
+
+The current fixture implementation is a valid prototype, but Phase 4A must deliberately remove these temporary boundaries:
+
+- shared schema names currently include `.fixture.v1`;
+- several types currently hard-code `fixture: true`;
+- the Feed and report shell import fixture modules directly;
+- `identity-data.ts` composes Team, Player, Search, and directory data from report fixtures at runtime;
+- some presentation ordering is performed in TypeScript;
+- Methodology and Data Status are still placeholders.
+
+These are not Phase 1–3 defects. They are the exact seams Phase 4A must replace with production-neutral schemas and one validated loader boundary.
+
 ## 1. Public bundles are production-neutral
 
 Schema versions must not encode the current fixture source.
