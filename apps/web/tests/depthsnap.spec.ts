@@ -194,6 +194,9 @@ test("mobile uses the required module order and keeps navigation clear", async (
   const errors = monitorPageErrors(page);
 
   await page.goto("/");
+  await expect(
+    page.getByLabel("Loading DepthSnap findings"),
+  ).toHaveCount(0);
 
   const hero = page.locator(".lead-panel");
   const movement = page.locator(".movement-panel");

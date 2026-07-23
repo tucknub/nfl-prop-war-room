@@ -1,11 +1,10 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { ReportPage } from "@/components/report-page";
+import type { ReportSearchParams } from "@/lib/report-types";
 
-export default function TargetsPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Report 02"
-      title="Target Hierarchy"
-      description="A team-by-team view of documented WR and TE target ownership, with raw counts and exact team denominators."
-    />
-  );
+export default function TargetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<ReportSearchParams>;
+}) {
+  return <ReportPage family="target_hierarchy" searchParams={searchParams} />;
 }

@@ -1,11 +1,12 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { ReportPage } from "@/components/report-page";
+import type { ReportSearchParams } from "@/lib/report-types";
 
-export default function BackfieldPage() {
+export default function BackfieldPage({
+  searchParams,
+}: {
+  searchParams: Promise<ReportSearchParams>;
+}) {
   return (
-    <PlaceholderPage
-      eyebrow="Report 01"
-      title="Backfield Control"
-      description="A ranked view of documented carries and total RB opportunities, always paired with the matching team total."
-    />
+    <ReportPage family="backfield_control" searchParams={searchParams} />
   );
 }

@@ -1,11 +1,10 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { ReportPage } from "@/components/report-page";
+import type { ReportSearchParams } from "@/lib/report-types";
 
-export default function MovementPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Report 03"
-      title="Role Movement"
-      description="Before-and-after role changes across RB carries, RB opportunities, WR targets, and TE targets."
-    />
-  );
+export default function MovementPage({
+  searchParams,
+}: {
+  searchParams: Promise<ReportSearchParams>;
+}) {
+  return <ReportPage family="role_movement" searchParams={searchParams} />;
 }
