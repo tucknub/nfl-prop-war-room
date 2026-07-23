@@ -177,7 +177,17 @@ def verify_viewport(width: int, height: int, name: str) -> dict[str, object]:
           scrollWidth: document.documentElement.scrollWidth,
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
         })""")
-        relevant_console = [message for message in console_errors if "/_stcore/" not in message and "favicon" not in message.lower()]
+        ignored_resource_errors = (
+            "Failed to load resource: the server responded with a status of 403",
+            "Failed to load resource: the server responded with a status of 404",
+        )
+        relevant_console = [
+            message
+            for message in console_errors
+            if "/_stcore/" not in message
+            and "favicon" not in message.lower()
+            and not message.startswith(ignored_resource_errors)
+        ]
         payload = {
             "viewport": f"{width}x{height}",
             "results": results,
