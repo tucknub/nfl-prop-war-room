@@ -11,7 +11,10 @@ export type PlayerIdentity = {
   id: string;
   name: string;
   team: string;
+  teamId?: string;
   position: PlayerPosition;
+  href?: string;
+  jerseyNumber?: number;
 };
 
 export type RawShareEvidence = {

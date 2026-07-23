@@ -48,7 +48,7 @@ export const publishedHomeFixture = {
     player: {
       id: "fixture-marcus-hale",
       name: "Marcus Hale",
-      team: "JAX",
+      team: "JVT",
       position: "RB",
     },
     headline: "Marcus Hale took control of the team backfield.",
@@ -109,7 +109,7 @@ export const publishedHomeFixture = {
         },
         percentagePointChange: 26.5,
       },
-      evidenceHref: "/reports/backfield?player=fixture-zion-mercer",
+      evidenceHref: "/players/player-zion-mercer",
     },
     {
       id: "fixture-target-share-increase",
@@ -144,7 +144,7 @@ export const publishedHomeFixture = {
         },
         percentagePointChange: 15.1,
       },
-      evidenceHref: "/reports/targets?player=fixture-theo-lane",
+      evidenceHref: "/players/player-theo-lane",
     },
     {
       id: "fixture-role-decline",
@@ -179,7 +179,7 @@ export const publishedHomeFixture = {
         },
         percentagePointChange: -29.1,
       },
-      evidenceHref: "/reports/movement?player=fixture-miles-redd",
+      evidenceHref: "/players/player-miles-redd",
     },
     {
       id: "fixture-concentrated-role",
@@ -199,7 +199,7 @@ export const publishedHomeFixture = {
         share: 0.818,
         opportunityLabel: "targets",
       },
-      evidenceHref: "/reports/targets?player=fixture-drew-keaton",
+      evidenceHref: "/players/player-drew-keaton",
     },
     {
       id: "fixture-committee-formation",
@@ -234,7 +234,7 @@ export const publishedHomeFixture = {
         },
         percentagePointChange: -29.1,
       },
-      evidenceHref: "/reports/movement?player=fixture-owen-black",
+      evidenceHref: "/players/player-owen-black",
     },
   ],
 } as const satisfies HomepageFixture;

@@ -58,9 +58,9 @@ export const teamSnapshotFixture = {
     player: "Marcus Hale",
     summary: "RB opportunity share",
     percentagePointChange: 23.1,
-    evidenceHref: "/reports/backfield?player=fixture-marcus-hale",
+    evidenceHref: "/players/player-marcus-hale",
   },
-  reportHref: "/teams?team=jvt",
+  reportHref: "/teams/JVT",
 } as const satisfies TeamSnapshotFixture;
 
 export const reportLeaderboardFixture = {
@@ -80,7 +80,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 23.1,
-      evidenceHref: "/reports/backfield?player=fixture-marcus-hale",
+      evidenceHref: "/players/player-marcus-hale",
     },
     {
       rank: 2,
@@ -97,7 +97,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 8.6,
-      evidenceHref: "/reports/backfield?player=fixture-caleb-stone",
+      evidenceHref: "/players/player-caleb-stone",
     },
     {
       rank: 3,
@@ -114,7 +114,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 12.4,
-      evidenceHref: "/reports/backfield?player=fixture-jordan-vale",
+      evidenceHref: "/players/player-jordan-vale",
     },
     {
       rank: 4,
@@ -131,7 +131,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: -3.2,
-      evidenceHref: "/reports/backfield?player=fixture-micah-reed",
+      evidenceHref: "/players/player-micah-reed",
     },
     {
       rank: 5,
@@ -148,7 +148,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 5.4,
-      evidenceHref: "/reports/backfield?player=fixture-devin-banks",
+      evidenceHref: "/players/player-devin-banks",
     },
   ],
   target_hierarchy: [
@@ -167,7 +167,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: 15.1,
-      evidenceHref: "/reports/targets?player=fixture-theo-lane",
+      evidenceHref: "/players/player-theo-lane",
     },
     {
       rank: 2,
@@ -184,7 +184,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: 6.7,
-      evidenceHref: "/reports/targets?player=fixture-jonah-pike",
+      evidenceHref: "/players/player-jonah-pike",
     },
     {
       rank: 3,
@@ -201,7 +201,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: 4.2,
-      evidenceHref: "/reports/targets?player=fixture-drew-keaton",
+      evidenceHref: "/players/player-drew-keaton",
     },
     {
       rank: 4,
@@ -218,7 +218,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: -2.9,
-      evidenceHref: "/reports/targets?player=fixture-luca-ward",
+      evidenceHref: "/players/player-luca-ward",
     },
     {
       rank: 5,
@@ -235,7 +235,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: 3.8,
-      evidenceHref: "/reports/targets?player=fixture-cole-mercer",
+      evidenceHref: "/players/player-cole-mercer",
     },
   ],
   role_movement: [
@@ -254,7 +254,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 26.5,
-      evidenceHref: "/reports/movement?player=fixture-zion-mercer",
+      evidenceHref: "/players/player-zion-mercer",
     },
     {
       rank: 2,
@@ -271,7 +271,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: 23.1,
-      evidenceHref: "/reports/movement?player=fixture-marcus-hale",
+      evidenceHref: "/players/player-marcus-hale",
     },
     {
       rank: 3,
@@ -288,7 +288,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "targets",
       },
       movementPoints: 15.1,
-      evidenceHref: "/reports/movement?player=fixture-theo-lane",
+      evidenceHref: "/players/player-theo-lane",
     },
     {
       rank: 4,
@@ -305,7 +305,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "carries",
       },
       movementPoints: -29.1,
-      evidenceHref: "/reports/movement?player=fixture-miles-redd",
+      evidenceHref: "/players/player-miles-redd",
     },
     {
       rank: 5,
@@ -322,7 +322,7 @@ export const reportLeaderboardFixture = {
         opportunityLabel: "opportunities",
       },
       movementPoints: -29.1,
-      evidenceHref: "/reports/movement?player=fixture-owen-black",
+      evidenceHref: "/players/player-owen-black",
     },
   ],
 } as const satisfies ReportLeaderboardFixture;

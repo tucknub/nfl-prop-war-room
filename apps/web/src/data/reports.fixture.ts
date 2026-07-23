@@ -15,6 +15,7 @@ import type {
   RawShareEvidence,
   ReportFamily,
 } from "@/lib/types";
+import { getPlayerIdentity, getTeamIdentity } from "@/data/identity.fixture";
 
 const fixtureNotice =
   "Design fixture data — synthetic records for interface review, not a current NFL week.";
@@ -68,18 +69,25 @@ function currentRow(
   dataQuality: DataQuality = "complete",
   supportingContext?: CurrentEvidenceRow["supportingContext"],
 ): CurrentEvidenceRow {
+  const identity = getPlayerIdentity(
+    id.replace(/-season$/, "").replace(/-move$/, ""),
+  );
+  const teamIdentity = getTeamIdentity(team);
+  if (!identity || !teamIdentity || identity.name !== name || identity.position !== position) {
+    throw new Error(`Missing canonical identity for report row: ${id}`);
+  }
   return {
     id,
     authoritativeRank: rank,
-    player: { id: `fixture-${id}`, name, team, position },
+    player: identity,
     roleFamily,
     current,
     classificationLabel,
     dataQuality,
     supportingContext,
-    teamHref: `/teams?team=${team}`,
-    playerHref: `/players?player=fixture-${id}`,
-    evidenceHref: `#${id}`,
+    teamHref: teamIdentity.href,
+    playerHref: identity.href,
+    evidenceHref: identity.href,
   };
 }
 
@@ -98,19 +106,26 @@ function movementRow(
   finding: string,
   dataQuality: DataQuality = "complete",
 ): MovementEvidenceRow {
+  const identity = getPlayerIdentity(
+    id.replace(/-season-move$/, "").replace(/-move$/, ""),
+  );
+  const teamIdentity = getTeamIdentity(team);
+  if (!identity || !teamIdentity || identity.name !== name || identity.position !== position) {
+    throw new Error(`Missing canonical identity for movement row: ${id}`);
+  }
   return {
     id,
     authoritativeRank: rank,
-    player: { id: `fixture-${id}`, name, team, position },
+    player: identity,
     roleFamily,
     movement: { previous, current, percentagePointChange },
     direction,
     movementLabel,
     finding,
     dataQuality,
-    teamHref: `/teams?team=${team}`,
-    playerHref: `/players?player=fixture-${id}`,
-    evidenceHref: `#${id}`,
+    teamHref: teamIdentity.href,
+    playerHref: identity.href,
+    evidenceHref: identity.href,
   };
 }
 

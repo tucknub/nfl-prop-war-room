@@ -5,10 +5,12 @@ import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/components/navigation";
+import { GlobalSearchShortcut } from "@/components/global-search-shortcut";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
+      <GlobalSearchShortcut />
       <a className="skip-link" href="#main-content">
         Skip to findings
       </a>
@@ -32,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="header-tools">
             <Link
               className="search-trigger"
-              href="/search"
+              href="/search?focus=1"
               aria-label="Search players and teams"
             >
               <SearchIcon />
