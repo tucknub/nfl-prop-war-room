@@ -38,7 +38,7 @@ def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: st
 def render_home() -> None:
     enable_browser_history_sync()
     page_intro(
-        "Latest Role Changes",
+        "This Week in NFL Roles",
         "Start with the clearest usage changes, then open the supporting player and team evidence.",
     )
 
