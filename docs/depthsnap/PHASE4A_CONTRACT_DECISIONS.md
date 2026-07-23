@@ -116,9 +116,9 @@ The manifest must list every V1 public bundle family in fixture and export modes
 When status is `no_published_week` or `unavailable`:
 
 - metadata and state copy remain present;
-- result collections are empty;
+- route-level evidence collections are empty;
 - no estimated or stale evidence is substituted;
-- stable directory and identity behavior must follow the frozen schemas;
+- canonical team/player identity records may remain available only when the bundle explicitly supplies them as non-evidence directory metadata;
 - the UI renders the supplied state rather than inferring one from empty arrays.
 
 This keeps route behavior deterministic and prevents the loader from treating an intentionally empty state as a missing file.
