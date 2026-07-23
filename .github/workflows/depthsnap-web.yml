@@ -36,3 +36,20 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser verification
+        run: npm run test:e2e
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: depthsnap-phase-1-browser-evidence
+          path: |
+            apps/web/artifacts/screenshots
+            apps/web/artifacts/playwright-report
+            apps/web/artifacts/test-results
+          if-no-files-found: warn

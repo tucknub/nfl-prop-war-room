@@ -1,164 +1,270 @@
-import type { HomeBundle } from "@/lib/types";
+import type {
+  HomepageFixture,
+  NoPublishedWeekHomepageFixture,
+  ReportLink,
+  UnavailableHomepageFixture,
+} from "@/lib/types";
 
-export const homeFixture: HomeBundle = {
-  schemaVersion: "depthsnap.home.v1",
+const reportLinks = [
+  {
+    family: "backfield_control",
+    label: "Backfield Control",
+    description: "Carries and total RB opportunities",
+    href: "/reports/backfield",
+  },
+  {
+    family: "target_hierarchy",
+    label: "Target Hierarchy",
+    description: "WR and TE target ownership",
+    href: "/reports/targets",
+  },
+  {
+    family: "role_movement",
+    label: "Role Movement",
+    description: "Before-versus-current evidence",
+    href: "/reports/movement",
+  },
+] as const satisfies readonly ReportLink[];
+
+const fixtureMetadata = {
+  schemaVersion: "depthsnap.home.fixture.v1",
   fixture: true,
+  fixtureNotice:
+    "Design fixture data — synthetic records for interface review, not a current NFL week.",
   season: 2025,
   throughWeek: 18,
-  updatedAt: "2026-07-23T12:00:00Z",
-  status: "PUBLISHED",
-  lead: {
-    id: "lead-rb-opportunity",
-    playerId: "fixture-rb-1",
-    playerName: "Marcus Hale",
-    team: "JAX",
-    position: "RB",
-    roleFamily: "rb_opportunity_share",
-    label: "Backfield control",
-    currentRaw: 34,
-    currentTeamTotal: 47,
-    currentShare: 0.723,
-    priorRaw: 15,
-    priorTeamTotal: 44,
-    priorShare: 0.341,
-    changePoints: 38.2,
-    direction: "up",
+  generatedAt: "2026-07-23T12:00:00Z",
+  reportLinks,
+} as const;
+
+export const publishedHomeFixture = {
+  ...fixtureMetadata,
+  status: "published",
+  leadFinding: {
+    id: "fixture-lead-backfield-control",
+    kind: "backfield_increase",
+    reportFamily: "backfield_control",
+    roleFamily: "RB opportunity share",
+    player: {
+      id: "fixture-marcus-hale",
+      name: "Marcus Hale",
+      team: "JAX",
+      position: "RB",
+    },
+    headline: "Marcus Hale took control of the team backfield.",
+    current: {
+      numerator: 27,
+      denominator: 34,
+      share: 0.794,
+      opportunityLabel: "opportunities",
+    },
+    movement: {
+      previous: {
+        numerator: 18,
+        denominator: 32,
+        share: 0.563,
+        opportunityLabel: "opportunities",
+      },
+      current: {
+        numerator: 27,
+        denominator: 34,
+        share: 0.794,
+        opportunityLabel: "opportunities",
+      },
+      percentagePointChange: 23.1,
+    },
+    evidenceHref: "/reports/backfield?player=fixture-marcus-hale",
   },
-  movement: [
+  findings: [
     {
-      id: "movement-1",
-      playerId: "fixture-wr-1",
-      playerName: "Evan Cross",
-      team: "IND",
-      position: "WR",
-      roleFamily: "wr_target_share",
-      label: "Target hierarchy gain",
-      currentRaw: 12,
-      currentTeamTotal: 31,
-      currentShare: 0.387,
-      priorRaw: 6,
-      priorTeamTotal: 30,
-      priorShare: 0.2,
-      changePoints: 18.7,
-      direction: "up",
+      id: "fixture-backfield-increase",
+      kind: "backfield_increase",
+      reportFamily: "backfield_control",
+      roleFamily: "RB opportunity share",
+      player: {
+        id: "fixture-zion-mercer",
+        name: "Zion Mercer",
+        team: "IND",
+        position: "RB",
+      },
+      headline: "Moved into the lead backfield role.",
+      current: {
+        numerator: 22,
+        denominator: 35,
+        share: 0.629,
+        opportunityLabel: "opportunities",
+      },
+      movement: {
+        previous: {
+          numerator: 12,
+          denominator: 33,
+          share: 0.364,
+          opportunityLabel: "opportunities",
+        },
+        current: {
+          numerator: 22,
+          denominator: 35,
+          share: 0.629,
+          opportunityLabel: "opportunities",
+        },
+        percentagePointChange: 26.5,
+      },
+      evidenceHref: "/reports/backfield?player=fixture-zion-mercer",
     },
     {
-      id: "movement-2",
-      playerId: "fixture-rb-2",
-      playerName: "Darius Cole",
-      team: "TB",
-      position: "RB",
-      roleFamily: "rb_carry_share",
-      label: "Carry share decline",
-      currentRaw: 10,
-      currentTeamTotal: 27,
-      currentShare: 0.37,
-      priorRaw: 19,
-      priorTeamTotal: 28,
-      priorShare: 0.679,
-      changePoints: -30.9,
-      direction: "down",
+      id: "fixture-target-share-increase",
+      kind: "target_share_increase",
+      reportFamily: "target_hierarchy",
+      roleFamily: "WR target share",
+      player: {
+        id: "fixture-theo-lane",
+        name: "Theo Lane",
+        team: "SEA",
+        position: "WR",
+      },
+      headline: "Claimed a larger share of the team target tree.",
+      current: {
+        numerator: 10,
+        denominator: 31,
+        share: 0.323,
+        opportunityLabel: "targets",
+      },
+      movement: {
+        previous: {
+          numerator: 5,
+          denominator: 29,
+          share: 0.172,
+          opportunityLabel: "targets",
+        },
+        current: {
+          numerator: 10,
+          denominator: 31,
+          share: 0.323,
+          opportunityLabel: "targets",
+        },
+        percentagePointChange: 15.1,
+      },
+      evidenceHref: "/reports/targets?player=fixture-theo-lane",
     },
     {
-      id: "movement-3",
-      playerId: "fixture-te-1",
-      playerName: "Noah Price",
-      team: "ARI",
-      position: "TE",
-      roleFamily: "te_target_share",
-      label: "New TE target leader",
-      currentRaw: 8,
-      currentTeamTotal: 29,
-      currentShare: 0.276,
-      priorRaw: 4,
-      priorTeamTotal: 30,
-      priorShare: 0.133,
-      changePoints: 14.3,
-      direction: "up",
+      id: "fixture-role-decline",
+      kind: "role_decline",
+      reportFamily: "role_movement",
+      roleFamily: "RB carry share",
+      player: {
+        id: "fixture-miles-redd",
+        name: "Miles Redd",
+        team: "TB",
+        position: "RB",
+      },
+      headline: "Lost a meaningful portion of the rushing workload.",
+      current: {
+        numerator: 8,
+        denominator: 28,
+        share: 0.286,
+        opportunityLabel: "carries",
+      },
+      movement: {
+        previous: {
+          numerator: 15,
+          denominator: 26,
+          share: 0.577,
+          opportunityLabel: "carries",
+        },
+        current: {
+          numerator: 8,
+          denominator: 28,
+          share: 0.286,
+          opportunityLabel: "carries",
+        },
+        percentagePointChange: -29.1,
+      },
+      evidenceHref: "/reports/movement?player=fixture-miles-redd",
     },
     {
-      id: "movement-4",
-      playerId: "fixture-rb-3",
-      playerName: "Andre West",
-      team: "DEN",
-      position: "RB",
-      roleFamily: "rb_opportunity_share",
-      label: "Committee forming",
-      currentRaw: 14,
-      currentTeamTotal: 31,
-      currentShare: 0.452,
-      priorRaw: 21,
-      priorTeamTotal: 30,
-      priorShare: 0.7,
-      changePoints: -24.8,
-      direction: "down",
-    }
+      id: "fixture-concentrated-role",
+      kind: "concentrated_role",
+      reportFamily: "target_hierarchy",
+      roleFamily: "TE target share",
+      player: {
+        id: "fixture-drew-keaton",
+        name: "Drew Keaton",
+        team: "MIN",
+        position: "TE",
+      },
+      headline: "Owned a concentrated share of team tight end targets.",
+      current: {
+        numerator: 9,
+        denominator: 11,
+        share: 0.818,
+        opportunityLabel: "targets",
+      },
+      evidenceHref: "/reports/targets?player=fixture-drew-keaton",
+    },
+    {
+      id: "fixture-committee-formation",
+      kind: "committee_formation",
+      reportFamily: "role_movement",
+      roleFamily: "RB opportunity share",
+      player: {
+        id: "fixture-owen-black",
+        name: "Owen Black",
+        team: "DEN",
+        position: "RB",
+      },
+      headline: "The backfield moved away from a single lead role.",
+      current: {
+        numerator: 13,
+        denominator: 30,
+        share: 0.433,
+        opportunityLabel: "opportunities",
+      },
+      movement: {
+        previous: {
+          numerator: 21,
+          denominator: 29,
+          share: 0.724,
+          opportunityLabel: "opportunities",
+        },
+        current: {
+          numerator: 13,
+          denominator: 30,
+          share: 0.433,
+          opportunityLabel: "opportunities",
+        },
+        percentagePointChange: -29.1,
+      },
+      evidenceHref: "/reports/movement?player=fixture-owen-black",
+    },
   ],
-  rankings: [
-    {
-      id: "rank-1",
-      playerId: "fixture-rb-4",
-      playerName: "Caleb Stone",
-      team: "LV",
-      position: "RB",
-      roleFamily: "rb_opportunity_share",
-      label: "Backfield control",
-      currentRaw: 90,
-      currentTeamTotal: 98,
-      currentShare: 0.918,
-      direction: "steady"
-    },
-    {
-      id: "rank-2",
-      playerId: "fixture-rb-5",
-      playerName: "Jordan Vale",
-      team: "IND",
-      position: "RB",
-      roleFamily: "rb_opportunity_share",
-      label: "Backfield control",
-      currentRaw: 75,
-      currentTeamTotal: 89,
-      currentShare: 0.843,
-      direction: "up"
-    },
-    {
-      id: "rank-3",
-      playerId: "fixture-rb-6",
-      playerName: "Micah Reed",
-      team: "ATL",
-      position: "RB",
-      roleFamily: "rb_opportunity_share",
-      label: "Backfield control",
-      currentRaw: 59,
-      currentTeamTotal: 74,
-      currentShare: 0.797,
-      direction: "steady"
-    },
-    {
-      id: "rank-4",
-      playerId: "fixture-rb-7",
-      playerName: "Devin Banks",
-      team: "PHI",
-      position: "RB",
-      roleFamily: "rb_opportunity_share",
-      label: "Backfield control",
-      currentRaw: 70,
-      currentTeamTotal: 92,
-      currentShare: 0.761,
-      direction: "down"
-    }
-  ],
-  teamSnapshot: {
-    team: "IND",
-    name: "Indianapolis",
-    backfield: [
-      { playerName: "Jordan Vale", share: 0.79, raw: 70, teamTotal: 89 },
-      { playerName: "Second RB", share: 0.16, raw: 14, teamTotal: 89 }
-    ],
-    targets: [
-      { playerName: "Evan Cross", position: "WR", share: 0.31, raw: 32, teamTotal: 102 },
-      { playerName: "Primary WR", position: "WR", share: 0.24, raw: 24, teamTotal: 102 },
-      { playerName: "TE group leader", position: "TE", share: 0.19, raw: 19, teamTotal: 102 }
-    ]
+} as const satisfies HomepageFixture;
+
+export const noPublishedWeekFixture = {
+  ...fixtureMetadata,
+  status: "no_published_week",
+  stateTitle: "No completed week is published yet",
+  stateMessage:
+    "DepthSnap will show role findings after the authoritative pipeline validates and publishes a completed week.",
+} as const satisfies NoPublishedWeekHomepageFixture;
+
+export const unavailableHomeFixture = {
+  ...fixtureMetadata,
+  status: "unavailable",
+  stateTitle: "Role data is temporarily unavailable",
+  stateMessage:
+    "The published bundle could not be read. No shares or findings are shown until validated data is available again.",
+} as const satisfies UnavailableHomepageFixture;
+
+export function getHomeFixture(
+  requestedState?: string,
+): HomepageFixture {
+  if (requestedState === "empty") {
+    return noPublishedWeekFixture;
   }
-};
+
+  if (requestedState === "unavailable") {
+    return unavailableHomeFixture;
+  }
+
+  return publishedHomeFixture;
+}

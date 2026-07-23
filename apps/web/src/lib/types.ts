@@ -1,56 +1,87 @@
-export type RoleFamily =
-  | "rb_carry_share"
-  | "rb_opportunity_share"
-  | "wr_target_share"
-  | "te_target_share";
+export type DataStatus = "published" | "no_published_week" | "unavailable";
 
-export type Direction = "up" | "down" | "steady";
+export type ReportFamily =
+  | "backfield_control"
+  | "target_hierarchy"
+  | "role_movement";
 
-export type RoleFinding = {
+export type PlayerPosition = "RB" | "WR" | "TE";
+
+export type PlayerIdentity = {
   id: string;
-  playerId: string;
-  playerName: string;
-  team: string;
-  position: "RB" | "WR" | "TE";
-  roleFamily: RoleFamily;
-  label: string;
-  currentRaw: number;
-  currentTeamTotal: number;
-  currentShare: number;
-  priorRaw?: number;
-  priorTeamTotal?: number;
-  priorShare?: number;
-  changePoints?: number;
-  direction: Direction;
-};
-
-export type TeamSnapshot = {
-  team: string;
   name: string;
-  backfield: Array<{
-    playerName: string;
-    share: number;
-    raw: number;
-    teamTotal: number;
-  }>;
-  targets: Array<{
-    playerName: string;
-    position: "WR" | "TE";
-    share: number;
-    raw: number;
-    teamTotal: number;
-  }>;
+  team: string;
+  position: PlayerPosition;
 };
 
-export type HomeBundle = {
-  schemaVersion: "depthsnap.home.v1";
-  fixture: boolean;
+export type RawShareEvidence = {
+  numerator: number;
+  denominator: number;
+  share: number;
+  opportunityLabel: "opportunities" | "carries" | "targets";
+};
+
+export type MovementEvidence = {
+  previous: RawShareEvidence;
+  current: RawShareEvidence;
+  percentagePointChange: number;
+};
+
+export type FeedFindingKind =
+  | "backfield_increase"
+  | "target_share_increase"
+  | "role_decline"
+  | "concentrated_role"
+  | "committee_formation";
+
+export type FeedFinding = {
+  id: string;
+  kind: FeedFindingKind;
+  reportFamily: ReportFamily;
+  roleFamily: string;
+  player: PlayerIdentity;
+  headline: string;
+  current: RawShareEvidence;
+  movement?: MovementEvidence;
+  evidenceHref: string;
+};
+
+export type ReportLink = {
+  family: ReportFamily;
+  label: string;
+  description: string;
+  href: string;
+};
+
+type HomepageFixtureMetadata = {
+  schemaVersion: "depthsnap.home.fixture.v1";
+  fixture: true;
+  fixtureNotice: string;
   season: number;
   throughWeek: number;
-  updatedAt: string;
-  status: "PUBLISHED" | "WAITING_FOR_COMPLETED_WEEK" | "BLOCKED";
-  lead: RoleFinding;
-  movement: RoleFinding[];
-  rankings: RoleFinding[];
-  teamSnapshot: TeamSnapshot;
+  generatedAt: string;
+  reportLinks: readonly ReportLink[];
 };
+
+export type PublishedHomepageFixture = HomepageFixtureMetadata & {
+  status: "published";
+  leadFinding: FeedFinding;
+  findings: readonly FeedFinding[];
+};
+
+export type NoPublishedWeekHomepageFixture = HomepageFixtureMetadata & {
+  status: "no_published_week";
+  stateTitle: string;
+  stateMessage: string;
+};
+
+export type UnavailableHomepageFixture = HomepageFixtureMetadata & {
+  status: "unavailable";
+  stateTitle: string;
+  stateMessage: string;
+};
+
+export type HomepageFixture =
+  | PublishedHomepageFixture
+  | NoPublishedWeekHomepageFixture
+  | UnavailableHomepageFixture;

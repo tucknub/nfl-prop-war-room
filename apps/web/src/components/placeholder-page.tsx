@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowRightIcon } from "@/components/icons";
+
 export function PlaceholderPage({
   eyebrow,
   title,
@@ -9,10 +12,17 @@ export function PlaceholderPage({
 }) {
   return (
     <div className="page-shell placeholder-page">
-      <span className="eyebrow">{eyebrow}</span>
+      <span className="section-kicker">{eyebrow}</span>
       <h1>{title}</h1>
       <p>{description}</p>
-      <a className="back-link" href="/">← Back to DepthSnap Feed</a>
+      <div className="placeholder-rule" />
+      <p className="placeholder-note">
+        This route is intentionally held for a later DepthSnap phase.
+      </p>
+      <Link className="back-link" href="/">
+        Return to the feed
+        <ArrowRightIcon />
+      </Link>
     </div>
   );
 }

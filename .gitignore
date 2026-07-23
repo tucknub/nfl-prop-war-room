@@ -15,3 +15,9 @@ outputs/receptions_simulation_distribution.csv
 data/cache/role_research/
 outputs/role_research/.staging/
 outputs/run_reports/role_research/
+
+# DepthSnap Next.js build and browser QA artifacts
+apps/web/.next/
+apps/web/node_modules/
+apps/web/artifacts/
+apps/web/*.tsbuildinfo

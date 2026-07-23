@@ -1,45 +1,61 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-const navItems = [
-  ["/", "Feed"],
-  ["/reports", "Reports"],
-  ["/teams", "Teams"],
-  ["/players", "Players"],
-  ["/methodology", "Methodology"],
-] as const;
+import { SearchIcon, StatusIcon } from "@/components/icons";
+import {
+  DesktopNavigation,
+  MobileNavigation,
+} from "@/components/navigation";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to findings
+      </a>
+
       <header className="site-header">
-        <Link href="/" className="brand" aria-label="DepthSnap home">
-          <span className="brand-mark" aria-hidden="true">DS</span>
-          <span>
-            <strong>DepthSnap</strong>
-            <small>NFL role intelligence</small>
-          </span>
-        </Link>
+        <div className="header-inner">
+          <Link href="/" className="brand" aria-label="DepthSnap home">
+            <span className="brand-symbol" aria-hidden="true">
+              D
+            </span>
+            <span className="brand-copy">
+              <span className="brand-name">
+                Depth<span>Snap</span>
+              </span>
+              <small>NFL Role Intelligence</small>
+            </span>
+          </Link>
 
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {navItems.map(([href, label]) => (
-            <Link key={href} href={href}>{label}</Link>
-          ))}
-        </nav>
+          <DesktopNavigation />
 
-        <Link className="search-trigger" href="/search" aria-label="Search players and teams">
-          <span aria-hidden="true">⌕</span>
-          <span>Search</span>
-        </Link>
+          <div className="header-tools">
+            <div
+              className="freshness-indicator"
+              aria-label="Design fixture for the 2025 season through Week 18"
+            >
+              <StatusIcon />
+              <span>
+                <strong>2025 · Week 18</strong>
+                <small>Design fixture</small>
+              </span>
+            </div>
+            <Link
+              className="search-trigger"
+              href="/search"
+              aria-label="Search players and teams"
+            >
+              <SearchIcon />
+              <span>Search players or teams</span>
+              <kbd>/</kbd>
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
 
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        {navItems.slice(0, 4).map(([href, label]) => (
-          <Link key={href} href={href}>{label}</Link>
-        ))}
-      </nav>
+      <MobileNavigation />
     </div>
   );
 }

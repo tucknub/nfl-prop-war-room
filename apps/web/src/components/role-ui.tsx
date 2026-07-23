@@ -1,80 +1,224 @@
-import type { RoleFinding, TeamSnapshot } from "@/lib/types";
+import Link from "next/link";
+import {
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  MinusIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+} from "@/components/icons";
+import type {
+  FeedFinding,
+  RawShareEvidence,
+  ReportFamily,
+  ReportLink,
+} from "@/lib/types";
+
+const reportLabels: Record<ReportFamily, string> = {
+  backfield_control: "Backfield Control",
+  target_hierarchy: "Target Hierarchy",
+  role_movement: "Role Movement",
+};
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
-const signedPoints = (value?: number) => `${(value ?? 0) > 0 ? "+" : ""}${(value ?? 0).toFixed(1)} pp`;
 
-export function ShareBar({ value, tone = "teal" }: { value: number; tone?: "teal" | "amber" | "coral" }) {
+const signedPoints = (value: number) =>
+  `${value > 0 ? "+" : ""}${value.toFixed(1)} percentage points`;
+
+function findingTone(finding: FeedFinding) {
+  if (finding.kind === "role_decline" || finding.kind === "committee_formation") {
+    return "decline";
+  }
+
+  if (finding.kind === "concentrated_role") {
+    return "concentration";
+  }
+
+  return "gain";
+}
+
+function TrendIcon({ finding }: { finding: FeedFinding }) {
+  const tone = findingTone(finding);
+
+  if (tone === "decline") {
+    return <TrendDownIcon />;
+  }
+
+  if (tone === "concentration") {
+    return <MinusIcon />;
+  }
+
+  return <TrendUpIcon />;
+}
+
+export function ShareEvidence({
+  evidence,
+  label,
+  tone = "gain",
+  compact = false,
+}: {
+  evidence: RawShareEvidence;
+  label: string;
+  tone?: "gain" | "decline" | "concentration" | "prior";
+  compact?: boolean;
+}) {
   return (
-    <span className="share-track" aria-label={`${percent(value)} share`}>
-      <span className={`share-fill share-fill-${tone}`} style={{ width: `${Math.min(value * 100, 100)}%` }} />
-    </span>
+    <div
+      className={`share-evidence share-evidence-${tone}${compact ? " share-evidence-compact" : ""}`}
+      data-share-evidence
+    >
+      <span className="evidence-label">{label}</span>
+      <strong className="evidence-percentage">{percent(evidence.share)}</strong>
+      <span className="evidence-raw">
+        {evidence.numerator} of {evidence.denominator} {evidence.opportunityLabel}
+      </span>
+      <span className="share-track" aria-hidden="true">
+        <span
+          className="share-fill"
+          style={{ width: `${Math.min(evidence.share * 100, 100)}%` }}
+        />
+      </span>
+    </div>
   );
 }
 
-export function LeadFinding({ finding }: { finding: RoleFinding }) {
+export function LeadFinding({ finding }: { finding: FeedFinding }) {
+  if (!finding.movement) {
+    return null;
+  }
+
   return (
-    <article className="lead-story panel">
-      <div className="eyebrow">What changed this week</div>
-      <div className="lead-grid">
-        <div>
-          <span className="team-chip">{finding.team} · {finding.position}</span>
-          <h1>{finding.playerName} took control of the backfield.</h1>
-          <p className="lead-copy">
-            His documented team share moved from <strong>{percent(finding.priorShare ?? 0)}</strong> to
-            <strong> {percent(finding.currentShare)}</strong> in the selected comparison window.
-          </p>
-          <div className="evidence-line">
-            <span>Current evidence</span>
-            <strong>{finding.currentRaw} of {finding.currentTeamTotal} opportunities</strong>
-          </div>
+    <article className="lead-finding" aria-labelledby="lead-finding-heading">
+      <div className="lead-copy">
+        <div className="finding-family">
+          <span className="family-index">01</span>
+          <span>{reportLabels[finding.reportFamily]}</span>
         </div>
-        <div className="change-visual" aria-label="Previous versus current role share">
-          <div className="change-column muted">
-            <small>Previous</small>
-            <strong>{percent(finding.priorShare ?? 0)}</strong>
-            <ShareBar value={finding.priorShare ?? 0} tone="amber" />
-            <span>{finding.priorRaw} / {finding.priorTeamTotal}</span>
-          </div>
-          <span className="change-arrow" aria-hidden="true">→</span>
-          <div className="change-column">
-            <small>Current</small>
-            <strong>{percent(finding.currentShare)}</strong>
-            <ShareBar value={finding.currentShare} />
-            <span>{finding.currentRaw} / {finding.currentTeamTotal}</span>
-          </div>
-          <div className="change-badge positive">{signedPoints(finding.changePoints)}</div>
+        <div className="player-identity">
+          <span className="player-initials" aria-hidden="true">
+            {finding.player.name
+              .split(" ")
+              .map((part) => part[0])
+              .join("")}
+          </span>
+          <span>
+            <strong>{finding.player.name}</strong>
+            <small>
+              {finding.player.team} · {finding.player.position} ·{" "}
+              {finding.roleFamily}
+            </small>
+          </span>
+        </div>
+        <h1 id="lead-finding-heading">{finding.headline}</h1>
+        <Link className="evidence-link" href={finding.evidenceHref}>
+          Open supporting evidence
+          <ArrowUpRightIcon />
+        </Link>
+      </div>
+
+      <div
+        className="lead-comparison"
+        aria-label="Previous and current role evidence"
+      >
+        <ShareEvidence
+          evidence={finding.movement.previous}
+          label="Previous"
+          tone="prior"
+        />
+        <span className="comparison-divider" aria-hidden="true" />
+        <ShareEvidence
+          evidence={finding.movement.current}
+          label="Current"
+          tone="gain"
+        />
+        <div className="lead-change">
+          <span>Change</span>
+          <strong>
+            {signedPoints(finding.movement.percentagePointChange)}
+          </strong>
         </div>
       </div>
     </article>
   );
 }
 
-export function MovementFeed({ findings }: { findings: RoleFinding[] }) {
+export function RoleChangeFeed({
+  findings,
+}: {
+  findings: readonly FeedFinding[];
+}) {
   return (
-    <section className="panel feed-panel">
+    <section className="feed-section" aria-labelledby="role-change-feed-heading">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">Role movement feed</span>
-          <h2>Latest material changes</h2>
+          <span className="section-kicker">Weekly evidence</span>
+          <h2 id="role-change-feed-heading">Role-change feed</h2>
         </div>
-        <a href="/reports/movement">View all</a>
+        <Link href="/reports/movement" className="section-link">
+          View all movement
+          <ArrowRightIcon />
+        </Link>
       </div>
-      <div className="movement-list">
-        {findings.map((finding) => {
-          const isUp = finding.direction === "up";
+
+      <div className="feed-list">
+        {findings.map((finding, index) => {
+          const tone = findingTone(finding);
           return (
-            <a className="movement-row" href={`/players/${finding.playerId}`} key={finding.id}>
-              <span className={`direction ${isUp ? "positive" : "negative"}`}>{isUp ? "↑" : "↓"}</span>
-              <span className="movement-player">
-                <strong>{finding.playerName}</strong>
-                <small>{finding.team} · {finding.position}</small>
-              </span>
-              <span className="movement-values">
-                <strong>{percent(finding.priorShare ?? 0)} → {percent(finding.currentShare)}</strong>
-                <small>{finding.label}</small>
-              </span>
-              <span className={isUp ? "positive" : "negative"}>{signedPoints(finding.changePoints)}</span>
-            </a>
+            <article className={`feed-row feed-row-${tone}`} key={finding.id}>
+              <div className="feed-order" aria-hidden="true">
+                {String(index + 2).padStart(2, "0")}
+              </div>
+
+              <div className={`trend-marker trend-marker-${tone}`}>
+                <TrendIcon finding={finding} />
+                <span>{reportLabels[finding.reportFamily]}</span>
+              </div>
+
+              <div className="feed-summary">
+                <div className="feed-player">
+                  <strong>{finding.player.name}</strong>
+                  <span>
+                    {finding.player.team} · {finding.player.position}
+                  </span>
+                </div>
+                <h3>{finding.headline}</h3>
+                <span className="role-family">{finding.roleFamily}</span>
+              </div>
+
+              <div className="feed-evidence">
+                {finding.movement ? (
+                  <ShareEvidence
+                    evidence={finding.movement.previous}
+                    label="Previous"
+                    tone="prior"
+                    compact
+                  />
+                ) : (
+                  <span className="no-prior">Current role concentration</span>
+                )}
+                <ShareEvidence
+                  evidence={finding.current}
+                  label="Current"
+                  tone={tone}
+                  compact
+                />
+              </div>
+
+              <div className="feed-action">
+                {finding.movement ? (
+                  <span className={`movement-value movement-value-${tone}`}>
+                    {signedPoints(finding.movement.percentagePointChange)}
+                  </span>
+                ) : (
+                  <span className="movement-value movement-value-concentration">
+                    Concentrated role
+                  </span>
+                )}
+                <Link href={finding.evidenceHref} aria-label={`Open evidence for ${finding.player.name}`}>
+                  Evidence
+                  <ArrowUpRightIcon />
+                </Link>
+              </div>
+            </article>
           );
         })}
       </div>
@@ -82,69 +226,31 @@ export function MovementFeed({ findings }: { findings: RoleFinding[] }) {
   );
 }
 
-export function Rankings({ findings }: { findings: RoleFinding[] }) {
+export function ReportLinks({
+  reports,
+}: {
+  reports: readonly ReportLink[];
+}) {
   return (
-    <section className="panel rankings-panel">
-      <div className="section-heading">
-        <div>
-          <span className="eyebrow">Backfield Control</span>
-          <h2>Highest team opportunity shares</h2>
-        </div>
-        <a href="/reports/backfield">Full report</a>
+    <aside className="report-rail" aria-labelledby="report-rail-heading">
+      <div className="report-rail-intro">
+        <span className="section-kicker">Three reports</span>
+        <h2 id="report-rail-heading">Follow the evidence</h2>
       </div>
-      <div className="ranking-table" role="table" aria-label="Backfield control rankings">
-        {findings.map((finding, index) => (
-          <a className="ranking-row" href={`/players/${finding.playerId}`} key={finding.id} role="row">
-            <span className="rank">{String(index + 1).padStart(2, "0")}</span>
-            <span className="ranking-player">
-              <strong>{finding.playerName}</strong>
-              <small>{finding.team} · {finding.position}</small>
+      <div className="report-links">
+        {reports.map((report, index) => (
+          <Link href={report.href} key={report.family}>
+            <span className="report-number">
+              {String(index + 1).padStart(2, "0")}
             </span>
-            <span className="ranking-share">
-              <strong>{percent(finding.currentShare)}</strong>
-              <ShareBar value={finding.currentShare} />
+            <span>
+              <strong>{report.label}</strong>
+              <small>{report.description}</small>
             </span>
-            <span className="ranking-count">{finding.currentRaw} / {finding.currentTeamTotal}</span>
-          </a>
+            <ArrowRightIcon />
+          </Link>
         ))}
       </div>
-    </section>
-  );
-}
-
-export function TeamCard({ snapshot }: { snapshot: TeamSnapshot }) {
-  return (
-    <section className="panel team-panel">
-      <div className="section-heading">
-        <div>
-          <span className="eyebrow">Team depth</span>
-          <h2>{snapshot.name}</h2>
-        </div>
-        <a href={`/teams/${snapshot.team.toLowerCase()}`}>Open team</a>
-      </div>
-
-      <div className="team-columns">
-        <div>
-          <h3>Backfield</h3>
-          {snapshot.backfield.map((row) => (
-            <div className="team-row" key={row.playerName}>
-              <span>{row.playerName}</span>
-              <ShareBar value={row.share} />
-              <strong>{percent(row.share)}</strong>
-            </div>
-          ))}
-        </div>
-        <div>
-          <h3>Target hierarchy</h3>
-          {snapshot.targets.map((row) => (
-            <div className="team-row" key={row.playerName}>
-              <span>{row.playerName}</span>
-              <ShareBar value={row.share} tone="amber" />
-              <strong>{percent(row.share)}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    </aside>
   );
 }
