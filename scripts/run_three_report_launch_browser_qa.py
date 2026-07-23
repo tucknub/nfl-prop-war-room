@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs" / "three_report_browser_qa"
 SHOTS = OUT / "screenshots"
 
-HOME_HEADING = "Know what changed before researching what happens next."
+HOME_HEADING = "What changed in NFL roles?"
 REPORT_HEADING = "NFL Role Intelligence"
 METHODOLOGY_HEADING = "Methodology"
 REPORTS = ("Backfield Control", "Target Hierarchy", "Role Movement")
@@ -25,11 +25,12 @@ RETIRED_REPORTS = (
 )
 METHODOLOGY_COPY = (
     "All-play raw counts and same-team denominators are the methodology authority",
+    "How to read a report",
     "Backfield Control",
     "Target Hierarchy",
     "Role Movement",
+    "Plain-language terms",
     "Report boundaries",
-    "What each report does—and does not—claim",
     "Missing and unavailable data",
 )
 
@@ -101,6 +102,14 @@ def navigate(page: Page, base: str, route: str, heading: str) -> None:
     page.wait_for_timeout(1500)
 
 
+def validate_report_href(href: str | None, report: str) -> bool:
+    if not href:
+        return False
+    parsed = urlsplit(href)
+    query = parse_qs(parsed.query)
+    return parsed.path.endswith("/reports") and query.get("report", [""])[0] == report
+
+
 def validate_player_href(href: str | None) -> bool:
     if not href:
         return False
@@ -144,7 +153,14 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     home_text = body(page)
     for report in REPORTS:
         check(report in home_text, f"{name}: Home missing {report}", failures)
-    check("Open Reports" in home_text, f"{name}: Home missing report CTA", failures)
+    check("View Backfield Control" in home_text, f"{name}: Home missing direct report CTA", failures)
+    home_cta = first_visible(page.get_by_role("link", name="View Backfield Control", exact=True))
+    home_href = home_cta.get_attribute("href") if home_cta is not None else None
+    check(
+        validate_report_href(home_href, "Backfield Control"),
+        f"{name}: invalid direct report link: {home_href}",
+        failures,
+    )
     page.screenshot(path=str(SHOTS / f"{name}_home.png"), full_page=True)
     record_page_state(page, "Home", failures, overflow)
     routes.append("Home")
@@ -159,11 +175,11 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     for report in REPORTS:
         click_report(page, report)
         text = body(page)
-        check("Answer first" in text, f"{name}: {report} missing Answer first", failures)
+        check("Top findings" in text, f"{name}: {report} missing top findings", failures)
         check("Complete report" in text, f"{name}: {report} missing complete table", failures)
         check("All-play evidence" in text, f"{name}: {report} missing all-play evidence", failures)
-        check("Player evidence" in text, f"{name}: {report} missing player evidence link", failures)
-        check("Team evidence" in text, f"{name}: {report} missing team evidence link", failures)
+        check("View player evidence" in text, f"{name}: {report} missing player evidence link", failures)
+        check("View team evidence" in text, f"{name}: {report} missing team evidence link", failures)
         page.screenshot(
             path=str(SHOTS / f"{name}_{report.lower().replace(' ', '_')}.png"),
             full_page=True,
@@ -172,7 +188,7 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     routes.append("Reports")
 
     click_report(page, "Backfield Control")
-    evidence_link = first_visible(page.get_by_role("link", name="Player evidence", exact=True))
+    evidence_link = first_visible(page.get_by_role("link", name="View player evidence", exact=True))
     href = evidence_link.get_attribute("href") if evidence_link is not None else None
     check(validate_player_href(href), f"{name}: invalid Player evidence deep link: {href}", failures)
     routes.append("Player evidence link contract")

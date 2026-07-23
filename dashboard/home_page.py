@@ -39,7 +39,7 @@ def render_home() -> None:
     enable_browser_history_sync()
     page_intro(
         "This Week in NFL Roles",
-        "A concise review of changed opportunity, abnormal game context, and opportunity that outpaced production.",
+        "Start with the clearest usage changes, then open the supporting player and team evidence.",
     )
 
     seasons = available_seasons()
@@ -54,20 +54,21 @@ def render_home() -> None:
     )
     week = week_state.value
 
-    controls = st.columns([1, 1, 4])
-    with controls[0]:
-        season = st.selectbox(
-            "Season", seasons, key="home_season",
-            on_change=update_query_from_widget,
-            args=("season", "home_season"),
-            kwargs={"clear_query": ("week",)},
-        )
-    with controls[1]:
-        week = st.selectbox(
-            "Week", weeks, key="home_week",
-            on_change=update_query_from_widget,
-            args=("week", "home_week"),
-        )
+    with st.expander("Choose another season or week"):
+        controls = st.columns([1, 1, 4])
+        with controls[0]:
+            season = st.selectbox(
+                "Season", seasons, key="home_season",
+                on_change=update_query_from_widget,
+                args=("season", "home_season"),
+                kwargs={"clear_query": ("week",)},
+            )
+        with controls[1]:
+            week = st.selectbox(
+                "Week", weeks, key="home_week",
+                on_change=update_query_from_widget,
+                args=("week", "home_week"),
+            )
 
     if season_state.invalid_query or week_state.invalid_query:
         if season_state.invalid_query:
@@ -115,7 +116,7 @@ def render_home() -> None:
         "Normal-game share removes defined late-game and abnormal contexts that can distort workload."
     )
 
-    with st.expander("Change filters"):
+    with st.expander("Filter findings"):
         filter_columns = st.columns(3)
         with filter_columns[0]:
             st.selectbox("Position", positions, index=positions.index(selected_position), key="home_position")
