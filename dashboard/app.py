@@ -114,7 +114,7 @@ def render_launch_home() -> None:
         unsafe_allow_html=True,
     )
 
-    section("Choose a report", "Each report answers one research question without odds, picks, or projections.")
+    section("Choose a report", "Each report answers one documented role question without market or outcome claims.")
     report_columns = st.columns(3)
     for column, (title, description) in zip(report_columns, REPORT_CARDS):
         with column:
