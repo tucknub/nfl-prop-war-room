@@ -1,0 +1,37 @@
+name: Verify Live Usability Phase 1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/verify_live_usability_phase1.py"
+      - ".github/workflows/verify-live-usability-phase1.yml"
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install browser verifier
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Verify public usability release
+        run: python scripts/verify_live_usability_phase1.py
+
+      - name: Upload live usability evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-usability-phase1-verification
+          path: outputs/live_usability_phase1_verification
+          if-no-files-found: warn
