@@ -13,7 +13,7 @@ export function IdentityPageHeader({
   eyebrow,
   title,
   description,
-  fixtureNotice,
+  dataNotice,
   dataMode,
   meta,
   children,
@@ -21,14 +21,16 @@ export function IdentityPageHeader({
   eyebrow: string;
   title: string;
   description: string;
-  fixtureNotice: string;
+  dataNotice: string;
   dataMode?: "fixture" | "export";
   meta: string;
   children?: React.ReactNode;
 }) {
   return (
     <>
-      <FixtureNotice>{fixtureNotice}</FixtureNotice>
+      {dataMode === "fixture" ? (
+        <FixtureNotice>{dataNotice}</FixtureNotice>
+      ) : null}
       <header className="identity-page-header">
         <div>
           <p className="identity-eyebrow">{eyebrow}</p>

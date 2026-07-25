@@ -8,6 +8,12 @@ export const PublicationStatusSchema = z.enum([
   "no_published_week",
   "unavailable",
 ]);
+export const PublicationValidationResultSchema = z.enum([
+  "pass",
+  "fail",
+  "not_applicable",
+]);
+export const ProductIdSchema = z.literal("depthsnap");
 export const DataQualitySchema = z.enum([
   "complete",
   "reviewed_partial_game",
@@ -25,7 +31,7 @@ export const OpportunityLabelSchema = z.enum([
   "targets",
 ]);
 export const MovementDirectionSchema = z.enum(["gain", "decline", "stable"]);
-export const FixtureAccentSchema = z.enum(["teal", "amber", "slate"]);
+export const VisualAccentSchema = z.enum(["teal", "amber", "slate"]);
 
 const StableIdSchema = z.string().min(1).max(96);
 const HrefSchema = z.string().startsWith("/");
@@ -83,7 +89,7 @@ export const TeamIdentitySchema = z
     conference: z.string().min(1).optional(),
     division: z.string().min(1).optional(),
     monogram: z.string().min(1).max(8),
-    accent: FixtureAccentSchema,
+    accent: VisualAccentSchema,
     href: HrefSchema,
     searchAliases: z.array(z.string().min(1)),
   })
@@ -266,7 +272,7 @@ export const ReportLeaderboardSchema = z
 
 const BundleBaseShape = {
   dataMode: DataModeSchema,
-  fixtureNotice: z.string().min(1),
+  dataNotice: z.string().min(1),
   status: PublicationStatusSchema,
   season: z.number().int().min(2000).max(2200),
   throughWeek: z.number().int().min(1).max(18).nullable(),
@@ -671,20 +677,72 @@ export const SearchBundleSchema = z
   })
   .strict();
 
+export const StatusCheckResultSchema = z.enum([
+  "pass",
+  "fail",
+  "attention",
+  "unavailable",
+  "reviewed",
+  "not_applicable",
+]);
 export const StatusCheckSchema = z
   .object({
     id: StableIdSchema,
     label: z.string().min(1),
-    status: z.enum(["pass", "attention", "unavailable"]),
+    status: StatusCheckResultSchema,
     detail: z.string().min(1),
+    required: z.boolean(),
+    blocking: z.boolean(),
+    numerator: z.number().int().nonnegative().optional(),
+    denominator: z.number().int().nonnegative().optional(),
+    percentage: z.number().min(0).max(100).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const hasNumerator = value.numerator !== undefined;
+    const hasDenominator = value.denominator !== undefined;
+    if (hasNumerator !== hasDenominator) {
+      context.addIssue({
+        code: "custom",
+        path: [hasNumerator ? "denominator" : "numerator"],
+        message: "coverage numerator and denominator must be supplied together",
+      });
+      return;
+    }
+    if (
+      value.numerator !== undefined &&
+      value.denominator !== undefined &&
+      value.numerator > value.denominator
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["numerator"],
+        message: "coverage numerator must not exceed denominator",
+      });
+    }
+    if (
+      value.numerator !== undefined &&
+      value.denominator !== undefined &&
+      value.denominator > 0 &&
+      value.percentage !== undefined
+    ) {
+      const expected = (value.numerator / value.denominator) * 100;
+      if (Math.abs(value.percentage - expected) > 0.05) {
+        context.addIssue({
+          code: "custom",
+          path: ["percentage"],
+          message:
+            "coverage percentage must match numerator / denominator within 0.05 percentage points",
+        });
+      }
+    }
+  });
 export const StatusBundleSchema = z
   .object({
     ...BundleBaseShape,
     schemaVersion: z.literal("depthsnap.status.v1"),
     formulaVersion: z.string().min(1).optional(),
-    pipelineRunVersion: z.string().min(1).optional(),
+    pipelineRunId: z.string().min(1).optional(),
     manifestSchemaVersion: z.literal("depthsnap.manifest.v1"),
     bundleCount: z.number().int().nonnegative(),
     validationSummary: z.string().min(1),
@@ -729,9 +787,16 @@ export const ManifestEntrySchema = z
 export const ManifestSchema = z
   .object({
     schemaVersion: z.literal("depthsnap.manifest.v1"),
+    productId: ProductIdSchema,
     dataMode: DataModeSchema,
+    publicationStatus: PublicationStatusSchema,
+    validationResult: PublicationValidationResultSchema,
+    season: z.number().int().min(2000).max(2200),
+    throughWeek: z.number().int().min(1).max(18).nullable(),
     generatedAt: TimestampSchema,
     sourceVersion: z.string().min(1),
+    formulaVersion: z.string().min(1).optional(),
+    pipelineRunId: z.string().min(1).optional(),
     entries: z.array(ManifestEntrySchema).min(1),
   })
   .strict();
@@ -771,7 +836,11 @@ export const BundleSchemas = {
 
 export type DataMode = z.infer<typeof DataModeSchema>;
 export type PublicationStatus = z.infer<typeof PublicationStatusSchema>;
+export type PublicationValidationResult = z.infer<
+  typeof PublicationValidationResultSchema
+>;
 export type DataQuality = z.infer<typeof DataQualitySchema>;
+export type StatusCheckResult = z.infer<typeof StatusCheckResultSchema>;
 export type RawShareEvidenceContract = z.infer<typeof RawShareEvidenceSchema>;
 export type MovementEvidenceContract = z.infer<typeof MovementEvidenceSchema>;
 export type HomeBundle = z.infer<typeof HomeBundleSchema>;

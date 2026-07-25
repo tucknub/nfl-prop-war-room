@@ -74,6 +74,30 @@ async function main() {
   console.log(
     "export isolation: PASS · missing export manifest returned bundle_missing · no fixture fallback",
   );
+
+  const productionUnset = await loadDepthSnapRegistry({
+    publicationVariant: "published",
+  });
+  if (
+    productionUnset.ok ||
+    productionUnset.failure.category !== "unsupported_data_mode"
+  ) {
+    throw new Error(
+      "Production mode isolation failed: an unset mode must fail closed.",
+    );
+  }
+  const developmentDefault = await loadDepthSnapRegistry({
+    allowFixtureDefault: true,
+    publicationVariant: "published",
+  });
+  if (!developmentDefault.ok || developmentDefault.registry.mode !== "fixture") {
+    throw new Error(
+      "Development fixture default failed: the explicitly scoped default must load fixture mode.",
+    );
+  }
+  console.log(
+    "mode selection: PASS · production unset failed closed · explicitly scoped development default loaded fixture mode",
+  );
 }
 
 main().catch((error: unknown) => {

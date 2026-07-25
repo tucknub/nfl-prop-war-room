@@ -59,7 +59,7 @@ export type ReportLink = {
 type HomepageFixtureMetadata = {
   schemaVersion: "depthsnap.home.fixture.v1";
   fixture: true;
-  fixtureNotice: string;
+  dataNotice: string;
   season: number;
   throughWeek: number;
   generatedAt: string;

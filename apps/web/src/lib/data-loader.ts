@@ -1,6 +1,5 @@
 import "server-only";
 
-import { cache } from "react";
 import type {
   BackfieldReportBundle,
   HomeBundle,
@@ -18,10 +17,10 @@ import type {
 } from "@/lib/data-contract";
 import {
   getRegistryBundle,
-  loadDepthSnapRegistry,
   type DepthSnapRegistry,
   type PublicationVariant,
 } from "@/lib/data-registry-core";
+import { loadCachedDepthSnapRegistry } from "@/lib/data-registry-cache";
 import type { ReportFamily } from "@/lib/types";
 
 export type LoadedData<T> = {
@@ -36,11 +35,6 @@ export type FailedData = {
 };
 
 export type DataLoadResult<T> = LoadedData<T> | FailedData;
-
-const loadRegistry = cache(
-  async (mode: string | undefined, variant: PublicationVariant) =>
-    loadDepthSnapRegistry({ mode, publicationVariant: variant }),
-);
 
 export function publicationVariantFromState(
   state: string | undefined,
@@ -57,10 +51,13 @@ async function registryForState(
   | { ok: true; registry: DepthSnapRegistry }
   | { ok: false; failure: LoaderFailure }
 > {
-  return loadRegistry(
-    process.env.DEPTHSNAP_DATA_MODE,
-    publicationVariantFromState(state),
-  );
+  const mode = process.env.DEPTHSNAP_DATA_MODE;
+  return loadCachedDepthSnapRegistry({
+    mode,
+    publicationVariant: publicationVariantFromState(state),
+    allowFixtureDefault:
+      mode === undefined && process.env.NODE_ENV === "development",
+  });
 }
 
 async function loadBundle<T>(

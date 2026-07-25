@@ -17,7 +17,7 @@ import type {
 } from "@/lib/types";
 import { getPlayerIdentity, getTeamIdentity } from "@/data/identity.fixture";
 
-const fixtureNotice =
+const dataNotice =
   "Design fixture data — synthetic records for interface review, not a current NFL week.";
 
 const teamOptions = [
@@ -192,7 +192,7 @@ const movementSeasonRows = [
 const metadataBase = {
   schemaVersion: "depthsnap.report.fixture.v1",
   fixture: true,
-  fixtureNotice,
+  dataNotice,
   season: 2025,
   throughWeek: 18,
   generatedAt: "2026-07-23T12:00:00Z",

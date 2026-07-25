@@ -19,7 +19,7 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
           eyebrow="Player dossier"
           title={bundle.player.name}
           description="Supplied role evidence across the selected season."
-          fixtureNotice={bundle.fixtureNotice}
+          dataNotice={bundle.dataNotice}
           dataMode={bundle.dataMode}
           meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
         />
@@ -34,7 +34,7 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
         eyebrow="Player dossier"
         title={bundle.player.name}
         description="The supplied season story for this player’s documented role."
-        fixtureNotice={bundle.fixtureNotice}
+        dataNotice={bundle.dataNotice}
         dataMode={bundle.dataMode}
         meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
       >

@@ -7,13 +7,13 @@ import type {
 } from "@/lib/identity-types";
 import type { PlayerPosition, RawShareEvidence } from "@/lib/types";
 
-export const identityFixtureNotice =
+export const identityDataNotice =
   "Design fixture data — synthetic records for interface review, not a current NFL week.";
 
 export const identityFixtureMetadata = {
   schemaVersion: "depthsnap.identity.fixture.v1",
   fixture: true,
-  fixtureNotice: identityFixtureNotice,
+  dataNotice: identityDataNotice,
   status: "published",
   season: 2025,
   throughWeek: 18,

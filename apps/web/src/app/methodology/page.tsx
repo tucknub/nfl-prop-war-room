@@ -3,6 +3,8 @@ import { ContractFailure } from "@/components/contract-failure";
 import { FixtureNotice } from "@/components/fixture-notice";
 import { loadStatusData } from "@/lib/data-loader";
 
+export const dynamic = "force-dynamic";
+
 const sections = [
   {
     id: "measures",
@@ -85,6 +87,57 @@ const sections = [
           <p>The supplied ratio, validated against the two raw counts.</p>
         </div>
       </div>
+    ),
+  },
+  {
+    id: "glossary",
+    kicker: "Evidence glossary",
+    title: "The evidence terms used throughout DepthSnap",
+    body: (
+      <dl className="evidence-glossary">
+        <div>
+          <dt>Numerator</dt>
+          <dd>The supplied player count for the selected evidence period.</dd>
+        </div>
+        <div>
+          <dt>Denominator</dt>
+          <dd>The matching supplied team total for the same role and period.</dd>
+        </div>
+        <div>
+          <dt>Share</dt>
+          <dd>
+            The supplied decimal ratio, displayed as a percentage and validated
+            against the numerator and denominator.
+          </dd>
+        </div>
+        <div>
+          <dt>Percentage-point change</dt>
+          <dd>
+            Current share minus prior share, expressed in percentage points.
+          </dd>
+        </div>
+        <div>
+          <dt>Authoritative all-play evidence</dt>
+          <dd>
+            The Python-supplied result used for public report membership,
+            ordering, and findings.
+          </dd>
+        </div>
+        <div>
+          <dt>Typical-game context</dt>
+          <dd>
+            Optional supporting evidence that never replaces the authoritative
+            all-play result.
+          </dd>
+        </div>
+        <div>
+          <dt>Published through week</dt>
+          <dd>
+            The latest consecutive completed week admitted by the supplied
+            publication result.
+          </dd>
+        </div>
+      </dl>
     ),
   },
   {
@@ -219,7 +272,9 @@ export default async function MethodologyPage() {
   const status = result.data;
   return (
     <div className="page-shell methodology-page">
-      <FixtureNotice>{status.fixtureNotice}</FixtureNotice>
+      {status.dataMode === "fixture" ? (
+        <FixtureNotice>{status.dataNotice}</FixtureNotice>
+      ) : null}
       <header className="methodology-hero">
         <div>
           <span className="section-kicker">Methodology</span>

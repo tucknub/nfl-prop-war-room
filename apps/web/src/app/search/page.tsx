@@ -26,7 +26,7 @@ export default async function SearchPage({
         eyebrow="Search"
         title="Find exact evidence"
         description="Search only the synthetic team and player identity index, then open the supplied record directly."
-        fixtureNotice={data.fixtureNotice}
+        dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.records.length} ${data.dataMode} identities`}
       />

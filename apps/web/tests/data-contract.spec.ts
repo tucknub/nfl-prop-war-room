@@ -10,23 +10,16 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import type { Manifest } from "../src/lib/data-contract";
+import {
+  getRegistryCacheMetrics,
+  loadCachedDepthSnapRegistry,
+  resetRegistryCacheForTests,
+} from "../src/lib/data-registry-cache";
 import {
   loadDepthSnapRegistry,
   type PublicationVariant,
 } from "../src/lib/data-registry-core";
-
-type Manifest = {
-  dataMode: "fixture" | "export";
-  entries: Array<{
-    family: string;
-    id?: string;
-    path: string;
-    schemaVersion: string;
-    sha256: string;
-    required: boolean;
-    recordCount: number;
-  }>;
-};
 
 const fixtureSource = path.resolve(
   process.cwd(),
@@ -98,6 +91,19 @@ test("all three complete fixture registries validate with deterministic hashes",
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.registry.manifest.entries).toHaveLength(44);
+      expect(result.registry.manifest).toMatchObject({
+        productId: "depthsnap",
+        publicationStatus:
+          publicationVariant === "published"
+            ? "published"
+            : publicationVariant,
+        validationResult:
+          publicationVariant === "unavailable" ? "not_applicable" : "pass",
+        season: 2025,
+        throughWeek: publicationVariant === "published" ? 18 : null,
+        formulaVersion: "python-current-role-contract-v1",
+        pipelineRunId: "synthetic-fixture-build-v1",
+      });
       expect(
         new Set(result.registry.manifest.entries.map((entry) => entry.sha256))
           .size,
@@ -107,7 +113,98 @@ test("all three complete fixture registries validate with deterministic hashes",
           ? "published"
           : publicationVariant,
       );
+      const checks = result.registry.bundles.get("status")
+        ?.checks as Array<Record<string, unknown>>;
+      expect(checks).toHaveLength(3);
+      expect(checks[0]).toMatchObject({
+        required: true,
+        blocking: true,
+        numerator: 44,
+        denominator: 44,
+        percentage: 100,
+      });
     }
+  }
+});
+
+test("production mode is explicit and the development fixture default is opt-in", async () => {
+  const productionUnset = await loadDepthSnapRegistry();
+  expect(productionUnset).toMatchObject({
+    ok: false,
+    failure: { category: "unsupported_data_mode" },
+  });
+
+  const developmentDefault = await loadDepthSnapRegistry({
+    allowFixtureDefault: true,
+  });
+  expect(developmentDefault).toMatchObject({
+    ok: true,
+    registry: { mode: "fixture" },
+  });
+});
+
+test("validated registries are cached for the process lifetime after one cold load", async () => {
+  resetRegistryCacheForTests();
+  const cold = await loadCachedDepthSnapRegistry({
+    mode: "fixture",
+    publicationVariant: "published",
+  });
+  expect(cold.ok).toBe(true);
+  if (!cold.ok) return;
+  expect(cold.registry.loadMetrics).toMatchObject({
+    filesRead: 45,
+    entriesValidated: 44,
+  });
+  expect(cold.registry.loadMetrics.bytesRead).toBeGreaterThan(0);
+
+  const warm = await loadCachedDepthSnapRegistry({
+    mode: "fixture",
+    publicationVariant: "published",
+  });
+  expect(warm.ok).toBe(true);
+  if (!warm.ok) return;
+  expect(warm.registry).toBe(cold.registry);
+  expect(getRegistryCacheMetrics()).toEqual({
+    entries: 1,
+    hits: 1,
+    misses: 1,
+  });
+});
+
+test("status coverage and manifest run metadata fail closed when inconsistent", async () => {
+  const coverageCase = await temporaryDataRoot();
+  try {
+    await mutateBundle(coverageCase.dataRoot, "status", (bundle) => {
+      const checks = bundle.checks as Array<{ percentage?: number }>;
+      checks[0].percentage = 99;
+    });
+    const coverageResult = await loadDepthSnapRegistry({
+      mode: "fixture",
+      dataRoot: coverageCase.dataRoot,
+    });
+    expect(coverageResult).toMatchObject({
+      ok: false,
+      failure: { category: "invalid_bundle" },
+    });
+  } finally {
+    await rm(coverageCase.temporaryRoot, { recursive: true, force: true });
+  }
+
+  const runCase = await temporaryDataRoot();
+  try {
+    const { manifestPath, manifest } = await readManifest(runCase.dataRoot);
+    manifest.pipelineRunId = "different-run";
+    await writeManifest(manifestPath, manifest);
+    const runResult = await loadDepthSnapRegistry({
+      mode: "fixture",
+      dataRoot: runCase.dataRoot,
+    });
+    expect(runResult).toMatchObject({
+      ok: false,
+      failure: { category: "manifest_mismatch" },
+    });
+  } finally {
+    await rm(runCase.temporaryRoot, { recursive: true, force: true });
   }
 });
 

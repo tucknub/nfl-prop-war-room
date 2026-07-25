@@ -1,4 +1,5 @@
 import { ContractFailure } from "@/components/contract-failure";
+import { FixtureNotice } from "@/components/fixture-notice";
 import { HomeState } from "@/components/home-state";
 import { ReportLeaderboard } from "@/components/report-leaderboard";
 import { LeadFinding, RoleChangeFeed } from "@/components/role-ui";
@@ -29,10 +30,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="page-shell">
-      <div className="fixture-notice" role="note">
-        <span aria-hidden="true" />
-        {data.fixtureNotice}
-      </div>
+      {data.dataMode === "fixture" ? (
+        <FixtureNotice>{data.dataNotice}</FixtureNotice>
+      ) : null}
 
       {data.status === "published" ? (
         <div className="dashboard-grid">

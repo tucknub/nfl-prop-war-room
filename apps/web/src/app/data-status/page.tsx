@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ContractFailure } from "@/components/contract-failure";
+import { CopyHashButton } from "@/components/copy-hash-button";
 import { FixtureNotice } from "@/components/fixture-notice";
 import { loadStatusData } from "@/lib/data-loader";
 
@@ -55,7 +56,9 @@ export default async function DataStatusPage({
 
   return (
     <div className="page-shell data-status-page">
-      <FixtureNotice>{status.fixtureNotice}</FixtureNotice>
+      {status.dataMode === "fixture" ? (
+        <FixtureNotice>{status.dataNotice}</FixtureNotice>
+      ) : null}
       <header className="status-hero">
         <div>
           <span className="section-kicker">Data Status</span>
@@ -87,8 +90,32 @@ export default async function DataStatusPage({
         </div>
         <dl>
           <div>
+            <dt>Product</dt>
+            <dd>{manifest.productId}</dd>
+          </div>
+          <div>
             <dt>Data mode</dt>
             <dd>{status.dataMode}</dd>
+          </div>
+          <div>
+            <dt>Validation result</dt>
+            <dd>{manifest.validationResult.replaceAll("_", " ")}</dd>
+          </div>
+          <div>
+            <dt>Publication result</dt>
+            <dd>{manifest.publicationStatus.replaceAll("_", " ")}</dd>
+          </div>
+          <div>
+            <dt>Season</dt>
+            <dd>{manifest.season}</dd>
+          </div>
+          <div>
+            <dt>Published through</dt>
+            <dd>
+              {manifest.throughWeek
+                ? `Week ${manifest.throughWeek}`
+                : "No week supplied"}
+            </dd>
           </div>
           <div>
             <dt>Generated</dt>
@@ -104,7 +131,7 @@ export default async function DataStatusPage({
           </div>
           <div>
             <dt>Pipeline run</dt>
-            <dd>{status.pipelineRunVersion ?? "Not supplied"}</dd>
+            <dd>{status.pipelineRunId ?? "Not supplied"}</dd>
           </div>
           <div>
             <dt>Manifest schema</dt>
@@ -129,9 +156,28 @@ export default async function DataStatusPage({
                 aria-hidden="true"
               />
               <div>
-                <small>{check.status}</small>
+                <small>{check.status.replaceAll("_", " ")}</small>
                 <h3>{check.label}</h3>
                 <p>{check.detail}</p>
+                <div className="status-check-flags">
+                  <span>{check.required ? "Required" : "Optional"}</span>
+                  <span>{check.blocking ? "Blocking" : "Non-blocking"}</span>
+                </div>
+                {check.numerator !== undefined &&
+                check.denominator !== undefined ? (
+                  <p className="status-check-coverage">
+                    <strong>
+                      {check.numerator} of {check.denominator}
+                    </strong>
+                    {check.percentage !== undefined ? (
+                      <span>{check.percentage.toFixed(1)}%</span>
+                    ) : null}
+                  </p>
+                ) : check.percentage !== undefined ? (
+                  <p className="status-check-coverage">
+                    <span>{check.percentage.toFixed(1)}%</span>
+                  </p>
+                ) : null}
               </div>
             </article>
           ))}
@@ -165,14 +211,18 @@ export default async function DataStatusPage({
               <tbody>
                 {manifest.entries.map((entry) => (
                   <tr key={`${entry.family}:${entry.id ?? "index"}`}>
-                    <th scope="row">
+                    <th scope="row" data-label="Bundle">
                       {entry.family}
                       {entry.id ? <small>{entry.id}</small> : null}
                     </th>
-                    <td>{entry.recordCount}</td>
-                    <td>{entry.schemaVersion}</td>
-                    <td>
+                    <td data-label="Records">{entry.recordCount}</td>
+                    <td data-label="Schema">{entry.schemaVersion}</td>
+                    <td data-label="SHA-256">
                       <code>{entry.sha256}</code>
+                      <CopyHashButton
+                        hash={entry.sha256}
+                        bundleLabel={`${entry.family}${entry.id ? ` ${entry.id}` : ""}`}
+                      />
                     </td>
                   </tr>
                 ))}

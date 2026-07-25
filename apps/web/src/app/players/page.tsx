@@ -26,7 +26,7 @@ export default async function PlayersPage({
         eyebrow="Players"
         title="Player role evidence"
         description="Find a player and read the latest supplied share, raw counts, report memberships, and movement context."
-        fixtureNotice={data.fixtureNotice}
+        dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}
       />

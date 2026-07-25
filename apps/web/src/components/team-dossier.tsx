@@ -17,7 +17,7 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
           eyebrow="Team dossier"
           title={bundle.team.name}
           description={bundle.suppliedSummary}
-          fixtureNotice={bundle.fixtureNotice}
+          dataNotice={bundle.dataNotice}
           dataMode={bundle.dataMode}
           meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
         />
@@ -33,7 +33,7 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
         eyebrow="Team dossier"
         title={bundle.team.name}
         description={bundle.suppliedSummary}
-        fixtureNotice={bundle.fixtureNotice}
+        dataNotice={bundle.dataNotice}
         dataMode={bundle.dataMode}
         meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
       >

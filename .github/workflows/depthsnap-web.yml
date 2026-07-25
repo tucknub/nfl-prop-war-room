@@ -37,6 +37,9 @@ jobs:
       - name: Validate DepthSnap data contracts
         run: npm run validate:data
 
+      - name: Measure DepthSnap registry load
+        run: npm run measure:data
+
       - name: Typecheck
         run: npm run typecheck
 

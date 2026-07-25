@@ -24,6 +24,14 @@ export type DepthSnapRegistry = {
   mode: DataMode;
   directory: string;
   bundles: ReadonlyMap<string, RegistryBundle>;
+  loadMetrics: RegistryLoadMetrics;
+};
+
+export type RegistryLoadMetrics = {
+  filesRead: number;
+  bytesRead: number;
+  entriesValidated: number;
+  durationMs: number;
 };
 
 export type RegistryResult =
@@ -32,8 +40,10 @@ export type RegistryResult =
 
 export type RegistryOptions = {
   mode?: string;
+  allowFixtureDefault?: boolean;
   publicationVariant?: PublicationVariant;
   dataRoot?: string;
+  readTextFile?: (filePath: string) => Promise<string>;
 };
 
 const expectedSchemaVersions: Record<BundleFamily, string> = {
@@ -317,15 +327,18 @@ function validateReferences(
   }
 }
 
-function resolveMode(value: string | undefined): DataMode | undefined {
-  if (!value) return "fixture";
+function resolveMode(
+  value: string | undefined,
+  allowFixtureDefault = false,
+): DataMode | undefined {
+  if (!value && allowFixtureDefault) return "fixture";
   if (value === "fixture" || value === "export") return value;
 }
 
 export async function loadDepthSnapRegistry(
   options: RegistryOptions = {},
 ): Promise<RegistryResult> {
-  const mode = resolveMode(options.mode);
+  const mode = resolveMode(options.mode, options.allowFixtureDefault);
   if (!mode) {
     return fail(
       "unsupported_data_mode",
@@ -337,12 +350,23 @@ export async function loadDepthSnapRegistry(
   const variant = options.publicationVariant ?? "published";
   const dataRoot =
     options.dataRoot ??
-    path.resolve(process.cwd(), "public", "data", "depthsnap");
+    path.join("public", "data", "depthsnap");
   const directory = path.join(dataRoot, safeDirectoryName(mode, variant));
+  const startedAt = performance.now();
+  let filesRead = 0;
+  let bytesRead = 0;
+  const readTextFile = async (filePath: string) => {
+    const bytes = options.readTextFile
+      ? await options.readTextFile(filePath)
+      : await readFile(filePath, "utf8");
+    filesRead += 1;
+    bytesRead += Buffer.byteLength(bytes, "utf8");
+    return bytes;
+  };
   const manifestPath = path.join(directory, "manifest.json");
   let manifestBytes: string;
   try {
-    manifestBytes = await readFile(manifestPath, "utf8");
+    manifestBytes = await readTextFile(manifestPath);
   } catch {
     return fail(
       "bundle_missing",
@@ -431,7 +455,9 @@ export async function loadDepthSnapRegistry(
     }
     let bytes: string;
     try {
-      bytes = await readFile(path.join(directory, ...entry.path.split("/")), "utf8");
+      bytes = await readTextFile(
+        path.join(directory, ...entry.path.split("/")),
+      );
     } catch {
       return fail(
         "bundle_missing",
@@ -527,7 +553,21 @@ export async function loadDepthSnapRegistry(
   if (
     !statusBundle ||
     statusBundle.bundleCount !== manifest.entries.length ||
-    [...bundles.values()].some((bundle) => bundle.status !== suppliedStatus)
+    suppliedStatus !== manifest.publicationStatus ||
+    statusBundle.season !== manifest.season ||
+    statusBundle.throughWeek !== manifest.throughWeek ||
+    statusBundle.generatedAt !== manifest.generatedAt ||
+    statusBundle.sourceVersion !== manifest.sourceVersion ||
+    statusBundle.formulaVersion !== manifest.formulaVersion ||
+    statusBundle.pipelineRunId !== manifest.pipelineRunId ||
+    [...bundles.values()].some(
+      (bundle) =>
+        bundle.status !== suppliedStatus ||
+        bundle.season !== manifest.season ||
+        bundle.throughWeek !== manifest.throughWeek ||
+        bundle.generatedAt !== manifest.generatedAt ||
+        bundle.sourceVersion !== manifest.sourceVersion,
+    )
   ) {
     return fail(
       "manifest_mismatch",
@@ -541,7 +581,18 @@ export async function loadDepthSnapRegistry(
   if (referenceFailure) return referenceFailure;
   return {
     ok: true,
-    registry: { manifest, mode, directory, bundles },
+    registry: {
+      manifest,
+      mode,
+      directory,
+      bundles,
+      loadMetrics: {
+        filesRead,
+        bytesRead,
+        entriesValidated: manifest.entries.length,
+        durationMs: Number((performance.now() - startedAt).toFixed(3)),
+      },
+    },
   };
 }
 

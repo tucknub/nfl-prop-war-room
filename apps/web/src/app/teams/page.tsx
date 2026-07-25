@@ -27,7 +27,7 @@ export default async function TeamsPage({
         eyebrow="Teams"
         title="Team role structure"
         description="Locate a supplied team, scan its role leaders, and open one coherent evidence dossier."
-        fixtureNotice={data.fixtureNotice}
+        dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}
       />

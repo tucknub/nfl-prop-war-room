@@ -33,7 +33,9 @@ export async function ReportPage({
 
   return (
     <div className="page-shell report-page-shell">
-      <FixtureNotice>{data.fixtureNotice}</FixtureNotice>
+      {data.dataMode === "fixture" ? (
+        <FixtureNotice>{data.dataNotice}</FixtureNotice>
+      ) : null}
       {data.status === "published" ? (
         <ReportExperience
           data={data}

@@ -21,7 +21,9 @@ export default async function ReportsPage({
   const data = result.data;
   return (
     <div className="page-shell reports-overview-page">
-      <FixtureNotice>{data.fixtureNotice}</FixtureNotice>
+      {data.dataMode === "fixture" ? (
+        <FixtureNotice>{data.dataNotice}</FixtureNotice>
+      ) : null}
       <header className="reports-overview-header">
         <span role="heading" aria-level={2}>
           Reports

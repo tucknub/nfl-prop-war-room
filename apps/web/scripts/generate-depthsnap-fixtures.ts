@@ -35,7 +35,10 @@ const webRoot = path.resolve(scriptDirectory, "..");
 const dataRoot = path.join(webRoot, "public", "data", "depthsnap");
 const generatedAt = identityFixtureMetadata.generatedAt;
 const sourceVersion = identityFixtureMetadata.sourceVersion;
-const fixtureNotice =
+const productId = "depthsnap";
+const formulaVersion = "python-current-role-contract-v1";
+const pipelineRunId = "synthetic-fixture-build-v1";
+const dataNotice =
   "Design fixture data — synthetic records for interface review, not a current NFL week.";
 
 function sortedJson(value: unknown): string {
@@ -67,12 +70,17 @@ function canonicalPlayer(player: { name: string; team: string }) {
   return match;
 }
 
-function normalizePlayerReferences<T>(value: T): T {
+function normalizePlayerReferences<T>(value: T, field?: string): T {
   if (Array.isArray(value)) {
-    return value.map(normalizePlayerReferences) as T;
+    return value.map((child) => normalizePlayerReferences(child, field)) as T;
   }
   if (typeof value === "string") {
-    return value.replaceAll("fixture-", "player-") as T;
+    return (
+      field &&
+      ["id", "href", "evidenceHref", "playerHref"].includes(field)
+        ? value.replaceAll("fixture-", "player-")
+        : value
+    ) as T;
   }
   if (!value || typeof value !== "object") return value;
   const object = value as Record<string, unknown>;
@@ -90,7 +98,7 @@ function normalizePlayerReferences<T>(value: T): T {
   return Object.fromEntries(
     Object.entries(object).map(([key, child]) => [
       key,
-      normalizePlayerReferences(child),
+      normalizePlayerReferences(child, key),
     ]),
   ) as T;
 }
@@ -102,13 +110,15 @@ function productionNeutral<T extends JsonObject>(
   const {
     fixture: _fixture,
     schemaVersion: _schemaVersion,
+    dataNotice: _dataNotice,
+    sourceVersion: _sourceVersion,
     ...content
   } = source;
   return normalizePlayerReferences({
     ...content,
     schemaVersion,
     dataMode: "fixture",
-    fixtureNotice,
+    dataNotice,
     sourceVersion,
   });
 }
@@ -138,7 +148,7 @@ const movementBundle = productionNeutral(
 const reportsIndexBundle = {
   schemaVersion: "depthsnap.reports.index.v1",
   dataMode: "fixture",
-  fixtureNotice,
+  dataNotice,
   status: "published",
   season: identityFixtureMetadata.season,
   throughWeek: identityFixtureMetadata.throughWeek,
@@ -205,7 +215,7 @@ const publishedPlayerBundles = players.map((player) => {
 const teamsIndexBundle = {
   schemaVersion: "depthsnap.teams.index.v1",
   dataMode: "fixture",
-  fixtureNotice,
+  dataNotice,
   status: "published",
   season: identityFixtureMetadata.season,
   throughWeek: identityFixtureMetadata.throughWeek,
@@ -217,7 +227,7 @@ const teamsIndexBundle = {
 const playersIndexBundle = {
   schemaVersion: "depthsnap.players.index.v1",
   dataMode: "fixture",
-  fixtureNotice,
+  dataNotice,
   status: "published",
   season: identityFixtureMetadata.season,
   throughWeek: identityFixtureMetadata.throughWeek,
@@ -230,7 +240,7 @@ const playersIndexBundle = {
 const searchBundle = {
   schemaVersion: "depthsnap.search.v1",
   dataMode: "fixture",
-  fixtureNotice,
+  dataNotice,
   status: "published",
   season: identityFixtureMetadata.season,
   throughWeek: identityFixtureMetadata.throughWeek,
@@ -255,14 +265,14 @@ function statusBundle(state: PublicationState) {
   return {
     schemaVersion: "depthsnap.status.v1",
     dataMode: "fixture",
-    fixtureNotice,
+    dataNotice,
     status: state,
     season: identityFixtureMetadata.season,
     throughWeek: published ? identityFixtureMetadata.throughWeek : null,
     generatedAt,
     sourceVersion,
-    formulaVersion: "python-current-role-contract-v1",
-    pipelineRunVersion: "synthetic-fixture-build-v1",
+    formulaVersion,
+    pipelineRunId,
     manifestSchemaVersion: "depthsnap.manifest.v1",
     bundleCount: totalBundleCount,
     validationSummary: published
@@ -274,26 +284,42 @@ function statusBundle(state: PublicationState) {
       {
         id: "manifest-integrity",
         label: "Manifest integrity",
-        status: published ? "pass" : state === "unavailable" ? "unavailable" : "attention",
+        status: published ? "pass" : "reviewed",
         detail: published
           ? "Every required fixture bundle is declared and hashed."
           : "The state bundle is declared and hashed without publishing evidence rows.",
+        required: true,
+        blocking: true,
+        numerator: totalBundleCount,
+        denominator: totalBundleCount,
+        percentage: 100,
       },
       {
         id: "identity-references",
         label: "Identity references",
-        status: published ? "pass" : state === "unavailable" ? "unavailable" : "attention",
+        status: published
+          ? "pass"
+          : state === "no_published_week"
+            ? "reviewed"
+            : "not_applicable",
         detail: published
           ? "All supplied team and player references resolve to one stable identity."
           : "Identity records remain synthetic and no evidence membership is asserted.",
+        required: true,
+        blocking: true,
+        numerator: published || state === "no_published_week" ? teams.length + players.length : undefined,
+        denominator: published || state === "no_published_week" ? teams.length + players.length : undefined,
+        percentage: published || state === "no_published_week" ? 100 : undefined,
       },
       {
         id: "raw-share-consistency",
         label: "Raw-share consistency",
-        status: published ? "pass" : state === "unavailable" ? "unavailable" : "attention",
+        status: published ? "pass" : "not_applicable",
         detail: published
           ? "Every supplied share agrees with its raw numerator and denominator."
           : "No share evidence is published in this state.",
+        required: true,
+        blocking: true,
       },
     ],
     limitations: [
@@ -563,9 +589,17 @@ async function writeStateDirectory(
   }
   const manifest = {
     schemaVersion: "depthsnap.manifest.v1",
+    productId,
     dataMode: "fixture",
+    publicationStatus: state,
+    validationResult: state === "unavailable" ? "not_applicable" : "pass",
+    season: identityFixtureMetadata.season,
+    throughWeek:
+      state === "published" ? identityFixtureMetadata.throughWeek : null,
     generatedAt,
     sourceVersion,
+    formulaVersion,
+    pipelineRunId,
     entries,
   };
   await writeFile(path.join(target, "manifest.json"), sortedJson(manifest), "utf8");

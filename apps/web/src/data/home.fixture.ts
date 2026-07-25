@@ -29,7 +29,7 @@ const reportLinks = [
 const fixtureMetadata = {
   schemaVersion: "depthsnap.home.fixture.v1",
   fixture: true,
-  fixtureNotice:
+  dataNotice:
     "Design fixture data — synthetic records for interface review, not a current NFL week.",
   season: 2025,
   throughWeek: 18,
