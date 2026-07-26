@@ -25,7 +25,7 @@ export default async function PlayersPage({
       <IdentityPageHeader
         eyebrow="Players"
         title="Player role evidence"
-        description="Find a player and read the latest supplied share, raw counts, report memberships, and movement context."
+        description="Find a player and read the latest role share, raw counts, current reports, and recent changes."
         dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}

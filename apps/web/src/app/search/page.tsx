@@ -10,7 +10,7 @@ export default async function SearchPage({
   searchParams: Promise<IdentitySearchParams>;
 }) {
   const params = await searchParams;
-  if (params.state === "loading") return <IdentityLoading title="identity search" />;
+  if (params.state === "loading") return <IdentityLoading title="search" />;
   const result = await loadSearchData(params.state);
   if (!result.ok) {
     return (
@@ -24,15 +24,11 @@ export default async function SearchPage({
     <div className="page-shell identity-page-shell search-page-shell">
       <IdentityPageHeader
         eyebrow="Search"
-        title="Find exact evidence"
-        description={
-          data.dataMode === "fixture"
-            ? "Search only the synthetic team and player identity index, then open the supplied record directly."
-            : "Search the validated team and player identity index, then open the supplied evidence record directly."
-        }
+        title="Search DepthSnap"
+        description="Find a player or team."
         dataNotice={data.dataNotice}
         dataMode={data.dataMode}
-        meta={`${data.records.length} ${data.dataMode} identities`}
+        meta="Players and teams"
       />
       {data.status === "published" ? (
         <SearchExperience
@@ -41,7 +37,7 @@ export default async function SearchPage({
           shouldFocus={params.focus === "1"}
         />
       ) : (
-        <IdentityState status={data.status} subject="identity search" />
+        <IdentityState status={data.status} subject="search" />
       )}
     </div>
   );

@@ -73,7 +73,7 @@ export function PlayerDirectory({
           options={["ALL", "backfield_control", "target_hierarchy", "role_movement"]}
           labels={{ backfield_control: "Backfield Control", target_hierarchy: "Target Hierarchy", role_movement: "Role Movement" }}
         />
-        <Filter label="Order" value={sort} onChange={(value) => setSort(value as typeof sort)} options={["alphabetical", "authority"]} labels={{ alphabetical: "Alphabetical", authority: "Supplied authority" }} />
+        <Filter label="Order" value={sort} onChange={(value) => setSort(value as typeof sort)} options={["alphabetical", "authority"]} labels={{ alphabetical: "Alphabetical", authority: "Report order" }} />
       </div>
 
       {filtered.length ? (
@@ -86,15 +86,15 @@ export function PlayerDirectory({
                 <span>{record.currentTeam.id} · {record.player.position}</span>
               </div>
               <div className="player-memberships">
-                {record.memberships.length ? record.memberships.map((item) => <span key={item.family}>{item.label}</span>) : <span>Supplied identity</span>}
+                {record.memberships.length ? record.memberships.map((item) => <span key={item.family}>{item.label}</span>) : <span>Player</span>}
               </div>
-              {record.currentEvidence ? <ShareEvidence evidence={record.currentEvidence} compact /> : <p className="no-current-evidence">No current share supplied</p>}
+              {record.currentEvidence ? <ShareEvidence evidence={record.currentEvidence} compact /> : <p className="no-current-evidence">No recent qualifying report</p>}
               <div className="player-directory-movement">
                 <span>Latest movement</span>
                 <strong>
                   {record.latestMovement
                     ? `${record.latestMovement.movement.percentagePointChange > 0 ? "+" : ""}${record.latestMovement.movement.percentagePointChange.toFixed(1)} pp`
-                    : "Not supplied"}
+                    : "No recent change"}
                 </strong>
               </div>
               <Link className="directory-action" href={record.player.href}>Open dossier <span aria-hidden="true">→</span></Link>
@@ -105,7 +105,7 @@ export function PlayerDirectory({
         <section className="directory-empty" role="status">
           <p className="identity-eyebrow">No matching filters</p>
           <h2>No players match the current directory view</h2>
-          <p>Reset the supplied identity filters to return to the full directory.</p>
+          <p>Reset the filters to return to the full player directory.</p>
           <button type="button" onClick={reset}>Reset player filters</button>
         </section>
       )}

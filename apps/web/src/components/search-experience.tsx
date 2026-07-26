@@ -19,6 +19,15 @@ export function SearchExperience({
   const [query, setQuery] = useState(initialQuery);
   const [activeIndex, setActiveIndex] = useState(0);
   const results = useMemo(() => rankResults(index, query), [index, query]);
+  const teamNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const record of index) {
+      if (record.type !== "team") continue;
+      const abbreviation = record.secondaryLabel.split("·").at(-1)?.trim();
+      if (abbreviation) names.set(abbreviation, record.displayName);
+    }
+    return names;
+  }, [index]);
 
   useEffect(() => {
     if (shouldFocus || window.innerWidth < 720) {
@@ -46,7 +55,7 @@ export function SearchExperience({
 
   return (
     <div className="global-search">
-      <label htmlFor="global-identity-search">Search supplied identities</label>
+      <label htmlFor="global-identity-search">Search players and teams</label>
       <div className="global-search-input">
         <span aria-hidden="true">⌕</span>
         <input
@@ -67,12 +76,25 @@ export function SearchExperience({
       </div>
       <p className="search-help">Exact and prefix matches appear first. Use ↑ ↓ and Enter to navigate.</p>
       <div className="search-result-heading">
-        <span>{query ? `${results.length} matching identities` : "Supplied identities"}</span>
+        <span>{query ? `${results.length} results` : "Players and teams"}</span>
         <span>Teams and players only</span>
       </div>
       {results.length ? (
         <ul id="identity-search-results" role="listbox">
-          {results.map((result, indexValue) => (
+          {results.map((result, indexValue) => {
+            const abbreviation = result.secondaryLabel
+              .split("·")
+              .at(-1)
+              ?.trim();
+            const position = result.secondaryLabel.split("·")[0]?.trim();
+            const secondary =
+              result.type === "player"
+                ? `${position} · ${teamNames.get(abbreviation ?? "") ?? abbreviation ?? "Team unavailable"}`
+                : abbreviation ?? result.secondaryLabel;
+            const noRecentReport = /no default-report|stable player identity/i.test(
+              result.summary,
+            );
+            return (
             <li
               id={result.id}
               key={result.id}
@@ -84,19 +106,29 @@ export function SearchExperience({
                 <span className={`search-result-type search-result-${result.type}`}>{result.type === "player" ? "P" : "T"}</span>
                 <span className="search-result-copy">
                   <strong>{result.displayName}</strong>
-                  <small>{result.secondaryLabel}</small>
+                  <small>{secondary}</small>
                 </span>
-                <span className="search-result-evidence">{result.summary}</span>
+                <span className="search-result-evidence">
+                  {noRecentReport
+                    ? "No recent qualifying report"
+                    : result.type === "player"
+                      ? result.summary
+                      : "View team"}
+                </span>
+                <span className="search-result-action">
+                  {result.type === "player" ? "View player" : "View team"}
+                </span>
                 <span aria-hidden="true">→</span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
         <section className="directory-empty" role="status">
-          <p className="identity-eyebrow">No matching identities</p>
+          <p className="identity-eyebrow">No matching players or teams</p>
           <h2>No teams or players match “{query}”</h2>
-          <p>Try a supplied name, abbreviation, or alias.</p>
+          <p>Try a player name, team name, or abbreviation.</p>
           <button type="button" onClick={() => setQuery("")}>Clear search</button>
         </section>
       )}

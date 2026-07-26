@@ -26,7 +26,7 @@ export default async function TeamsPage({
       <IdentityPageHeader
         eyebrow="Teams"
         title="Team role structure"
-        description="Locate a supplied team, scan its role leaders, and open one coherent evidence dossier."
+        description="Find a team, scan its role leaders, and open one concise evidence dossier."
         dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.season}${data.throughWeek ? ` · through Week ${data.throughWeek}` : ""}`}

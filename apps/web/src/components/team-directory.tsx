@@ -47,7 +47,7 @@ export function TeamDirectory({
           <span>Order</span>
           <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
             <option value="alphabetical">Alphabetical</option>
-            <option value="movement">Largest supplied movement</option>
+            <option value="movement">Largest recent change</option>
           </select>
         </label>
       </div>
@@ -70,7 +70,7 @@ export function TeamDirectory({
                 <DirectoryEvidence label="Top TE" row={record.topTe} />
               </div>
               <div className="team-movement-preview">
-                <span>Largest supplied movement</span>
+                <span>Largest recent change</span>
                 {record.largestMovement ? (
                   <strong className={`movement-text-${record.largestMovement.direction}`}>
                     {record.largestMovement.player.name} ·{" "}
@@ -78,7 +78,7 @@ export function TeamDirectory({
                     {record.largestMovement.movement.percentagePointChange.toFixed(1)} pp
                   </strong>
                 ) : (
-                  <strong>No supplied movement</strong>
+                  <strong>No recent change</strong>
                 )}
               </div>
               <Link className="directory-action" href={record.team.href}>
@@ -90,8 +90,8 @@ export function TeamDirectory({
       ) : (
         <section className="directory-empty" role="status">
           <p className="identity-eyebrow">No matching filters</p>
-          <h2>No supplied teams match “{query}”</h2>
-          <p>Adjust the team search or reset it to see all supplied identities.</p>
+          <h2>No teams match “{query}”</h2>
+          <p>Adjust the search or reset it to see all teams.</p>
           <button type="button" onClick={() => setQuery("")}>Reset team search</button>
         </section>
       )}
@@ -115,7 +115,7 @@ function DirectoryEvidence({
           <ShareEvidence evidence={row.evidence} compact />
         </>
       ) : (
-        <em>Not supplied</em>
+        <em>Not available</em>
       )}
     </div>
   );

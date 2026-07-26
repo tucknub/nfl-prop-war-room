@@ -6,11 +6,11 @@ export default function TeamNotFound() {
       <section className="identity-state identity-not-found">
         <span className="identity-state-mark" aria-hidden="true">?</span>
         <p className="identity-eyebrow">Team not found</p>
-        <h1>This team identity is not in the selected bundle</h1>
-        <p>Use the team directory or global search to open a stable supplied identity.</p>
+        <h1>This team is not available</h1>
+        <p>Use the team directory or search to find another team.</p>
         <div className="identity-state-actions">
           <Link href="/teams">Open Teams</Link>
-          <Link href="/search?focus=1">Search identities</Link>
+          <Link href="/search?focus=1">Search players and teams</Link>
         </div>
       </section>
     </div>

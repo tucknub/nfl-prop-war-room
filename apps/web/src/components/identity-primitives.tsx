@@ -1,5 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState, type ReactNode } from "react";
 import { FixtureNotice } from "@/components/fixture-notice";
+import {
+  formatPoints,
+  metricLabel,
+  movementLabel,
+  movementRecordKey,
+} from "@/lib/consumer-presentation";
 import type {
   CanonicalPlayerIdentity,
   HierarchyEvidenceRow,
@@ -24,7 +33,7 @@ export function IdentityPageHeader({
   dataNotice: string;
   dataMode?: "fixture" | "export";
   meta: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <>
@@ -38,8 +47,9 @@ export function IdentityPageHeader({
           <p>{description}</p>
         </div>
         <div className="identity-header-meta">
-          <span>{dataMode === "export" ? "Export status" : "Fixture status"}</span>
+          <span>Data status</span>
           <strong>{meta}</strong>
+          <small>{dataMode === "export" ? "Data verified" : "Interface preview"}</small>
         </div>
         {children}
       </header>
@@ -60,7 +70,9 @@ export function IdentityState({
       <span className="identity-state-mark" aria-hidden="true">
         {unpublished ? "—" : "!"}
       </span>
-      <p className="identity-eyebrow">{unpublished ? "Publishing state" : "Bundle state"}</p>
+      <p className="identity-eyebrow">
+        {unpublished ? "Publishing state" : "Data status"}
+      </p>
       <h2>
         {unpublished
           ? `No completed week is published for ${subject}`
@@ -69,7 +81,7 @@ export function IdentityState({
       <p>
         {unpublished
           ? "A completed validated week has not been published. No estimated shares are shown."
-          : "The selected bundle could not be read. No stale or fabricated evidence is shown."}
+          : "The selected data could not be read. No stale or fabricated evidence is shown."}
       </p>
       <div className="identity-state-actions">
         <Link href="/data-status">Open Data Status</Link>
@@ -79,7 +91,13 @@ export function IdentityState({
   );
 }
 
-export function TeamMonogram({ team, size = "large" }: { team: TeamIdentity; size?: "small" | "large" }) {
+export function TeamMonogram({
+  team,
+  size = "large",
+}: {
+  team: TeamIdentity;
+  size?: "small" | "large";
+}) {
   return (
     <span
       className={`team-monogram team-monogram-${size} team-monogram-${team.accent}`}
@@ -90,7 +108,11 @@ export function TeamMonogram({ team, size = "large" }: { team: TeamIdentity; siz
   );
 }
 
-export function PlayerMonogram({ player }: { player: CanonicalPlayerIdentity }) {
+export function PlayerMonogram({
+  player,
+}: {
+  player: CanonicalPlayerIdentity;
+}) {
   return (
     <span className="player-monogram" aria-hidden="true">
       {player.name
@@ -113,11 +135,13 @@ export function ShareEvidence({
     <div
       className={`identity-share ${compact ? "identity-share-compact" : ""}`}
       aria-label={`${percent} percent, ${evidence.numerator} of ${evidence.denominator} ${evidence.opportunityLabel}`}
+      data-share-evidence
     >
       <div className="identity-share-value">
         <strong>{percent}%</strong>
         <span>
-          {evidence.numerator} of {evidence.denominator} {evidence.opportunityLabel}
+          {evidence.numerator} of {evidence.denominator}{" "}
+          {evidence.opportunityLabel}
         </span>
       </div>
       <span className="identity-share-track" aria-hidden="true">
@@ -136,35 +160,75 @@ export function HierarchySection({
   description: string;
   rows: readonly HierarchyEvidenceRow[];
 }) {
+  const metrics = useMemo(
+    () => [...new Set(rows.map((row) => row.evidence.opportunityLabel))],
+    [rows],
+  );
+  const [selectedMetric, setSelectedMetric] = useState<
+    RawShareEvidence["opportunityLabel"]
+  >(
+    metrics.includes("opportunities")
+      ? "opportunities"
+      : (metrics[0] ?? "opportunities"),
+  );
+  const visibleRows = useMemo(() => {
+    const seen = new Set<string>();
+    return rows.filter((row) => {
+      if (row.evidence.opportunityLabel !== selectedMetric) return false;
+      if (seen.has(row.player.id)) return false;
+      seen.add(row.player.id);
+      return true;
+    });
+  }, [rows, selectedMetric]);
+
   return (
     <section className="dossier-section hierarchy-section">
       <header>
         <div>
-          <p className="identity-eyebrow">Supplied hierarchy</p>
+          <p className="identity-eyebrow">Team hierarchy</p>
           <h2>{title}</h2>
         </div>
         <p>{description}</p>
       </header>
-      {rows.length ? (
+      {metrics.length > 1 ? (
+        <fieldset className="consumer-segmented hierarchy-metric-control">
+          <legend>Metric</legend>
+          <div>
+            {metrics.map((metric) => (
+              <button
+                type="button"
+                key={metric}
+                aria-pressed={selectedMetric === metric}
+                onClick={() => setSelectedMetric(metric)}
+              >
+                {metricLabel(metric)}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+      {visibleRows.length ? (
         <ol className="hierarchy-list">
-          {rows.map((row) => (
+          {visibleRows.map((row) => (
             <li key={row.player.id}>
-              <span className="hierarchy-rank">{row.authoritativeOrder}</span>
               <div className="hierarchy-player">
                 <Link href={row.player.href}>{row.player.name}</Link>
                 <span>
-                  {row.evidenceTeam.id} · {row.player.position} · {row.roleLabel}
+                  {row.evidenceTeam.name} · {row.player.position} ·{" "}
+                  {row.roleLabel}
                 </span>
               </div>
               <ShareEvidence evidence={row.evidence} />
               <Link className="text-action" href={row.player.href}>
-                Player evidence <span aria-hidden="true">→</span>
+                View player <span aria-hidden="true">→</span>
               </Link>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="identity-inline-empty">No supplied hierarchy rows for this role family.</p>
+        <p className="identity-inline-empty">
+          No players qualify for this metric.
+        </p>
       )}
     </section>
   );
@@ -172,10 +236,12 @@ export function HierarchySection({
 
 export function MovementList({
   movements,
-  title = "Biggest supplied movements",
+  title = "Recent role changes",
+  comparisonByRecord = {},
 }: {
   movements: readonly SuppliedMovementRecord[];
   title?: string;
+  comparisonByRecord?: Readonly<Record<string, string>>;
 }) {
   return (
     <section className="dossier-section movement-section">
@@ -196,24 +262,40 @@ export function MovementList({
               <article key={`${record.player.id}-${record.authoritativeOrder}`}>
                 <div className="movement-identity">
                   <Link href={record.player.href}>{record.player.name}</Link>
-                  <span>{record.player.position} · {record.roleFamily}</span>
+                  <span>
+                    {record.evidenceTeam.name} · {record.player.position} ·{" "}
+                    {record.roleLabel}
+                  </span>
+                  <small>
+                    {comparisonByRecord[movementRecordKey(record)] ??
+                      "Compared periods"}
+                  </small>
                 </div>
                 <div className="movement-transition">
                   <ShareEvidence evidence={record.movement.previous} compact />
                   <span aria-hidden="true">→</span>
                   <ShareEvidence evidence={record.movement.current} compact />
                 </div>
-                <div className={`movement-change movement-change-${record.direction}`}>
-                  <strong>{change > 0 ? "+" : ""}{change.toFixed(1)} pp</strong>
-                  <span>{record.direction === "gain" ? "Gain" : record.direction === "decline" ? "Decline" : "Stable"}</span>
+                <div
+                  className={`movement-change movement-change-${record.direction}`}
+                >
+                  <strong>{formatPoints(change)}</strong>
+                  <span>{movementLabel(change)}</span>
                 </div>
-                <p>{record.finding}</p>
+                {record.participationQuality !== "complete" ||
+                record.supportingContextStatus === "unavailable" ? (
+                  <p className="movement-caution">
+                    Caution · context or participation limits apply
+                  </p>
+                ) : null}
               </article>
             );
           })}
         </div>
       ) : (
-        <p className="identity-inline-empty">No supplied movement records for this identity.</p>
+        <p className="identity-inline-empty">
+          No recent role changes qualify.
+        </p>
       )}
     </section>
   );
@@ -221,7 +303,11 @@ export function MovementList({
 
 export function IdentityLoading({ title }: { title: string }) {
   return (
-    <div className="page-shell identity-page-shell" aria-busy="true" aria-label={`Loading ${title}`}>
+    <div
+      className="page-shell identity-page-shell"
+      aria-busy="true"
+      aria-label={`Loading ${title}`}
+    >
       <div className="fixture-notice skeleton skeleton-notice" />
       <div className="identity-loading-header skeleton" />
       <div className="identity-loading-grid">
