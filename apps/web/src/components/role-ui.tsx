@@ -7,6 +7,13 @@ import {
   TrendDownIcon,
   TrendUpIcon,
 } from "@/components/icons";
+import {
+  formatPercent,
+  formatPoints,
+  movementHeadline,
+  movementLabel,
+  rollingFourWeekComparison,
+} from "@/lib/consumer-presentation";
 import type { FeedFinding, RawShareEvidence, ReportFamily } from "@/lib/types";
 
 const reportLabels: Record<ReportFamily, string> = {
@@ -14,18 +21,6 @@ const reportLabels: Record<ReportFamily, string> = {
   target_hierarchy: "Target Hierarchy",
   role_movement: "Role Movement",
 };
-
-const findingLabels: Record<FeedFinding["kind"], string> = {
-  opportunity_gained: "Opportunity gained",
-  opportunity_lost: "Opportunity lost",
-  box_score_overstated_role: "Box score overstated role",
-  strong_opportunity_weak_production: "Strong opportunity, weak production",
-};
-
-const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
-
-const signedPoints = (value: number, compact = false) =>
-  `${value > 0 ? "+" : ""}${value.toFixed(1)}${compact ? " pp" : " percentage points"}`;
 
 function findingTone(finding: FeedFinding) {
   if (finding.kind === "opportunity_lost") {
@@ -36,7 +31,7 @@ function findingTone(finding: FeedFinding) {
     finding.kind === "box_score_overstated_role" ||
     finding.kind === "strong_opportunity_weak_production"
   ) {
-    return "concentration";
+    return "caution";
   }
 
   return "gain";
@@ -49,7 +44,7 @@ function TrendIcon({ finding }: { finding: FeedFinding }) {
     return <TrendDownIcon />;
   }
 
-  if (tone === "concentration") {
+  if (tone === "caution") {
     return <MinusIcon />;
   }
 
@@ -64,7 +59,7 @@ export function ShareEvidence({
 }: {
   evidence: RawShareEvidence;
   label: string;
-  tone?: "gain" | "decline" | "concentration" | "prior";
+  tone?: "gain" | "decline" | "caution" | "prior";
   compact?: boolean;
 }) {
   return (
@@ -73,7 +68,7 @@ export function ShareEvidence({
       data-share-evidence
     >
       <span className="evidence-label">{label}</span>
-      <strong className="evidence-percentage">{percent(evidence.share)}</strong>
+      <strong className="evidence-percentage">{formatPercent(evidence.share)}</strong>
       <span className="evidence-raw">
         {evidence.numerator} of {evidence.denominator} {evidence.opportunityLabel}
       </span>
@@ -99,14 +94,31 @@ export function LeadFinding({
   }
 
   const movement = finding.movement;
+  const tone =
+    movement.percentagePointChange > 0
+      ? "gain"
+      : movement.percentagePointChange < 0
+        ? "decline"
+        : "neutral";
+  const DirectionIcon =
+    tone === "gain"
+      ? TrendUpIcon
+      : tone === "decline"
+        ? TrendDownIcon
+        : MinusIcon;
+  const caution =
+    finding.kind === "box_score_overstated_role" ||
+    finding.kind === "strong_opportunity_weak_production" ||
+    finding.participationQuality !== "complete" ||
+    finding.supportingContextStatus === "unavailable";
 
   return (
     <article className="dashboard-panel lead-panel" aria-labelledby="lead-finding-heading">
       <div className="panel-heading">
-        <span className="panel-icon panel-icon-gain" aria-hidden="true">
-          <TrendUpIcon />
+        <span className={`panel-icon panel-icon-${tone}`} aria-hidden="true">
+          <DirectionIcon />
         </span>
-        <span className="panel-label">Lead finding</span>
+        <span className="panel-label">Weekly briefing</span>
         <span className="panel-context">
           Week {week} · {reportLabels[finding.reportFamily]}
         </span>
@@ -126,20 +138,31 @@ export function LeadFinding({
             </span>
           </div>
 
-          <h1 id="lead-finding-heading">{finding.headline}</h1>
+          <h1 id="lead-finding-heading">
+            {movementHeadline(
+              finding.player.name,
+              finding.roleLabel,
+              movement,
+            )}
+          </h1>
           <p className="lead-summary">
-            His documented opportunity share moved from{" "}
-            {percent(movement.previous.share)} to {percent(movement.current.share)}.
+            {rollingFourWeekComparison(week)}
           </p>
+          {caution ? (
+            <p className="lead-caution" role="note">
+              Caution: unusual game context or participation may affect how this
+              change should be read.
+            </p>
+          ) : null}
 
           <div className="lead-actions">
             <Link className="primary-action" href={finding.evidenceHref}>
-              Open supporting evidence
+              View evidence
               <ArrowRightIcon />
             </Link>
             <span className="lead-change">
-              <small>Weekly change</small>
-              <strong>{signedPoints(movement.percentagePointChange, true)}</strong>
+              <small>{movementLabel(movement.percentagePointChange)}</small>
+              <strong>{formatPoints(movement.percentagePointChange)}</strong>
             </span>
           </div>
 
@@ -148,7 +171,11 @@ export function LeadFinding({
             <span className="evidence-arrow" aria-hidden="true">
               <ArrowRightIcon />
             </span>
-            <ShareEvidence evidence={movement.current} label="Current" tone="gain" />
+            <ShareEvidence
+              evidence={movement.current}
+              label="Current"
+              tone={tone === "neutral" ? "prior" : tone}
+            />
           </div>
         </div>
 
@@ -176,6 +203,13 @@ export function LeadFinding({
 
 function CompactFindingRow({ finding }: { finding: FeedFinding }) {
   const tone = findingTone(finding);
+  const movementValue = finding.movement?.percentagePointChange;
+  const direction =
+    movementValue === undefined
+      ? "Caution"
+      : tone === "caution"
+        ? "Caution"
+        : movementLabel(movementValue);
 
   return (
     <article
@@ -189,7 +223,7 @@ function CompactFindingRow({ finding }: { finding: FeedFinding }) {
       <div className="compact-identity">
         <strong>{finding.player.name}</strong>
         <small>
-          {finding.evidenceTeam.id} · {finding.player.position} · {findingLabels[finding.kind]}
+          {finding.evidenceTeam.name} · {finding.player.position} · {direction}
         </small>
       </div>
 
@@ -221,11 +255,12 @@ function CompactFindingRow({ finding }: { finding: FeedFinding }) {
         <small>Movement</small>
         <strong>
           {finding.movement
-            ? signedPoints(finding.movement.percentagePointChange, true)
-            : "Supported"}
+            ? formatPoints(finding.movement.percentagePointChange)
+            : "Context note"}
         </strong>
-        <Link href={finding.evidenceHref} aria-label={`Open evidence for ${finding.player.name}`}>
-          Evidence
+        <span className="compact-direction-label">{direction}</span>
+        <Link href={finding.evidenceHref} aria-label={`View evidence for ${finding.player.name}`}>
+          View
           <ArrowUpRightIcon />
         </Link>
       </div>
@@ -247,7 +282,7 @@ export function RoleChangeFeed({
         <span className="panel-icon panel-icon-gain" aria-hidden="true">
           <TrendUpIcon />
         </span>
-        <h2 id="role-change-feed-heading">Role Movement Feed</h2>
+        <h2 id="role-change-feed-heading">Recent role changes</h2>
         <Link href="/reports/movement" className="panel-link">
           View all
         </Link>

@@ -4,6 +4,7 @@ import {
   ReportsIcon,
   TrendUpIcon,
 } from "@/components/icons";
+import { possessiveName } from "@/lib/consumer-presentation";
 import type { ReportsIndexBundle } from "@/lib/data-contract";
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -41,7 +42,7 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
             <span>Backfield Control</span>
             <strong>01</strong>
           </div>
-          <h2>{backfieldModule.question}</h2>
+          <h2>Who controls each team’s backfield opportunities?</h2>
           <div className="overview-player">
             <span className="overview-rank">1</span>
             <span>
@@ -56,7 +57,12 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
               </small>
             </span>
           </div>
-          <p>{backfieldModule.description}</p>
+          <p>
+            {backfield.player.name} controlled {backfield.current.numerator} of{" "}
+            {possessiveName(backfield.evidenceTeam.name)}{" "}
+            {backfield.current.denominator}{" "}
+            documented {backfield.current.opportunityLabel} in this view.
+          </p>
           <Link href={backfieldModule.href}>
             Open Backfield Control
             <ArrowRightIcon />
@@ -69,7 +75,7 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
             <span>Target Hierarchy</span>
             <strong>02</strong>
           </div>
-          <h2>{targetModule.question}</h2>
+          <h2>Who controls each team’s documented targets?</h2>
           <div className="overview-player">
             <span className="overview-rank">1</span>
             <span>
@@ -84,7 +90,12 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
               </small>
             </span>
           </div>
-          <p>{targetModule.description}</p>
+          <p>
+            {target.player.name} received {target.current.numerator} of{" "}
+            {possessiveName(target.evidenceTeam.name)}{" "}
+            {target.current.denominator} documented
+            targets in this view.
+          </p>
           <Link href={targetModule.href}>
             Open Target Hierarchy
             <ArrowRightIcon />
@@ -97,7 +108,7 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
             <span>Role Movement</span>
             <strong>03</strong>
           </div>
-          <h2>{movementModule.question}</h2>
+          <h2>Whose documented role changed the most?</h2>
           <div className="overview-movement">
             <span>
               <small>Previous</small>
@@ -121,6 +132,10 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
               <strong>{points(movement.movement.percentagePointChange)}</strong>
             </span>
           </div>
+          <p>
+            {movement.player.name} recorded the largest first displayed role
+            change in this view, with every percentage tied to its raw counts.
+          </p>
           <Link href={movementModule.href}>
             Open Role Movement
             <ArrowRightIcon />
@@ -128,27 +143,25 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
         </article>
       </div>
 
-      <section className="reports-authority" aria-labelledby="reports-authority-title">
+      <section className="reports-authority" aria-labelledby="reports-guide-title">
         <div>
-          <span>All-play authority</span>
-          <h2 id="reports-authority-title">Exact counts stay attached to every share.</h2>
+          <span>Start with the answer</span>
+          <h2 id="reports-guide-title">Each tool answers a different football question.</h2>
           <p>
-            The published bundle supplies both the player count and its matching
-            team denominator. DepthSnap formats those values without rebuilding
-            report membership or authority order.
+            Backfield Control shows rushing workload, Target Hierarchy shows
+            target ownership, and Role Movement shows recent changes.
           </p>
         </div>
         <div>
-          <span>Supporting context</span>
-          <h2>Typical-game evidence stays secondary.</h2>
+          <span>Then inspect the evidence</span>
+          <h2>Exact counts stay attached to every share.</h2>
           <p>
-            When the bundle supplies a typical-game window, it is labeled as
-            supporting context rather than replacing the authoritative all-play
-            result.
+            Open any result for normal-game context, participation cautions,
+            compared periods, and optional technical details.
           </p>
         </div>
         <nav aria-label="Report documentation">
-          <Link href="/methodology">Future Methodology</Link>
+          <Link href="/methodology">How this is calculated</Link>
           <Link href="/data-status">Data Status</Link>
         </nav>
       </section>

@@ -39,6 +39,7 @@ export type ReportViewOption = {
 export type ReportSort =
   | "authority"
   | "share"
+  | "share_asc"
   | "gainers"
   | "decliners"
   | "absolute_change"
@@ -171,6 +172,8 @@ export type ParsedReportQuery = {
   sort: ReportSort;
   team: string;
   position: "ALL" | PlayerPosition;
+  metric: "opportunities" | "carries";
+  direction: "gains" | "declines" | "all";
   page: number;
 };
 
@@ -179,6 +182,8 @@ export type ReportSearchParams = {
   sort?: string;
   team?: string;
   position?: string;
+  metric?: string;
+  direction?: string;
   page?: string;
   state?: string;
 };

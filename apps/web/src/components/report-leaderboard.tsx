@@ -61,7 +61,11 @@ export function ReportLeaderboard({
 }) {
   const [activeFamily, setActiveFamily] =
     useState<ReportFamily>("backfield_control");
-  const rows = data[activeFamily];
+  const rows = data[activeFamily].filter(
+    (row, index, source) =>
+      source.findIndex((candidate) => candidate.player.id === row.player.id) ===
+      index,
+  );
 
   return (
     <section
@@ -73,7 +77,7 @@ export function ReportLeaderboard({
         <span className="panel-icon panel-icon-gain" aria-hidden="true">
           <ReportsIcon />
         </span>
-        <h2 id="report-leaderboard-heading">Report Leaderboard</h2>
+        <h2 id="report-leaderboard-heading">Quick leaders</h2>
         <Link href={reportHrefs[activeFamily]} className="panel-link">
           Full report
         </Link>
@@ -111,11 +115,11 @@ export function ReportLeaderboard({
           <span>Player</span>
           <span>Team</span>
           <span>{activeFamily === "role_movement" ? "Movement" : "Share"}</span>
-          <span>Trend</span>
+          <span>Change</span>
         </div>
 
         <div className="leaderboard-rows" role="table" aria-label={`${tabs.find((tab) => tab.family === activeFamily)?.label} rankings`}>
-          {rows.map((row) => (
+          {rows.map((row, index) => (
             <Link
               className="leaderboard-row"
               data-testid="leaderboard-row"
@@ -124,7 +128,7 @@ export function ReportLeaderboard({
               role="row"
             >
               <span className="leaderboard-rank" role="cell">
-                {row.rank}
+                {index + 1}
               </span>
               <span className="leaderboard-player" role="cell">
                 <strong>{row.player.name}</strong>
@@ -148,7 +152,17 @@ export function ReportLeaderboard({
                   {row.evidence.opportunityLabel}
                 </small>
               </span>
-              <MovementIndicator value={row.movementPoints} />
+              {activeFamily === "role_movement" ? (
+                <MovementIndicator value={row.movementPoints} />
+              ) : (
+                <span
+                  className="leaderboard-trend leaderboard-trend-neutral"
+                  role="cell"
+                >
+                  <MinusIcon />
+                  Current share
+                </span>
+              )}
             </Link>
           ))}
         </div>

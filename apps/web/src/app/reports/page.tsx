@@ -28,10 +28,10 @@ export default async function ReportsPage({
         <span role="heading" aria-level={2}>
           Reports
         </span>
-        <h1>Follow the evidence</h1>
+        <h1>Three tools for understanding NFL roles</h1>
         <p>
-          Every share includes its player count and matching team total. Open a
-          report to inspect the supplied authority order and exact evidence.
+          See who controls backfields, who earns targets, and whose role changed.
+          Every percentage includes its player count and matching team total.
         </p>
         <div>
           <strong>
@@ -41,7 +41,7 @@ export default async function ReportsPage({
           <small>
             {data.dataMode === "fixture"
               ? "Synthetic design fixture"
-              : "Validated export bundle"}
+              : "Data verified"}
           </small>
         </div>
       </header>

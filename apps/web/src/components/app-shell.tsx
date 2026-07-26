@@ -13,14 +13,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const status = statusResult.ok ? statusResult.data : null;
   const freshnessLabel =
     status?.status === "published" && status.throughWeek
-      ? `${status.season} · Week ${status.throughWeek}`
+      ? `${status.season} · Through Week ${status.throughWeek}`
       : status?.status === "no_published_week"
         ? `${status.season} · No published week`
         : "Data unavailable";
   const modeLabel = status
     ? status.dataMode === "fixture"
-      ? "Design fixture"
-      : "Validated export"
+      ? "Interface preview"
+      : "Data verified"
     : "Contract check";
   return (
     <div className="app-shell">

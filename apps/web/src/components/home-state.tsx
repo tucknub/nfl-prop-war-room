@@ -27,10 +27,14 @@ export function HomeState({
       </div>
       <div className="state-body">
         <span className="state-status">
-          {unavailable ? "Bundle unavailable" : "Awaiting a completed week"}
+          {unavailable ? "Data unavailable" : "Awaiting a completed week"}
         </span>
         <h1 id="home-state-title">{data.stateTitle}</h1>
-        <p>{data.stateMessage}</p>
+        <p>
+          {unavailable
+            ? data.stateMessage
+            : "No completed week has passed every publication check. DepthSnap will update after a completed week is verified."}
+        </p>
         <div className="state-actions">
           <Link href="/data-status">
             View data status
@@ -39,7 +43,7 @@ export function HomeState({
           <Link href="/methodology">How publishing works</Link>
         </div>
         <p className="state-safety">
-          DepthSnap never substitutes estimated shares when authoritative data is absent.
+          DepthSnap never substitutes estimated shares when verified data is absent.
         </p>
       </div>
     </section>
