@@ -68,7 +68,7 @@ export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
       ) : null}
 
       <Link className="team-report-action" href={data.reportHref}>
-        Future team report
+        View team dossier
         <ArrowRightIcon />
       </Link>
     </section>

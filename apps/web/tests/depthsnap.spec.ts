@@ -126,7 +126,7 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
     teamSnapshot.getByText("Biggest documented movement", { exact: true }),
   ).toBeVisible();
   await expect(
-    teamSnapshot.getByRole("link", { name: "Future team report" }),
+    teamSnapshot.getByRole("link", { name: "View team dossier" }),
   ).toBeVisible();
 
   const leaderboard = page.getByTestId("report-leaderboard");

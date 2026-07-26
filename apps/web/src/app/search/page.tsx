@@ -25,7 +25,11 @@ export default async function SearchPage({
       <IdentityPageHeader
         eyebrow="Search"
         title="Find exact evidence"
-        description="Search only the synthetic team and player identity index, then open the supplied record directly."
+        description={
+          data.dataMode === "fixture"
+            ? "Search only the synthetic team and player identity index, then open the supplied record directly."
+            : "Search the validated team and player identity index, then open the supplied evidence record directly."
+        }
         dataNotice={data.dataNotice}
         dataMode={data.dataMode}
         meta={`${data.records.length} ${data.dataMode} identities`}

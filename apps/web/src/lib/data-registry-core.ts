@@ -141,7 +141,7 @@ function validateUnique<T>(
       "unresolved_reference",
       "Duplicate identity",
       `The selected bundle set contains a duplicate ${label}.`,
-      `A duplicate ${label} prevented this fixture from being published.`,
+      `A duplicate ${label} prevented this registry from being loaded.`,
     );
   }
 }
