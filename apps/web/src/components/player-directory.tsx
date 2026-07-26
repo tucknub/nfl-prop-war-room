@@ -36,7 +36,7 @@ export function PlayerDirectory({
     const normalized = query.trim().toLowerCase();
     return records
       .filter((record) => record.player.name.toLowerCase().includes(normalized))
-      .filter((record) => team === "ALL" || record.player.team === team)
+      .filter((record) => team === "ALL" || record.currentTeam.id === team)
       .filter((record) => position === "ALL" || record.player.position === position)
       .filter((record) => report === "ALL" || record.memberships.some((item) => item.family === report))
       .toSorted((left, right) => {
@@ -83,7 +83,7 @@ export function PlayerDirectory({
               <PlayerMonogram player={record.player} />
               <div className="player-directory-identity">
                 <Link href={record.player.href}>{record.player.name}</Link>
-                <span>{record.player.team} · {record.player.position}</span>
+                <span>{record.currentTeam.id} · {record.player.position}</span>
               </div>
               <div className="player-memberships">
                 {record.memberships.length ? record.memberships.map((item) => <span key={item.family}>{item.label}</span>) : <span>Supplied identity</span>}

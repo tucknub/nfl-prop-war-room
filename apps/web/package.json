@@ -11,6 +11,9 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "prepare:export-e2e": "tsx scripts/prepare-export-e2e.ts",
+    "test:e2e:export-active": "playwright test --config playwright.export-active.config.ts",
+    "test:e2e:export-historical": "playwright test --config playwright.export-historical.config.ts",
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {

@@ -46,7 +46,7 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
             <span className="overview-rank">1</span>
             <span>
               <strong>{backfield.player.name}</strong>
-              <small>{backfield.player.team} · {backfield.player.position}</small>
+              <small>{backfield.evidenceTeam.id} · {backfield.player.position}</small>
             </span>
             <span className="overview-metric">
               <strong>{percent(backfield.current.share)}</strong>
@@ -74,7 +74,7 @@ export function ReportsOverview({ data }: { data: ReportsIndexBundle }) {
             <span className="overview-rank">1</span>
             <span>
               <strong>{target.player.name}</strong>
-              <small>{target.player.team} · {target.player.position}</small>
+              <small>{target.evidenceTeam.id} · {target.player.position}</small>
             </span>
             <span className="overview-metric">
               <strong>{percent(target.current.share)}</strong>

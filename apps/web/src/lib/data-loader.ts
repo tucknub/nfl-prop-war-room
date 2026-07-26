@@ -54,6 +54,7 @@ async function registryForState(
   const mode = process.env.DEPTHSNAP_DATA_MODE;
   return loadCachedDepthSnapRegistry({
     mode,
+    dataRoot: process.env.DEPTHSNAP_DATA_ROOT,
     publicationVariant: publicationVariantFromState(state),
     allowFixtureDefault:
       mode === undefined && process.env.NODE_ENV === "development",

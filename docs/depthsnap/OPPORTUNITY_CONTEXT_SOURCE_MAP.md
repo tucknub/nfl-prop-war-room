@@ -97,7 +97,7 @@ the validated inputs supply them:
 - weekly roster team presence;
 - source version, generated timestamp, run identifier, and file hashes.
 
-That normalized layer should not be added to frozen V1 public JSON and should
+That normalized layer should not be added to V1 public JSON and should
 not be interpreted as a prediction surface.
 
 ## Known source gaps
@@ -117,3 +117,19 @@ Raw play-by-play, roster, schedule, and snap snapshots referenced by the
 completed-2025 source manifest are not committed as a public bridge input in
 this worktree. Ordinary CI must continue to use committed validated outputs and
 must not make live network calls.
+
+## Phase 4B preservation evidence
+
+The Phase 4B exporter keeps this source map out of public V1 JSON and writes a
+private, deterministic preservation inventory at:
+
+`outputs/role_research/depthsnap_bridge/opportunity_context_preservation_2025.json`
+
+That inventory hashes the exact committed source artifacts used to verify the
+available columns, explicitly retains the source-available-but-not-public
+dimensions `yardline_100`, `down`, `ydstogo`, and `offense_snaps`, and repeats
+the unavailable-authority list. Its `publicExposure` value is `false`.
+
+`tests/test_depthsnap_exporter.py` verifies both that this inventory is hashed
+and that no `opportunityContext` object appears in the public historical
+registry.

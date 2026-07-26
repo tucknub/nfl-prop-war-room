@@ -2,3 +2,12 @@ ROLE_CHANGE_VALIDATION_PROTOCOL.md text eol=lf
 LOCKED_DECISIONS.md text eol=lf
 config/*.yaml text eol=lf
 outputs/role_validation/**/frozen_role_change_fold*_candidate.yaml text eol=lf
+
+# DepthSnap exact-byte registries and their JSON source metadata
+apps/web/public/data/depthsnap/**/*.json text eol=lf
+outputs/role_research/role_research_status_2026.json text eol=lf
+outputs/role_research/build_manifest.json text eol=lf
+outputs/role_research/canonical_audit_2025.json text eol=lf
+outputs/role_research/validation_report.json text eol=lf
+outputs/role_research/depthsnap_bridge/*.json text eol=lf
+tests/fixtures/depthsnap_role_status_blocked_2026.json text eol=lf

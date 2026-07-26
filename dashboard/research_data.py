@@ -489,7 +489,20 @@ def league_window_summary(
     ).agg(prior_raw=(raw_col, "sum"))
     prior = prior.merge(prior_denominators, on=["team", "role_family"], how="left")
     prior["prior_share"] = prior["prior_raw"] / prior["prior_denom"].replace(0, np.nan)
-    summary = summary.merge(prior[["player_id", "team", "role_family", "prior_share"]], on=["player_id", "team", "role_family"], how="left")
+    summary = summary.merge(
+        prior[
+            [
+                "player_id",
+                "team",
+                "role_family",
+                "prior_raw",
+                "prior_denom",
+                "prior_share",
+            ]
+        ],
+        on=["player_id", "team", "role_family"],
+        how="left",
+    )
     summary["change"] = summary["share"] - summary["prior_share"]
     return summary.sort_values(["share", "raw_opportunities"], ascending=[False, False]).reset_index(drop=True)
 

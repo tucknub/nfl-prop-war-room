@@ -3,6 +3,7 @@ import type {
   RawShareEvidence,
   ReportFamily,
 } from "@/lib/types";
+import type { TeamIdentity } from "@/lib/identity-types";
 
 export type TeamSnapshotRole = "RB1" | "RB2" | "WR1" | "TE1";
 
@@ -19,7 +20,7 @@ export type TeamSnapshotFixture = {
   teamCode: string;
   week: number;
   rows: readonly TeamSnapshotRow[];
-  biggestMovement: {
+  biggestMovement?: {
     player: string;
     summary: string;
     percentagePointChange: number;
@@ -31,6 +32,7 @@ export type TeamSnapshotFixture = {
 export type LeaderboardRow = {
   rank: number;
   player: PlayerIdentity;
+  evidenceTeam?: TeamIdentity;
   evidence: RawShareEvidence;
   movementPoints: number;
   evidenceHref: string;

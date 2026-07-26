@@ -1,349 +1,290 @@
 # DepthSnap public export contract
 
-Status: **Frozen V1 bridge contract**
+Status: **Pre-production V1, amended in place for Phase 4B**
 
-This document defines the JSON boundary that a future Python exporter must
-produce and the public Next.js application must consume. It does not implement
-the exporter or change the Python methodology. The machine-enforced web
-authority is `apps/web/src/lib/data-contract.ts`.
+The normative decisions in PR #9, “Phase 4B normative decisions — resume
+authorization,” resolve the authority gaps recorded in
+`PHASE4B_AUTHORITY_GAP_REPORT.md`. Because no V1 export has been deployed, the
+contract remains `*.v1` and is amended in place. Compatibility obligations
+begin with the first production publication.
+
+The machine-enforced authority is
+`apps/web/src/lib/data-contract.ts`. The Python implementation is
+`src/export/depthsnap_exporter.py`.
 
 ## Compatibility policy
 
-- V1 schema identifiers are exact strings. Unknown identifiers fail closed.
-- `dataMode` is separate from `schemaVersion`; schema names never include
-  `fixture` or `export`.
-- Adding a required field, changing a field meaning, changing a closed enum, or
-  changing numeric semantics requires a new schema version.
-- V1 readers reject unknown fields because public objects are strict.
-- Future readers do not automatically reinterpret older or newer versions.
-- Fixture and export registries use the same bundle schemas.
+- V1 schema identifiers are exact; unknown identifiers fail closed.
+- Public objects are strict and reject unknown fields.
+- `dataMode` is separate from `schemaVersion`.
+- Fixture and export registries use the same schemas.
+- After the first production publication, a required-field change, field
+  meaning change, closed-enum change, or numeric-semantics change requires a
+  new schema version.
 
-## Registry selection
+## Registry selection and isolation
 
 `DEPTHSNAP_DATA_MODE` must be `fixture` or `export`.
 
 - Production with an unset or unsupported value returns
-  `unsupported_data_mode` before reading a manifest.
-- `next dev` may opt into the fixture default through the explicitly scoped
-  development loader path.
-- Browser tests set `DEPTHSNAP_DATA_MODE=fixture` explicitly.
-- Export mode reads only `public/data/depthsnap/export`.
-- Export mode never falls back to a fixture directory.
+  `unsupported_data_mode`.
+- Development may opt into the fixture default only through its explicitly
+  scoped loader path.
+- Export mode reads only `<dataRoot>/export`.
+- `DEPTHSNAP_DATA_ROOT` may select an independent export root for verification.
+- Export mode never falls back to fixtures.
+- A validated registry is cached for the process lifetime. Replacing an active
+  registry requires a new process/build before readers see it.
 
-## Deterministic serialization and hashes
+The committed roots are:
+
+- active: `apps/web/public/data/depthsnap/export`;
+- temporary parity only:
+  `apps/web/public/data/depthsnap/export-historical-2025`.
+
+The historical root is never selected by the application implicitly.
+
+## Deterministic serialization, timestamps, and source versions
 
 Every bundle and manifest uses:
 
-1. camelCase public field names;
-2. object keys sorted lexicographically at every depth;
+1. camelCase public fields;
+2. keys sorted lexicographically at every depth;
 3. compact JSON separators;
 4. UTF-8 with non-ASCII characters preserved;
-5. exactly one final newline.
+5. exactly one trailing LF.
 
-The Python equivalent is `json.dumps(value, sort_keys=True,
-separators=(",", ":"), ensure_ascii=False) + "\n"`.
+Python equivalent:
 
-Each manifest entry’s `sha256` is the lowercase hexadecimal SHA-256 of the
-exact serialized bundle bytes. The manifest has no self-hash.
+```python
+json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+```
 
-## Common bundle fields
+Each entry SHA-256 covers the exact serialized bundle bytes. The manifest has
+no self-hash.
 
-Every V1 bundle contains:
+- `generatedAt` is the actual exporter invocation time, or an explicit
+  RFC 3339 timestamp supplied for a reproducibility test.
+- `sourceVersion` is `sha256:<digest>` over the exact source-artifact inventory
+  and hashes used by that registry. It is not a season label or pipeline name.
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `schemaVersion` | closed schema string | Bundle family/version |
-| `dataMode` | `fixture \| export` | Selected source mode |
-| `dataNotice` | non-empty string | Supplied source/public notice |
-| `status` | `published \| no_published_week \| unavailable` | Supplied publication state |
-| `season` | integer, 2000–2200 | Supplied season |
-| `throughWeek` | integer 1–18 or `null` | Supplied published-through week |
-| `generatedAt` | RFC 3339 timestamp with offset | Bundle generation time |
-| `sourceVersion` | non-empty string | Supplied source version |
+Repeated builds with the same sources and explicit `generatedAt` must be
+byte-for-byte identical.
 
-The UI renders `dataNotice` as the visible fixture banner only when
-`dataMode === "fixture"`. Export mode does not display a fixture banner.
+Repository attributes pin registry JSON and exact JSON source-metadata
+artifacts to LF so Git checkout settings cannot alter hashed bytes.
 
-Non-published state bundles retain metadata and state copy but do not fabricate
-evidence.
+## Common fields and publication states
 
-## Shared records
+Every V1 bundle includes:
 
-### `RawShareEvidence`
+| Field | Meaning |
+|---|---|
+| `schemaVersion` | Exact bundle schema |
+| `dataMode` | `fixture` or `export` |
+| `dataNotice` | Supplied public notice |
+| `status` | `published`, `no_published_week`, or `unavailable` |
+| `season` | Supplied season |
+| `throughWeek` | Week 1–18 or `null` |
+| `generatedAt` | RFC 3339 generation timestamp |
+| `sourceVersion` | Content-addressed exact sources |
 
-- `numerator`: non-negative integer
-- `denominator`: positive integer
-- `share`: decimal ratio from 0 through 1
-- `opportunityLabel`: `opportunities`, `carries`, or `targets`
+Publication mapping:
 
-`numerator` must not exceed `denominator`. `share` must agree with
+| Python state | Public registry behavior |
+|---|---|
+| Independently validated `PUBLISHED` | Populated `published` registry |
+| `PRESEASON` or `WAITING_FOR_COMPLETED_WEEK` | Empty `no_published_week` registry |
+| `BLOCKED`, with supplied state metadata and no prior valid registry | Empty `unavailable` registry |
+| `BLOCKED`, with a prior valid registry | Retain prior registry; do not promote |
+| `VALIDATED_NOT_PUBLISHED` | Do not promote |
+| Contract, identity, source, or validation failure | Fail closed; no state downgrade |
+
+Every publication state emits the nine singleton families. Only a populated
+publication also emits one bundle per team and player. Non-published bundles
+contain no team, player, report, movement, hierarchy, or weekly evidence.
+
+The active committed registry truthfully represents 2026
+`no_published_week`. The completed-2025 registry is temporary parity evidence,
+not the active season and not a deployable current publication.
+
+## Shared evidence and identity records
+
+### Raw evidence
+
+`RawShareEvidence` contains:
+
+- non-negative integer `numerator`;
+- positive integer `denominator`;
+- `share` from 0 through 1;
+- `opportunityLabel`: `opportunities`, `carries`, or `targets`.
+
+`numerator <= denominator`, and `share` must match
 `numerator / denominator` within `0.0005`.
 
-### `MovementEvidence`
-
-- `previous`: `RawShareEvidence`
-- `current`: `RawShareEvidence`
-- `percentagePointChange`: number
-
-The supplied percentage-point value must agree with
+`MovementEvidence` contains `previous`, `current`, and
+`percentagePointChange`. The change must match
 `(current.share - previous.share) * 100` within `0.05`.
 
-### `TeamIdentity`
+### Team-neutral players and evidence teams
 
-- `id`
-- `abbreviation`
-- `name`
-- optional `conference`
-- optional `division`
-- `monogram`
-- `accent`: `teal`, `amber`, or `slate`
-- `href`
-- `searchAliases`
+`PlayerIdentity` contains only:
 
-### `PlayerIdentity`
+- `id`;
+- `name`;
+- `position`: `RB`, `WR`, or `TE`;
+- `href`;
+- optional `jerseyNumber`;
+- `searchAliases`.
 
-- `id`
-- `name`
-- `team`
-- `teamId`
-- `position`: `RB`, `WR`, or `TE`
-- `href`
-- optional `jerseyNumber`
-- `searchAliases`
+It never embeds team, team ID, or current-team state.
 
-### Closed evidence values
+- Dossiers and directory records carry `currentTeam` separately.
+- Every report, finding, hierarchy, movement, period-summary, leaderboard, and
+  weekly evidence row carries `evidenceTeam`.
+- `currentEvidence` and `currentEvidenceTeam` are supplied together.
+- A player may have historical evidence teams that differ from `currentTeam`.
+  The frontend must preserve those stints rather than rewriting them.
 
-- Data quality: `complete`, `reviewed_partial_game`,
-  `unavailable_supporting_context`
-- Report family: `backfield_control`, `target_hierarchy`, `role_movement`
-- Movement direction: `gain`, `decline`, `stable`
+`TeamIdentity` contains stable ID, abbreviation, name, optional conference and
+division, monogram, accent, href, and aliases. The canonical 32-team crosswalk
+includes ATL.
 
-## Manifest: `depthsnap.manifest.v1`
+### Closed role and quality vocabulary
 
-The manifest contains exactly:
+Role family to display label is exact:
 
-| Field | Type |
-| --- | --- |
-| `schemaVersion` | literal `depthsnap.manifest.v1` |
-| `productId` | literal `depthsnap` |
-| `dataMode` | `fixture \| export` |
-| `publicationStatus` | `published \| no_published_week \| unavailable` |
-| `validationResult` | `pass \| fail \| not_applicable` |
-| `season` | integer, 2000–2200 |
-| `throughWeek` | integer 1–18 or `null` |
-| `generatedAt` | RFC 3339 timestamp with offset |
-| `sourceVersion` | non-empty string |
-| `formulaVersion` | optional non-empty string |
-| `pipelineRunId` | optional non-empty string |
-| `entries` | non-empty array of manifest entries |
+| `roleFamily` | `roleLabel` |
+|---|---|
+| `rb_carry_share` | `RB carry share` |
+| `rb_opportunity_share` | `RB opportunity share` |
+| `wr_target_share` | `WR target share` |
+| `te_target_share` | `TE target share` |
 
-Each manifest entry contains exactly:
+`classificationLabel` and `movementLabel` are not part of V1.
 
-- `family`
-- optional stable `id` for `team` and `player`
-- canonical relative POSIX `path`
-- `schemaVersion`
-- lowercase 64-character `sha256`
-- `required`
-- non-negative `recordCount`
+Participation and supporting context are separate:
 
-All V1 entries are required. Paths cannot be absolute, contain backslashes, or
-contain `..`.
+- `participationQuality`:
+  `complete`, `suspected_statistical`, `suspected_corroborated`,
+  `reviewed_partial_game`;
+- `supportingContextStatus`: `available`, `unavailable`.
 
-The loader verifies that manifest publication, season, week, generation,
-source, formula, and pipeline-run metadata agree with the status bundle and
-that common bundle metadata agrees across the registry.
+The bridge must preserve suspected rows and their supplied label. It must not
+map suspicion to `complete` or `reviewed_partial_game`.
+
+Home finding kinds are exactly:
+
+- `opportunity_gained`;
+- `opportunity_lost`;
+- `box_score_overstated_role`;
+- `strong_opportunity_weak_production`.
 
 ## Bundle families
 
-### Home: `depthsnap.home.v1`
+The singleton families are:
 
-Common fields plus:
+- `depthsnap.home.v1`;
+- `depthsnap.reports.index.v1`;
+- `depthsnap.report.backfield.v1`;
+- `depthsnap.report.targets.v1`;
+- `depthsnap.report.movement.v1`;
+- `depthsnap.teams.index.v1`;
+- `depthsnap.players.index.v1`;
+- `depthsnap.search.v1`;
+- `depthsnap.status.v1`.
 
-- `reportLinks`
-- when published: `leadFinding`, `findings`, `teamSnapshot`,
-  `reportLeaderboard`
-- when not published: `stateTitle`, `stateMessage`
+Populated registries additionally contain:
 
-Feed findings contain `id`, `kind`, `reportFamily`, `roleFamily`, `player`,
-`headline`, `current`, optional `movement`, and `evidenceHref`.
+- `depthsnap.team.v1` for every team;
+- `depthsnap.player.v1` for every player.
 
-### Reports index: `depthsnap.reports.index.v1`
+Report views are `last4`, `last8`, `last2`, and `season`. Membership,
+authoritative order, raw current/prior values, supporting context, movement,
+and finding copy come directly from the existing Python report builders.
+`classificationLabel` and `movementLabel` are absent. `suppliedSummary` and
+`suppliedRoleDescription` are optional.
 
-Common fields plus `modules`. A module contains `kind`, `family`, `title`,
-`question`, `description`, `href`, and its supplied current or movement row.
-Non-published indexes have an empty `modules` array.
+The Home bundle uses the Python weekly-report order. Team Snapshot and the
+three report leaderboards are deterministic compositions of that supplied
+evidence, as authorized in PR #9. The frontend does not reclassify or rerank
+them.
 
-### Current reports
+## Manifest
 
-Schemas:
+`depthsnap.manifest.v1` contains:
 
-- `depthsnap.report.backfield.v1`
-- `depthsnap.report.targets.v1`
+- product ID `depthsnap`;
+- data mode and publication state;
+- validation result;
+- season and through week;
+- generation and source versions;
+- optional formula version and pipeline run ID;
+- a non-empty entry array.
 
-Common fields plus:
+Each required entry has family, optional stable ID for team/player, canonical
+relative POSIX path, exact schema, lowercase SHA-256, and record count.
 
-- `reportFamily`
-- `title`
-- `question`
-- `description`
-- `availableViews`
-- `defaultView`
-- `defaultSort`
-- `availableSorts`
-- `teamOptions`
-- `resultCount`
-- `views`
-- `stateTitle` and `stateMessage` when not published
+The loader verifies:
 
-Each published view has `viewId`, `summary`, and `rows`. A current row contains
-`id`, `authoritativeRank`, `player`, `roleFamily`, `current`, optional
-`supportingContext`, `classificationLabel`, `teamHref`, `playerHref`,
-`evidenceHref`, and `dataQuality`.
+- safe paths and exact family paths;
+- schema versions;
+- bundle hashes and record counts;
+- publication metadata agreement;
+- team/player uniqueness and references;
+- team-neutral player identity;
+- `currentTeam` and `evidenceTeam` references;
+- cross-route evidence parity.
 
-### Role Movement: `depthsnap.report.movement.v1`
+Closed failure categories are `bundle_missing`, `invalid_json`,
+`invalid_bundle`, `incompatible_schema`, `manifest_mismatch`,
+`hash_mismatch`, `unresolved_reference`, and `unsupported_data_mode`.
 
-Uses the report metadata fields above. Each published movement row contains
-`id`, `authoritativeRank`, `player`, `roleFamily`, `movement`, `direction`,
-`movementLabel`, `finding`, optional `supportingContext`, `teamHref`,
-`playerHref`, `evidenceHref`, and `dataQuality`.
+## Python exporter and promotion requirements
 
-### Teams index: `depthsnap.teams.index.v1`
+The exporter must:
 
-Common fields plus `teams`. Each directory record contains `team`, optional
-`topBackfield`, optional `topWr`, optional `topTe`, and optional
-`largestMovement`. Non-published indexes contain no evidence rows.
+- read the existing validated Python sources without changing methodology;
+- preserve Python membership, ordering, formulas, findings, and raw values;
+- expose prior numerator, denominator, and share already computed by the
+  existing summary path;
+- build all three publication states;
+- resolve the full team crosswalk and stable players;
+- validate schemas, numeric relationships, refs, hashes, counts, and metadata
+  before promotion;
+- stage in a sibling directory;
+- atomically rename active to rollback and staging to active;
+- restore active automatically if promotion fails;
+- support explicit rollback and guarded staging/rollback cleanup;
+- never write a partial registry into the active directory.
 
-### Team dossier: `depthsnap.team.v1`
+The active 2026 build uses atomic staging/promotion. Historical parity writes
+to its explicitly named, isolated directory and is not promoted active.
 
-Common fields plus:
+## Opportunity Context preservation
 
-- `team`
-- `suppliedSummary`
-- `backfieldHierarchy`
-- `wrTargetHierarchy`
-- `teTargetHierarchy`
-- `movements`
-- `linkedPlayers`
-- `availableViews`
-- `dataQuality`
+Phase 4B does not expose new Opportunity Context fields in V1. It preserves the
+source dimensions and availability classifications documented in
+`OPPORTUNITY_CONTEXT_SOURCE_MAP.md`. The private, content-addressed inventory
+is:
 
-Hierarchy rows carry supplied `authoritativeOrder`; the frontend does not
-reclassify them.
+`outputs/role_research/depthsnap_bridge/opportunity_context_preservation_2025.json`
 
-### Players index: `depthsnap.players.index.v1`
+Source-available fields that remain private include `yardline_100`, `down`,
+`ydstogo`, and `offense_snaps`. Absence from V1 public JSON does not mean those
+source dimensions were discarded.
 
-Common fields plus `players` and `teamOptions`. Each directory record contains
-`player`, optional `currentEvidence`, `suppliedRoleDescription`,
-`memberships`, and optional `latestMovement`.
+## Verification authority
 
-### Player dossier: `depthsnap.player.v1`
+Required verification includes:
 
-Common fields plus:
-
-- `player`
-- `currentTeam`
-- `suppliedRoleDescription`
-- optional `currentEvidence`
-- optional `supportingContext`
-- optional `latestMovement`
-- `reportMemberships`
-- `weeklyEvidence`
-- `periodSummaries`
-- `movementHistory`
-- `teamHierarchyContext`
-- `dataQuality`
-
-A weekly point contains `week`, `periodLabel`, optional `evidence`,
-`opportunityLabel`, `dataQuality`, and optional `partialGame`.
-
-### Search: `depthsnap.search.v1`
-
-Common fields plus `records`. Each record contains `type`, `id`, `displayName`,
-`secondaryLabel`, `summary`, `href`, and `searchAliases`.
-
-### Status: `depthsnap.status.v1`
-
-Common fields plus:
-
-- optional `formulaVersion`
-- optional `pipelineRunId`
-- `manifestSchemaVersion`
-- `bundleCount`
-- `validationSummary`
-- `checks`
-- `limitations`
-
-Each status check contains:
-
-| Field | Type |
-| --- | --- |
-| `id` | stable non-empty string |
-| `label` | non-empty string |
-| `status` | `pass \| fail \| attention \| unavailable \| reviewed \| not_applicable` |
-| `detail` | non-empty string |
-| `required` | boolean |
-| `blocking` | boolean |
-| `numerator` | optional non-negative integer |
-| `denominator` | optional non-negative integer |
-| `percentage` | optional number from 0 through 100 |
-
-Coverage numerator and denominator must be supplied together. Numerator cannot
-exceed denominator. When a positive denominator and percentage are both
-supplied, the percentage must agree within `0.05` percentage points.
-
-Checks are explanatory operational evidence. The frontend displays them and
-does not calculate a publication verdict.
-
-## Python exporter responsibilities
-
-The future Python exporter must:
-
-- remain authoritative for identity, membership, order, classifications,
-  findings, evidence, publication, and operational checks;
-- map internal snake_case data to this public camelCase contract;
-- emit every required family in every publication state;
-- retain exact supplied numerators, denominators, shares, movements, and
-  quality values;
-- resolve every stable team/player reference;
-- serialize deterministically and populate the manifest hashes/counts;
-- supply manifest publication/version metadata;
-- write only to the export registry;
-- complete its own validation before making an export registry available.
-
-## Frontend loader responsibilities
-
-The frontend loader must:
-
-- require an explicit production mode;
-- select only the matching registry directory;
-- validate the manifest and every required entry;
-- verify paths, versions, hashes, counts, identities, cross-route evidence, and
-  registry-wide metadata agreement;
-- return typed data or a public-safe typed failure;
-- display supplied publication/check results without deriving a new verdict;
-- never substitute fixture data in export mode.
-
-The application caches one fully validated immutable registry promise per
-process, mode, publication variant, and data root. The cold load reads the
-manifest plus every required bundle and performs all fail-closed checks. Warm
-requests reuse that validated registry and perform no additional file reads.
-Changing a deployed registry requires a new process/build rather than an
-in-place mutation.
-
-## Failure behavior
-
-Closed loader failure categories are:
-
-- `bundle_missing`
-- `invalid_json`
-- `invalid_bundle`
-- `incompatible_schema`
-- `manifest_mismatch`
-- `hash_mismatch`
-- `unresolved_reference`
-- `unsupported_data_mode`
-
-Failures expose a safe title, message, and public detail. They do not expose
-absolute paths, stack traces, credentials, tokens, or private source URLs.
-They are distinct from valid `unavailable` publication bundles.
+- Python exporter unit and failure-injection tests;
+- Python validation of active and historical registries;
+- exact source-to-export parity for all report families and all four views;
+- Home membership/order and composition parity;
+- deterministic byte/hash checks;
+- frontend Zod/registry validation;
+- fixture/export isolation;
+- production Next.js build;
+- fixture, active-export, and historical-export browser suites;
+- CI review artifacts and screenshots.

@@ -1,5 +1,4 @@
 import type {
-  HomepageFixture,
   NoPublishedWeekHomepageFixture,
   ReportLink,
   UnavailableHomepageFixture,
@@ -237,7 +236,7 @@ export const publishedHomeFixture = {
       evidenceHref: "/players/player-owen-black",
     },
   ],
-} as const satisfies HomepageFixture;
+} as const;
 
 export const noPublishedWeekFixture = {
   ...fixtureMetadata,
@@ -257,7 +256,7 @@ export const unavailableHomeFixture = {
 
 export function getHomeFixture(
   requestedState?: string,
-): HomepageFixture {
+) {
   if (requestedState === "empty") {
     return noPublishedWeekFixture;
   }

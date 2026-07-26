@@ -10,6 +10,23 @@ projected_team_pass_attempts x projected_player_target_share x projected_catch_r
 
 Only Receptions are implemented in this version. TD, rushing yards, receiving yards, QB rushing, and passing yards are intentionally out of scope until Receptions are proven.
 
+## DepthSnap Python Export Bridge
+
+The pre-production Next.js application reads deterministic Python-built
+registries. The active committed registry is the truthful 2026
+`no_published_week` state; the completed-2025 populated registry is temporary
+historical parity evidence only.
+
+```powershell
+python scripts/export_depthsnap.py build-active --promote
+python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export
+python -m pytest tests/test_depthsnap_exporter.py -q
+```
+
+See `docs/depthsnap/PHASE4B_EXPORTER_AND_PARITY_BRIDGE.md` for exact commands,
+bundle counts, parity results, atomic promotion/rollback behavior, frontend
+export-mode verification, and known limitations.
+
 ## Install
 
 ```powershell

@@ -1,4 +1,7 @@
 import type {
+  TeamIdentity,
+} from "@/lib/identity-types";
+import type {
   MovementEvidence,
   PlayerIdentity,
   PlayerPosition,
@@ -11,10 +14,13 @@ export type ReportDataStatus =
   | "no_published_week"
   | "unavailable";
 
-export type DataQuality =
+export type ParticipationQuality =
   | "complete"
-  | "reviewed_partial_game"
-  | "unavailable_supporting_context";
+  | "suspected_statistical"
+  | "suspected_corroborated"
+  | "reviewed_partial_game";
+
+export type SupportingContextStatus = "available" | "unavailable";
 
 export type ReportPeriod = {
   label: string;
@@ -85,14 +91,16 @@ export type CurrentEvidenceRow = {
   id: string;
   authoritativeRank: number;
   player: PlayerIdentity;
+  evidenceTeam: TeamIdentity;
   roleFamily: string;
+  roleLabel: string;
   current: RawShareEvidence;
   supportingContext?: SupportingContext;
-  classificationLabel: string;
   teamHref: string;
   playerHref: string;
   evidenceHref: string;
-  dataQuality: DataQuality;
+  participationQuality: ParticipationQuality;
+  supportingContextStatus: SupportingContextStatus;
 };
 
 export type MovementDirection = "gain" | "decline" | "stable";
@@ -101,16 +109,18 @@ export type MovementEvidenceRow = {
   id: string;
   authoritativeRank: number;
   player: PlayerIdentity;
+  evidenceTeam: TeamIdentity;
   roleFamily: string;
+  roleLabel: string;
   movement: MovementEvidence;
   direction: MovementDirection;
-  movementLabel: string;
   finding: string;
   supportingContext?: SupportingContext;
   teamHref: string;
   playerHref: string;
   evidenceHref: string;
-  dataQuality: DataQuality;
+  participationQuality: ParticipationQuality;
+  supportingContextStatus: SupportingContextStatus;
 };
 
 export type CurrentReportView = {

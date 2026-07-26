@@ -14,10 +14,15 @@ export const PublicationValidationResultSchema = z.enum([
   "not_applicable",
 ]);
 export const ProductIdSchema = z.literal("depthsnap");
-export const DataQualitySchema = z.enum([
+export const ParticipationQualitySchema = z.enum([
   "complete",
+  "suspected_statistical",
+  "suspected_corroborated",
   "reviewed_partial_game",
-  "unavailable_supporting_context",
+]);
+export const SupportingContextStatusSchema = z.enum([
+  "available",
+  "unavailable",
 ]);
 export const ReportFamilySchema = z.enum([
   "backfield_control",
@@ -25,6 +30,12 @@ export const ReportFamilySchema = z.enum([
   "role_movement",
 ]);
 export const PlayerPositionSchema = z.enum(["RB", "WR", "TE"]);
+export const RoleFamilySchema = z.enum([
+  "rb_carry_share",
+  "rb_opportunity_share",
+  "wr_target_share",
+  "te_target_share",
+]);
 export const OpportunityLabelSchema = z.enum([
   "opportunities",
   "carries",
@@ -99,14 +110,34 @@ export const PlayerIdentitySchema = z
   .object({
     id: StableIdSchema,
     name: z.string().min(1),
-    team: z.string().min(1),
-    teamId: StableIdSchema,
     position: PlayerPositionSchema,
     href: HrefSchema,
     jerseyNumber: z.number().int().positive().max(99).optional(),
     searchAliases: z.array(z.string().min(1)),
   })
   .strict();
+
+export const ROLE_LABELS = {
+  rb_carry_share: "RB carry share",
+  rb_opportunity_share: "RB opportunity share",
+  wr_target_share: "WR target share",
+  te_target_share: "TE target share",
+} as const;
+
+const RoleLabelSchema = z.string().min(1);
+
+function validateRoleLabel(
+  value: { roleFamily: z.infer<typeof RoleFamilySchema>; roleLabel: string },
+  context: z.RefinementCtx,
+) {
+  if (value.roleLabel !== ROLE_LABELS[value.roleFamily]) {
+    context.addIssue({
+      code: "custom",
+      path: ["roleLabel"],
+      message: "roleLabel must be the closed display mapping for roleFamily",
+    });
+  }
+}
 
 export const ReportPeriodSchema = z
   .object({
@@ -166,34 +197,40 @@ export const CurrentEvidenceRowSchema = z
     id: StableIdSchema,
     authoritativeRank: z.number().int().positive(),
     player: PlayerIdentitySchema,
-    roleFamily: z.string().min(1),
+    evidenceTeam: TeamIdentitySchema,
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     current: RawShareEvidenceSchema,
     supportingContext: SupportingContextSchema.optional(),
-    classificationLabel: z.string().min(1),
     teamHref: HrefSchema,
     playerHref: HrefSchema,
     evidenceHref: HrefSchema,
-    dataQuality: DataQualitySchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 export const MovementEvidenceRowSchema = z
   .object({
     id: StableIdSchema,
     authoritativeRank: z.number().int().positive(),
     player: PlayerIdentitySchema,
-    roleFamily: z.string().min(1),
+    evidenceTeam: TeamIdentitySchema,
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     movement: MovementEvidenceSchema,
     direction: MovementDirectionSchema,
-    movementLabel: z.string().min(1),
     finding: z.string().min(1),
     supportingContext: SupportingContextSchema.optional(),
     teamHref: HrefSchema,
     playerHref: HrefSchema,
     evidenceHref: HrefSchema,
-    dataQuality: DataQualitySchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 export const ReportLinkSchema = z
   .object({
@@ -208,21 +245,25 @@ export const FeedFindingSchema = z
   .object({
     id: StableIdSchema,
     kind: z.enum([
-      "backfield_increase",
-      "target_share_increase",
-      "role_decline",
-      "concentrated_role",
-      "committee_formation",
+      "opportunity_gained",
+      "opportunity_lost",
+      "box_score_overstated_role",
+      "strong_opportunity_weak_production",
     ]),
     reportFamily: ReportFamilySchema,
-    roleFamily: z.string().min(1),
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     player: PlayerIdentitySchema,
+    evidenceTeam: TeamIdentitySchema,
     headline: z.string().min(1),
     current: RawShareEvidenceSchema,
     movement: MovementEvidenceSchema.optional(),
     evidenceHref: HrefSchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 export const TeamSnapshotSchema = z
   .object({
@@ -247,7 +288,8 @@ export const TeamSnapshotSchema = z
         percentagePointChange: z.number(),
         evidenceHref: HrefSchema,
       })
-      .strict(),
+      .strict()
+      .optional(),
     reportHref: HrefSchema,
   })
   .strict();
@@ -256,6 +298,7 @@ export const LeaderboardRowSchema = z
   .object({
     rank: z.number().int().positive(),
     player: PlayerIdentitySchema,
+    evidenceTeam: TeamIdentitySchema,
     evidence: RawShareEvidenceSchema,
     movementPoints: z.number(),
     evidenceHref: HrefSchema,
@@ -484,26 +527,33 @@ export const HierarchyEvidenceRowSchema = z
   .object({
     authoritativeOrder: z.number().int().positive(),
     player: PlayerIdentitySchema,
-    roleFamily: z.string().min(1),
+    evidenceTeam: TeamIdentitySchema,
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     evidence: RawShareEvidenceSchema,
-    classificationLabel: z.string().min(1),
-    dataQuality: DataQualitySchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 export const SuppliedMovementRecordSchema = z
   .object({
     authoritativeOrder: z.number().int().positive(),
     player: PlayerIdentitySchema,
+    evidenceTeam: TeamIdentitySchema,
     reportFamily: ReportFamilySchema,
-    roleFamily: z.string().min(1),
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     movement: MovementEvidenceSchema,
     direction: MovementDirectionSchema,
     finding: z.string().min(1),
     reportHref: HrefSchema,
-    dataQuality: DataQualitySchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 export const ReportMembershipSchema = z
   .object({
@@ -527,23 +577,54 @@ export const TeamDirectoryRecordSchema = z
 export const PlayerDirectoryRecordSchema = z
   .object({
     player: PlayerIdentitySchema,
+    currentTeam: TeamIdentitySchema,
     currentEvidence: RawShareEvidenceSchema.optional(),
-    suppliedRoleDescription: z.string().min(1),
+    currentEvidenceTeam: TeamIdentitySchema.optional(),
+    roleFamily: RoleFamilySchema.optional(),
+    roleLabel: RoleLabelSchema.optional(),
+    suppliedRoleDescription: z.string().min(1).optional(),
     memberships: z.array(ReportMembershipSchema),
     latestMovement: SuppliedMovementRecordSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      (value.currentEvidence === undefined) !==
+      (value.currentEvidenceTeam === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["currentEvidenceTeam"],
+        message: "current evidence and its evidence team must be supplied together",
+      });
+    }
+    if (
+      value.roleFamily !== undefined &&
+      value.roleLabel !== ROLE_LABELS[value.roleFamily]
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["roleLabel"],
+        message: "roleLabel must be the closed display mapping for roleFamily",
+      });
+    }
+  });
 
 export const WeeklyEvidencePointSchema = z
   .object({
     week: z.number().int().min(1).max(18),
     periodLabel: z.string().min(1),
+    evidenceTeam: TeamIdentitySchema,
+    roleFamily: RoleFamilySchema,
+    roleLabel: RoleLabelSchema,
     evidence: RawShareEvidenceSchema.optional(),
     opportunityLabel: OpportunityLabelSchema,
-    dataQuality: DataQualitySchema,
+    participationQuality: ParticipationQualitySchema,
+    supportingContextStatus: SupportingContextStatusSchema,
     partialGame: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(validateRoleLabel);
 
 const IdentityMetadataShape = {
   ...BundleBaseShape,
@@ -587,14 +668,13 @@ export const TeamBundleSchema = z
     ...IdentityMetadataShape,
     schemaVersion: z.literal("depthsnap.team.v1"),
     team: TeamIdentitySchema,
-    suppliedSummary: z.string().min(1),
+    suppliedSummary: z.string().min(1).optional(),
     backfieldHierarchy: z.array(HierarchyEvidenceRowSchema),
     wrTargetHierarchy: z.array(HierarchyEvidenceRowSchema),
     teTargetHierarchy: z.array(HierarchyEvidenceRowSchema),
     movements: z.array(SuppliedMovementRecordSchema),
     linkedPlayers: z.array(PlayerIdentitySchema),
     availableViews: z.array(z.string().min(1)),
-    dataQuality: DataQualitySchema,
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -619,8 +699,11 @@ export const PlayerBundleSchema = z
     schemaVersion: z.literal("depthsnap.player.v1"),
     player: PlayerIdentitySchema,
     currentTeam: TeamIdentitySchema,
-    suppliedRoleDescription: z.string().min(1),
+    suppliedRoleDescription: z.string().min(1).optional(),
     currentEvidence: RawShareEvidenceSchema.optional(),
+    currentEvidenceTeam: TeamIdentitySchema.optional(),
+    currentRoleFamily: RoleFamilySchema.optional(),
+    currentRoleLabel: RoleLabelSchema.optional(),
     supportingContext: SupportingContextSchema.optional(),
     latestMovement: SuppliedMovementRecordSchema.optional(),
     reportMemberships: z.array(ReportMembershipSchema),
@@ -629,19 +712,45 @@ export const PlayerBundleSchema = z
       z
         .object({
           label: z.string().min(1),
+          evidenceTeam: TeamIdentitySchema,
+          roleFamily: RoleFamilySchema,
+          roleLabel: RoleLabelSchema,
           evidence: RawShareEvidenceSchema,
         })
-        .strict(),
+        .strict()
+        .superRefine(validateRoleLabel),
     ),
     movementHistory: z.array(SuppliedMovementRecordSchema),
     teamHierarchyContext: z.array(HierarchyEvidenceRowSchema),
-    dataQuality: DataQualitySchema,
   })
   .strict()
   .superRefine((bundle, context) => {
     if (
+      (bundle.currentEvidence === undefined) !==
+      (bundle.currentEvidenceTeam === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["currentEvidenceTeam"],
+        message: "current evidence and its evidence team must be supplied together",
+      });
+    }
+    if (
+      bundle.currentRoleFamily !== undefined &&
+      bundle.currentRoleLabel !== ROLE_LABELS[bundle.currentRoleFamily]
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["currentRoleLabel"],
+        message: "currentRoleLabel must match currentRoleFamily",
+      });
+    }
+    if (
       bundle.status !== "published" &&
       (bundle.currentEvidence !== undefined ||
+        bundle.currentEvidenceTeam !== undefined ||
+        bundle.currentRoleFamily !== undefined ||
+        bundle.currentRoleLabel !== undefined ||
         bundle.supportingContext !== undefined ||
         bundle.latestMovement !== undefined ||
         bundle.reportMemberships.length > 0 ||
@@ -839,7 +948,12 @@ export type PublicationStatus = z.infer<typeof PublicationStatusSchema>;
 export type PublicationValidationResult = z.infer<
   typeof PublicationValidationResultSchema
 >;
-export type DataQuality = z.infer<typeof DataQualitySchema>;
+export type ParticipationQuality = z.infer<
+  typeof ParticipationQualitySchema
+>;
+export type SupportingContextStatus = z.infer<
+  typeof SupportingContextStatusSchema
+>;
 export type StatusCheckResult = z.infer<typeof StatusCheckResultSchema>;
 export type RawShareEvidenceContract = z.infer<typeof RawShareEvidenceSchema>;
 export type MovementEvidenceContract = z.infer<typeof MovementEvidenceSchema>;

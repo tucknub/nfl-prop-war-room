@@ -64,8 +64,7 @@ function player(
   return {
     id: `player-${slug}`,
     name,
-    team: teamId,
-    teamId,
+    currentTeamId: teamId,
     position,
     href: `/players/player-${slug}`,
     searchAliases: aliases,
@@ -132,19 +131,33 @@ function hierarchy(
   authoritativeOrder: number,
   roleFamily: string,
   raw: RawShareEvidence,
-  classificationLabel: string,
+  _fixtureRoleDescription: string,
 ): HierarchyEvidenceRow {
   const identity = getPlayerIdentity(slug);
-  if (!identity) {
+  const evidenceTeam = identity
+    ? getTeamIdentity(identity.currentTeamId)
+    : undefined;
+  if (!identity || !evidenceTeam) {
     throw new Error(`Missing fixture identity: ${slug}`);
+  }
+  const roleFamilySlug = {
+    "RB carry share": "rb_carry_share",
+    "RB opportunity share": "rb_opportunity_share",
+    "WR target share": "wr_target_share",
+    "TE target share": "te_target_share",
+  }[roleFamily];
+  if (!roleFamilySlug) {
+    throw new Error(`Unsupported fixture role family: ${roleFamily}`);
   }
   return {
     authoritativeOrder,
     player: identity,
-    roleFamily,
+    evidenceTeam,
+    roleFamily: roleFamilySlug,
+    roleLabel: roleFamily,
     evidence: raw,
-    classificationLabel,
-    dataQuality: "complete",
+    participationQuality: "complete",
+    supportingContextStatus: "available",
   };
 }
 
@@ -173,19 +186,34 @@ function suppliedMovement(
   finding: string,
 ): SuppliedMovementRecord {
   const identity = getPlayerIdentity(slug);
-  if (!identity) {
+  const evidenceTeam = identity
+    ? getTeamIdentity(identity.currentTeamId)
+    : undefined;
+  if (!identity || !evidenceTeam) {
     throw new Error(`Missing fixture identity: ${slug}`);
+  }
+  const roleFamilySlug = {
+    "RB carry share": "rb_carry_share",
+    "RB opportunity share": "rb_opportunity_share",
+    "WR target share": "wr_target_share",
+    "TE target share": "te_target_share",
+  }[roleFamily];
+  if (!roleFamilySlug) {
+    throw new Error(`Unsupported fixture role family: ${roleFamily}`);
   }
   return {
     authoritativeOrder: order,
     player: identity,
+    evidenceTeam,
     reportFamily: "role_movement",
-    roleFamily,
+    roleFamily: roleFamilySlug,
+    roleLabel: roleFamily,
     movement: { previous, current, percentagePointChange },
     direction: percentagePointChange > 0 ? "gain" : percentagePointChange < 0 ? "decline" : "stable",
     finding,
     reportHref: "/reports/movement?view=last4-vs-prior4",
-    dataQuality: "complete",
+    participationQuality: "complete",
+    supportingContextStatus: "available",
   };
 }
 
@@ -211,7 +239,8 @@ function weekly(
       numerator === null || denominator === null || share === null
         ? undefined
         : evidence(numerator, denominator, share, opportunityLabel),
-    dataQuality: partialGame ? "reviewed_partial_game" : numerator === null ? "unavailable_supporting_context" : "complete",
+    participationQuality: partialGame ? "reviewed_partial_game" : "complete",
+    supportingContextStatus: numerator === null ? "unavailable" : "available",
     partialGame: partialGame || undefined,
   };
 }

@@ -11,6 +11,7 @@ from src.common import output_path, raw_path
 TEAM_VARIANTS = {
     "ARI": ("ARI", "Arizona Cardinals"),
     "ARZ": ("ARI", "Arizona Cardinals"),
+    "ATL": ("ATL", "Atlanta Falcons"),
     "BAL": ("BAL", "Baltimore Ravens"),
     "BUF": ("BUF", "Buffalo Bills"),
     "CAR": ("CAR", "Carolina Panthers"),

@@ -120,7 +120,7 @@ export function ReportLeaderboard({
               className="leaderboard-row"
               data-testid="leaderboard-row"
               href={row.evidenceHref}
-              key={row.player.id}
+              key={`${row.player.id}-${row.evidenceTeam?.id ?? row.player.team ?? "team"}-${row.evidence.opportunityLabel}-${row.rank}`}
               role="row"
             >
               <span className="leaderboard-rank" role="cell">
@@ -134,7 +134,7 @@ export function ReportLeaderboard({
                 </small>
               </span>
               <span className="leaderboard-team" role="cell">
-                {row.player.team}
+                {row.evidenceTeam?.id ?? row.player.team ?? "—"}
                 <small>{row.player.position}</small>
               </span>
               <span className="leaderboard-metric" role="cell" data-share-evidence>

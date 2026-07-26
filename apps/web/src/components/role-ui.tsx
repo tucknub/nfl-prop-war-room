@@ -16,11 +16,10 @@ const reportLabels: Record<ReportFamily, string> = {
 };
 
 const findingLabels: Record<FeedFinding["kind"], string> = {
-  backfield_increase: "Backfield gain",
-  target_share_increase: "Target-share gain",
-  role_decline: "Role decline",
-  concentrated_role: "Concentrated role",
-  committee_formation: "Committee forming",
+  opportunity_gained: "Opportunity gained",
+  opportunity_lost: "Opportunity lost",
+  box_score_overstated_role: "Box score overstated role",
+  strong_opportunity_weak_production: "Strong opportunity, weak production",
 };
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -29,11 +28,14 @@ const signedPoints = (value: number, compact = false) =>
   `${value > 0 ? "+" : ""}${value.toFixed(1)}${compact ? " pp" : " percentage points"}`;
 
 function findingTone(finding: FeedFinding) {
-  if (finding.kind === "role_decline" || finding.kind === "committee_formation") {
+  if (finding.kind === "opportunity_lost") {
     return "decline";
   }
 
-  if (finding.kind === "concentrated_role") {
+  if (
+    finding.kind === "box_score_overstated_role" ||
+    finding.kind === "strong_opportunity_weak_production"
+  ) {
     return "concentration";
   }
 
@@ -119,7 +121,7 @@ export function LeadFinding({
             <span>
               <strong>{finding.player.name}</strong>
               <small>
-                {finding.player.team} · {finding.player.position} · {finding.roleFamily}
+                {finding.evidenceTeam.id} · {finding.player.position} · {finding.roleLabel}
               </small>
             </span>
           </div>
@@ -187,7 +189,7 @@ function CompactFindingRow({ finding }: { finding: FeedFinding }) {
       <div className="compact-identity">
         <strong>{finding.player.name}</strong>
         <small>
-          {finding.player.team} · {finding.player.position} · {findingLabels[finding.kind]}
+          {finding.evidenceTeam.id} · {finding.player.position} · {findingLabels[finding.kind]}
         </small>
       </div>
 

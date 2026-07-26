@@ -39,10 +39,12 @@ function fromCurrentRow(row: CurrentEvidenceRow): HierarchyEvidenceRow {
   return {
     authoritativeOrder: row.authoritativeRank,
     player,
+    evidenceTeam: row.evidenceTeam,
     roleFamily: row.roleFamily,
+    roleLabel: row.roleLabel,
     evidence: row.current,
-    classificationLabel: row.classificationLabel,
-    dataQuality: row.dataQuality,
+    participationQuality: row.participationQuality,
+    supportingContextStatus: row.supportingContextStatus,
   };
 }
 
@@ -54,13 +56,16 @@ function fromMovementRow(row: MovementEvidenceRow): SuppliedMovementRecord {
   return {
     authoritativeOrder: row.authoritativeRank,
     player,
+    evidenceTeam: row.evidenceTeam,
     reportFamily: "role_movement",
     roleFamily: row.roleFamily,
+    roleLabel: row.roleLabel,
     movement: row.movement,
     direction: row.direction,
     finding: row.finding,
     reportHref: "/reports/movement?view=last4-vs-prior4",
-    dataQuality: row.dataQuality,
+    participationQuality: row.participationQuality,
+    supportingContextStatus: row.supportingContextStatus,
   };
 }
 
@@ -82,7 +87,7 @@ function topRows(
   return allHierarchy
     .filter(
       (row) =>
-        row.player.teamId === teamId && row.player.position === position,
+        row.evidenceTeam.id === teamId && row.player.position === position,
     )
     .sort((left, right) => left.authoritativeOrder - right.authoritativeOrder);
 }
@@ -99,13 +104,22 @@ export function getTeamBundle(
   const wrTargetHierarchy = topRows(team.id, "WR");
   const teTargetHierarchy = topRows(team.id, "TE");
   const movements = allMovements
-    .filter((movement) => movement.player.teamId === team.id)
+    .filter((movement) => movement.evidenceTeam.id === team.id)
     .sort(
       (left, right) =>
         Math.abs(right.movement.percentagePointChange) -
         Math.abs(left.movement.percentagePointChange),
     );
-  const linkedPlayers = players.filter((player) => player.teamId === team.id);
+  const linkedPlayers = players.filter(
+    (player) =>
+      player.currentTeamId === team.id ||
+      allHierarchy.some(
+        (row) => row.player.id === player.id && row.evidenceTeam.id === team.id,
+      ) ||
+      allMovements.some(
+        (row) => row.player.id === player.id && row.evidenceTeam.id === team.id,
+      ),
+  );
   const status =
     state === "unpublished"
       ? "no_published_week"
@@ -127,7 +141,6 @@ export function getTeamBundle(
     movements: status === "published" ? movements : [],
     linkedPlayers,
     availableViews: ["last4", "season"],
-    dataQuality: "complete",
   };
 }
 
@@ -179,9 +192,13 @@ function fallbackWeekly(
     {
       week: identityFixtureMetadata.throughWeek,
       periodLabel: `Week ${identityFixtureMetadata.throughWeek}`,
+      evidenceTeam: hierarchy.evidenceTeam,
+      roleFamily: hierarchy.roleFamily,
+      roleLabel: hierarchy.roleLabel,
       evidence: hierarchy.evidence,
       opportunityLabel: hierarchy.evidence.opportunityLabel,
-      dataQuality: hierarchy.dataQuality,
+      participationQuality: hierarchy.participationQuality,
+      supportingContextStatus: hierarchy.supportingContextStatus,
     },
   ];
 }
@@ -194,9 +211,9 @@ export function getPlayerBundle(
   if (!player) {
     return undefined;
   }
-  const team = getTeamIdentity(player.teamId);
+  const team = getTeamIdentity(player.currentTeamId);
   if (!team) {
-    throw new Error(`Team fixture is missing ${player.teamId}`);
+    throw new Error(`Team fixture is missing ${player.currentTeamId}`);
   }
   const hierarchy = currentHierarchyForPlayer(player.id);
   const movement = currentMovementForPlayer(player.id);
@@ -213,7 +230,7 @@ export function getPlayerBundle(
   const teamContext = allHierarchy
     .filter(
       (row) =>
-        row.player.teamId === player.teamId &&
+        row.evidenceTeam.id === player.currentTeamId &&
         row.player.position === player.position,
     )
     .sort((left, right) => left.authoritativeOrder - right.authoritativeOrder);
@@ -224,24 +241,60 @@ export function getPlayerBundle(
     player,
     currentTeam: team,
     suppliedRoleDescription:
-      hierarchy?.classificationLabel ??
+      hierarchy?.roleLabel ??
       movement?.finding ??
       "No current hierarchy description supplied",
     currentEvidence: status === "published" ? hierarchy?.evidence ?? movement?.movement.current : undefined,
+    currentEvidenceTeam:
+      status === "published"
+        ? hierarchy?.evidenceTeam ?? movement?.evidenceTeam
+        : undefined,
+    currentRoleFamily:
+      status === "published"
+        ? hierarchy?.roleFamily ?? movement?.roleFamily
+        : undefined,
+    currentRoleLabel:
+      status === "published"
+        ? hierarchy?.roleLabel ?? movement?.roleLabel
+        : undefined,
     supportingContext: status === "published" ? supportingContext : undefined,
     latestMovement: status === "published" ? movement : undefined,
     reportMemberships: status === "published" ? memberships : [],
     weeklyEvidence:
       status === "published"
-        ? weeklyEvidenceByPlayer[player.id] ?? fallbackWeekly(hierarchy)
+        ? (weeklyEvidenceByPlayer[player.id] ?? fallbackWeekly(hierarchy)).map(
+            (point) => ({
+              ...point,
+              evidenceTeam:
+                point.evidenceTeam ??
+                hierarchy?.evidenceTeam ??
+                movement?.evidenceTeam ??
+                team,
+              roleFamily:
+                point.roleFamily ??
+                hierarchy?.roleFamily ??
+                movement?.roleFamily ??
+                "rb_opportunity_share",
+              roleLabel:
+                point.roleLabel ??
+                hierarchy?.roleLabel ??
+                movement?.roleLabel ??
+                "RB opportunity share",
+            }),
+          )
         : [],
     periodSummaries:
       status === "published" && hierarchy
-        ? [{ label: "Supplied current window", evidence: hierarchy.evidence }]
+        ? [{
+            label: "Supplied current window",
+            evidenceTeam: hierarchy.evidenceTeam,
+            roleFamily: hierarchy.roleFamily,
+            roleLabel: hierarchy.roleLabel,
+            evidence: hierarchy.evidence,
+          }]
         : [],
     movementHistory: status === "published" && movement ? [movement] : [],
     teamHierarchyContext: status === "published" ? teamContext : [],
-    dataQuality: hierarchy?.dataQuality ?? movement?.dataQuality ?? "complete",
   };
 }
 
@@ -264,15 +317,24 @@ export const teamDirectoryRecords: readonly TeamDirectoryRecord[] = teams
 export const playerDirectoryRecords: readonly PlayerDirectoryRecord[] = players
   .map((player) => {
     const hierarchy = currentHierarchyForPlayer(player.id);
+    const movement = currentMovementForPlayer(player.id);
+    const currentTeam = getTeamIdentity(player.currentTeamId);
+    if (!currentTeam) {
+      throw new Error(`Missing current team: ${player.currentTeamId}`);
+    }
     return {
       player,
-      currentEvidence: hierarchy?.evidence ?? currentMovementForPlayer(player.id)?.movement.current,
+      currentTeam,
+      currentEvidence: hierarchy?.evidence ?? movement?.movement.current,
+      currentEvidenceTeam: hierarchy?.evidenceTeam ?? movement?.evidenceTeam,
+      roleFamily: hierarchy?.roleFamily ?? movement?.roleFamily,
+      roleLabel: hierarchy?.roleLabel ?? movement?.roleLabel,
       suppliedRoleDescription:
-        hierarchy?.classificationLabel ??
-        currentMovementForPlayer(player.id)?.finding ??
+        hierarchy?.roleLabel ??
+        movement?.finding ??
         "Fixture identity record",
       memberships: membershipForPlayer(player.id),
-      latestMovement: currentMovementForPlayer(player.id),
+      latestMovement: movement,
     };
   })
   .sort((left, right) => left.player.name.localeCompare(right.player.name));
@@ -301,10 +363,10 @@ export const searchIndex: readonly SearchIdentity[] = [
     type: "player" as const,
     id: `search-${record.player.id}`,
     displayName: record.player.name,
-    secondaryLabel: `${record.player.position} · ${record.player.team}`,
+    secondaryLabel: `${record.player.position} · ${record.currentTeam.id}`,
     summary: record.currentEvidence
       ? `${record.currentEvidence.numerator} of ${record.currentEvidence.denominator} ${record.currentEvidence.opportunityLabel} · ${(record.currentEvidence.share * 100).toFixed(1)}%`
-      : record.suppliedRoleDescription,
+      : record.suppliedRoleDescription ?? "Stable player identity",
     href: record.player.href,
     searchAliases: record.player.searchAliases,
   })),

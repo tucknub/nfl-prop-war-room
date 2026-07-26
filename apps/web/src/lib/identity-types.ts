@@ -5,7 +5,10 @@ import type {
   RawShareEvidence,
   ReportFamily,
 } from "@/lib/types";
-import type { DataQuality } from "@/lib/report-types";
+import type {
+  ParticipationQuality,
+  SupportingContextStatus,
+} from "@/lib/report-types";
 
 export type TeamIdentity = {
   id: string;
@@ -20,7 +23,7 @@ export type TeamIdentity = {
 };
 
 export type CanonicalPlayerIdentity = PlayerIdentity & {
-  teamId: string;
+  currentTeamId: string;
   href: string;
   searchAliases: readonly string[];
 };
@@ -45,42 +48,50 @@ export type IdentityBundleMetadata = {
 export type HierarchyEvidenceRow = {
   authoritativeOrder: number;
   player: CanonicalPlayerIdentity;
+  evidenceTeam: TeamIdentity;
   roleFamily: string;
+  roleLabel: string;
   evidence: RawShareEvidence;
-  classificationLabel: string;
-  dataQuality: DataQuality;
+  participationQuality: ParticipationQuality;
+  supportingContextStatus: SupportingContextStatus;
 };
 
 export type SuppliedMovementRecord = {
   authoritativeOrder: number;
   player: CanonicalPlayerIdentity;
+  evidenceTeam: TeamIdentity;
   reportFamily: ReportFamily;
   roleFamily: string;
+  roleLabel: string;
   movement: MovementEvidence;
   direction: "gain" | "decline" | "stable";
   finding: string;
   reportHref: string;
-  dataQuality: DataQuality;
+  participationQuality: ParticipationQuality;
+  supportingContextStatus: SupportingContextStatus;
 };
 
 export type TeamEvidenceBundle = IdentityBundleMetadata & {
   team: TeamIdentity;
-  suppliedSummary: string;
+  suppliedSummary?: string;
   backfieldHierarchy: readonly HierarchyEvidenceRow[];
   wrTargetHierarchy: readonly HierarchyEvidenceRow[];
   teTargetHierarchy: readonly HierarchyEvidenceRow[];
   movements: readonly SuppliedMovementRecord[];
   linkedPlayers: readonly CanonicalPlayerIdentity[];
   availableViews: readonly string[];
-  dataQuality: DataQuality;
 };
 
 export type WeeklyEvidencePoint = {
   week: number;
   periodLabel: string;
+  evidenceTeam?: TeamIdentity;
+  roleFamily?: string;
+  roleLabel?: string;
   evidence?: RawShareEvidence;
   opportunityLabel: RawShareEvidence["opportunityLabel"];
-  dataQuality: DataQuality;
+  participationQuality: ParticipationQuality;
+  supportingContextStatus: SupportingContextStatus;
   partialGame?: boolean;
 };
 
@@ -94,8 +105,11 @@ export type ReportMembership = {
 export type PlayerEvidenceBundle = IdentityBundleMetadata & {
   player: CanonicalPlayerIdentity;
   currentTeam: TeamIdentity;
-  suppliedRoleDescription: string;
+  suppliedRoleDescription?: string;
   currentEvidence?: RawShareEvidence;
+  currentEvidenceTeam?: TeamIdentity;
+  currentRoleFamily?: string;
+  currentRoleLabel?: string;
   supportingContext?: {
     label: string;
     evidence: RawShareEvidence;
@@ -105,11 +119,13 @@ export type PlayerEvidenceBundle = IdentityBundleMetadata & {
   weeklyEvidence: readonly WeeklyEvidencePoint[];
   periodSummaries: readonly {
     label: string;
+    evidenceTeam: TeamIdentity;
+    roleFamily: string;
+    roleLabel: string;
     evidence: RawShareEvidence;
   }[];
   movementHistory: readonly SuppliedMovementRecord[];
   teamHierarchyContext: readonly HierarchyEvidenceRow[];
-  dataQuality: DataQuality;
 };
 
 export type TeamDirectoryRecord = {
@@ -122,8 +138,12 @@ export type TeamDirectoryRecord = {
 
 export type PlayerDirectoryRecord = {
   player: CanonicalPlayerIdentity;
+  currentTeam: TeamIdentity;
   currentEvidence?: RawShareEvidence;
-  suppliedRoleDescription: string;
+  currentEvidenceTeam?: TeamIdentity;
+  roleFamily?: string;
+  roleLabel?: string;
+  suppliedRoleDescription?: string;
   memberships: readonly ReportMembership[];
   latestMovement?: SuppliedMovementRecord;
 };

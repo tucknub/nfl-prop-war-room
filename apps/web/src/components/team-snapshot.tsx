@@ -25,7 +25,7 @@ export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
         </span>
         <span>
           <strong>{data.teamName}</strong>
-          <small>{data.teamCode} · synthetic team record</small>
+          <small>{data.teamCode} · documented evidence team</small>
         </span>
       </div>
 
@@ -50,19 +50,22 @@ export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
         ))}
       </div>
 
-      <div className="team-movement">
-        <span className="team-movement-icon" aria-hidden="true">
-          <TrendUpIcon />
-        </span>
-        <span>
-          <small>Biggest documented movement</small>
-          <strong>{data.biggestMovement.player}</strong>
-          <span>{data.biggestMovement.summary}</span>
-        </span>
-        <strong>
-          +{data.biggestMovement.percentagePointChange.toFixed(1)} pp
-        </strong>
-      </div>
+      {data.biggestMovement ? (
+        <div className="team-movement">
+          <span className="team-movement-icon" aria-hidden="true">
+            <TrendUpIcon />
+          </span>
+          <span>
+            <small>Biggest documented movement</small>
+            <strong>{data.biggestMovement.player}</strong>
+            <span>{data.biggestMovement.summary}</span>
+          </span>
+          <strong>
+            {data.biggestMovement.percentagePointChange > 0 ? "+" : ""}
+            {data.biggestMovement.percentagePointChange.toFixed(1)} pp
+          </strong>
+        </div>
+      ) : null}
 
       <Link className="team-report-action" href={data.reportHref}>
         Future team report

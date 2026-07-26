@@ -194,6 +194,9 @@ def _baseline_rows(season: int, week: int, config: WeeklyReportConfig) -> pd.Dat
                 "share_change": float(recent_share - baseline_share),
                 "confirmed_partial_game": bool(current["confirmed_partial_game"]),
                 "suspected_partial_game": bool(current["suspected_partial_game"]),
+                "suspected_partial_corroborated": bool(
+                    current.get("suspected_partial_corroborated", False)
+                ),
                 "partial_game_note": str(current["partial_game_note"]),
             }
         )

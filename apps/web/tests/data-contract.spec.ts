@@ -28,6 +28,13 @@ const fixtureSource = path.resolve(
   "depthsnap",
   "fixture",
 );
+const historicalExportSource = path.resolve(
+  process.cwd(),
+  "public",
+  "data",
+  "depthsnap",
+  "export-historical-2025",
+);
 
 async function temporaryDataRoot() {
   const temporaryRoot = await mkdtemp(
@@ -37,6 +44,15 @@ async function temporaryDataRoot() {
   await cp(fixtureSource, path.join(dataRoot, "fixture"), {
     recursive: true,
   });
+  return { temporaryRoot, dataRoot };
+}
+
+async function temporaryExportDataRoot(source: string) {
+  const temporaryRoot = await mkdtemp(
+    path.join(tmpdir(), "depthsnap-export-contract-"),
+  );
+  const dataRoot = path.join(temporaryRoot, "depthsnap");
+  await cp(source, path.join(dataRoot, "export"), { recursive: true });
   return { temporaryRoot, dataRoot };
 }
 
@@ -457,11 +473,93 @@ test("missing files, hash mismatches, and record-count mismatches fail closed", 
 });
 
 test("fixture and export modes are isolated without silent fallback", async () => {
-  const absentExport = await loadDepthSnapRegistry({ mode: "export" });
-  expect(absentExport).toMatchObject({
-    ok: false,
-    failure: { category: "bundle_missing" },
-  });
+  const activeExport = await loadDepthSnapRegistry({ mode: "export" });
+  expect(activeExport.ok).toBe(true);
+  if (activeExport.ok) {
+    expect(activeExport.registry.manifest).toMatchObject({
+      dataMode: "export",
+      publicationStatus: "no_published_week",
+      season: 2026,
+      throughWeek: null,
+      validationResult: "pass",
+    });
+    expect(activeExport.registry.manifest.entries).toHaveLength(9);
+    expect(activeExport.registry.bundles.get("status")).toMatchObject({
+      dataMode: "export",
+      status: "no_published_week",
+      season: 2026,
+      bundleCount: 9,
+    });
+    expect(activeExport.registry.bundles.get("players_index")).toMatchObject({
+      players: [],
+    });
+  }
+
+  const historicalCase = await temporaryExportDataRoot(
+    historicalExportSource,
+  );
+  try {
+    const historical = await loadDepthSnapRegistry({
+      mode: "export",
+      dataRoot: historicalCase.dataRoot,
+    });
+    expect(historical.ok).toBe(true);
+    if (historical.ok) {
+      expect(historical.registry.manifest).toMatchObject({
+        dataMode: "export",
+        publicationStatus: "published",
+        season: 2025,
+        throughWeek: 18,
+        validationResult: "pass",
+      });
+      expect(historical.registry.manifest.entries).toHaveLength(586);
+      expect(
+        historical.registry.bundles.get("team:ATL"),
+      ).toBeDefined();
+
+      const playerBundles = [...historical.registry.bundles.entries()]
+        .filter(([key]) => key.startsWith("player:"))
+        .map(([, bundle]) => bundle);
+      expect(playerBundles).toHaveLength(545);
+      let transferredEvidenceRows = 0;
+      for (const bundle of playerBundles) {
+        const player = bundle.player as Record<string, unknown>;
+        expect(player).not.toHaveProperty("team");
+        expect(player).not.toHaveProperty("teamId");
+        expect(player).not.toHaveProperty("currentTeam");
+        const currentTeam = bundle.currentTeam as
+          | { id?: string }
+          | undefined;
+        const evidenceTeams = [
+          ...(bundle.weeklyEvidence as Array<{
+            evidenceTeam: { id: string };
+          }>),
+          ...(bundle.periodSummaries as Array<{
+            evidenceTeam: { id: string };
+          }>),
+          ...(bundle.movementHistory as Array<{
+            evidenceTeam: { id: string };
+          }>),
+        ].map((row) => row.evidenceTeam.id);
+        expect(
+          (bundle.weeklyEvidence as Array<Record<string, unknown>>).every(
+            (row) => "evidenceTeam" in row,
+          ),
+        ).toBe(true);
+        if (currentTeam) {
+          transferredEvidenceRows += evidenceTeams.filter(
+            (team) => team !== currentTeam.id,
+          ).length;
+        }
+      }
+      expect(transferredEvidenceRows).toBeGreaterThan(0);
+    }
+  } finally {
+    await rm(historicalCase.temporaryRoot, {
+      recursive: true,
+      force: true,
+    });
+  }
 
   const { temporaryRoot, dataRoot } = await temporaryDataRoot();
   try {

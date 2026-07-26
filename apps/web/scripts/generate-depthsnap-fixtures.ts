@@ -60,15 +60,67 @@ function sha256(bytes: string): string {
   return createHash("sha256").update(bytes, "utf8").digest("hex");
 }
 
-function canonicalPlayer(player: { name: string; team: string }) {
+function canonicalPlayer(player: { name: string }) {
   const match = players.find((candidate) => candidate.name === player.name);
   if (!match) {
-    throw new Error(
-      `Fixture generation could not resolve ${player.name} (${player.team})`,
-    );
+    throw new Error(`Fixture generation could not resolve ${player.name}`);
   }
   return match;
 }
+
+function publicPlayer(player: (typeof players)[number]) {
+  return {
+    id: player.id,
+    name: player.name,
+    position: player.position,
+    href: player.href,
+    searchAliases: player.searchAliases,
+  };
+}
+
+function fixtureTeamForPlayer(player: { name: string }) {
+  const canonical = canonicalPlayer(player);
+  const team = teams.find(
+    (candidate) => candidate.id === canonical.currentTeamId,
+  );
+  if (!team) {
+    throw new Error(
+      `Fixture generation could not resolve team ${canonical.currentTeamId}`,
+    );
+  }
+  return team;
+}
+
+const roleFamilyMap = {
+  "RB carry share": "rb_carry_share",
+  "RB opportunity share": "rb_opportunity_share",
+  "WR target share": "wr_target_share",
+  "TE target share": "te_target_share",
+  rb_carry_share: "rb_carry_share",
+  rb_opportunity_share: "rb_opportunity_share",
+  wr_target_share: "wr_target_share",
+  te_target_share: "te_target_share",
+} as const;
+
+const roleLabelMap = {
+  rb_carry_share: "RB carry share",
+  rb_opportunity_share: "RB opportunity share",
+  wr_target_share: "WR target share",
+  te_target_share: "TE target share",
+} as const;
+
+const findingKindMap = {
+  backfield_increase: "opportunity_gained",
+  target_share_increase: "opportunity_gained",
+  role_decline: "opportunity_lost",
+  concentrated_role: "strong_opportunity_weak_production",
+  committee_formation: "box_score_overstated_role",
+  opportunity_gained: "opportunity_gained",
+  opportunity_lost: "opportunity_lost",
+  box_score_overstated_role: "box_score_overstated_role",
+  strong_opportunity_weak_production:
+    "strong_opportunity_weak_production",
+} as const;
 
 function normalizePlayerReferences<T>(value: T, field?: string): T {
   if (Array.isArray(value)) {
@@ -86,21 +138,65 @@ function normalizePlayerReferences<T>(value: T, field?: string): T {
   const object = value as Record<string, unknown>;
   if (
     typeof object.name === "string" &&
-    typeof object.team === "string" &&
     typeof object.position === "string" &&
-    "id" in object
+    typeof object.id === "string" &&
+    (object.id.startsWith("player-") ||
+      object.id.startsWith("fixture-"))
   ) {
-    return canonicalPlayer({
-      name: object.name,
-      team: object.team,
-    }) as T;
+    return publicPlayer(canonicalPlayer({ name: object.name })) as T;
   }
-  return Object.fromEntries(
+  const normalized = Object.fromEntries(
     Object.entries(object).map(([key, child]) => [
       key,
       normalizePlayerReferences(child, key),
     ]),
-  ) as T;
+  ) as Record<string, unknown>;
+  const sourcePlayer = object.player as
+    | { name?: unknown; position?: unknown }
+    | undefined;
+  if (
+    sourcePlayer &&
+    typeof sourcePlayer.name === "string" &&
+    typeof sourcePlayer.position === "string" &&
+    normalized.evidenceTeam === undefined &&
+    ("authoritativeRank" in object ||
+      "authoritativeOrder" in object ||
+      "headline" in object ||
+      ("rank" in object && "evidence" in object))
+  ) {
+    normalized.evidenceTeam = fixtureTeamForPlayer({
+      name: sourcePlayer.name,
+    });
+  }
+  if (typeof object.roleFamily === "string") {
+    const roleFamily =
+      roleFamilyMap[object.roleFamily as keyof typeof roleFamilyMap];
+    if (!roleFamily) {
+      throw new Error(
+        `Fixture generation found unsupported role family ${object.roleFamily}`,
+      );
+    }
+    normalized.roleFamily = roleFamily;
+    normalized.roleLabel = roleLabelMap[roleFamily];
+  }
+  if (typeof object.kind === "string") {
+    const kind = findingKindMap[object.kind as keyof typeof findingKindMap];
+    if (!kind) {
+      throw new Error(
+        `Fixture generation found unsupported finding kind ${object.kind}`,
+      );
+    }
+    normalized.kind = kind;
+  }
+  if (
+    "headline" in object &&
+    "current" in object &&
+    "player" in object
+  ) {
+    normalized.participationQuality ??= "complete";
+    normalized.supportingContextStatus ??= "available";
+  }
+  return normalized as T;
 }
 
 function productionNeutral<T extends JsonObject>(
@@ -406,12 +502,14 @@ function withoutPublicationEvidence(
       wrTargetHierarchy: [],
       teTargetHierarchy: [],
       movements: [],
-      dataQuality: "unavailable_supporting_context",
     };
   }
   if (family === "player") {
     const {
       currentEvidence: _currentEvidence,
+      currentEvidenceTeam: _currentEvidenceTeam,
+      currentRoleFamily: _currentRoleFamily,
+      currentRoleLabel: _currentRoleLabel,
       supportingContext: _supportingContext,
       latestMovement: _latestMovement,
       ...identity
@@ -424,7 +522,6 @@ function withoutPublicationEvidence(
       periodSummaries: [],
       movementHistory: [],
       teamHierarchyContext: [],
-      dataQuality: "unavailable_supporting_context",
     };
   }
   return common;

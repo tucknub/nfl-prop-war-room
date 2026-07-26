@@ -47,8 +47,10 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
       <section className="player-identity-hero">
         <PlayerMonogram player={bundle.player} />
         <div className="player-identity-copy">
-          <span>{bundle.player.team} · {bundle.player.position}</span>
-          <h2>{bundle.suppliedRoleDescription}</h2>
+          <span>{bundle.currentTeam.id} · {bundle.player.position}</span>
+          {bundle.suppliedRoleDescription ? (
+            <h2>{bundle.suppliedRoleDescription}</h2>
+          ) : null}
           <Link href={bundle.currentTeam.href}>
             <TeamMonogram team={bundle.currentTeam} size="small" />
             {bundle.currentTeam.name} <span aria-hidden="true">→</span>
@@ -91,13 +93,13 @@ export function PlayerDossier({ bundle }: { bundle: PlayerEvidenceBundle }) {
             </div>
           ) : <p className="identity-inline-empty">No current report membership supplied.</p>}
         </section>
-        <HierarchySection title="Team hierarchy context" description={`Nearby supplied ${bundle.player.position} evidence for ${bundle.player.team}.`} rows={bundle.teamHierarchyContext} />
+        <HierarchySection title="Team hierarchy context" description={`Nearby supplied ${bundle.player.position} evidence for the evidence team.`} rows={bundle.teamHierarchyContext} />
       </div>
 
       <MovementList movements={bundle.movementHistory} title="Movement history" />
 
       <footer className="dossier-quality">
-        <div><span>Data quality</span><strong>{bundle.dataQuality.replaceAll("_", " ")}</strong></div>
+        <div><span>Identity</span><strong>Team-neutral player ID</strong></div>
         <div><span>Generated</span><strong>{new Date(bundle.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}</strong></div>
         <div><span>Source</span><strong>{bundle.sourceVersion}</strong></div>
         <Link href="/methodology">Read Methodology →</Link>

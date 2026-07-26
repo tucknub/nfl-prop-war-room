@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "status": "BLOCKED",
+  "generated_at_utc": "2026-07-26T00:00:00Z",
+  "published_through_week": null,
+  "completed_games": 0,
+  "message": "Current-season publication is blocked and no prior valid registry is available.",
+  "source_status": [],
+  "operational_policy": {
+    "atomic_publication": true,
+    "stale_cache_default": "blocked"
+  }
+}

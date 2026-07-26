@@ -10,11 +10,12 @@ export type PlayerPosition = "RB" | "WR" | "TE";
 export type PlayerIdentity = {
   id: string;
   name: string;
-  team: string;
+  team?: string;
   teamId?: string;
   position: PlayerPosition;
   href?: string;
   jerseyNumber?: number;
+  searchAliases?: readonly string[];
 };
 
 export type RawShareEvidence = {
@@ -31,22 +32,39 @@ export type MovementEvidence = {
 };
 
 export type FeedFindingKind =
-  | "backfield_increase"
-  | "target_share_increase"
-  | "role_decline"
-  | "concentrated_role"
-  | "committee_formation";
+  | "opportunity_gained"
+  | "opportunity_lost"
+  | "box_score_overstated_role"
+  | "strong_opportunity_weak_production";
 
 export type FeedFinding = {
   id: string;
   kind: FeedFindingKind;
   reportFamily: ReportFamily;
   roleFamily: string;
+  roleLabel: string;
   player: PlayerIdentity;
+  evidenceTeam: {
+    id: string;
+    abbreviation: string;
+    name: string;
+    monogram: string;
+    accent: "teal" | "amber" | "slate";
+    href: string;
+    searchAliases: readonly string[];
+    conference?: string;
+    division?: string;
+  };
   headline: string;
   current: RawShareEvidence;
   movement?: MovementEvidence;
   evidenceHref: string;
+  participationQuality:
+    | "complete"
+    | "suspected_statistical"
+    | "suspected_corroborated"
+    | "reviewed_partial_game";
+  supportingContextStatus: "available" | "unavailable";
 };
 
 export type ReportLink = {

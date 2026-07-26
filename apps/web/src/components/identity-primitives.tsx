@@ -153,7 +153,7 @@ export function HierarchySection({
               <div className="hierarchy-player">
                 <Link href={row.player.href}>{row.player.name}</Link>
                 <span>
-                  {row.player.position} · {row.classificationLabel}
+                  {row.evidenceTeam.id} · {row.player.position} · {row.roleLabel}
                 </span>
               </div>
               <ShareEvidence evidence={row.evidence} />

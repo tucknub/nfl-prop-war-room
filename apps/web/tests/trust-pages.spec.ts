@@ -35,7 +35,7 @@ test("Methodology exposes the supplied definitions and report navigation accessi
     "All-play evidence leads; typical-game context supports",
     "Current, prior, and percentage-point movement",
     "A week publishes only after the operational checks pass",
-    "Data quality has three supplied states",
+    "Participation and context quality stay separate",
     "Descriptive by design",
   ]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();

@@ -21,3 +21,6 @@ apps/web/.next/
 apps/web/node_modules/
 apps/web/artifacts/
 apps/web/*.tsbuildinfo
+apps/web/public/data/depthsnap/.staging/
+apps/web/public/data/depthsnap/.export.rollback-swap-*/
+apps/web/public/data/depthsnap/export.rollback/

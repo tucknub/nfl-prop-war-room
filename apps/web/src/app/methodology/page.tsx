@@ -154,8 +154,8 @@ const sections = [
         </p>
         <p>
           Supporting context may be unavailable even when the authoritative
-          result is complete. The closed data-quality label communicates that
-          distinction.
+          participation result is complete. Separate closed participation and
+          context labels communicate that distinction.
         </p>
       </>
     ),
@@ -215,7 +215,7 @@ const sections = [
   {
     id: "quality",
     kicker: "Closed labels",
-    title: "Data quality has three supplied states",
+    title: "Participation and context quality stay separate",
     body: (
       <dl className="quality-definitions">
         <div>
@@ -223,11 +223,25 @@ const sections = [
           <dd>The supplied evidence passed the applicable publication checks.</dd>
         </div>
         <div>
+          <dt>Suspected statistical</dt>
+          <dd>
+            Statistical signals indicate a possible partial-game participation
+            issue that has not been corroborated.
+          </dd>
+        </div>
+        <div>
+          <dt>Suspected corroborated</dt>
+          <dd>
+            Statistical signals and a separate supplied source both indicate a
+            possible partial-game participation issue.
+          </dd>
+        </div>
+        <div>
           <dt>Reviewed partial game</dt>
           <dd>A reviewed manual partial-game designation accompanies the row.</dd>
         </div>
         <div>
-          <dt>Unavailable supporting context</dt>
+          <dt>Supporting context available or unavailable</dt>
           <dd>
             The authoritative evidence may be present while optional supporting
             context is not supplied.

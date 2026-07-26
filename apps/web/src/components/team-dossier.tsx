@@ -16,7 +16,7 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
         <IdentityPageHeader
           eyebrow="Team dossier"
           title={bundle.team.name}
-          description={bundle.suppliedSummary}
+          description={bundle.suppliedSummary ?? "Structured team role evidence."}
           dataNotice={bundle.dataNotice}
           dataMode={bundle.dataMode}
           meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
@@ -32,7 +32,7 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
       <IdentityPageHeader
         eyebrow="Team dossier"
         title={bundle.team.name}
-        description={bundle.suppliedSummary}
+        description={bundle.suppliedSummary ?? "Structured team role evidence."}
         dataNotice={bundle.dataNotice}
         dataMode={bundle.dataMode}
         meta={`${bundle.season}${bundle.throughWeek ? ` · through Week ${bundle.throughWeek}` : " · no published week"}`}
@@ -79,14 +79,14 @@ export function TeamDossier({ bundle }: { bundle: TeamEvidenceBundle }) {
           {bundle.linkedPlayers.map((player) => (
             <Link href={player.href} key={player.id}>
               <strong>{player.name}</strong>
-              <span>{player.position} · {player.team}</span>
+              <span>{player.position} · stable player identity</span>
             </Link>
           ))}
         </div>
       </section>
 
       <footer className="dossier-quality">
-        <div><span>Data quality</span><strong>{bundle.dataQuality.replaceAll("_", " ")}</strong></div>
+        <div><span>Evidence teams</span><strong>Supplied per row</strong></div>
         <div><span>Generated</span><strong>{new Date(bundle.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}</strong></div>
         <div><span>Source</span><strong>{bundle.sourceVersion}</strong></div>
         <Link href="/data-status">Open Data Status →</Link>

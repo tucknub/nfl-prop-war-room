@@ -169,7 +169,7 @@ function validateReferences(
   const teamSet = new Set(teamIds);
   const playerSet = new Set(playerIds);
   const checkPlayer = (player: unknown, context: string) => {
-    const identity = player as { id?: string; teamId?: string };
+    const identity = player as { id?: string };
     if (!identity?.id || !playerSet.has(identity.id)) {
       return fail(
         "unresolved_reference",
@@ -178,7 +178,10 @@ function validateReferences(
         "A player reference did not resolve to the supplied identity bundle.",
       );
     }
-    if (!identity.teamId || !teamSet.has(identity.teamId)) {
+  };
+  const checkTeam = (team: unknown, context: string) => {
+    const identity = team as { id?: string };
+    if (!identity?.id || !teamSet.has(identity.id)) {
       return fail(
         "unresolved_reference",
         "Unresolved team reference",
@@ -191,15 +194,8 @@ function validateReferences(
   for (const bundle of playerBundles) {
     const playerFailure = checkPlayer(bundle.player, "Player dossier");
     if (playerFailure) return playerFailure;
-    const currentTeam = bundle.currentTeam as { id?: string };
-    if (!currentTeam?.id || !teamSet.has(currentTeam.id)) {
-      return fail(
-        "unresolved_reference",
-        "Unresolved current team",
-        "A player dossier references an unknown current team.",
-        "The supplied current-team identity could not be resolved.",
-      );
-    }
+    const currentTeamFailure = checkTeam(bundle.currentTeam, "Player dossier");
+    if (currentTeamFailure) return currentTeamFailure;
   }
 
   const playerContainers: Array<[string, unknown[]]> = [];
@@ -257,6 +253,41 @@ function validateReferences(
     }
   }
 
+  const validateNestedReferences = (
+    value: unknown,
+    context: string,
+  ): RegistryResult | undefined => {
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        const failure = validateNestedReferences(child, context);
+        if (failure) return failure;
+      }
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    for (const [key, child] of Object.entries(
+      value as Record<string, unknown>,
+    )) {
+      if (
+        key === "evidenceTeam" ||
+        key === "currentTeam" ||
+        key === "currentEvidenceTeam"
+      ) {
+        const failure = checkTeam(child, context);
+        if (failure) return failure;
+      } else if (key === "player" && typeof child === "object") {
+        const failure = checkPlayer(child, context);
+        if (failure) return failure;
+      }
+      const nestedFailure = validateNestedReferences(child, context);
+      if (nestedFailure) return nestedFailure;
+    }
+  };
+  for (const [key, bundle] of bundles) {
+    const failure = validateNestedReferences(bundle, key);
+    if (failure) return failure;
+  }
+
   const currentByReport = new Map<
     string,
     { evidence: unknown; roleFamily: string }
@@ -268,16 +299,20 @@ function validateReferences(
       report.views as Array<{
         rows: Array<{
           player: { id: string };
+          evidenceTeam: { id: string };
           roleFamily: string;
           current: unknown;
         }>;
       }>
     )[0];
     for (const row of firstView?.rows ?? []) {
-      currentByReport.set(row.player.id, {
+      currentByReport.set(
+        `${row.player.id}:${row.evidenceTeam.id}:${row.roleFamily}`,
+        {
         evidence: row.current,
         roleFamily: row.roleFamily,
-      });
+        },
+      );
     }
   }
   const movementReport = bundles.get("report_movement");
@@ -285,17 +320,34 @@ function validateReferences(
   if (movementReport?.status === "published") {
     const firstView = (
       movementReport.views as Array<{
-        rows: Array<{ player: { id: string }; movement: unknown }>;
+        rows: Array<{
+          player: { id: string };
+          evidenceTeam: { id: string };
+          roleFamily: string;
+          movement: unknown;
+        }>;
       }>
     )[0];
     for (const row of firstView?.rows ?? []) {
-      movementByPlayer.set(row.player.id, row.movement);
+      movementByPlayer.set(
+        `${row.player.id}:${row.evidenceTeam.id}:${row.roleFamily}`,
+        row.movement,
+      );
     }
   }
   for (const bundle of playerBundles) {
     if (bundle.status !== "published") continue;
     const playerId = (bundle.player as { id: string }).id;
-    const current = currentByReport.get(playerId);
+    const evidenceTeamId = (bundle.currentEvidenceTeam as { id?: string })
+      ?.id;
+    const currentRoleFamily = bundle.currentRoleFamily as string | undefined;
+    const evidenceKey =
+      evidenceTeamId && currentRoleFamily
+        ? `${playerId}:${evidenceTeamId}:${currentRoleFamily}`
+        : undefined;
+    const current = evidenceKey
+      ? currentByReport.get(evidenceKey)
+      : undefined;
     if (
       current &&
       bundle.currentEvidence &&
@@ -308,13 +360,22 @@ function validateReferences(
         "Supplied evidence is inconsistent across public routes.",
       );
     }
-    const movement = movementByPlayer.get(playerId);
+    const latestMovement = bundle.latestMovement as
+      | { evidenceTeam?: { id?: string }; roleFamily?: string; movement: unknown }
+      | undefined;
+    const movementKey =
+      latestMovement?.evidenceTeam?.id && latestMovement.roleFamily
+        ? `${playerId}:${latestMovement.evidenceTeam.id}:${latestMovement.roleFamily}`
+        : undefined;
+    const movement = movementKey
+      ? movementByPlayer.get(movementKey)
+      : undefined;
     if (
       movement &&
       bundle.latestMovement &&
       !sameEvidence(
         movement,
-        (bundle.latestMovement as { movement: unknown }).movement,
+        latestMovement?.movement,
       )
     ) {
       return fail(

@@ -4,8 +4,17 @@ on:
   pull_request:
     paths:
       - "apps/web/**"
+      - "dashboard/launch_contract.py"
+      - "dashboard/research_data.py"
+      - "dashboard/weekly_report.py"
       - "docs/depthsnap/**"
       - "docs/propwar/NEXTJS_PUBLIC_APP_MIGRATION.md"
+      - "outputs/role_research/**"
+      - "scripts/export_depthsnap.py"
+      - "src/export/depthsnap_exporter.py"
+      - "src/load/build_identity_crosswalk.py"
+      - "tests/fixtures/depthsnap_role_status_blocked_2026.json"
+      - "tests/test_depthsnap_exporter.py"
       - ".github/workflows/depthsnap-web.yml"
   workflow_dispatch:
 
@@ -17,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: apps/web
@@ -31,8 +40,33 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python exporter dependencies
+        working-directory: .
+        run: python -m pip install pandas numpy pytest
+
+      - name: Verify Python exporter, parity, and atomic operations
+        working-directory: .
+        run: python -m pytest tests/test_depthsnap_exporter.py -q
+
+      - name: Validate active and historical registries in Python
+        working-directory: .
+        run: |
+          python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export
+          python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export-historical-2025
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Regenerate deterministic fixtures
+        run: npm run generate:data
+
+      - name: Verify committed fixture bytes
+        run: git diff --exit-code -- public/data/depthsnap/fixture public/data/depthsnap/fixture-no-published-week public/data/depthsnap/fixture-unavailable
 
       - name: Validate DepthSnap data contracts
         run: npm run validate:data
@@ -46,8 +80,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run browser verification
+      - name: Run fixture browser verification
         run: npm run test:e2e
+
+      - name: Run active export browser verification
+        run: npm run test:e2e:export-active
+
+      - name: Prepare isolated historical export root
+        run: npm run prepare:export-e2e
+
+      - name: Run historical export browser verification
+        run: npm run test:e2e:export-historical
 
       - name: Upload browser evidence
         if: always()
@@ -55,7 +98,6 @@ jobs:
         with:
           name: depthsnap-browser-evidence
           path: |
-            apps/web/artifacts/screenshots
-            apps/web/artifacts/playwright-report
-            apps/web/artifacts/test-results
+            apps/web/artifacts
+            docs/depthsnap/reviews/phase4b-export/*.png
           if-no-files-found: warn

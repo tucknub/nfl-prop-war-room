@@ -20,7 +20,10 @@ export function WeeklyTimeline({
         <>
           <ol aria-label={`${playerName} weekly role evidence`}>
             {points.map((point) => (
-              <li key={point.week} className={!point.evidence ? "timeline-missing" : ""}>
+              <li
+                key={`${point.week}-${point.roleFamily}-${point.evidenceTeam?.id}`}
+                className={!point.evidence ? "timeline-missing" : ""}
+              >
                 <span className="timeline-week">W{point.week}</span>
                 <span className="timeline-bar" aria-hidden="true">
                   <span style={{ height: point.evidence ? `${Math.max(point.evidence.share * 100, 7)}%` : "0%" }} />
@@ -45,11 +48,17 @@ export function WeeklyTimeline({
             <thead><tr><th>Week</th><th>Share</th><th>Raw evidence</th><th>Quality</th></tr></thead>
             <tbody>
               {points.map((point) => (
-                <tr key={point.week}>
-                  <th scope="row">{point.periodLabel}</th>
+                <tr key={`${point.week}-${point.roleFamily}-${point.evidenceTeam?.id}`}>
+                  <th scope="row">
+                    {point.periodLabel} · {point.evidenceTeam?.id} ·{" "}
+                    {point.roleLabel}
+                  </th>
                   <td>{point.evidence ? `${(point.evidence.share * 100).toFixed(1)}%` : "Unavailable"}</td>
                   <td>{point.evidence ? `${point.evidence.numerator} of ${point.evidence.denominator} ${point.opportunityLabel}` : "No supplied evidence"}</td>
-                  <td>{point.partialGame ? "Reviewed partial game" : point.dataQuality.replaceAll("_", " ")}</td>
+                  <td>
+                    {point.participationQuality.replaceAll("_", " ")} · context{" "}
+                    {point.supportingContextStatus}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -4,14 +4,42 @@ Date: 2026-07-25
 
 Starting branch head: `de7b6ce72e457b1aa5e5599676b8e858f6dfe188`
 
-Status: **Published-registry generation is blocked by frozen-contract conflicts.**
+Resolution date: 2026-07-26
 
-This report records the Phase 4B authoritative-input audit. It does not change
-the frozen V1 web contract, Python calculations, thresholds, classifications,
-report membership, ordering, completed-week gates, partial-game rules, or
-Streamlit production.
+Status: **Resolved by PR #9 normative decisions; Phase 4B implementation resumed.**
 
-## Safe conclusion
+This report preserves the original Phase 4B authoritative-input audit and stop
+conditions. The newest PR #9 comment titled “Phase 4B normative decisions —
+resume authorization” supplied a decision for every stop condition and
+authorized the pre-production V1 contract to be amended in place. The
+implementation does not change Python calculations, thresholds, report
+membership, ordering, completed-week gates, partial-game rules, or Streamlit
+production.
+
+## Resolution record
+
+The authorization established:
+
+- the exact four neutral Home finding slugs;
+- removal of unsourced `classificationLabel` and `movementLabel`;
+- a closed `roleFamily` to `roleLabel` mapping;
+- optional team and player narrative fields;
+- separate participation-quality and supporting-context dimensions;
+- exporter-time `generatedAt` and content-addressed exact-source
+  `sourceVersion`;
+- active 2026 `no_published_week` publication;
+- a temporary, isolated completed-2025 historical parity registry;
+- ATL crosswalk completion;
+- team-neutral player identities with `currentTeam` and per-row
+  `evidenceTeam`;
+- deterministic exporter, validation, parity, atomic promotion, rollback,
+  cleanup, and frontend export-mode verification.
+
+The amended contract is `EXPORT_CONTRACT.md`; the implementation and evidence
+record is `PHASE4B_EXPORTER_AND_PARITY_BRIDGE.md`. The sections below remain as
+the historical explanation of why work originally stopped.
+
+## Original safe conclusion
 
 The repository has enough authority to implement deterministic serialization,
 exact-byte hashing, registry validation, staging, rollback, and publication
@@ -78,7 +106,7 @@ It is not a current operational `PUBLISHED` partition. Its release artifacts do
 not supply the frozen registry's required generated timestamp. Substituting it
 for the 2026 preseason state would violate the no-stale/no-prior-season rule.
 
-## Mandatory stop conditions
+## Original mandatory stop conditions
 
 ### 1. Home finding categories do not fit the frozen enum
 

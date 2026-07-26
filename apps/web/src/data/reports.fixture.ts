@@ -1,6 +1,5 @@
 import type {
   CurrentEvidenceRow,
-  DataQuality,
   MovementDirection,
   MovementEvidenceRow,
   PublishedCurrentReportFixture,
@@ -16,6 +15,40 @@ import type {
   ReportFamily,
 } from "@/lib/types";
 import { getPlayerIdentity, getTeamIdentity } from "@/data/identity.fixture";
+
+type FixtureQualityInput =
+  | "complete"
+  | "reviewed_partial_game"
+  | "context_unavailable";
+
+const roleFamilies = {
+  "RB carry share": "rb_carry_share",
+  "RB opportunity share": "rb_opportunity_share",
+  "WR target share": "wr_target_share",
+  "TE target share": "te_target_share",
+} as const;
+
+function normalizedRoleFamily(roleFamily: string) {
+  const normalized =
+    roleFamilies[roleFamily as keyof typeof roleFamilies] ?? roleFamily;
+  if (!Object.values(roleFamilies).includes(normalized as never)) {
+    throw new Error(`Unsupported fixture role family: ${roleFamily}`);
+  }
+  return normalized;
+}
+
+function qualityDimensions(qualityInput: FixtureQualityInput) {
+  return {
+    participationQuality:
+      qualityInput === "reviewed_partial_game"
+        ? ("reviewed_partial_game" as const)
+        : ("complete" as const),
+    supportingContextStatus:
+      qualityInput === "context_unavailable"
+        ? ("unavailable" as const)
+        : ("available" as const),
+  };
+}
 
 const dataNotice =
   "Design fixture data — synthetic records for interface review, not a current NFL week.";
@@ -65,8 +98,8 @@ function currentRow(
   position: PlayerPosition,
   roleFamily: string,
   current: RawShareEvidence,
-  classificationLabel: string,
-  dataQuality: DataQuality = "complete",
+  _fixtureRoleDescription: string,
+  qualityInput: FixtureQualityInput = "complete",
   supportingContext?: CurrentEvidenceRow["supportingContext"],
 ): CurrentEvidenceRow {
   const identity = getPlayerIdentity(
@@ -80,10 +113,11 @@ function currentRow(
     id,
     authoritativeRank: rank,
     player: identity,
-    roleFamily,
+    evidenceTeam: teamIdentity,
+    roleFamily: normalizedRoleFamily(roleFamily),
+    roleLabel: roleFamily,
     current,
-    classificationLabel,
-    dataQuality,
+    ...qualityDimensions(qualityInput),
     supportingContext,
     teamHref: teamIdentity.href,
     playerHref: identity.href,
@@ -102,9 +136,9 @@ function movementRow(
   current: RawShareEvidence,
   percentagePointChange: number,
   direction: MovementDirection,
-  movementLabel: string,
+  _fixtureMovementDescription: string,
   finding: string,
-  dataQuality: DataQuality = "complete",
+  qualityInput: FixtureQualityInput = "complete",
 ): MovementEvidenceRow {
   const identity = getPlayerIdentity(
     id.replace(/-season-move$/, "").replace(/-move$/, ""),
@@ -117,12 +151,13 @@ function movementRow(
     id,
     authoritativeRank: rank,
     player: identity,
-    roleFamily,
+    evidenceTeam: teamIdentity,
+    roleFamily: normalizedRoleFamily(roleFamily),
+    roleLabel: roleFamily,
     movement: { previous, current, percentagePointChange },
     direction,
-    movementLabel,
     finding,
-    dataQuality,
+    ...qualityDimensions(qualityInput),
     teamHref: teamIdentity.href,
     playerHref: identity.href,
     evidenceHref: identity.href,
@@ -145,7 +180,7 @@ const backfieldLast4Rows = [
   currentRow("caleb-stone", 2, "Caleb Stone", "PDX", "RB", "RB opportunity share", evidence(25, 34, 0.735, "opportunities"), "lead role"),
   currentRow("jordan-vale", 3, "Jordan Vale", "BHM", "RB", "RB opportunity share", evidence(23, 33, 0.697, "opportunities"), "lead role", "reviewed_partial_game"),
   currentRow("zion-mercer", 4, "Zion Mercer", "IND", "RB", "RB opportunity share", evidence(22, 35, 0.629, "opportunities"), "shared backfield"),
-  currentRow("micah-reed", 5, "Micah Reed", "SAC", "RB", "RB opportunity share", evidence(21, 32, 0.656, "opportunities"), "shared backfield", "unavailable_supporting_context"),
+  currentRow("micah-reed", 5, "Micah Reed", "SAC", "RB", "RB opportunity share", evidence(21, 32, 0.656, "opportunities"), "shared backfield", "context_unavailable"),
   currentRow("devin-banks", 6, "Devin Banks", "OKC", "RB", "RB opportunity share", evidence(19, 31, 0.613, "opportunities"), "committee"),
 ] as const;
 
@@ -163,7 +198,7 @@ const targetLast4Rows = [
   currentRow("luca-ward", 4, "Luca Ward", "PDX", "WR", "WR target share", evidence(9, 30, 0.3, "targets"), "shared target tier"),
   currentRow("omar-voss", 5, "Omar Voss", "SAC", "WR", "WR target share", evidence(8, 28, 0.286, "targets"), "emerging concentration"),
   currentRow("eli-rhodes", 6, "Eli Rhodes", "OKC", "TE", "TE target share", evidence(7, 28, 0.25, "targets"), "leading TE"),
-  currentRow("cole-mercer", 7, "Cole Mercer", "JVT", "TE", "TE target share", evidence(7, 32, 0.219, "targets"), "shared target tier", "unavailable_supporting_context"),
+  currentRow("cole-mercer", 7, "Cole Mercer", "JVT", "TE", "TE target share", evidence(7, 32, 0.219, "targets"), "shared target tier", "context_unavailable"),
 ] as const;
 
 const targetSeasonRows = [

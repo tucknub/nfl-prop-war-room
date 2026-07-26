@@ -43,10 +43,11 @@ const reportLinks = [
   },
 ] as const;
 
-const qualityLabels = {
+const participationLabels = {
   complete: "Complete",
+  suspected_statistical: "Suspected statistical partial participation",
+  suspected_corroborated: "Suspected partial participation, corroborated",
   reviewed_partial_game: "Reviewed partial game",
-  unavailable_supporting_context: "Supporting context unavailable",
 } as const;
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -69,7 +70,9 @@ function sortRows(rows: readonly ResultRow[], sort: ReportSort) {
   }
 
   if (sort === "team") {
-    return sorted.sort((a, b) => a.player.team.localeCompare(b.player.team));
+    return sorted.sort((a, b) =>
+      a.evidenceTeam.id.localeCompare(b.evidenceTeam.id),
+    );
   }
 
   if (sort === "share") {
@@ -118,11 +121,11 @@ function CurrentResultRow({
       <span className="report-player-cell">
         <strong>{row.player.name}</strong>
         <small>
-          {row.player.team} · {row.player.position} · {row.roleFamily}
+          {row.evidenceTeam.id} · {row.player.position} · {row.roleLabel}
         </small>
       </span>
       <span className="report-team-cell">
-        <strong>{row.player.team}</strong>
+        <strong>{row.evidenceTeam.id}</strong>
         <small>{row.player.position}</small>
       </span>
       <span className="report-share-cell" data-share-evidence>
@@ -136,9 +139,11 @@ function CurrentResultRow({
         </span>
       </span>
       <span className="report-classification">
-        <strong>{row.classificationLabel}</strong>
+        <strong>{row.roleLabel}</strong>
         <small>
-          {row.supportingContext ? "Typical-game context supplied" : qualityLabels[row.dataQuality]}
+          {row.supportingContext
+            ? "Typical-game context supplied"
+            : "Typical-game context unavailable"}
         </small>
       </span>
       <button
@@ -171,7 +176,7 @@ function MovementResultRow({
       <span className="report-player-cell">
         <strong>{row.player.name}</strong>
         <small>
-          {row.player.team} · {row.player.position} · {row.roleFamily}
+          {row.evidenceTeam.id} · {row.player.position} · {row.roleLabel}
         </small>
       </span>
       <span className="movement-period movement-period-prior" data-prior-evidence>
@@ -264,7 +269,7 @@ function EvidenceDrawer({
           </span>
           <h2 id="evidence-drawer-title">{row.player.name}</h2>
           <p>
-            {row.player.team} · {row.player.position} · {row.roleFamily}
+            {row.evidenceTeam.id} · {row.player.position} · {row.roleLabel}
           </p>
 
           {"movement" in row && (
@@ -323,8 +328,11 @@ function EvidenceDrawer({
 
           <dl className="evidence-metadata">
             <div>
-              <dt>Data quality</dt>
-              <dd>{qualityLabels[row.dataQuality]}</dd>
+              <dt>Participation and context</dt>
+              <dd>
+                {participationLabels[row.participationQuality]} · supporting
+                context {row.supportingContextStatus}
+              </dd>
             </div>
             <div>
               <dt>Published through</dt>
@@ -370,7 +378,8 @@ export function ReportExperience({
   const rows = useMemo(() => {
     const filtered = allRows.filter((row) => {
       const teamMatch =
-        initialQuery.team === "ALL" || row.player.team === initialQuery.team;
+        initialQuery.team === "ALL" ||
+        row.evidenceTeam.id === initialQuery.team;
       const positionMatch =
         data.reportFamily !== "target_hierarchy" ||
         initialQuery.position === "ALL" ||

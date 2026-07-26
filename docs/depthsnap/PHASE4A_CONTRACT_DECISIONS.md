@@ -1,6 +1,14 @@
 # DepthSnap Phase 4A Contract Decisions
 
-Status: **Normative for Phase 4A and the later Python export bridge**
+Status: **Historical Phase 4A authority; amended by Phase 4B before production**
+
+The newest PR #9 comment titled “Phase 4B normative decisions — resume
+authorization” supersedes this file only where the Phase 4B authority-gap
+report identified conflicts: Home slugs, unsourced classification/movement
+labels, role labels, narrative optionality, split quality dimensions,
+generation/source metadata, active/historical registry treatment, ATL, and
+team-neutral player/evidence-team identity. The current normative contract is
+`EXPORT_CONTRACT.md`.
 
 This file freezes decisions that must be settled before runtime schemas, manifests, and public loaders are implemented. Codex may refine implementation details, but it must not silently change these product or data-contract decisions.
 
