@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - "src/operations/**"
+      - "src/export/**"
       - "scripts/run_current_role_research.py"
+      - "scripts/publish_current_depthsnap.py"
+      - "scripts/rehearse_depthsnap_release.py"
       - "scripts/validate_current_role_outputs.py"
       - "dashboard/**"
       - "tests/test_current_role_*.py"
+      - "tests/test_depthsnap_*.py"
       - "requirements.txt"
       - ".github/workflows/role-research-operations.yml"
   workflow_dispatch:
@@ -20,6 +24,11 @@ on:
         description: "Optional maximum regular-season week"
         required: false
         type: string
+      dry_run:
+        description: "Validate without promoting current outputs or DepthSnap"
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "30 13 * 9-12,1 2,4"
 
@@ -52,62 +61,16 @@ jobs:
           pip install pytest
 
       - name: Compile operational code
-        run: python -m compileall -q src/operations scripts dashboard tests
+        run: python -m compileall -q src/operations src/export scripts dashboard tests
 
-      - name: Run operational contract tests
+      - name: Run no-network operational contract tests
         run: |
           python -m pytest -q \
             tests/test_current_role_operations.py \
             tests/test_current_role_dashboard_status.py \
-            tests/test_public_role_research_language.py
-
-      - name: Verify current nflreadpy schemas against a completed historical week
-        id: schema_contract
-        continue-on-error: true
-        run: |
-          set +e
-          python scripts/run_current_role_research.py \
-            --season 2025 \
-            --through-week 1 \
-            --source-cache-dir /tmp/propwar-role-cache \
-            --output-dir /tmp/propwar-role-output \
-            --report-dir /tmp/propwar-role-reports \
-            --refresh \
-            --no-publish \
-            > /tmp/propwar-role-schema.log 2>&1
-          exit_code=$?
-          set -e
-          cat /tmp/propwar-role-schema.log
-          if [ "$exit_code" -ne 0 ]; then
-            exit "$exit_code"
-          fi
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          payload = json.loads(
-              Path('/tmp/propwar-role-reports/role_research_attempt_2025.json').read_text(encoding='utf-8')
-          )
-          assert payload['status'] == 'VALIDATED_NOT_PUBLISHED', payload
-          assert payload['published_through_week'] == 1, payload
-          PY
-
-      - name: Upload nflreadpy schema evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: current-role-schema-contract
-          path: |
-            /tmp/propwar-role-schema.log
-            /tmp/propwar-role-reports
-          if-no-files-found: warn
-
-      - name: Enforce nflreadpy schema contract
-        if: steps.schema_contract.outcome == 'failure'
-        run: |
-          cat /tmp/propwar-role-schema.log || true
-          find /tmp/propwar-role-reports -maxdepth 2 -type f -print -exec cat {} \; || true
-          exit 1
+            tests/test_public_role_research_language.py \
+            tests/test_depthsnap_release.py
+          python scripts/rehearse_depthsnap_release.py
 
   publish-current-season:
     if: github.event_name != 'pull_request'
@@ -132,11 +95,12 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Resolve season and optional week
+      - name: Resolve season, optional week, and dry-run mode
         id: target
         env:
           INPUT_SEASON: ${{ inputs.season }}
           INPUT_WEEK: ${{ inputs.through_week }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           from datetime import datetime, timezone
@@ -146,19 +110,27 @@ jobs:
           supplied = os.environ.get("INPUT_SEASON", "").strip()
           season = int(supplied) if supplied else (now.year - 1 if now.month == 1 else now.year)
           week = os.environ.get("INPUT_WEEK", "").strip()
+          dry_run = os.environ.get("INPUT_DRY_RUN", "").strip().lower() == "true"
           print(f"season={season}")
           print(f"week_arg={'--through-week ' + week if week else ''}")
+          print(f"publish_arg={'--no-publish' if dry_run else ''}")
           PY
 
       - name: Refresh and build current-season partition
+        id: pipeline
+        continue-on-error: true
         run: |
           python scripts/run_current_role_research.py \
             --season "${{ steps.target.outputs.season }}" \
             ${{ steps.target.outputs.week_arg }} \
+            ${{ steps.target.outputs.publish_arg }} \
             --refresh
 
       - name: Read attempt status
         id: attempt
+        if: always()
+        env:
+          SEASON: ${{ steps.target.outputs.season }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
@@ -171,8 +143,6 @@ jobs:
           print(f"status={payload['status']}")
           print(f"through_week={payload.get('published_through_week') or ''}")
           PY
-        env:
-          SEASON: ${{ steps.target.outputs.season }}
 
       - name: Independently validate published files
         if: steps.attempt.outputs.status == 'PUBLISHED'
@@ -180,19 +150,43 @@ jobs:
           python scripts/validate_current_role_outputs.py --season "${{ steps.target.outputs.season }}"
           python -m pytest -q tests/test_current_role_operations.py tests/test_current_role_dashboard_status.py
 
-      - name: Commit validated partition
-        if: steps.attempt.outputs.status == 'PUBLISHED'
+      - name: Apply current state to the active DepthSnap registry
+        if: always() && steps.attempt.outputs.status != ''
+        run: |
+          python scripts/publish_current_depthsnap.py \
+            "outputs/run_reports/role_research/role_research_attempt_${{ steps.target.outputs.season }}.json"
+          python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export
+
+      - name: Commit validated operational state
+        if: steps.attempt.outputs.status != 'VALIDATED_NOT_PUBLISHED'
+        env:
+          STATE: ${{ steps.attempt.outputs.status }}
         run: |
           git config user.name "propwar-operations"
           git config user.email "actions@users.noreply.github.com"
-          git add outputs/role_research
+          git add apps/web/public/data/depthsnap/export
+          if [ "$STATE" = "PUBLISHED" ]; then
+            git add outputs/role_research
+          fi
           if git diff --cached --quiet; then
-            echo "No validated output changes to commit."
+            echo "No validated operational changes to commit."
             exit 0
           fi
-          git commit -m "Publish ${{ steps.target.outputs.season }} role research through Week ${{ steps.attempt.outputs.through_week }}"
+          git commit -m "Publish ${{ steps.target.outputs.season }} DepthSnap state through Week ${{ steps.attempt.outputs.through_week || 'preseason' }}"
           git pull --rebase origin streamlit-cloud-deploy
           git push origin HEAD:streamlit-cloud-deploy
+
+      - name: Enforce blocked operational outcome
+        if: always() && steps.attempt.outputs.status == 'BLOCKED'
+        run: |
+          echo "Publication is BLOCKED; the prior valid registry was retained or an unavailable registry was generated."
+          exit 1
+
+      - name: Enforce unexpected pipeline failure
+        if: always() && steps.pipeline.outcome == 'failure' && steps.attempt.outputs.status != 'BLOCKED'
+        run: |
+          echo "The current-season pipeline failed without a handled BLOCKED state."
+          exit 1
 
       - name: Upload operational evidence
         if: always()
@@ -208,4 +202,6 @@ jobs:
             outputs/role_research/source_coverage_${{ steps.target.outputs.season }}_live.csv
             outputs/role_research/join_coverage_${{ steps.target.outputs.season }}_live.csv
             outputs/role_research/completion_gate_${{ steps.target.outputs.season }}.csv
+            apps/web/public/data/depthsnap/export/manifest.json
+            apps/web/public/data/depthsnap/export/status.json
           if-no-files-found: warn

@@ -14,6 +14,7 @@ from typing import Any, Iterable, Mapping, Sequence
 import pandas as pd
 
 from src.load.build_identity_crosswalk import TEAM_VARIANTS, canonical_team
+from src.operations.published_validation import validate_published_role_outputs
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -131,6 +132,7 @@ PUBLIC_DATA_ROOT = REPO_ROOT / "apps" / "web" / "public" / "data" / "depthsnap"
 ACTIVE_EXPORT_DIRECTORY = PUBLIC_DATA_ROOT / "export"
 HISTORICAL_EXPORT_DIRECTORY = PUBLIC_DATA_ROOT / "export-historical-2025"
 ACTIVE_STATUS_PATH = REPO_ROOT / "outputs" / "role_research" / "role_research_status_2026.json"
+CURRENT_ROLE_OUTPUT_DIRECTORY = REPO_ROOT / "outputs" / "role_research"
 HISTORICAL_SOURCE_PATHS = (
     REPO_ROOT / "outputs" / "role_research" / "canonical_role_2025_descriptive.csv.gz",
     REPO_ROOT / "outputs" / "role_research" / "canonical_audit_2025.json",
@@ -344,6 +346,77 @@ def historical_registry_spec(generated_at: str | None = None) -> RegistrySpec:
         source_artifacts=artifacts,
         status_payload={"status": "PUBLISHED", "historicalParity": True},
         historical_parity=True,
+    )
+
+
+def current_published_registry_spec(
+    status_path: Path = ACTIVE_STATUS_PATH,
+    *,
+    output_dir: Path = CURRENT_ROLE_OUTPUT_DIRECTORY,
+    generated_at: str | None = None,
+) -> RegistrySpec:
+    status_path = Path(status_path)
+    output_dir = Path(output_dir)
+    status = _load_json(status_path)
+    if status.get("status") != "PUBLISHED":
+        raise DepthSnapExportError(
+            "A populated current registry requires supplied PUBLISHED status"
+        )
+    season = int(status.get("season") or 0)
+    through_week = int(status.get("published_through_week") or 0)
+    if season < 2026 or not 1 <= through_week <= 18:
+        raise DepthSnapExportError(
+            "Current published status requires season 2026 or later and Week 1 through 18"
+        )
+    validation = validate_published_role_outputs(season, output_dir)
+    if validation.get("status") != "PASS":
+        raise DepthSnapExportError(
+            "Current-season role outputs failed independent publication validation"
+        )
+    artifact_paths = [
+        output_dir / f"canonical_role_{season}_live.csv.gz",
+        output_dir / f"situational_player_week_{season}_live.csv.gz",
+        output_dir / f"game_player_usage_{season}_live.csv.gz",
+        output_dir / f"opportunity_events_{season}_live.csv.gz",
+        output_dir / f"partial_game_status_{season}_live.csv.gz",
+        output_dir / f"join_coverage_{season}_live.csv",
+        output_dir / f"source_coverage_{season}_live.csv",
+        output_dir / f"role_research_manifest_{season}.json",
+        output_dir / f"role_research_validation_{season}.json",
+        output_dir / f"role_research_status_{season}.json",
+        output_dir / f"source_input_manifest_{season}_live.csv",
+        output_dir / f"completion_gate_{season}.csv",
+    ]
+    if status_path.resolve() not in {
+        path.resolve() for path in artifact_paths
+    }:
+        artifact_paths.append(status_path)
+    artifacts = source_artifacts(artifact_paths)
+    manifest = _load_json(output_dir / f"role_research_manifest_{season}.json")
+    return RegistrySpec(
+        publication_status="published",
+        season=season,
+        through_week=through_week,
+        generated_at=generated_at or utc_now(),
+        source_version=content_addressed_source_version(
+            season=season,
+            publication_status="published",
+            artifacts=artifacts,
+        ),
+        validation_result="pass",
+        data_notice=str(status.get("message") or f"Published through Week {through_week}."),
+        source_artifacts=artifacts,
+        formula_version=(
+            str(manifest["formula_version"])
+            if manifest.get("formula_version")
+            else None
+        ),
+        pipeline_run_id=(
+            str(status["staging_run_id"])
+            if status.get("staging_run_id")
+            else None
+        ),
+        status_payload=status,
     )
 
 
@@ -1606,17 +1679,23 @@ def build_nonpublished_plan(spec: RegistrySpec) -> list[PlannedBundle]:
 
 
 def build_published_plan(spec: RegistrySpec) -> list[PlannedBundle]:
-    if (
-        spec.publication_status != "published"
-        or spec.through_week is None
-        or not spec.historical_parity
-        or spec.season != 2025
-    ):
+    if spec.publication_status != "published" or spec.through_week is None:
         raise DepthSnapExportError(
-            "Populated generation is limited to the authorized completed-2025 historical parity registry"
+            "Populated generation requires independently validated published inputs"
         )
     canonical = primary_rows(load_role_data())
     canonical = canonical[canonical["season"].eq(spec.season)].copy()
+    if canonical.empty:
+        raise DepthSnapExportError(
+            f"No validated canonical rows are available for season {spec.season}"
+        )
+    observed_weeks = sorted(
+        canonical["week"].dropna().astype(int).unique().tolist()
+    )
+    if not observed_weeks or observed_weeks[-1] != spec.through_week:
+        raise DepthSnapExportError(
+            "Canonical role rows do not reach the supplied published week"
+        )
     teams = build_team_identities()
     players, current_teams = build_player_identities(
         canonical, spec.season, spec.through_week
@@ -1753,9 +1832,26 @@ def build_published_plan(spec: RegistrySpec) -> list[PlannedBundle]:
         )
     )
     bundle_count = len(plan) + 1
-    audit = _load_json(
-        REPO_ROOT / "outputs" / "role_research" / "canonical_audit_2025.json"
-    )
+    audit = {
+        "confirmed_partial_family_rows": int(
+            canonical.get(
+                "confirmed_partial_game",
+                pd.Series(False, index=canonical.index),
+            )
+            .fillna(False)
+            .astype(bool)
+            .sum()
+        ),
+        "suspected_partial_family_rows": int(
+            canonical.get(
+                "suspected_partial_game",
+                pd.Series(False, index=canonical.index),
+            )
+            .fillna(False)
+            .astype(bool)
+            .sum()
+        ),
+    }
     status = _status_bundle(
         spec,
         bundle_count=bundle_count,

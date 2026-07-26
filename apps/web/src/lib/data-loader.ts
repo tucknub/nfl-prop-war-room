@@ -21,6 +21,7 @@ import {
   type PublicationVariant,
 } from "@/lib/data-registry-core";
 import { loadCachedDepthSnapRegistry } from "@/lib/data-registry-cache";
+import { resolveRuntimeDataConfiguration } from "@/lib/runtime-config";
 import type { ReportFamily } from "@/lib/types";
 
 export type LoadedData<T> = {
@@ -51,13 +52,13 @@ async function registryForState(
   | { ok: true; registry: DepthSnapRegistry }
   | { ok: false; failure: LoaderFailure }
 > {
-  const mode = process.env.DEPTHSNAP_DATA_MODE;
+  const configuration = resolveRuntimeDataConfiguration(process.env);
+  if (!configuration.ok) return configuration;
   return loadCachedDepthSnapRegistry({
-    mode,
-    dataRoot: process.env.DEPTHSNAP_DATA_ROOT,
+    mode: configuration.mode,
+    dataRoot: configuration.dataRoot,
     publicationVariant: publicationVariantFromState(state),
-    allowFixtureDefault:
-      mode === undefined && process.env.NODE_ENV === "development",
+    allowFixtureDefault: configuration.allowFixtureDefault,
   });
 }
 

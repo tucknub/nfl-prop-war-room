@@ -20,6 +20,7 @@ import {
   loadDepthSnapRegistry,
   type PublicationVariant,
 } from "../src/lib/data-registry-core";
+import { resolveRuntimeDataConfiguration } from "../src/lib/runtime-config";
 
 const fixtureSource = path.resolve(
   process.cwd(),
@@ -156,6 +157,51 @@ test("production mode is explicit and the development fixture default is opt-in"
   expect(developmentDefault).toMatchObject({
     ok: true,
     registry: { mode: "fixture" },
+  });
+});
+
+test("production runtime requires export mode and the approved data root", () => {
+  const cwd = path.resolve(process.cwd());
+  expect(resolveRuntimeDataConfiguration({ NODE_ENV: "production" }, cwd)).toMatchObject({
+    ok: false,
+    failure: { category: "unsupported_data_mode" },
+  });
+  expect(
+    resolveRuntimeDataConfiguration(
+      { NODE_ENV: "production", DEPTHSNAP_DATA_MODE: "export" },
+      cwd,
+    ),
+  ).toMatchObject({
+    ok: false,
+    failure: { category: "unsupported_data_mode" },
+  });
+  expect(
+    resolveRuntimeDataConfiguration(
+      {
+        NODE_ENV: "production",
+        DEPTHSNAP_DATA_MODE: "export",
+        DEPTHSNAP_DATA_ROOT: "artifacts/test-data",
+      },
+      cwd,
+    ),
+  ).toMatchObject({
+    ok: false,
+    failure: { category: "unsupported_data_mode" },
+  });
+
+  const valid = resolveRuntimeDataConfiguration(
+    {
+      NODE_ENV: "production",
+      DEPTHSNAP_DATA_MODE: "export",
+      DEPTHSNAP_DATA_ROOT: "public/data/depthsnap",
+    },
+    cwd,
+  );
+  expect(valid).toEqual({
+    ok: true,
+    mode: "export",
+    dataRoot: path.resolve(cwd, "public", "data", "depthsnap"),
+    allowFixtureDefault: false,
   });
 });
 

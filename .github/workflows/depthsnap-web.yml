@@ -11,10 +11,14 @@ on:
       - "docs/propwar/NEXTJS_PUBLIC_APP_MIGRATION.md"
       - "outputs/role_research/**"
       - "scripts/export_depthsnap.py"
+      - "scripts/publish_current_depthsnap.py"
+      - "scripts/rehearse_depthsnap_release.py"
       - "src/export/depthsnap_exporter.py"
+      - "src/export/depthsnap_release.py"
       - "src/load/build_identity_crosswalk.py"
       - "tests/fixtures/depthsnap_role_status_blocked_2026.json"
       - "tests/test_depthsnap_exporter.py"
+      - "tests/test_depthsnap_release.py"
       - ".github/workflows/depthsnap-web.yml"
   workflow_dispatch:
 
@@ -47,11 +51,24 @@ jobs:
 
       - name: Install Python exporter dependencies
         working-directory: .
-        run: python -m pip install pandas numpy pytest PyYAML
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest
 
       - name: Verify Python exporter, parity, and atomic operations
         working-directory: .
-        run: python -m pytest tests/test_depthsnap_exporter.py -q
+        run: |
+          python -m pytest tests/test_depthsnap_exporter.py tests/test_depthsnap_release.py -q
+          python scripts/rehearse_depthsnap_release.py
+
+      - name: Verify existing Python methodology and correctness
+        working-directory: .
+        run: python -m pytest tests -q
+
+      - name: Check Python dependency consistency
+        working-directory: .
+        run: python -m pip check
 
       - name: Validate active and historical registries in Python
         working-directory: .
@@ -61,6 +78,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit full and production npm dependencies
+        run: |
+          npm audit --audit-level=critical
+          npm audit --omit=dev --audit-level=critical
 
       - name: Snapshot committed fixtures
         run: |
@@ -103,6 +125,18 @@ jobs:
       - name: Run historical export browser verification
         run: npm run test:e2e:export-historical
 
+      - name: Create and audit production package, then smoke test it
+        run: npm run package:production
+
+      - name: Prepare isolated release-state roots
+        run: npm run prepare:release-states
+
+      - name: Run unavailable and contract-failure production verification
+        run: npm run test:e2e:release-states
+
+      - name: Re-audit production package isolation
+        run: npm run audit:production
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v5
@@ -111,4 +145,5 @@ jobs:
           path: |
             apps/web/artifacts
             docs/depthsnap/reviews/phase4b-export/*.png
+            docs/depthsnap/reviews/release-readiness/*.png
           if-no-files-found: warn

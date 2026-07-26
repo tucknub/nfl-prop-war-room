@@ -33,6 +33,7 @@ export default defineConfig({
       DEPTHSNAP_DATA_ROOT: path.resolve(
         "artifacts/export-e2e-data/depthsnap",
       ),
+      DEPTHSNAP_ALLOW_TEST_DATA_ROOT: "1",
     },
     reuseExistingServer: false,
     timeout: 120_000,

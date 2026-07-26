@@ -2,11 +2,18 @@
   "name": "depthsnap-web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "generate:data": "tsx scripts/generate-depthsnap-fixtures.ts",
     "measure:data": "tsx scripts/measure-depthsnap-registry.ts",
+    "package:production:stage": "tsx scripts/package-production.ts",
+    "audit:production": "tsx scripts/audit-production-package.ts",
+    "package:production": "npm run package:production:stage && npm run test:e2e:production && npm run audit:production",
     "validate:data": "tsx scripts/validate-depthsnap-data.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -14,6 +21,9 @@
     "prepare:export-e2e": "tsx scripts/prepare-export-e2e.ts",
     "test:e2e:export-active": "playwright test --config playwright.export-active.config.ts",
     "test:e2e:export-historical": "playwright test --config playwright.export-historical.config.ts",
+    "test:e2e:production": "playwright test --config playwright.production.config.ts",
+    "prepare:release-states": "tsx scripts/prepare-release-state-e2e.ts",
+    "test:e2e:release-states": "playwright test --config playwright.release-states.config.ts",
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
