@@ -47,7 +47,7 @@ jobs:
 
       - name: Install Python exporter dependencies
         working-directory: .
-        run: python -m pip install pandas numpy pytest
+        run: python -m pip install pandas numpy pytest PyYAML
 
       - name: Verify Python exporter, parity, and atomic operations
         working-directory: .
