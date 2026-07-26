@@ -31,10 +31,14 @@ The machine-enforced authority is
 - Development may opt into the fixture default only through its explicitly
   scoped loader path.
 - Export mode reads only `<dataRoot>/export`.
-- `DEPTHSNAP_DATA_ROOT` may select an independent export root for verification.
+- Production requires `DEPTHSNAP_DATA_ROOT` to resolve exactly to
+  `public/data/depthsnap` from the runtime package root.
+- Independent roots require the explicit test-only
+  `DEPTHSNAP_ALLOW_TEST_DATA_ROOT=1` override.
 - Export mode never falls back to fixtures.
 - A validated registry is cached for the process lifetime. Replacing an active
-  registry requires a new process/build before readers see it.
+  registry requires a controlled restart or rebuild/redeploy before readers
+  see it.
 
 The committed roots are:
 
@@ -43,6 +47,9 @@ The committed roots are:
   `apps/web/public/data/depthsnap/export-historical-2025`.
 
 The historical root is never selected by the application implicitly.
+The provider-neutral production package copies only the active root. Fixture,
+historical, private, test, Python, staging, and rollback content is rejected by
+the production artifact audit.
 
 ## Deterministic serialization, timestamps, and source versions
 
@@ -260,6 +267,23 @@ The exporter must:
 
 The active 2026 build uses atomic staging/promotion. Historical parity writes
 to its explicitly named, isolated directory and is not promoted active.
+
+## Production artifact and cache requirements
+
+The standalone production package must:
+
+- build with `DEPTHSNAP_DATA_MODE=export`;
+- reject a missing, invalid, or pre-2026 active registry;
+- stage only the active validated `export` directory;
+- exclude fixture, historical, private, source, test, screenshot, trace,
+  staging, rollback, and local-path content;
+- start successfully in production mode and pass route smoke tests.
+
+Registry JSON uses `max-age=0, must-revalidate` because its filenames remain
+stable across promotions; ETags may satisfy a revalidation. Next-generated
+hashed static assets may use immutable caching. A promotion must be followed
+by the documented process restart or rebuild/redeploy because registry
+validation is cached for the process lifetime.
 
 ## Opportunity Context preservation
 

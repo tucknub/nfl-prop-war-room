@@ -11,6 +11,10 @@ Starting head: `215ac8773e82e7c1780fafdcedbb7be4fe151b1d`
 
 Scope status: **implemented and verified; not merged or deployed**
 
+Release hardening, provider-neutral packaging, and launch evidence are
+documented in `RELEASE_READINESS.md`. The Phase 4B exporter and parity
+decisions remain unchanged.
+
 ## Outcome
 
 Phase 4B now provides a deterministic Python-to-Next.js export bridge without
@@ -139,7 +143,8 @@ python scripts/export_depthsnap.py preserve-context outputs/role_research/depths
 
 python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export
 python scripts/export_depthsnap.py validate apps/web/public/data/depthsnap/export-historical-2025
-python -m pytest tests/test_depthsnap_exporter.py -q
+python -m pytest tests/test_depthsnap_exporter.py tests/test_depthsnap_release.py -q
+python scripts/rehearse_depthsnap_release.py
 ```
 
 From `apps/web`:
@@ -155,6 +160,9 @@ npm run test:e2e
 npm run test:e2e:export-active
 npm run prepare:export-e2e
 npm run test:e2e:export-historical
+npm run package:production
+npm run prepare:release-states
+npm run test:e2e:release-states
 ```
 
 Operational commands:
@@ -179,6 +187,11 @@ temporary registry to
 
 Both suites assert that no fixture notice or synthetic-record copy appears.
 The loader does not use the fixture publication query variants in export mode.
+
+Production packaging builds a standalone Next.js server, selectively stages
+the active validated export, removes build/source/test content, scrubs
+generated local paths, and runs the artifact audit and production smoke suite.
+The package fails when the active root is absent, invalid, or historical.
 
 ## Opportunity Context preservation
 
@@ -212,3 +225,6 @@ CI also uploads fixture and export Playwright reports, traces, and screenshots.
   semver-major dependency change.
 - No merge, deployment, production-branch change, Streamlit change, Python
   methodology change, or domain change is part of this work.
+- Deployment-provider selection, the canonical public origin, and the
+  provider-specific restart/redeploy mechanism remain launch operations rather
+  than export-contract authority.

@@ -62,6 +62,42 @@ GitHub Actions runs at 13:30 UTC on Tuesdays and Thursdays during September–Ja
 - Thursday allows official corrections and revised source files to be incorporated.
 - January resolves to the prior calendar year's NFL season.
 - Manual dispatch supports an explicit season and optional maximum week.
+- Manual dispatch also supports `dry_run`; it passes `--no-publish` and does
+  not promote or commit a DepthSnap registry.
+- Ordinary pull-request CI performs no live source refresh. Scheduled and
+  non-dry manual operations are the authorized live-refresh paths.
+
+## DepthSnap current-season bridge
+
+After the existing pipeline writes its attempt status, the bridge applies the
+same operational authority without changing methodology:
+
+- `PUBLISHED` requires independent validation, then builds, validates, and
+  atomically promotes the populated current-season registry;
+- `PRESEASON` and `WAITING_FOR_COMPLETED_WEEK` promote the truthful
+  `no_published_week` registry;
+- `BLOCKED` retains a same-season prior valid registry, or builds
+  `unavailable` from the supplied blocked metadata when none exists;
+- `VALIDATED_NOT_PUBLISHED` never promotes;
+- any identity, schema, hash, parity, loader, or validation failure retains
+  the prior valid registry.
+
+The bridge rejects seasons before 2026. A temporary 2025 parity registry is
+never used as current evidence.
+
+Apply one supplied state:
+
+```bash
+python scripts/publish_current_depthsnap.py \
+  outputs/run_reports/role_research/role_research_attempt_2026.json
+```
+
+Rehearse failure, retention, rollback, later promotion, and cleanup without
+touching the active registry:
+
+```bash
+python scripts/rehearse_depthsnap_release.py
+```
 
 ## Commands
 
@@ -104,3 +140,8 @@ Each row must contain season, week, game ID, player ID, team, reason, and review
 ## Rollback
 
 Every successful weekly update is one generated-data commit on `streamlit-cloud-deploy`. Reverting that commit restores the previous published partition. Frozen historical files remain unchanged throughout current-season operations.
+
+DepthSnap promotion also retains `export.rollback` until guarded cleanup. A
+running web process caches its validated registry for its lifetime, so a
+registry commit must trigger the authorized rebuild/redeploy or a controlled
+process restart before the new source version is public.

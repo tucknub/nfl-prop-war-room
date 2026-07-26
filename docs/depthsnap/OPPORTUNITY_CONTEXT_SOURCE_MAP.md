@@ -6,6 +6,11 @@ This document inventories source availability for possible future Opportunity
 Context research. It does not add a fourth report, change V1 schemas, infer
 causation, create a projection, or introduce a universal opportunity score.
 
+Release packaging note: this source map and its private preservation inventory
+remain repository/CI evidence. Neither is copied into the public production
+artifact. Artifact isolation does not remove or reinterpret any preserved
+dimension.
+
 ## Guardrails
 
 - Carries, targets, receptions, offensive snaps, and total opportunities remain
