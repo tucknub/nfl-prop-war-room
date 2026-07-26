@@ -31,7 +31,11 @@ test("blocked current season without prior data renders unavailable safely", asy
       "Current-season publication is blocked and no prior valid registry is available.",
     ),
   ).toBeVisible();
-  await expect(page.getByText("Bundle unavailable", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByLabel("Role data is unavailable")
+      .getByText("Data unavailable", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".fixture-notice")).toHaveCount(0);
   await expect(page.getByText(/2025 historical/i)).toHaveCount(0);
   await page.screenshot({

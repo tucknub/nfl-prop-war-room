@@ -137,7 +137,9 @@ test("all production routes, deep links, and keyboard navigation fail closed cle
   await expect(page).toHaveURL(/#main-content$/);
   await page.keyboard.press("/");
   await expect(page).toHaveURL(/\/search\?focus=1$/);
-  await expect(page.getByRole("heading", { name: "Find exact evidence" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Search DepthSnap" }),
+  ).toBeVisible();
 
   await page.goto("/");
   await page.screenshot({

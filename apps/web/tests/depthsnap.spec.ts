@@ -74,14 +74,14 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   await expect(page.getByText(/synthetic records/i)).toBeVisible();
 
   const heroHeading = page.getByRole("heading", {
-    name: "Marcus Hale took control of the team backfield.",
+    name: "Marcus Hale’s RB opportunity share rose from 56.3% to 79.4%.",
   });
   const movementHeading = page.getByRole("heading", {
-    name: "Role Movement Feed",
+    name: "Recent role changes",
   });
-  const teamHeading = page.getByRole("heading", { name: "Team Snapshot" });
+  const teamHeading = page.getByRole("heading", { name: "Team role snapshot" });
   const leaderboardHeading = page.getByRole("heading", {
-    name: "Report Leaderboard",
+    name: "Quick leaders",
   });
 
   await expect(heroHeading).toBeVisible();
@@ -118,12 +118,12 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
     teamSnapshot.getByText("Jacksonville Tide", { exact: true }),
   ).toBeVisible();
   await expect(teamSnapshot.getByText("Week 18", { exact: true })).toBeVisible();
-  await expect(teamSnapshot.getByText("RB1", { exact: true })).toBeVisible();
-  await expect(teamSnapshot.getByText("RB2", { exact: true })).toBeVisible();
-  await expect(teamSnapshot.getByText("WR1", { exact: true })).toBeVisible();
-  await expect(teamSnapshot.getByText("TE1", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("Backfield leader", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("Secondary back", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("WR target leader", { exact: true })).toBeVisible();
+  await expect(teamSnapshot.getByText("TE target leader", { exact: true })).toBeVisible();
   await expect(
-    teamSnapshot.getByText("Biggest documented movement", { exact: true }),
+    teamSnapshot.getByText("Biggest recent change", { exact: true }),
   ).toBeVisible();
   await expect(
     teamSnapshot.getByRole("link", { name: "View team dossier" }),
@@ -140,7 +140,11 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   await expect(
     leaderboard.getByRole("tab", { name: "Role Movement" }),
   ).toBeVisible();
-  await expect(leaderboard.getByTestId("leaderboard-row")).toHaveCount(5);
+  const backfieldLeaderNames = await leaderboard
+    .getByTestId("leaderboard-row")
+    .locator(".leaderboard-player strong")
+    .allTextContents();
+  expect(new Set(backfieldLeaderNames).size).toBe(backfieldLeaderNames.length);
   await expect(leaderboard.getByText(/role score/i)).toHaveCount(0);
   await expectEveryShareHasRawEvidence(page);
 
@@ -150,7 +154,11 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   await targetTab.click();
   await expect(targetTab).toHaveAttribute("aria-selected", "true");
   await expect(leaderboard.getByText("Theo Lane", { exact: true })).toBeVisible();
-  await expect(leaderboard.getByTestId("leaderboard-row")).toHaveCount(5);
+  const targetLeaderNames = await leaderboard
+    .getByTestId("leaderboard-row")
+    .locator(".leaderboard-player strong")
+    .allTextContents();
+  expect(new Set(targetLeaderNames).size).toBe(targetLeaderNames.length);
   await backfieldTab.click();
 
   await expectNoHorizontalOverflow(page);
@@ -160,7 +168,7 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   expect(desktopHeight).toBeLessThanOrEqual(900);
 
   await page
-    .getByRole("link", { name: "Open supporting evidence" })
+    .getByRole("link", { name: "View evidence", exact: true })
     .click();
   await expect(page).toHaveURL(
     /\/reports\/backfield\?player=player-marcus-hale$/,

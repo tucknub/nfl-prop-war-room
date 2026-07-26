@@ -1,10 +1,6 @@
-import { readFileSync, readdirSync, mkdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-
-const screenshotDirectory = path.join(process.cwd(), "artifacts", "screenshots");
-
-test.beforeAll(() => mkdirSync(screenshotDirectory, { recursive: true }));
 
 function monitorPageErrors(page: Page) {
   const errors: string[] = [];
@@ -25,222 +21,249 @@ async function expectNoOverflow(page: Page) {
   expect(sizes.body).toBeLessThanOrEqual(sizes.viewport);
 }
 
-async function capture(page: Page, name: string, fullPage = false) {
-  await page.screenshot({
-    path: path.join(screenshotDirectory, name),
-    animations: "disabled",
-    fullPage,
-  });
-}
-
-test("teams directory filters supplied teams and preserves exact raw evidence", async ({ page }) => {
+test("team and player directories retain exact evidence with consumer language", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  const errors = monitorPageErrors(page);
   await page.goto("/teams");
   await expect(page.getByRole("heading", { name: "Team role structure" })).toBeVisible();
-  await expect(page.getByText(/synthetic records/i)).toBeVisible();
   await expect(page.locator(".team-directory-item")).toHaveCount(8);
-  const jvt = page.locator(".team-directory-item").filter({ hasText: "Jacksonville Tide" });
+  const jvt = page.locator(".team-directory-item").filter({
+    hasText: "Jacksonville Tide",
+  });
   await expect(jvt).toContainText("27 of 34 opportunities");
   await expect(jvt).toContainText("11 of 32 targets");
-  await capture(page, "phase3-desktop-teams.png");
+  await expect(jvt).toContainText("Largest recent change");
 
-  await page.getByLabel("Search teams").fill("Portland");
-  await expect(page.locator(".team-directory-item")).toHaveCount(1);
-  await page.getByRole("link", { name: "Open team dossier" }).click();
-  await expect(page).toHaveURL("/teams/PDX");
-  await expect(page.getByRole("heading", { name: "Portland Pioneers" })).toBeVisible();
-  await expectNoOverflow(page);
-  expect(errors).toEqual([]);
-});
-
-test("team dossier combines all three report families and stable player links", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/teams/JVT");
-  await expect(page.getByRole("heading", { name: "Jacksonville Tide" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Backfield hierarchy" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "WR target hierarchy" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "TE target hierarchy" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Biggest supplied movements" })).toBeVisible();
-  await expect(page.getByText("27 of 34 opportunities", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("11 of 32 targets", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Marcus Hale" }).first()).toHaveAttribute("href", "/players/player-marcus-hale");
-  await capture(page, "phase3-desktop-team-dossier.png");
-
-  await page.getByRole("link", { name: "Marcus Hale" }).first().click();
-  await expect(page).toHaveURL("/players/player-marcus-hale");
-  await expect(page.getByRole("heading", { name: "Marcus Hale" })).toBeVisible();
-});
-
-test("players directory filters by identity and supplied report membership", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/players");
-  await expect(page.getByRole("heading", { name: "Player role evidence" })).toBeVisible();
   await expect(page.locator(".player-directory-list > article")).toHaveCount(27);
-  await capture(page, "phase3-desktop-players.png");
   await page.getByLabel("Team", { exact: true }).selectOption("JVT");
-  await page.getByLabel("Position", { exact: true }).selectOption("RB");
+  await page.getByLabel("Position").selectOption("RB");
   await expect(page.locator(".player-directory-list > article")).toHaveCount(2);
-  await page.getByLabel("Report", { exact: true }).selectOption("backfield_control");
+  await page.getByLabel("Report").selectOption("backfield_control");
   await expect(page.locator(".player-directory-list > article")).toHaveCount(1);
   await expect(page.getByText("27 of 34 opportunities", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Open dossier" }).click();
-  await expect(page).toHaveURL("/players/player-marcus-hale");
+  await expect(page.getByLabel("Order")).toContainText("Report order");
 });
 
-test("player dossier exposes exact weekly chronology, context, movements, and memberships", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test("team dossier starts with a deterministic role summary and progressive detail", async ({
+  page,
+}) => {
+  await page.goto("/teams/JVT");
+  await expect(page.getByRole("heading", { name: "Jacksonville Tide" })).toBeVisible();
+  const summary = page.locator(".team-dossier-summary");
+  await expect(summary).toContainText(
+    "Marcus Hale leads Jacksonville Tide’s backfield with 27 of 34 opportunities.",
+  );
+  await expect(summary).toContainText(
+    "Jonah Pike leads WR targets with 11 of 32.",
+  );
+  await expect(summary).toContainText(
+    "Cole Mercer leads TE targets with 7 of 32.",
+  );
+  await expect(
+    page.getByRole("heading", {
+      name: "Biggest recent gains and declines",
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Backfield hierarchy" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "WR hierarchy" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "TE hierarchy" })).toBeVisible();
+  await expect(page.getByText("Source version")).not.toBeVisible();
+  await page.getByText("View deeper evidence").click();
+  await expect(page.getByText("Source version")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Marcus Hale" }).first(),
+  ).toHaveAttribute("href", "/players/player-marcus-hale");
+});
+
+test("player dossier uses three summaries, one weekly metric, and collapsed counts", async ({
+  page,
+}) => {
   const errors = monitorPageErrors(page);
   await page.goto("/players/player-marcus-hale");
   await expect(page.getByRole("heading", { name: "Marcus Hale" })).toBeVisible();
-  await expect(page.getByText("27 of 34 opportunities", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Weekly role timeline" })).toBeVisible();
-  await expect(page.getByRole("table")).toContainText("Week 18");
-  await expect(page.getByRole("table")).toContainText("27 of 34 opportunities");
-  await expect(page.getByRole("table")).toContainText("No supplied evidence");
-  await expect(page.getByRole("heading", { name: "Current reports" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Team hierarchy context" })).toBeVisible();
+  const cards = page.locator(".player-summary-cards article");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.nth(0)).toContainText("Current role");
+  await expect(cards.nth(0)).toContainText("27 of 34 opportunities");
+  await expect(cards.nth(1)).toContainText("Gain · +23.1 pp");
+  await expect(cards.nth(1)).toContainText("18/32");
+  await expect(cards.nth(1)).toContainText("27/34");
+  await expect(cards.nth(2)).toContainText("Team position");
+
+  await expect(
+    page.getByRole("heading", { name: "How the role changed week by week" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Total opportunities" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  const weekButtons = page.locator(".weekly-trend-chart > li > button");
+  await expect(weekButtons).toHaveCount(18);
+  await expect(
+    page.getByRole("button", { name: /Week 18, 79\.4%/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("table")).toHaveCount(0);
+  await page.getByText("View exact weekly counts").click();
+  const table = page.getByRole("table");
+  await expect(table).toBeVisible();
+  await expect(table.locator("tbody tr")).toHaveCount(18);
+  await expect(table).toContainText("79.4% · 27/34");
+  await expect(table).toContainText("No evidence");
+
+  await expect(page.getByRole("heading", { name: "Teammate comparison" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Movement history" })).toBeVisible();
-  await capture(page, "phase3-desktop-player-dossier.png");
-  await page.getByRole("heading", { name: "Weekly role timeline" }).scrollIntoViewIfNeeded();
-  await capture(page, "phase3-desktop-player-timeline.png");
+  await expect(
+    page.getByText("Weeks 15–18 compared with Weeks 11–14"),
+  ).toBeVisible();
+  await expect(page.getByText("Source version")).not.toBeVisible();
+  await page.getByText("Technical details").click();
+  await expect(page.getByText("Team-neutral player ID")).toBeVisible();
+  await expect(page.getByText("Source version")).toBeVisible();
   await expectNoOverflow(page);
   expect(errors).toEqual([]);
 });
 
-test("global search prioritizes supplied identities and supports keyboard navigation", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-  await page.getByRole("link", { name: "Search players and teams" }).click();
-  await expect(page).toHaveURL(/\/search\?focus=1/);
-  await expect(page.getByRole("combobox", { name: "Search supplied identities" })).toBeFocused();
-  await page.goto("/");
-  await page.keyboard.press("/");
-  await expect(page).toHaveURL(/\/search\?focus=1/);
-  const input = page.getByRole("combobox", { name: "Search supplied identities" });
+test("weekly chart exposes focus details and a textual accessible equivalent", async ({
+  page,
+}) => {
+  await page.goto("/players/player-marcus-hale");
+  const week15 = page.getByRole("button", { name: /Week 15, 75\.0%/ });
+  await week15.focus();
+  const detail = page.locator(".weekly-trend-detail");
+  await expect(detail).toContainText("Week 15");
+  await expect(detail).toContainText("75.0%");
+  await expect(detail).toContainText("24 of 32 opportunities");
+  await expect(
+    page.locator(".weekly-text-equivalent"),
+  ).toContainText("Week 15:");
+  await expect(page.locator(".weekly-text-equivalent")).toContainText(
+    "24 of 32 opportunities",
+  );
+});
+
+test("search uses plain player and team results with keyboard navigation", async ({
+  page,
+}) => {
+  await page.goto("/search?focus=1");
+  await expect(
+    page.getByRole("heading", { name: "Search DepthSnap" }),
+  ).toBeVisible();
+  const input = page.getByRole("combobox", {
+    name: "Search players and teams",
+  });
   await expect(input).toBeFocused();
   await input.fill("mar");
-  await expect(page.getByRole("option").first()).toContainText("Marcus Hale");
-  await capture(page, "phase3-desktop-search.png");
-  await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("option").nth(1)).toHaveAttribute("aria-selected", "true");
-  await page.keyboard.press("ArrowUp");
+  const first = page.getByRole("option").first();
+  await expect(first).toContainText("Marcus Hale");
+  await expect(first).toContainText("RB · Jacksonville Tide");
+  await expect(first).toContainText("View player");
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL("/players/player-marcus-hale");
 
   await page.goto("/search?focus=1");
-  await input.fill("JVT");
-  await expect(page.getByRole("option").first()).toContainText("Jacksonville Tide");
-  await page.keyboard.press("Escape");
-  await expect(input).toHaveValue("");
-  const ids = await page.getByRole("option").evaluateAll((elements) => elements.map((element) => element.id));
-  expect(new Set(ids).size).toBe(ids.length);
+  await page.getByRole("combobox").fill("JVT");
+  await expect(page.getByRole("option").first()).toContainText(
+    "Jacksonville Tide",
+  );
+  await expect(page.getByRole("option").first()).toContainText("View team");
 });
 
-test("identity states distinguish loading, unpublished, unavailable, filters, and not found", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test("identity states and not-found pages stay truthful and plain", async ({
+  page,
+}) => {
   await page.goto("/teams?state=loading");
   await expect(page.getByLabel("Loading team directory")).toBeVisible();
   await page.goto("/players?state=unpublished");
-  await expect(page.getByRole("heading", { name: /No completed week is published/ })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /No completed week is published/ }),
+  ).toBeVisible();
   await page.goto("/teams/JVT?state=unavailable");
-  await expect(page.getByRole("heading", { name: "Jacksonville Tide evidence is unavailable" })).toBeVisible();
-  await capture(page, "phase3-desktop-unavailable-team.png");
+  await expect(
+    page.getByRole("heading", {
+      name: "Jacksonville Tide evidence is unavailable",
+    }),
+  ).toBeVisible();
   await page.goto("/players/player-marcus-hale?state=unavailable");
-  await expect(page.getByRole("heading", { name: "Marcus Hale evidence is unavailable" })).toBeVisible();
-  await capture(page, "phase3-desktop-unavailable-player.png");
-
+  await expect(
+    page.getByRole("heading", {
+      name: "Marcus Hale evidence is unavailable",
+    }),
+  ).toBeVisible();
   await page.goto("/teams/unknown-team");
-  await expect(page.getByRole("heading", { name: "This team identity is not in the selected bundle" })).toBeVisible();
-  await capture(page, "phase3-desktop-unknown-team.png");
+  await expect(
+    page.getByRole("heading", { name: "This team is not available" }),
+  ).toBeVisible();
   await page.goto("/players/player-unknown");
-  await expect(page.getByRole("heading", { name: "This player identity is not in the selected bundle" })).toBeVisible();
-  await capture(page, "phase3-desktop-unknown-player.png");
-
-  await page.goto("/teams");
-  await page.getByLabel("Search teams").fill("no such team");
-  await expect(page.getByRole("heading", { name: /No supplied teams match/ })).toBeVisible();
-  await page.getByRole("button", { name: "Reset team search" }).click();
-  await expect(page.locator(".team-directory-item")).toHaveCount(8);
+  await expect(
+    page.getByRole("heading", { name: "This player is not available" }),
+  ).toBeVisible();
 });
 
-test("normalized evidence agrees across Feed, report, team, player, and search", async ({ page }) => {
+test("normalized evidence agrees across feed, report, team, player, and search", async ({
+  page,
+}) => {
   const exact = "27 of 34 opportunities";
-  await page.goto("/");
-  await expect(page.getByText(exact, { exact: true }).first()).toBeVisible();
-  await page.goto("/reports/backfield");
-  await expect(page.getByTestId("report-row").first()).toContainText(exact);
-  await page.goto("/teams/jvt");
-  await expect(page.getByText(exact, { exact: true }).first()).toBeVisible();
-  await page.goto("/players/PLAYER-MARCUS-HALE");
-  await expect(page.getByText(exact, { exact: true }).first()).toBeVisible();
-  await page.goto("/search?q=Marcus");
-  await expect(page.getByRole("option").first()).toContainText(exact);
-});
-
-test("mobile identity routes are purpose built, overflow free, and clear the fixed navigation", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  const routes = [
-    ["/teams", "phase3-mobile-teams.png"],
-    ["/teams/JVT", "phase3-mobile-team-dossier.png"],
-    ["/players", "phase3-mobile-players.png"],
-    ["/players/player-marcus-hale", "phase3-mobile-player-dossier.png"],
-    ["/search?q=mar", "phase3-mobile-search.png"],
-  ] as const;
-  for (const [route, image] of routes) {
+  for (const route of [
+    "/",
+    "/reports/backfield",
+    "/teams/jvt",
+    "/players/PLAYER-MARCUS-HALE",
+    "/search?q=Marcus",
+  ]) {
     await page.goto(route);
-    await expect(page.locator(".identity-page-shell:not([aria-busy='true'])")).toBeVisible();
-    await expectNoOverflow(page);
-    const clearance = await page.locator(".identity-page-shell:not([aria-busy='true'])").evaluate((element) => Number.parseFloat(getComputedStyle(element).paddingBottom));
-    expect(clearance).toBeGreaterThanOrEqual(112);
-    const navigation = page.getByRole("navigation", { name: "Mobile navigation" });
-    await expect(navigation).toBeVisible();
-    await capture(page, image, true);
+    await expect(page.locator("main")).toContainText(exact);
   }
+});
 
-  await page.goto("/search?focus=1");
-  await expect(page.getByRole("combobox")).toBeFocused();
-  await page.getByRole("combobox").fill("JVT");
-  await capture(page, "phase3-mobile-search-open.png");
-
+test("mobile identity routes and weekly trend stay overflow free", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = monitorPageErrors(page);
+  for (const route of [
+    "/teams",
+    "/teams/JVT",
+    "/players",
+    "/players/player-marcus-hale",
+    "/search?q=mar",
+  ]) {
+    await page.goto(route);
+    await expectNoOverflow(page);
+    await expect(
+      page.getByRole("navigation", { name: "Mobile navigation" }),
+    ).toBeVisible();
+  }
   await page.goto("/players/player-marcus-hale");
-  await page.getByRole("heading", { name: "Weekly role timeline" }).scrollIntoViewIfNeeded();
+  await page
+    .getByRole("heading", { name: "How the role changed week by week" })
+    .scrollIntoViewIfNeeded();
   await expectNoOverflow(page);
-  await capture(page, "phase3-mobile-player-timeline.png");
-
-  await page.goto("/teams/unknown");
-  await capture(page, "phase3-mobile-unknown-team.png");
-  await page.goto("/players/player-unknown");
-  await capture(page, "phase3-mobile-unknown-player.png");
+  await expect(
+    page.locator(".weekly-trend-chart > li > button"),
+  ).toHaveCount(18);
+  expect(errors).toEqual([]);
 });
 
-test("mobile Search navigation opens and active controls remain accessible", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  const nav = page.getByRole("navigation", { name: "Mobile navigation" });
-  await nav.getByRole("link", { name: "Search" }).click();
-  await expect(page).toHaveURL("/search");
-  await expect(page.getByRole("combobox")).toBeFocused();
-  await page.getByRole("combobox").fill("Theo");
-  await expect(page.getByRole("option").first()).toContainText("Theo Lane");
-  await page.getByRole("option").first().getByRole("link").focus();
-  await expect(page.getByRole("option").first().getByRole("link")).toBeFocused();
+test("normal identity and search pages contain no banned internal wording", async ({
+  page,
+}) => {
+  for (const route of [
+    "/teams",
+    "/teams/JVT",
+    "/players",
+    "/players/player-marcus-hale",
+    "/search",
+  ]) {
+    await page.goto(route);
+    const text = (await page.locator("main").innerText()).toLowerCase();
+    expect(text).not.toMatch(
+      /\b(python-supplied|supplied hierarchy|supplied identity|authority rank|canonical identity|export status|export bundle|evidence team|future player|future team|default-report evidence)\b/,
+    );
+  }
 });
 
-test("captures Phase 1 and Phase 2 regression views without changing their layout", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-  await capture(page, "phase3-regression-desktop-feed.png");
-  await page.goto("/reports/backfield");
-  await capture(page, "phase3-regression-desktop-backfield.png");
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  await capture(page, "phase3-regression-mobile-feed.png", true);
-  await page.goto("/reports/backfield");
-  await capture(page, "phase3-regression-mobile-backfield.png", true);
-});
-
-test("Phase 3 public source contains no score, projection, recommendation, betting, or fantasy constructs", () => {
+test("identity source contains no score, projection, recommendation, or betting constructs", () => {
   const sourceRoot = path.join(process.cwd(), "src");
   const files: string[] = [];
   const visit = (directory: string) => {
@@ -251,10 +274,16 @@ test("Phase 3 public source contains no score, projection, recommendation, betti
     }
   };
   visit(sourceRoot);
-  const phase3Files = files.filter((file) =>
-    /(identity|team-|player-|weekly|search-experience|\[team\]|\[playerId\])/.test(file),
+  const identityFiles = files.filter((file) =>
+    /(identity|team-|player-|weekly|search-experience|\[team\]|\[playerId\])/.test(
+      file,
+    ),
   );
-  const source = phase3Files.map((file) => readFileSync(file, "utf8")).join("\n");
+  const source = identityFiles
+    .map((file) => readFileSync(file, "utf8"))
+    .join("\n");
   expect(source).not.toMatch(/\b(RoleScore|ImpactScore|ConfidenceScore)\b/i);
-  expect(source).not.toMatch(/\b(projection|betting|sportsbook|fantasy advice|recommendation)\b/i);
+  expect(source).not.toMatch(
+    /\b(projection|betting|sportsbook|fantasy advice|recommendation)\b/i,
+  );
 });

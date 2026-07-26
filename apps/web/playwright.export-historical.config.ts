@@ -1,6 +1,9 @@
 import path from "node:path";
 import { defineConfig } from "@playwright/test";
 
+const historicalPort = process.env.DEPTHSNAP_HISTORICAL_E2E_PORT ?? "3300";
+const historicalBaseUrl = `http://127.0.0.1:${historicalPort}`;
+
 export default defineConfig({
   testDir: "./tests",
   testMatch: "export-historical.spec.ts",
@@ -20,14 +23,14 @@ export default defineConfig({
   ],
   outputDir: "artifacts/test-results-export-historical",
   use: {
-    baseURL: "http://127.0.0.1:3300",
+    baseURL: historicalBaseUrl,
     browserName: "chromium",
     colorScheme: "dark",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run start -- --hostname 127.0.0.1 --port 3300",
-    url: "http://127.0.0.1:3300",
+    command: `npm run start -- --hostname 127.0.0.1 --port ${historicalPort}`,
+    url: historicalBaseUrl,
     env: {
       DEPTHSNAP_DATA_MODE: "export",
       DEPTHSNAP_DATA_ROOT: path.resolve(

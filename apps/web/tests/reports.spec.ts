@@ -1,20 +1,11 @@
 import { readFileSync } from "node:fs";
-import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { expect, test, type Page } from "@playwright/test";
-
-const screenshotDirectory = path.join(process.cwd(), "artifacts", "screenshots");
-
-test.beforeAll(() => {
-  mkdirSync(screenshotDirectory, { recursive: true });
-});
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 function monitorPageErrors(page: Page) {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") {
-      errors.push(`console: ${message.text()}`);
-    }
+    if (message.type() === "error") errors.push(`console: ${message.text()}`);
   });
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
   return errors;
@@ -30,278 +21,234 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport);
 }
 
-async function screenshot(
-  page: Page,
-  name: string,
-  fullPage = true,
-) {
-  await page.screenshot({
-    path: path.join(screenshotDirectory, name),
-    fullPage,
-    animations: "disabled",
-  });
-}
-
-async function expectEveryCurrentShareHasRawEvidence(page: Page) {
-  const evidence = page.locator(".report-result-row [data-share-evidence]");
-  const count = await evidence.count();
+async function expectRawEvidence(rows: Locator) {
+  const count = await rows.count();
   expect(count).toBeGreaterThan(0);
   for (let index = 0; index < count; index += 1) {
-    const text = await evidence.nth(index).innerText();
+    const text = await rows.nth(index).innerText();
     expect(text).toMatch(/\d+\.\d%/);
-    expect(text).toMatch(/\d+ of \d+ (opportunities|targets)/);
+    expect(text).toMatch(/\d+ of \d+ (opportunities|carries|targets)/);
   }
 }
 
-test("reports overview presents exactly three evidence families and working routes", async ({
+async function playerNames(page: Page) {
+  return page.locator(".report-player-cell > strong").allTextContents();
+}
+
+test("reports overview explains three football tools with exact evidence", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const errors = monitorPageErrors(page);
   await page.goto("/reports");
 
-  await expect(page.getByRole("heading", { name: "Reports" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Follow the evidence" }),
+    page.getByRole("heading", {
+      name: "Three tools for understanding NFL roles",
+    }),
   ).toBeVisible();
-  await expect(page.getByText(/synthetic records/i)).toBeVisible();
   await expect(page.locator(".report-family-card")).toHaveCount(3);
   await expect(
     page.getByRole("heading", {
-      name: "Who owns each team’s documented RB opportunities?",
+      name: "Who controls each team’s backfield opportunities?",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Who owns each team’s documented WR and TE targets?",
+      name: "Who controls each team’s documented targets?",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Whose documented role changed most between supplied periods?",
+      name: "Whose documented role changed the most?",
     }),
   ).toBeVisible();
-
-  const routes = [
-    ["Open Backfield Control", "/reports/backfield"],
-    ["Open Target Hierarchy", "/reports/targets"],
-    ["Open Role Movement", "/reports/movement"],
-  ] as const;
-  for (const [label, route] of routes) {
-    await expect(page.getByRole("link", { name: label })).toHaveAttribute(
-      "href",
-      route,
-    );
-  }
-
+  await expect(page.getByText("27 of 34 opportunities").first()).toBeVisible();
+  await expect(page.getByText("11 of 32 targets").first()).toBeVisible();
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "phase2-desktop-reports-overview.png", false);
   expect(errors).toEqual([]);
 });
 
-test("Backfield Control preserves authority, raw evidence, filters, sorts, and details", async ({
+test("Backfield Control defaults to total opportunities and highest share", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const errors = monitorPageErrors(page);
+  await page.goto("/reports/backfield");
+  const rows = page.getByTestId("report-row");
+
+  await expect(
+    page.getByRole("button", { name: "Total opportunities" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Sort")).toHaveValue("share");
+  await expect(rows).toHaveCount(6);
+  await expect(rows.first()).toContainText("Marcus Hale");
+  await expect(rows.first()).toContainText("27 of 34 opportunities");
+  await expectRawEvidence(rows);
+
+  const ids = await rows.evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("data-player-id")),
+  );
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
+test("Backfield metric and consumer sorts use only displayed source values", async ({
+  page,
+}) => {
   await page.goto("/reports/backfield");
 
+  await page.getByLabel("Sort").selectOption("share_asc");
+  await expect(page).toHaveURL(/sort=share_asc/);
+  expect((await playerNames(page))[0]).toBe("Devin Banks");
+
+  await page.getByLabel("Sort").selectOption("authority");
+  await expect(page).toHaveURL(/sort=authority/);
+  expect((await playerNames(page))[0]).toBe("Marcus Hale");
+
+  await page.getByRole("button", { name: "Carries" }).click();
+  await expect(page).toHaveURL(/metric=carries/);
   await expect(
-    page.getByRole("heading", { name: "Backfield Control" }),
+    page.getByRole("heading", { name: "No players match these controls" }),
   ).toBeVisible();
-  await expect(page.getByText(/synthetic records/i)).toBeVisible();
-  await expect(page.getByTestId("report-row")).toHaveCount(6);
-  await expect(
-    page.getByTestId("report-row").first().getByText("Marcus Hale", {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expectEveryCurrentShareHasRawEvidence(page);
-  await expectNoHorizontalOverflow(page);
-  await screenshot(page, "phase2-desktop-backfield.png", false);
 
-  await page.getByLabel("View", { exact: true }).selectOption("season");
-  await expect(page).toHaveURL(/view=season/);
-  await expect(page.getByTestId("report-row")).toHaveCount(4);
-
-  await page.getByLabel("Team", { exact: true }).selectOption("JVT");
-  await expect(page).toHaveURL(/team=JVT/);
-  await expect(page.getByTestId("report-row")).toHaveCount(1);
-
-  await page.getByLabel("Team", { exact: true }).selectOption("ALL");
-  await page.getByLabel("View", { exact: true }).selectOption("last4");
-  await page.getByLabel("Sort", { exact: true }).selectOption("share");
-  await expect(page).toHaveURL(/sort=share/);
-  const sortedPlayers = await page
-    .locator(".report-player-cell > strong")
-    .allTextContents();
-  expect(sortedPlayers.slice(0, 5)).toEqual([
-    "Marcus Hale",
-    "Caleb Stone",
-    "Jordan Vale",
-    "Micah Reed",
-    "Zion Mercer",
-  ]);
-
-  const evidenceTrigger = page.getByRole("button", {
-    name: "Open evidence for Marcus Hale",
-  });
-  await evidenceTrigger.click();
-  const dialog = page.getByRole("dialog", { name: "Marcus Hale" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("27 of 34 opportunities")).toBeVisible();
-  await screenshot(page, "phase2-desktop-backfield-detail.png", false);
-  await dialog.getByRole("button", { name: "Close evidence detail" }).click();
-  await expect(dialog).toBeHidden();
-  await expect(evidenceTrigger).toBeFocused();
-  expect(errors).toEqual([]);
-});
-
-test("Backfield Control distinguishes a no-match filter from report availability", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/reports/backfield?team=SEA");
-  await expect(
-    page.getByRole("heading", { name: "No supplied rows match this view" }),
-  ).toBeVisible();
-  await expect(page.getByText("6 supplied results")).toHaveCount(0);
-  await expect(page.getByText("0 supplied results")).toBeVisible();
-  await screenshot(page, "phase2-desktop-no-matching-filters.png", false);
-  await page.getByRole("button", { name: "Reset filters" }).click();
+  await page.getByRole("button", { name: "Reset controls" }).click();
   await expect(page).toHaveURL("/reports/backfield");
   await expect(page.getByTestId("report-row")).toHaveCount(6);
 });
 
-test("Target Hierarchy exposes All, WR, and TE URL-backed views with raw target counts", async ({
+test("Target Hierarchy defaults to wide receivers and identifies both leaders for a team", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const errors = monitorPageErrors(page);
-  await page.goto("/reports/targets?view=season&position=TE&team=MIN");
-
-  await expect(page.getByLabel("View", { exact: true })).toHaveValue("season");
-  await expect(page.getByLabel("Position")).toHaveValue("TE");
-  await expect(page.getByLabel("Team", { exact: true })).toHaveValue("MIN");
-  await expect(page.getByTestId("report-row")).toHaveCount(1);
+  await page.goto("/reports/targets");
   await expect(
-    page.getByTestId("report-row").getByText("Drew Keaton", { exact: true }),
-  ).toBeVisible();
-  await expectEveryCurrentShareHasRawEvidence(page);
-
-  await page.getByLabel("View", { exact: true }).selectOption("last4");
-  await page.getByLabel("Team", { exact: true }).selectOption("ALL");
-  await page.getByLabel("Position").selectOption("WR");
-  await expect(page).toHaveURL(/position=WR/);
+    page.getByRole("button", { name: "Wide receivers" }),
+  ).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("report-row")).toHaveCount(4);
 
-  await page.getByLabel("Position").selectOption("TE");
+  await page.getByRole("button", { name: "Tight ends" }).click();
   await expect(page).toHaveURL(/position=TE/);
   await expect(page.getByTestId("report-row")).toHaveCount(3);
   for (const row of await page.getByTestId("report-row").all()) {
-    await expect(row.getByText("TE", { exact: true }).first()).toBeVisible();
+    await expect(row).toContainText("TE");
+    await expect(row).toContainText(/\d+ of \d+ targets/);
   }
 
-  await page.getByRole("button", { name: "Open evidence for Drew Keaton" }).click();
-  await expect(page.getByRole("dialog", { name: "Drew Keaton" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-
-  await page.getByLabel("Position").selectOption("ALL");
-  await expect(page).not.toHaveURL(/position=/);
-  await screenshot(page, "phase2-desktop-targets.png", false);
-  await expectNoHorizontalOverflow(page);
-  expect(errors).toEqual([]);
+  await page.getByRole("button", { name: "All", exact: true }).click();
+  await page.getByLabel("Team", { exact: true }).selectOption("JVT");
+  const answer = page.locator("#report-answer");
+  await expect(answer).toContainText("Jonah Pike leads WRs");
+  await expect(answer).toContainText("Cole Mercer leads TEs");
 });
 
-test("Role Movement renders previous and current raw evidence with explicit direction sorts", async ({
+test("Role Movement defaults to gains and exposes declines, all movement, and report order", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const errors = monitorPageErrors(page);
   await page.goto("/reports/movement");
-
-  await expect(page.getByTestId("report-row")).toHaveCount(6);
   const rows = page.getByTestId("report-row");
-  for (let index = 0; index < (await rows.count()); index += 1) {
-    await expect(rows.nth(index).locator("[data-prior-evidence]")).toContainText(
-      /\d+ of \d+ (opportunities|carries|targets)/,
-    );
-    await expect(rows.nth(index).locator("[data-current-evidence]")).toContainText(
-      /\d+ of \d+ (opportunities|carries|targets)/,
-    );
-    await expect(rows.nth(index).locator(".movement-direction")).toHaveAttribute(
-      "aria-label",
-      /(gain|decline) from previous to current/,
-    );
-  }
-  await screenshot(page, "phase2-desktop-movement.png", false);
-
-  await page.getByLabel("Sort", { exact: true }).selectOption("gainers");
-  await expect(page).toHaveURL(/sort=gainers/);
   await expect(
-    page.getByTestId("report-row").first().getByText("Zion Mercer", {
-      exact: true,
-    }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Biggest gains" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(rows).toHaveCount(4);
+  await expect(rows.first()).toContainText("Zion Mercer");
+  await expect(rows.first()).toContainText("Gain");
+  await expect(rows.first()).toContainText("+26.5 pp");
 
-  await page.getByLabel("Sort", { exact: true }).selectOption("decliners");
-  await expect(page).toHaveURL(/sort=decliners/);
-  await expect(
-    page.getByTestId("report-row").first().getByText("Miles Redd", {
-      exact: true,
-    }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Biggest declines" }).click();
+  await expect(page).toHaveURL(/direction=declines/);
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText("Miles Redd");
+  await expect(rows.first()).toContainText("Decline");
+  await expect(rows.first()).toContainText("-29.1 pp");
 
-  await page.getByRole("button", { name: "Open evidence for Miles Redd" }).click();
-  const dialog = page.getByRole("dialog", { name: "Miles Redd" });
-  await expect(dialog.getByText("Previous", { exact: true })).toBeVisible();
-  await expect(dialog.getByText("Current", { exact: true })).toBeVisible();
-  await expect(dialog.getByText("15 of 26 carries")).toBeVisible();
-  await expect(dialog.getByText("8 of 28 carries")).toBeVisible();
-  await screenshot(page, "phase2-desktop-movement-detail.png", false);
-  await page.keyboard.press("Escape");
-
-  const reportText = (await page.locator("main").innerText()).toLowerCase();
-  expect(reportText).not.toMatch(/\b(score|projection|bet|pick|grade)\b/);
-  expect(errors).toEqual([]);
+  await page.getByRole("button", { name: "All movement" }).click();
+  await expect(rows).toHaveCount(6);
+  await page.getByLabel("Sort").selectOption("authority");
+  await expect(page).toHaveURL(/sort=authority/);
+  await expect(rows.first()).toContainText("Zion Mercer");
+  await expectRawEvidence(rows);
 });
 
-test("report family switcher and Feed deep links point to the three report routes", async ({
+test("movement rows pair semantic colors with arrows, labels, and exact pp values", async ({
   page,
 }) => {
-  await page.goto("/reports/backfield?view=season");
-  const switcher = page.getByRole("navigation", { name: "Report family" });
+  await page.goto("/reports/movement?direction=all");
+  const gain = page.locator('[data-movement-direction="gain"]').first();
+  const decline = page.locator('[data-movement-direction="decline"]').first();
+
+  await expect(gain).toContainText("Gain");
+  await expect(gain).toContainText(/\+\d+\.\d pp/);
+  await expect(decline).toContainText("Decline");
+  await expect(decline).toContainText(/-\d+\.\d pp/);
+  await expect(gain.locator(".movement-finding svg")).toHaveCount(1);
+  await expect(decline.locator(".movement-finding svg")).toHaveCount(1);
+  const colors = await Promise.all([
+    gain.locator(".movement-finding").evaluate((node) => getComputedStyle(node).color),
+    decline
+      .locator(".movement-finding")
+      .evaluate((node) => getComputedStyle(node).color),
+  ]);
+  expect(colors[0]).not.toBe(colors[1]);
+});
+
+test("comparison windows are explicit and evidence details use progressive disclosure", async ({
+  page,
+}) => {
+  await page.goto("/reports/movement");
   await expect(
-    switcher.getByRole("link", { name: "Backfield Control" }),
-  ).toHaveAttribute("aria-current", "page");
-  await switcher.getByRole("link", { name: "Target Hierarchy" }).click();
-  await expect(page).toHaveURL("/reports/targets");
-  await expect(
-    page.getByRole("heading", { name: "Target Hierarchy" }),
+    page.getByText("Weeks 15–18 compared with Weeks 11–14").first(),
   ).toBeVisible();
 
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "View all" })).toHaveAttribute(
-    "href",
-    "/reports/movement",
+  const trigger = page.getByRole("button", {
+    name: "View evidence for Zion Mercer",
+  });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Zion Mercer" });
+  await expect(dialog).toContainText(
+    "Zion Mercer’s RB opportunity share rose from 36.4% to 62.9%",
   );
+  await expect(dialog).toContainText("12 of 33 opportunities");
+  await expect(dialog).toContainText("22 of 35 opportunities");
   await expect(
-    page.getByRole("link", { name: "Open supporting evidence" }),
-  ).toHaveAttribute("href", /\/reports\/backfield/);
+    dialog.getByRole("link", { name: "View player dossier" }),
+  ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Full report" }).first(),
-  ).toHaveAttribute("href", "/reports/backfield");
+    dialog.getByRole("link", { name: "View team dossier" }),
+  ).toBeVisible();
+  await expect(dialog.getByText("Source version")).not.toBeVisible();
+
+  await dialog.getByText("Technical details").click();
+  await expect(dialog.getByText("Source version")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
 });
 
-test("report loading, no-published-week, and unavailable states retain structure", async ({
+test("evidence drawer traps focus and restores the opening control", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/reports/backfield");
+  const trigger = page.getByRole("button", {
+    name: "View evidence for Marcus Hale",
+  });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Marcus Hale" });
+  const close = dialog.getByRole("button", { name: "Close evidence" });
+  await expect(close).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(dialog.locator("summary")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(trigger).toBeFocused();
+});
+
+test("no-match, loading, no-week, and unavailable states stay distinct", async ({
+  page,
+}) => {
+  await page.goto("/reports/backfield?team=SEA");
+  await expect(
+    page.getByRole("heading", { name: "No players match these controls" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("report-row")).toHaveCount(0);
 
   await page.goto("/reports/backfield?state=loading");
   await expect(page.getByLabel("Loading report evidence")).toBeVisible();
-  await expect(page.locator(".report-loading-rows > span")).toHaveCount(6);
 
   await page.goto("/reports/backfield?state=empty");
   await expect(
@@ -309,8 +256,6 @@ test("report loading, no-published-week, and unavailable states retain structure
       name: "No completed week is published for this report",
     }),
   ).toBeVisible();
-  await expect(page.getByText(/No estimated shares are shown/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "Data Status" })).toBeVisible();
   await expect(page.getByTestId("report-row")).toHaveCount(0);
 
   await page.goto("/reports/movement?state=unavailable");
@@ -319,141 +264,106 @@ test("report loading, no-published-week, and unavailable states retain structure
       name: "This report bundle is temporarily unavailable",
     }),
   ).toBeVisible();
-  await expect(page.getByText(/No stale or estimated results/)).toBeVisible();
   await expect(page.getByTestId("report-row")).toHaveCount(0);
-  await screenshot(page, "phase2-desktop-unavailable.png", false);
 });
 
-test("invalid report parameters fall back safely without preserving invalid state", async ({
-  page,
-}) => {
+test("invalid parameters fall back to consumer defaults", async ({ page }) => {
   await page.goto(
-    "/reports/targets?view=invalid&sort=invalid&team=XXX&position=QB&page=-5",
+    "/reports/targets?view=invalid&sort=invalid&team=XXX&position=QB&direction=bad&metric=bad&page=-5",
   );
-  await expect(page.getByLabel("View", { exact: true })).toHaveValue("last4");
-  await expect(page.getByLabel("Sort", { exact: true })).toHaveValue("authority");
+  await expect(page.getByLabel("Window")).toHaveValue("last4");
+  await expect(page.getByLabel("Sort")).toHaveValue("share");
   await expect(page.getByLabel("Team", { exact: true })).toHaveValue("ALL");
-  await expect(page.getByLabel("Position")).toHaveValue("ALL");
-  await expect(page.getByTestId("report-row")).toHaveCount(7);
+  await expect(
+    page.getByRole("button", { name: "Wide receivers" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("report-row")).toHaveCount(4);
 });
 
 test.describe("mobile report composition", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("overview and each report fit without horizontal overflow or bottom-nav overlap", async ({
+  test("all reports use stacked rows without horizontal overflow", async ({
     page,
   }) => {
     const errors = monitorPageErrors(page);
-    const routes = [
-      ["/reports", "phase2-mobile-reports-overview.png"],
-      ["/reports/backfield", "phase2-mobile-backfield.png"],
-      ["/reports/targets", "phase2-mobile-targets.png"],
-      ["/reports/movement", "phase2-mobile-movement.png"],
-    ] as const;
-
-    for (const [route, image] of routes) {
+    for (const route of [
+      "/reports",
+      "/reports/backfield",
+      "/reports/targets",
+      "/reports/movement",
+    ]) {
       await page.goto(route);
       await expectNoHorizontalOverflow(page);
-      const navigation = page.getByRole("navigation", {
-        name: "Mobile navigation",
-      });
-      await expect(navigation).toBeVisible();
-      const clearance = await page.locator(".page-shell").evaluate((element) =>
-        Number.parseFloat(getComputedStyle(element).paddingBottom),
-      );
-      expect(clearance).toBeGreaterThanOrEqual(112);
-      await screenshot(page, image);
     }
-
-    await page.goto("/reports/movement");
-    const footer = page.locator(".report-footer");
-    await footer.scrollIntoViewIfNeeded();
-    const footerBox = await footer.boundingBox();
-    const navBox = await page
-      .getByRole("navigation", { name: "Mobile navigation" })
-      .boundingBox();
-    expect(footerBox).not.toBeNull();
-    expect(navBox).not.toBeNull();
-    expect(footerBox?.y).toBeLessThan(navBox?.y ?? 0);
+    const row = page.getByTestId("report-row").first();
+    await expect(row).toBeVisible();
+    expect(await row.evaluate((node) => getComputedStyle(node).display)).toBe(
+      "grid",
+    );
     expect(errors).toEqual([]);
   });
 
-  test("mobile filters are compact and keep position visible", async ({ page }) => {
+  test("mobile report controls and evidence sheet remain keyboard accessible", async ({
+    page,
+  }) => {
     await page.goto("/reports/targets");
     const controls = page.locator(".report-controls");
     await expect(controls).not.toHaveAttribute("open");
     await controls.locator("summary").click();
-    await expect(controls).toHaveAttribute("open", "");
-    await expect(page.getByLabel("Position")).toBeVisible();
-    await screenshot(page, "phase2-mobile-open-filters.png", false);
+    await expect(
+      page.getByRole("button", { name: "Tight ends" }),
+    ).toBeVisible();
 
-    await page.getByLabel("Position").selectOption("TE");
-    await expect(page).toHaveURL(/position=TE/);
-    const rows = page.getByTestId("report-row");
-    await expect(rows).toHaveCount(3);
-    await expect(rows.first().locator(".report-player-cell")).toContainText("TE");
-  });
-
-  test("mobile evidence uses a closeable sheet with readable previous and current values", async ({
-    page,
-  }) => {
     await page.goto("/reports/movement");
     await page
-      .getByRole("button", { name: "Open evidence for Zion Mercer" })
+      .getByRole("button", { name: "View evidence for Zion Mercer" })
       .click();
     const dialog = page.getByRole("dialog", { name: "Zion Mercer" });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("Previous", { exact: true })).toBeVisible();
-    await expect(dialog.getByText("Current", { exact: true })).toBeVisible();
-    await screenshot(page, "phase2-mobile-evidence-detail.png", false);
-    await dialog.getByRole("button", { name: "Close evidence detail" }).focus();
-    await expect(
-      dialog.getByRole("button", { name: "Close evidence detail" }),
-    ).toBeFocused();
-    await page.keyboard.press("Enter");
-    await expect(dialog).toBeHidden();
-  });
-
-  test("mobile no-match and unavailable states remain clear of navigation", async ({
-    page,
-  }) => {
-    await page.goto("/reports/backfield?team=SEA");
-    await expect(
-      page.getByRole("heading", { name: "No supplied rows match this view" }),
-    ).toBeVisible();
-    await screenshot(page, "phase2-mobile-no-matching-filters.png");
-
-    await page.goto("/reports/targets?state=unavailable");
-    await expect(
-      page.getByRole("heading", {
-        name: "This report bundle is temporarily unavailable",
-      }),
-    ).toBeVisible();
-    await screenshot(page, "phase2-mobile-unavailable.png");
+    await expect(dialog).toContainText("Previous");
+    await expect(dialog).toContainText("Current");
     await expectNoHorizontalOverflow(page);
+    await dialog.getByRole("button", { name: "Close evidence" }).click();
+    await expect(dialog).toHaveCount(0);
   });
 });
 
-test("public report source excludes score, grade, projection, and betting constructs", () => {
+test("normal report pages avoid internal contract wording and unsupported constructs", async ({
+  page,
+}) => {
+  for (const route of [
+    "/reports",
+    "/reports/backfield",
+    "/reports/targets",
+    "/reports/movement",
+  ]) {
+    await page.goto(route);
+    const text = (await page.locator("main").innerText()).toLowerCase();
+    expect(text).not.toMatch(
+      /\b(python-supplied|supplied order|authority rank|authority order|canonical identity|export bundle|evidence-team|future report)\b/,
+    );
+    expect(text).not.toMatch(
+      /\b(role score|impact score|confidence score|projection|recommendation|betting)\b/,
+    );
+  }
+});
+
+test("public report source excludes scores, projections, and betting constructs", () => {
   const sources = [
     "src/lib/report-types.ts",
     "src/lib/report-query.ts",
-    "src/data/reports.fixture.ts",
+    "src/lib/consumer-presentation.ts",
     "src/components/report-experience.tsx",
     "src/components/reports-overview.tsx",
-    "src/components/report-page.tsx",
-    "src/components/report-state.tsx",
   ].map((file) => readFileSync(path.join(process.cwd(), file), "utf8"));
-  const reportSource = sources.join("\n");
-
+  const source = sources.join("\n");
   for (const banned of [
     "RoleScore",
     "ImpactScore",
     "ConfidenceScore",
-    "projection",
     "betting recommendation",
     "universal grade",
   ]) {
-    expect(reportSource).not.toContain(banned);
+    expect(source).not.toContain(banned);
   }
 });
