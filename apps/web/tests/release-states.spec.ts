@@ -34,6 +34,7 @@ test("blocked current season without prior data renders unavailable safely", asy
   await expect(
     page
       .getByLabel("Role data is unavailable")
+      .locator(".panel-label")
       .getByText("Data unavailable", { exact: true }),
   ).toBeVisible();
   await expect(page.locator(".fixture-notice")).toHaveCount(0);
