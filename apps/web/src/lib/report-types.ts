@@ -172,6 +172,12 @@ export type ParsedReportQuery = {
   sort: ReportSort;
   team: string;
   position: "ALL" | PlayerPosition;
+  role:
+    | "ALL"
+    | "rb_opportunity_share"
+    | "rb_carry_share"
+    | "wr_target_share"
+    | "te_target_share";
   metric: "opportunities" | "carries";
   direction: "gains" | "declines" | "all";
   page: number;
@@ -182,6 +188,7 @@ export type ReportSearchParams = {
   sort?: string;
   team?: string;
   position?: string;
+  role?: string;
   metric?: string;
   direction?: string;
   page?: string;

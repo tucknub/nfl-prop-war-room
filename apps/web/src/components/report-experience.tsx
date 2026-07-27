@@ -18,6 +18,7 @@ import {
   metricLabel,
   movementLabel,
   movementVerb,
+  normalGameComparison,
   possessiveName,
 } from "@/lib/consumer-presentation";
 import type {
@@ -66,6 +67,20 @@ const participationLabels = {
   suspected_statistical: "Possible partial participation",
   suspected_corroborated: "Corroborated partial participation",
   reviewed_partial_game: "Reviewed partial game",
+} as const;
+
+const movementRoleLabels = {
+  rb_opportunity_share: "RB opportunity",
+  rb_carry_share: "RB carry",
+  wr_target_share: "WR target",
+  te_target_share: "TE target",
+} as const;
+
+const movementRolePositions = {
+  rb_opportunity_share: "RB",
+  rb_carry_share: "RB",
+  wr_target_share: "WR",
+  te_target_share: "TE",
 } as const;
 
 function sortRows(rows: readonly ResultRow[], sort: ReportSort) {
@@ -158,10 +173,6 @@ function CurrentResultRow({
           {row.evidenceTeam.name} · {row.player.position}
         </small>
       </span>
-      <span className="report-role-cell">
-        <strong>{row.roleLabel}</strong>
-        <small>{metricLabel(row.current.opportunityLabel)}</small>
-      </span>
       <span className="report-share-cell" data-share-evidence>
         <strong>{formatPercent(row.current.share)}</strong>
         <small>
@@ -172,14 +183,18 @@ function CurrentResultRow({
           <span style={{ width: `${row.current.share * 100}%` }} />
         </span>
       </span>
-      <span className={`report-context report-context-${caution ? "caution" : "neutral"}`}>
-        <strong>{caution ? "Caution" : "Context checked"}</strong>
-        <small>
-          {row.supportingContextStatus === "available"
-            ? "Normal-game context available"
-            : "Normal-game context unavailable"}
-        </small>
-      </span>
+      {caution ? (
+        <span className="report-context report-context-caution" role="note">
+          <strong>Caution</strong>
+          <small>
+            {row.participationQuality !== "complete"
+              ? participationLabels[row.participationQuality]
+              : "Normal-game context unavailable"}
+          </small>
+        </span>
+      ) : (
+        <span className="report-context-placeholder" aria-hidden="true" />
+      )}
       <button
         type="button"
         onClick={(event) => onOpen(event.currentTarget)}
@@ -387,18 +402,26 @@ function EvidenceDrawer({
             </div>
           )}
 
-          {row.supportingContext ? (
-            <div className="drawer-supporting">
-              <span>Normal-game comparison</span>
-              <strong>{row.supportingContext.label}</strong>
-              <small>
-                {formatPercent(row.supportingContext.evidence.share)} ·{" "}
-                {row.supportingContext.evidence.numerator} of{" "}
-                {row.supportingContext.evidence.denominator}{" "}
-                {row.supportingContext.evidence.opportunityLabel}
-              </small>
-            </div>
-          ) : null}
+          <div className="drawer-supporting">
+            <span>Normal-game comparison</span>
+            {row.supportingContext ? (
+              <>
+                <strong>{row.supportingContext.label}</strong>
+                <small>
+                  {formatPercent(row.supportingContext.evidence.share)} ·{" "}
+                  {row.supportingContext.evidence.numerator} of{" "}
+                  {row.supportingContext.evidence.denominator}{" "}
+                  {row.supportingContext.evidence.opportunityLabel}
+                </small>
+              </>
+            ) : null}
+            <p>
+              {normalGameComparison(
+                current,
+                row.supportingContext?.evidence,
+              )}
+            </p>
+          </div>
 
           {caution ? (
             <p className="drawer-caution" role="note">
@@ -484,6 +507,7 @@ export function ReportExperience({
   const [selectedRow, setSelectedRow] = useState<ResultRow | null>(null);
   const [copied, setCopied] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(25);
   const evidenceTrigger = useRef<HTMLButtonElement | null>(null);
   const view = data.views.find((item) => item.viewId === initialQuery.view) ?? data.views[0];
   const viewOption =
@@ -494,6 +518,20 @@ export function ReportExperience({
     viewOption.priorPeriod,
   );
   const allRows = view.rows as readonly ResultRow[];
+  const movementPositions = useMemo(
+    () =>
+      ["RB", "WR", "TE"].filter((position) =>
+        allRows.some((row) => row.player.position === position),
+      ),
+    [allRows],
+  );
+  const movementRoles = useMemo(
+    () =>
+      Object.keys(movementRoleLabels).filter((role) =>
+        allRows.some((row) => row.roleFamily === role),
+      ) as (keyof typeof movementRoleLabels)[],
+    [allRows],
+  );
   const effectiveSort: ReportSort =
     data.reportFamily === "role_movement" &&
     initialQuery.sort !== "authority"
@@ -510,9 +548,14 @@ export function ReportExperience({
         initialQuery.team === "ALL" ||
         row.evidenceTeam.id === initialQuery.team;
       const positionMatch =
-        data.reportFamily !== "target_hierarchy" ||
+        (data.reportFamily !== "target_hierarchy" &&
+          data.reportFamily !== "role_movement") ||
         initialQuery.position === "ALL" ||
         row.player.position === initialQuery.position;
+      const roleMatch =
+        data.reportFamily !== "role_movement" ||
+        initialQuery.role === "ALL" ||
+        row.roleFamily === initialQuery.role;
       const metricMatch =
         data.reportFamily !== "backfield_control" ||
         ("current" in row &&
@@ -523,7 +566,13 @@ export function ReportExperience({
         ("movement" in row &&
           row.direction ===
             (initialQuery.direction === "gains" ? "gain" : "decline"));
-      return teamMatch && positionMatch && metricMatch && directionMatch;
+      return (
+        teamMatch &&
+        positionMatch &&
+        roleMatch &&
+        metricMatch &&
+        directionMatch
+      );
     });
     return sortRows(oneRowPerPlayer(filtered), effectiveSort);
   }, [
@@ -533,8 +582,10 @@ export function ReportExperience({
     initialQuery.direction,
     initialQuery.metric,
     initialQuery.position,
+    initialQuery.role,
     initialQuery.team,
   ]);
+  const visibleRows = rows.slice(0, visibleCount);
 
   const footballOrder = useMemo(() => {
     const sort =
@@ -552,9 +603,9 @@ export function ReportExperience({
     if (!footballOrder.length) return "No players match the selected controls.";
     if (data.reportFamily === "role_movement") {
       const row = footballOrder[0] as MovementEvidenceRow;
-      return `${row.player.name} has the largest displayed ${movementLabel(
+      return `${row.player.name} has the largest ${movementLabel(
         row.movement.percentagePointChange,
-      ).toLowerCase()}: ${formatPercent(
+      ).toLowerCase()} in this view: ${formatPercent(
         row.movement.previous.share,
       )} to ${formatPercent(row.movement.current.share)} (${formatPoints(
         row.movement.percentagePointChange,
@@ -610,6 +661,13 @@ export function ReportExperience({
     Number(
       data.reportFamily === "role_movement" &&
         initialQuery.direction !== "gains",
+    ) +
+    Number(
+      data.reportFamily === "role_movement" &&
+        initialQuery.position !== "ALL",
+    ) +
+    Number(
+      data.reportFamily === "role_movement" && initialQuery.role !== "ALL",
     );
 
   useEffect(() => {
@@ -619,6 +677,18 @@ export function ReportExperience({
   useEffect(() => {
     pendingParams.current = searchParams.toString();
   }, [searchParams]);
+
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [
+    initialQuery.view,
+    initialQuery.sort,
+    initialQuery.team,
+    initialQuery.position,
+    initialQuery.role,
+    initialQuery.metric,
+    initialQuery.direction,
+  ]);
 
   const updateParams = (
     updates: Record<string, string | undefined>,
@@ -741,20 +811,74 @@ export function ReportExperience({
             />
           ) : null}
           {data.reportFamily === "role_movement" ? (
-            <SegmentedControl
-              label="Direction"
-              value={initialQuery.direction}
-              options={[
-                { value: "gains", label: "Biggest gains" },
-                { value: "declines", label: "Biggest declines" },
-                { value: "all", label: "All movement" },
-              ]}
-              onChange={(value) =>
-                updateParams({
-                  direction: value === "gains" ? undefined : value,
-                })
-              }
-            />
+            <>
+              <SegmentedControl
+                label="Direction"
+                value={initialQuery.direction}
+                options={[
+                  { value: "gains", label: "Biggest gains" },
+                  { value: "declines", label: "Biggest declines" },
+                  { value: "all", label: "All movement" },
+                ]}
+                onChange={(value) =>
+                  updateParams({
+                    direction: value === "gains" ? undefined : value,
+                  })
+                }
+              />
+              <SegmentedControl
+                label="Position"
+                value={initialQuery.position}
+                options={[
+                  { value: "ALL", label: "All" },
+                  ...movementPositions.map((position) => ({
+                    value: position,
+                    label: position,
+                  })),
+                ]}
+                onChange={(value) => {
+                  const selectedRole = initialQuery.role;
+                  const compatible =
+                    selectedRole === "ALL" ||
+                    movementRolePositions[selectedRole] === value;
+                  updateParams({
+                    position: value === "ALL" ? undefined : value,
+                    role: compatible
+                      ? selectedRole === "ALL"
+                        ? undefined
+                        : selectedRole
+                      : undefined,
+                  });
+                }}
+              />
+              <label>
+                <span>Role</span>
+                <select
+                  aria-label="Role"
+                  value={initialQuery.role}
+                  onChange={(event) => {
+                    const role = event.target
+                      .value as ParsedReportQuery["role"];
+                    updateParams({
+                      role: role === "ALL" ? undefined : role,
+                      position:
+                        role === "ALL"
+                          ? initialQuery.position === "ALL"
+                            ? undefined
+                            : initialQuery.position
+                          : movementRolePositions[role],
+                    });
+                  }}
+                >
+                  <option value="ALL">All roles</option>
+                  {movementRoles.map((role) => (
+                    <option value={role} key={role}>
+                      {movementRoleLabels[role]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
           ) : null}
           <label>
             <span>Window</span>
@@ -843,6 +967,7 @@ export function ReportExperience({
 
       <div className="report-results-heading">
         <span>
+          Showing <strong>{Math.min(visibleCount, rows.length)}</strong> of{" "}
           <strong>{rows.length}</strong> players
         </span>
         <small>{period}</small>
@@ -856,7 +981,7 @@ export function ReportExperience({
             <h2 id="no-match-title">No players match these controls</h2>
             <p>
               The report is available, but this combination of team, metric,
-              position, and direction has no qualifying result.
+              position, role, and direction has no qualifying result.
             </p>
             <button type="button" onClick={resetFilters}>
               Reset controls
@@ -880,14 +1005,13 @@ export function ReportExperience({
             ) : (
               <>
                 <span>Player</span>
-                <span>Role</span>
                 <span>Current share</span>
-                <span>Context</span>
+                <span>Caution</span>
                 <span>Evidence</span>
               </>
             )}
           </div>
-          {rows.map((row) =>
+          {visibleRows.map((row) =>
             "movement" in row ? (
               <MovementResultRow
                 key={row.id}
@@ -902,11 +1026,25 @@ export function ReportExperience({
               />
             ),
           )}
+          {visibleCount < rows.length ? (
+            <div className="report-reveal">
+              <button
+                type="button"
+                onClick={() =>
+                  setVisibleCount((count) =>
+                    Math.min(count + 25, rows.length),
+                  )
+                }
+              >
+                Show 25 more
+              </button>
+            </div>
+          ) : null}
         </section>
       )}
 
       <footer className="report-footer">
-        <span>Exact counts stay attached to every displayed percentage.</span>
+        <span>Every percentage includes its raw count.</span>
         <div>
           <Link href="/methodology">How this is calculated</Link>
           <Link href="/data-status">Data status</Link>

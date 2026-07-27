@@ -102,7 +102,10 @@ export function SearchExperience({
               aria-selected={indexValue === activeIndex}
               onMouseEnter={() => setActiveIndex(indexValue)}
             >
-              <Link href={result.href}>
+              <Link
+                href={result.href}
+                aria-label={`${result.displayName}, view ${result.type}`}
+              >
                 <span className={`search-result-type search-result-${result.type}`}>{result.type === "player" ? "P" : "T"}</span>
                 <span className="search-result-copy">
                   <strong>{result.displayName}</strong>
@@ -113,12 +116,12 @@ export function SearchExperience({
                     ? "No recent qualifying report"
                     : result.type === "player"
                       ? result.summary
-                      : "View team"}
+                      : result.summary}
                 </span>
                 <span className="search-result-action">
                   {result.type === "player" ? "View player" : "View team"}
+                  <span aria-hidden="true"> →</span>
                 </span>
-                <span aria-hidden="true">→</span>
               </Link>
             </li>
             );

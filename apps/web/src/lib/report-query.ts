@@ -6,6 +6,13 @@ import type {
 } from "@/lib/report-types";
 
 const positions = new Set(["ALL", "RB", "WR", "TE"]);
+const roles = new Set([
+  "ALL",
+  "rb_opportunity_share",
+  "rb_carry_share",
+  "wr_target_share",
+  "te_target_share",
+]);
 const presentationSorts = new Set<ReportSort>([
   "authority",
   "share",
@@ -44,6 +51,11 @@ export function parseReportQuery(
     requestedPosition && positions.has(requestedPosition)
       ? (requestedPosition as ParsedReportQuery["position"])
       : defaultPosition;
+  const requestedRole = searchParams.role;
+  const role =
+    requestedRole && roles.has(requestedRole)
+      ? (requestedRole as ParsedReportQuery["role"])
+      : "ALL";
   const metric =
     searchParams.metric === "carries" ? "carries" : "opportunities";
   const direction =
@@ -54,5 +66,5 @@ export function parseReportQuery(
   const page =
     Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
-  return { view, sort, team, position, metric, direction, page };
+  return { view, sort, team, position, role, metric, direction, page };
 }

@@ -71,6 +71,27 @@ export function rollingFourWeekComparison(throughWeek: number) {
   return `Weeks ${currentStart}–${throughWeek} compared with Weeks ${priorStart}–${priorEnd}`;
 }
 
+export function normalGameComparison(
+  current: RawShareEvidence,
+  normal?: RawShareEvidence,
+) {
+  if (!normal) {
+    return "Normal-game context is unavailable for this record.";
+  }
+
+  const normalPercent = formatPercent(normal.share);
+  const currentPercent = formatPercent(current.share);
+  const difference = (normal.share - current.share) * 100;
+
+  if (Math.abs(difference) < 2) {
+    return `The normal-game share was nearly unchanged: ${normalPercent} compared with ${currentPercent} overall.`;
+  }
+  if (difference < 0) {
+    return `The share was lower when unusual game situations were excluded: ${normalPercent} compared with ${currentPercent} overall.`;
+  }
+  return `The share was higher when unusual game situations were excluded: ${normalPercent} compared with ${currentPercent} overall.`;
+}
+
 export function metricLabel(label: RawShareEvidence["opportunityLabel"]) {
   if (label === "opportunities") return "Total opportunities";
   if (label === "carries") return "Carries";
