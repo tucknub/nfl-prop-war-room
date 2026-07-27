@@ -96,11 +96,11 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   const heroPanel = page.locator(".lead-panel");
   const heroMedia = page.getByTestId("lead-media");
   await expect(heroMedia).toBeVisible();
-  await expect(
-    heroMedia.getByRole("img", {
-      name: "Fictional football running back carrying the ball",
-    }),
-  ).toBeVisible();
+  await expect(heroMedia).toHaveAttribute(
+    "aria-label",
+    "Jacksonville Tide backfield role illustration",
+  );
+  await expect(heroMedia.locator("img")).toHaveCount(0);
   const heroBox = await heroPanel.boundingBox();
   const mediaBox = await heroMedia.boundingBox();
   expect(heroBox).not.toBeNull();
@@ -117,7 +117,9 @@ test("desktop composes the approved four-module dashboard at 1440 by 900", async
   await expect(
     teamSnapshot.getByText("Jacksonville Tide", { exact: true }),
   ).toBeVisible();
-  await expect(teamSnapshot.getByText("Week 18", { exact: true })).toBeVisible();
+  await expect(
+    teamSnapshot.getByText("Team snapshot · Week 18", { exact: true }),
+  ).toBeVisible();
   await expect(teamSnapshot.getByText("Backfield leader", { exact: true })).toBeVisible();
   await expect(teamSnapshot.getByText("Secondary back", { exact: true })).toBeVisible();
   await expect(teamSnapshot.getByText("WR target leader", { exact: true })).toBeVisible();
@@ -215,6 +217,11 @@ test("mobile uses the required module order and keeps navigation clear", async (
 
   await expect(hero).toBeVisible();
   await expect(heroMedia).toBeVisible();
+  await expect(heroMedia).toHaveAttribute(
+    "aria-label",
+    "Jacksonville Tide backfield role illustration",
+  );
+  await expect(heroMedia.locator("img")).toHaveCount(0);
   const mobileMediaBox = await heroMedia.boundingBox();
   expect(mobileMediaBox).not.toBeNull();
   expect(mobileMediaBox?.height).toBeGreaterThanOrEqual(140);

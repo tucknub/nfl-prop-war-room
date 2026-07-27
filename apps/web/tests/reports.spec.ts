@@ -83,6 +83,9 @@ test("Backfield Control defaults to total opportunities and highest share", asyn
   await expect(rows.first()).toContainText("Marcus Hale");
   await expect(rows.first()).toContainText("27 of 34 opportunities");
   await expectRawEvidence(rows);
+  await expect(page.getByText("Context checked")).toHaveCount(0);
+  await expect(rows.first().locator(".report-role-cell")).toHaveCount(0);
+  await expect(rows.first().locator(".report-context-caution")).toHaveCount(0);
 
   const ids = await rows.evaluateAll((elements) =>
     elements.map((element) => element.getAttribute("data-player-id")),
@@ -132,6 +135,11 @@ test("Target Hierarchy defaults to wide receivers and identifies both leaders fo
   }
 
   await page.getByRole("button", { name: "All", exact: true }).click();
+  for (const row of await page.getByTestId("report-row").all()) {
+    await expect(row.locator(".report-player-cell small")).toContainText(
+      /· (WR|TE)$/,
+    );
+  }
   await page.getByLabel("Team", { exact: true }).selectOption("JVT");
   const answer = page.locator("#report-answer");
   await expect(answer).toContainText("Jonah Pike leads WRs");
@@ -164,6 +172,56 @@ test("Role Movement defaults to gains and exposes declines, all movement, and re
   await expect(page).toHaveURL(/sort=authority/);
   await expect(rows.first()).toContainText("Zion Mercer");
   await expectRawEvidence(rows);
+});
+
+test("Role Movement filters existing positions and roles with durable links", async ({
+  page,
+}) => {
+  await page.goto("/reports/movement");
+  await expect(page.getByRole("button", { name: "RB" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "WR" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "TE" })).toBeVisible();
+  await expect(page.getByLabel("Role", { exact: true })).toContainText(
+    "RB opportunity",
+  );
+  await expect(page.getByLabel("Role", { exact: true })).toContainText(
+    "WR target",
+  );
+
+  await page.getByLabel("Role", { exact: true }).selectOption("wr_target_share");
+  await expect(page).toHaveURL(
+    /position=WR.*role=wr_target_share|role=wr_target_share.*position=WR/,
+  );
+  for (const row of await page.getByTestId("report-row").all()) {
+    await expect(row.locator(".report-player-cell small")).toContainText("WR");
+  }
+
+  await page.reload();
+  await expect(page.getByLabel("Role", { exact: true })).toHaveValue(
+    "wr_target_share",
+  );
+  await expect(
+    page.getByRole("button", { name: "WR" }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: "RB" }).click();
+  await expect(page.getByLabel("Role", { exact: true })).toHaveValue("ALL");
+
+  await page
+    .getByLabel("Role", { exact: true })
+    .selectOption("rb_carry_share");
+  await page.getByRole("button", { name: "Biggest declines" }).click();
+  await expect(page).toHaveURL(/role=rb_carry_share/);
+  await expect(page).toHaveURL(/position=RB/);
+  for (const row of await page.getByTestId("report-row").all()) {
+    await expect(row.locator(".report-player-cell small")).toContainText(
+      "RB · RB carry share",
+    );
+    await expect(row).toContainText("Decline");
+  }
+
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page).toHaveURL("/reports/movement");
 });
 
 test("movement rows pair semantic colors with arrows, labels, and exact pp values", async ({
@@ -213,6 +271,9 @@ test("comparison windows are explicit and evidence details use progressive discl
     dialog.getByRole("link", { name: "View team dossier" }),
   ).toBeVisible();
   await expect(dialog.getByText("Source version")).not.toBeVisible();
+  await expect(dialog).toContainText(
+    "Normal-game context is unavailable for this record.",
+  );
 
   await dialog.getByText("Technical details").click();
   await expect(dialog.getByText("Source version")).toBeVisible();
@@ -230,6 +291,9 @@ test("evidence drawer traps focus and restores the opening control", async ({
   });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: "Marcus Hale" });
+  await expect(dialog).toContainText(
+    /normal-game share was nearly unchanged|share was (?:lower|higher) when unusual game situations were excluded/i,
+  );
   const close = dialog.getByRole("button", { name: "Close evidence" });
   await expect(close).toBeFocused();
   await page.keyboard.press("Shift+Tab");

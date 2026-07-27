@@ -98,7 +98,7 @@ test("player dossier uses three summaries, one weekly metric, and collapsed coun
   await expect(
     page.getByRole("button", { name: "Total opportunities" }),
   ).toHaveAttribute("aria-pressed", "true");
-  const weekButtons = page.locator(".weekly-trend-chart > li > button");
+  const weekButtons = page.locator(".weekly-chart-point");
   await expect(weekButtons).toHaveCount(18);
   await expect(
     page.getByRole("button", { name: /Week 18, 79\.4%/ }),
@@ -167,6 +167,22 @@ test("search uses plain player and team results with keyboard navigation", async
     "Jacksonville Tide",
   );
   await expect(page.getByRole("option").first()).toContainText("View team");
+
+  await page.getByRole("combobox").fill("hale");
+  await expect(page.getByRole("option").first()).toContainText("Marcus Hale");
+
+  await page.getByRole("combobox").fill("Jacksonville Tide");
+  await expect(page.getByRole("option").first()).toContainText(
+    "Jacksonville Tide",
+  );
+
+  const teamLink = page.getByRole("link", {
+    name: "Jacksonville Tide, view team",
+  });
+  await expect(teamLink).toHaveCount(1);
+  await teamLink.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/teams/JVT");
 });
 
 test("identity states and not-found pages stay truthful and plain", async ({
@@ -240,7 +256,7 @@ test("mobile identity routes and weekly trend stay overflow free", async ({
     .scrollIntoViewIfNeeded();
   await expectNoOverflow(page);
   await expect(
-    page.locator(".weekly-trend-chart > li > button"),
+    page.locator(".weekly-chart-point"),
   ).toHaveCount(18);
   expect(errors).toEqual([]);
 });

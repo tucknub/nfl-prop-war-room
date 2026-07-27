@@ -146,4 +146,5 @@ jobs:
             apps/web/artifacts
             docs/depthsnap/reviews/phase4b-export/*.png
             docs/depthsnap/reviews/release-readiness/*.png
+            docs/depthsnap/reviews/final-consumer-polish/*.png
           if-no-files-found: warn

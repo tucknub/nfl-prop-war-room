@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const reviewDirectory = path.resolve(
   process.cwd(),
-  "../../docs/depthsnap/reviews/consumer-ux-simplification",
+  "../../docs/depthsnap/reviews/final-consumer-polish",
 );
 
 test.beforeAll(() => mkdirSync(reviewDirectory, { recursive: true }));
@@ -67,7 +67,21 @@ test("historical 2025 home and reports present consumer answers with exact evide
   ).toBeVisible();
   await expectNoFixtureFallback(page);
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "desktop-home.png");
+  await expect(
+    page.getByTestId("lead-media"),
+  ).toHaveAttribute(
+    "aria-label",
+    "Green Bay Packers backfield role illustration",
+  );
+  await expect(page.getByTestId("lead-media").locator("img")).toHaveCount(0);
+  await screenshot(page, "desktop-home-weekly-briefing.png");
+  await expect(
+    page.getByTestId("team-snapshot").getByText(
+      "Latest complete team snapshot · Week 17",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await screenshot(page, "desktop-team-snapshot-week-17.png");
 
   await page.goto("/reports/backfield");
   await expect(
@@ -78,13 +92,23 @@ test("historical 2025 home and reports present consumer answers with exact evide
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("Sort")).toHaveValue("share");
   const backfieldRows = page.getByTestId("report-row");
+  await expect(backfieldRows).toHaveCount(25);
+  await expect(page.getByText(/Showing 25 of \d+ players/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show 25 more" })).toBeVisible();
   await expect(backfieldRows.first()).toContainText("Ashton Jeanty");
   await expect(backfieldRows.first()).toContainText("Las Vegas Raiders");
   await expect(backfieldRows.first()).toContainText("90 of 98 opportunities");
   const backfieldPlayers = await backfieldRows.locator(".report-player-cell strong").allTextContents();
   expect(new Set(backfieldPlayers).size).toBe(backfieldPlayers.length);
+  await expect(backfieldRows.first().locator(".report-role-cell")).toHaveCount(0);
+  await expect(page.getByText("Context checked")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "desktop-backfield-control.png");
+  await screenshot(page, "desktop-backfield-normal-rows.png");
+
+  const cautionRow = backfieldRows.filter({ hasText: "Caution" }).first();
+  await expect(cautionRow).toBeVisible();
+  await cautionRow.scrollIntoViewIfNeeded();
+  await screenshot(page, "desktop-backfield-caution-row.png");
 
   await page.getByRole("button", { name: "Carries", exact: true }).click();
   await expect(backfieldRows.first()).toContainText("75 of 92 carries");
@@ -113,12 +137,37 @@ test("historical 2025 home and reports present consumer answers with exact evide
   await expect(movementRows.first()).toContainText("+68.2 pp");
   await expect(movementRows.first()).toContainText("3 of 66 opportunities");
   await expect(movementRows.first()).toContainText("56 of 77 opportunities");
-  await screenshot(page, "desktop-role-movement-gainers.png");
+  await expect(movementRows).toHaveCount(25);
+  await screenshot(page, "desktop-movement-first-25.png");
+  await page.getByRole("button", { name: "Show 25 more" }).click();
+  await expect(movementRows).toHaveCount(50);
+  await page.locator(".report-results-heading").scrollIntoViewIfNeeded();
+  await expect(page.getByText(/Showing 50 of \d+ players/)).toBeVisible();
+  await screenshot(page, "desktop-movement-after-show-25.png");
 
+  await page
+    .getByLabel("Role", { exact: true })
+    .selectOption("wr_target_share");
+  await expect(page).toHaveURL(
+    /position=WR.*role=wr_target_share|role=wr_target_share.*position=WR/,
+  );
+  await expect(movementRows).toHaveCount(25);
+  await page.reload();
+  await expect(
+    page.getByLabel("Role", { exact: true }),
+  ).toHaveValue("wr_target_share");
+  await page.evaluate(() => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  });
+  await expect(page.locator(".report-header")).toBeInViewport();
+  await screenshot(page, "desktop-movement-filters.png");
+
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
   await page.getByRole("button", { name: "Biggest declines" }).click();
   await expect(movementRows.first()).toContainText("Decline");
   await expect(movementRows.first().locator(".movement-finding-decline")).toBeVisible();
-  await screenshot(page, "desktop-role-movement-declines.png");
+  await expect(movementRows).toHaveCount(25);
 
   expect(errors).toEqual([]);
 });
@@ -144,7 +193,13 @@ test("historical dossiers, weekly trend, search, and evidence drawer use progres
   await expect(
     weeklyTrend.getByRole("button", { name: "Total opportunities" }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect(weeklyTrend.locator(".weekly-trend-chart > li > button")).toHaveCount(18);
+  await expect(weeklyTrend.locator(".weekly-chart-point")).toHaveCount(18);
+  expect(
+    await weeklyTrend.locator("polyline.weekly-trend-line").count(),
+  ).toBeGreaterThan(1);
+  await expect(
+    weeklyTrend.getByRole("button", { name: /no evidence/i }),
+  ).toBeVisible();
   await expect(weeklyTrend.getByRole("table")).toHaveCount(0);
   await weeklyTrend
     .getByRole("button", { name: "Carries", exact: true })
@@ -156,11 +211,17 @@ test("historical dossiers, weekly trend, search, and evidence drawer use progres
     weeklyTrend.getByRole("button", { name: /Week 18,/ }),
   ).toBeVisible();
   await expect(weeklyTrend.locator(".weekly-text-equivalent")).toContainText("Week 18:");
-  await screenshot(page, "desktop-player-weekly-trend.png");
+  await screenshot(page, "desktop-player-trend.png");
 
   await weeklyTrend.getByText("View exact weekly counts").click();
   await expect(weeklyTrend.getByRole("table")).toBeVisible();
   await expect(weeklyTrend.getByRole("row")).toHaveCount(19);
+  await expect(weeklyTrend.getByRole("table")).toContainText("Normal");
+  await expect(weeklyTrend.getByRole("table")).toContainText("No evidence");
+  await expect(weeklyTrend.getByRole("table")).not.toContainText(
+    "complete · context available",
+  );
+  await screenshot(page, "desktop-exact-counts-expanded.png");
   await page.getByText("Technical details", { exact: true }).click();
   await expect(page.getByText(/Team-neutral player ID/)).toBeVisible();
   await expect(page.getByText("Source version")).toBeVisible();
@@ -188,7 +249,20 @@ test("historical dossiers, weekly trend, search, and evidence drawer use progres
   await expect(result).toContainText("Jaxon Smith-Njigba");
   await expect(result).toContainText("Seattle Seahawks");
   await expect(result).toContainText("View player");
-  await screenshot(page, "desktop-search.png");
+  await expect(result.locator(".search-result-action")).toHaveCount(1);
+  await expect(
+    result.getByRole("link", { name: "Jaxon Smith-Njigba, view player" }),
+  ).toHaveCount(1);
+  await screenshot(page, "desktop-search-player.png");
+
+  await page.getByRole("combobox").fill("GB");
+  await expect(page.getByRole("option").first()).toContainText(
+    "Green Bay Packers",
+  );
+  await expect(
+    page.getByRole("option").first().locator(".search-result-action"),
+  ).toHaveCount(1);
+  await screenshot(page, "desktop-search-team.png");
 
   await page.goto("/reports/targets");
   await page
@@ -207,7 +281,10 @@ test("historical dossiers, weekly trend, search, and evidence drawer use progres
     "/teams/SEA",
   );
   await expect(drawer.getByText("Source version")).not.toBeVisible();
-  await screenshot(page, "desktop-evidence-drawer.png");
+  await expect(drawer).toContainText(
+    /normal-game share was nearly unchanged|share was (?:lower|higher) when unusual game situations were excluded/i,
+  );
+  await screenshot(page, "desktop-drawer-normal-game-explanation.png");
   await drawer.getByText("Technical details", { exact: true }).click();
   await expect(drawer.getByText("Source version")).toBeVisible();
   await screenshot(page, "desktop-evidence-drawer-technical.png");
@@ -237,24 +314,25 @@ test("historical export remains readable at desktop and mobile review widths", a
     page.getByRole("navigation", { name: "Mobile navigation" }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "mobile-home.png");
+  await screenshot(page, "mobile-home.png", { fullPage: true });
 
   await page.goto("/reports/movement");
   await expect(page.getByTestId("report-row").first()).toBeVisible();
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "mobile-role-movement.png");
+  await page.locator(".report-controls > summary").click();
+  await screenshot(page, "mobile-movement-filters-results.png", { fullPage: true });
 
   await page.goto("/players/00-0038797");
   const weeklyTrend = page.locator(".weekly-timeline");
   await weeklyTrend.locator("header").scrollIntoViewIfNeeded();
-  await expect(weeklyTrend.locator(".weekly-trend-chart > li > button")).toHaveCount(18);
+  await expect(weeklyTrend.locator(".weekly-chart-point")).toHaveCount(18);
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "mobile-player-weekly-trend.png");
+  await screenshot(page, "mobile-player-trend.png");
 
   await page.goto("/search?q=Jaxon");
   await expect(page.getByRole("option").first()).toContainText("Jaxon Smith-Njigba");
   await expectNoHorizontalOverflow(page);
-  await screenshot(page, "mobile-search.png");
+  await screenshot(page, "mobile-search-results.png");
 
   await page.setViewportSize({ width: 430, height: 932 });
   for (const route of ["/", "/reports/movement", "/players/00-0038797", "/search?q=Jaxon"]) {
