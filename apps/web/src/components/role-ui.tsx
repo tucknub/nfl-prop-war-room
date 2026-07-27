@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRightIcon,
@@ -111,6 +110,10 @@ export function LeadFinding({
     finding.kind === "strong_opportunity_weak_production" ||
     finding.participationQuality !== "complete" ||
     finding.supportingContextStatus === "unavailable";
+  const illustrationLabel =
+    finding.player.position === "RB"
+      ? `${finding.evidenceTeam.name} backfield role illustration`
+      : `${finding.evidenceTeam.name} target role illustration`;
 
   return (
     <article className="dashboard-panel lead-panel" aria-labelledby="lead-finding-heading">
@@ -182,15 +185,22 @@ export function LeadFinding({
         <div
           className="lead-media"
           data-testid="lead-media"
-          aria-label="Fictional football athlete in action"
+          role="img"
+          aria-label={illustrationLabel}
         >
-          <Image
-            src="/images/depthsnap-athlete.png"
-            alt="Fictional football running back carrying the ball"
-            fill
-            priority
-            sizes="(max-width: 720px) 100vw, 46vw"
-          />
+          <span className="role-illustration-field" aria-hidden="true">
+            <span className="role-illustration-yard role-illustration-yard-one" />
+            <span className="role-illustration-yard role-illustration-yard-two" />
+            <span className="role-illustration-yard role-illustration-yard-three" />
+            <span className="role-illustration-route" />
+            <span className="role-illustration-node role-illustration-node-primary">
+              {finding.player.position}
+            </span>
+            <span className="role-illustration-node role-illustration-node-secondary" />
+            <span className="role-illustration-team">
+              {finding.evidenceTeam.id}
+            </span>
+          </span>
           <span className="lead-media-caption">
             <strong>{finding.player.position}</strong>
             <span>Role control</span>

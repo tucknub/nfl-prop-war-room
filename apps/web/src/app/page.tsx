@@ -38,7 +38,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="dashboard-grid">
           <LeadFinding finding={data.leadFinding} week={data.throughWeek} />
           <RoleChangeFeed findings={data.findings} />
-          <TeamSnapshot data={data.teamSnapshot} />
+          <TeamSnapshot data={data.teamSnapshot} throughWeek={data.throughWeek} />
           <ReportLeaderboard data={data.reportLeaderboard} />
         </div>
       ) : (
@@ -48,7 +48,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       )}
 
       <footer className="page-footer">
-        <span>DepthSnap presents documented role evidence, not forecasts.</span>
+        <span>DepthSnap presents role evidence, not forecasts.</span>
         <div>
           <a href="/methodology">Methodology</a>
           <a href="/data-status">Data status</a>

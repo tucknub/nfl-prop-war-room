@@ -10,14 +10,60 @@ import type { RawShareEvidence } from "@/lib/types";
 
 type Metric = RawShareEvidence["opportunityLabel"];
 
+const chart = {
+  width: 900,
+  height: 264,
+  left: 48,
+  right: 20,
+  top: 18,
+  bottom: 40,
+} as const;
+
+function isCaution(point: WeeklyEvidencePoint | undefined) {
+  return Boolean(
+    point &&
+      (point.participationQuality !== "complete" ||
+        point.supportingContextStatus === "unavailable"),
+  );
+}
+
 function qualityLabel(point: WeeklyEvidencePoint | undefined) {
-  if (!point) return "No evidence";
-  const participation = point.participationQuality.replaceAll("_", " ");
-  const context =
-    point.supportingContextStatus === "available"
-      ? "context available"
-      : "context unavailable";
-  return `${participation} · ${context}`;
+  if (!point?.evidence) return "No evidence";
+  if (!isCaution(point)) return "Normal";
+  if (point.participationQuality !== "complete") {
+    return "Partial participation";
+  }
+  return "Context unavailable";
+}
+
+function technicalQuality(point: WeeklyEvidencePoint | undefined) {
+  if (!point?.evidence) return "No evidence";
+  return `Participation: ${point.participationQuality}; context: ${point.supportingContextStatus}`;
+}
+
+function pointX(index: number, count: number) {
+  const plotWidth = chart.width - chart.left - chart.right;
+  return chart.left + (index * plotWidth) / Math.max(count - 1, 1);
+}
+
+function pointY(share: number) {
+  const plotHeight = chart.height - chart.top - chart.bottom;
+  return chart.top + (1 - Math.min(Math.max(share, 0), 1)) * plotHeight;
+}
+
+function lineSegments(points: readonly (WeeklyEvidencePoint | undefined)[]) {
+  const segments: string[][] = [];
+  let current: string[] = [];
+  points.forEach((point, index) => {
+    if (!point?.evidence) {
+      if (current.length) segments.push(current);
+      current = [];
+      return;
+    }
+    current.push(`${pointX(index, points.length)},${pointY(point.evidence.share)}`);
+  });
+  if (current.length) segments.push(current);
+  return segments;
 }
 
 export function WeeklyTimeline({
@@ -56,8 +102,10 @@ export function WeeklyTimeline({
   const visiblePoints = weeks.map((week) =>
     pointsByWeekAndMetric.get(`${week}:${metric}`),
   );
-  const selectedPoint =
-    pointsByWeekAndMetric.get(`${selectedWeek}:${metric}`);
+  const selectedPoint = pointsByWeekAndMetric.get(
+    `${selectedWeek}:${metric}`,
+  );
+  const segments = lineSegments(visiblePoints);
 
   return (
     <section
@@ -90,46 +138,93 @@ export function WeeklyTimeline({
             </div>
           </fieldset>
 
-          <ol
-            className="weekly-trend-chart"
-            aria-label={`${playerName} ${metricLabel(metric).toLowerCase()} by week`}
+          <p className="weekly-chart-hint">
+            Full season chart. On smaller screens, scroll horizontally to review
+            every week.
+          </p>
+          <div
+            className="weekly-chart-scroll"
+            role="region"
+            aria-label={`${playerName} ${metricLabel(metric).toLowerCase()} full season trend`}
+            tabIndex={0}
           >
-            {weeks.map((week, index) => {
-              const point = visiblePoints[index];
-              const selected = selectedWeek === week;
-              return (
-                <li key={week} className={!point?.evidence ? "timeline-missing" : ""}>
+            <div
+              className="weekly-trend-chart"
+              style={{ width: chart.width, height: chart.height }}
+            >
+              <svg
+                viewBox={`0 0 ${chart.width} ${chart.height}`}
+                aria-hidden="true"
+              >
+                {[0, 25, 50, 75, 100].map((percent) => {
+                  const y = pointY(percent / 100);
+                  return (
+                    <g key={percent}>
+                      <line
+                        className="weekly-grid-line"
+                        x1={chart.left}
+                        x2={chart.width - chart.right}
+                        y1={y}
+                        y2={y}
+                      />
+                      <text x={chart.left - 9} y={y + 4} textAnchor="end">
+                        {percent}%
+                      </text>
+                    </g>
+                  );
+                })}
+                {segments.map((segment, index) => (
+                  <polyline
+                    className="weekly-trend-line"
+                    key={index}
+                    points={segment.join(" ")}
+                  />
+                ))}
+                {weeks.map((week, index) => (
+                  <text
+                    className="weekly-axis-label"
+                    key={week}
+                    x={pointX(index, weeks.length)}
+                    y={chart.height - 14}
+                    textAnchor="middle"
+                  >
+                    W{week}
+                  </text>
+                ))}
+              </svg>
+              {weeks.map((week, index) => {
+                const point = visiblePoints[index];
+                const selected = selectedWeek === week;
+                const y = point?.evidence
+                  ? pointY(point.evidence.share)
+                  : chart.height - chart.bottom;
+                return (
                   <button
                     type="button"
+                    className={`weekly-chart-point${point?.evidence ? "" : " weekly-chart-point-missing"}${isCaution(point) ? " weekly-chart-point-caution" : ""}`}
+                    key={week}
+                    style={{
+                      left: pointX(index, weeks.length),
+                      top: y,
+                    }}
                     aria-pressed={selected}
                     aria-label={
                       point?.evidence
-                        ? `Week ${week}, ${formatPercent(point.evidence.share)}, ${point.evidence.numerator} of ${point.evidence.denominator} ${point.evidence.opportunityLabel}`
+                        ? `Week ${week}, ${formatPercent(point.evidence.share)}, ${point.evidence.numerator} of ${point.evidence.denominator} ${point.evidence.opportunityLabel}, ${qualityLabel(point)}`
                         : `Week ${week}, no evidence`
                     }
                     onClick={() => setSelectedWeek(week)}
                     onFocus={() => setSelectedWeek(week)}
                   >
-                    <span className="timeline-week">W{week}</span>
-                    <span className="timeline-bar" aria-hidden="true">
-                      <span
-                        style={{
-                          height: point?.evidence
-                            ? `${Math.max(point.evidence.share * 100, 5)}%`
-                            : "0%",
-                        }}
-                      />
-                    </span>
-                    <strong>
-                      {point?.evidence
-                        ? formatPercent(point.evidence.share)
-                        : "—"}
-                    </strong>
+                    <span aria-hidden="true" />
+                    {!point?.evidence ? (
+                      <em aria-hidden="true">No evidence</em>
+                    ) : null}
                   </button>
-                </li>
-              );
-            })}
-          </ol>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="weekly-trend-detail" aria-live="polite">
             <span>Week {selectedWeek}</span>
@@ -142,7 +237,12 @@ export function WeeklyTimeline({
                   {selectedPoint.evidence.opportunityLabel} ·{" "}
                   {selectedPoint.roleLabel}
                 </p>
-                <small>{qualityLabel(selectedPoint)}</small>
+                <small
+                  className={isCaution(selectedPoint) ? "quality-caution" : ""}
+                  title={technicalQuality(selectedPoint)}
+                >
+                  {qualityLabel(selectedPoint)}
+                </small>
               </>
             ) : (
               <>
@@ -152,14 +252,14 @@ export function WeeklyTimeline({
             )}
           </div>
 
-          <ul className="weekly-text-equivalent">
+          <ul className="weekly-text-equivalent sr-only">
             {weeks.map((week, index) => {
               const point = visiblePoints[index];
               return (
                 <li key={week}>
                   <strong>Week {week}:</strong>{" "}
                   {point?.evidence
-                    ? `${formatPercent(point.evidence.share)} · ${point.evidence.numerator} of ${point.evidence.denominator} ${point.evidence.opportunityLabel} · ${qualityLabel(point)}`
+                    ? `${formatPercent(point.evidence.share)} · ${point.evidence.numerator} of ${point.evidence.denominator} ${point.evidence.opportunityLabel} · ${qualityLabel(point)} · ${technicalQuality(point)}`
                     : "No evidence"}
                 </li>
               );
@@ -179,7 +279,7 @@ export function WeeklyTimeline({
                     {metrics.map((option) => (
                       <th key={option}>{metricLabel(option)}</th>
                     ))}
-                    <th>Context</th>
+                    <th>Quality</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,7 +287,9 @@ export function WeeklyTimeline({
                     const weekPoints = metrics.map((option) =>
                       pointsByWeekAndMetric.get(`${week}:${option}`),
                     );
-                    const qualityPoint = weekPoints.find(Boolean);
+                    const qualityPoint = weekPoints.find(
+                      (point) => point?.evidence,
+                    );
                     return (
                       <tr key={week}>
                         <th scope="row">Week {week}</th>
@@ -198,7 +300,14 @@ export function WeeklyTimeline({
                               : "No evidence"}
                           </td>
                         ))}
-                        <td>{qualityLabel(qualityPoint)}</td>
+                        <td
+                          className={
+                            isCaution(qualityPoint) ? "quality-caution" : ""
+                          }
+                          title={technicalQuality(qualityPoint)}
+                        >
+                          {qualityLabel(qualityPoint)}
+                        </td>
                       </tr>
                     );
                   })}

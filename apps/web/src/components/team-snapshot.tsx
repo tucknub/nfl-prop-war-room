@@ -10,7 +10,13 @@ import type { TeamSnapshotFixture } from "@/lib/presentation-types";
 
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
-export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
+export function TeamSnapshot({
+  data,
+  throughWeek,
+}: {
+  data: TeamSnapshotFixture;
+  throughWeek: number;
+}) {
   const roleLabels = {
     RB1: "Backfield leader",
     RB2: "Secondary back",
@@ -44,7 +50,11 @@ export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
           <TeamsIcon />
         </span>
         <h2 id="team-snapshot-heading">Team role snapshot</h2>
-        <span className="week-control">Week {data.week}</span>
+        <span className="week-control">
+          {data.week < throughWeek
+            ? `Latest complete team snapshot · Week ${data.week}`
+            : `Team snapshot · Week ${data.week}`}
+        </span>
       </div>
 
       <div className="team-identity">
@@ -53,7 +63,7 @@ export function TeamSnapshot({ data }: { data: TeamSnapshotFixture }) {
         </span>
         <span>
           <strong>{data.teamName}</strong>
-          <small>{data.teamCode} · Week {data.week}</small>
+          <small>{data.teamCode}</small>
         </span>
       </div>
       <p className="team-plain-summary">{summary}</p>
