@@ -101,6 +101,7 @@ jobs:
             /tmp/propwar-role-schema.log
             /tmp/propwar-role-reports
           if-no-files-found: warn
+          retention-days: 7
 
       - name: Enforce nflreadpy schema contract
         if: steps.schema_contract.outcome == 'failure'
@@ -209,3 +210,4 @@ jobs:
             outputs/role_research/join_coverage_${{ steps.target.outputs.season }}_live.csv
             outputs/role_research/completion_gate_${{ steps.target.outputs.season }}.csv
           if-no-files-found: warn
+          retention-days: 7
