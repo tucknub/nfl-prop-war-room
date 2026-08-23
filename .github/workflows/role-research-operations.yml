@@ -23,3 +23,5 @@ jobs:
         run: python -m pip install --disable-pip-version-check numpy pandas scipy
       - name: Run 2006-2025 Margin Pool research
         run: python research/margin_v1/run_margin_research.py
+      - name: Run rolling-strategy sensitivity checks
+        run: python research/margin_v1/run_margin_sensitivity.py
