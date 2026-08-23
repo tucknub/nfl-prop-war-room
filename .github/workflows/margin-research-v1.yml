@@ -6,6 +6,11 @@ on:
     paths:
       - 'research/margin_v1/**'
       - '.github/workflows/margin-research-v1.yml'
+  pull_request:
+    branches: [streamlit-cloud-deploy]
+    paths:
+      - 'research/margin_v1/**'
+      - '.github/workflows/margin-research-v1.yml'
 
 permissions:
   contents: read
