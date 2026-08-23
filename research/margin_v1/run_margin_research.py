@@ -28,19 +28,17 @@ def canonical_team_games(games: pd.DataFrame) -> pd.DataFrame:
     g = g[g['season'].between(min(SEASONS), max(SEASONS))].copy()
     for c in ['season','week','home_score','away_score','spread_line','total_line']:
         g[c] = pd.to_numeric(g[c], errors='coerce')
-    g['home_canon'] = g['home_team'].map(canon_team)
-    g['away_canon'] = g['away_team'].map(canon_team)
     location = g['location'].fillna('Home') if 'location' in g else pd.Series('Home', index=g.index)
     home = pd.DataFrame({
         'season':g.season.astype(int), 'week':g.week.astype(int), 'game_id':g.game_id,
-        'team':g.home_canon, 'opponent':g.away_canon, 'is_home':True, 'location':location,
+        'team':g.home_team, 'opponent':g.away_team, 'is_home':True, 'location':location,
         'points_for':g.home_score, 'points_against':g.away_score,
         'actual_margin':g.home_score-g.away_score,
         'market_expected_margin':g.spread_line, 'total_line':g.total_line,
     })
     away = pd.DataFrame({
         'season':g.season.astype(int), 'week':g.week.astype(int), 'game_id':g.game_id,
-        'team':g.away_canon, 'opponent':g.home_canon, 'is_home':False, 'location':location,
+        'team':g.away_team, 'opponent':g.home_team, 'is_home':False, 'location':location,
         'points_for':g.away_score, 'points_against':g.home_score,
         'actual_margin':g.away_score-g.home_score,
         'market_expected_margin':-g.spread_line, 'total_line':g.total_line,
@@ -85,7 +83,7 @@ def greedy_biggest_favorite(tg: pd.DataFrame, season: int) -> Result:
     for w in weeks:
         c=d[d.week.eq(w) & ~d.team.isin(used) & d.market_expected_margin.notna()].copy()
         if c.empty: raise RuntimeError(f'No eligible market row {season} W{w}')
-        c=c.sort_values(['market_expected_margin','team'], ascending=[False,True], kind='stable')
+        c=c.sort_values(['market_expected_margin','total_line','team'], ascending=[False,False,True], kind='stable')
         r=c.iloc[0]; rows.append(r); used.add(str(r.team))
     s=pd.DataFrame(rows).reset_index(drop=True); validate_selections(s,weeks)
     return Result(s,float(s.actual_margin.sum()),float(s.market_expected_margin.sum()))
@@ -150,7 +148,7 @@ def rolling_allocator(tg: pd.DataFrame, games_pi: pd.DataFrame, season: int) -> 
         def forecast(r):
             if int(r.week)==current:
                 return r.market_expected_margin
-            th=ratings.get(str(r.team),0.0); to=ratings.get(str(r.opponent),0.0)
+            th=ratings.get(canon_team(r.team),0.0); to=ratings.get(canon_team(r.opponent),0.0)
             loc_home = bool(r.is_home) and str(r.location).lower()=='home'
             loc_away = (not bool(r.is_home)) and str(r.location).lower()=='home'
             adj = hfa if loc_home else (-hfa if loc_away else 0.0)
