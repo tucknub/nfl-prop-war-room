@@ -1,25 +1,213 @@
-name: Margin Research Temporary Runner
+name: Current Role Operations
 
 on:
   pull_request:
-    branches: [streamlit-cloud-deploy]
     paths:
-      - 'research/margin_v1/**'
-      - '.github/workflows/role-research-operations.yml'
+      - "src/operations/**"
+      - "scripts/run_current_role_research.py"
+      - "scripts/validate_current_role_outputs.py"
+      - "dashboard/**"
+      - "tests/test_current_role_*.py"
+      - "requirements.txt"
+      - ".github/workflows/role-research-operations.yml"
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "NFL season year; blank uses the calendar-aware default"
+        required: false
+        type: string
+      through_week:
+        description: "Optional maximum regular-season week"
+        required: false
+        type: string
+  schedule:
+    - cron: "30 13 * 9-12,1 2,4"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: current-role-operations-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  backtest:
+  contract-tests:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install research dependencies
-        run: python -m pip install --disable-pip-version-check numpy pandas scipy
-      - name: Run responsive/long-slow ensemble test
-        run: python research/margin_v1/run_margin_ensemble.py
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Compile operational code
+        run: python -m compileall -q src/operations scripts dashboard tests
+
+      - name: Run operational contract tests
+        run: |
+          python -m pytest -q \
+            tests/test_current_role_operations.py \
+            tests/test_current_role_dashboard_status.py \
+            tests/test_public_role_research_language.py
+
+      - name: Verify current nflreadpy schemas against a completed historical week
+        id: schema_contract
+        continue-on-error: true
+        run: |
+          set +e
+          python scripts/run_current_role_research.py \
+            --season 2025 \
+            --through-week 1 \
+            --source-cache-dir /tmp/propwar-role-cache \
+            --output-dir /tmp/propwar-role-output \
+            --report-dir /tmp/propwar-role-reports \
+            --refresh \
+            --no-publish \
+            > /tmp/propwar-role-schema.log 2>&1
+          exit_code=$?
+          set -e
+          cat /tmp/propwar-role-schema.log
+          if [ "$exit_code" -ne 0 ]; then
+            exit "$exit_code"
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(
+              Path('/tmp/propwar-role-reports/role_research_attempt_2025.json').read_text(encoding='utf-8')
+          )
+          assert payload['status'] == 'VALIDATED_NOT_PUBLISHED', payload
+          assert payload['published_through_week'] == 1, payload
+          PY
+
+      - name: Upload nflreadpy schema evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-role-schema-contract
+          path: |
+            /tmp/propwar-role-schema.log
+            /tmp/propwar-role-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Enforce nflreadpy schema contract
+        if: steps.schema_contract.outcome == 'failure'
+        run: |
+          cat /tmp/propwar-role-schema.log || true
+          find /tmp/propwar-role-reports -maxdepth 2 -type f -print -exec cat {} \; || true
+          exit 1
+
+  publish-current-season:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out production branch
+        uses: actions/checkout@v4
+        with:
+          ref: streamlit-cloud-deploy
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Resolve season and optional week
+        id: target
+        env:
+          INPUT_SEASON: ${{ inputs.season }}
+          INPUT_WEEK: ${{ inputs.through_week }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from datetime import datetime, timezone
+          import os
+
+          now = datetime.now(timezone.utc)
+          supplied = os.environ.get("INPUT_SEASON", "").strip()
+          season = int(supplied) if supplied else (now.year - 1 if now.month == 1 else now.year)
+          week = os.environ.get("INPUT_WEEK", "").strip()
+          print(f"season={season}")
+          print(f"week_arg={'--through-week ' + week if week else ''}")
+          PY
+
+      - name: Refresh and build current-season partition
+        run: |
+          python scripts/run_current_role_research.py \
+            --season "${{ steps.target.outputs.season }}" \
+            ${{ steps.target.outputs.week_arg }} \
+            --refresh
+
+      - name: Read attempt status
+        id: attempt
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          import os
+
+          season = os.environ["SEASON"]
+          path = Path("outputs/run_reports/role_research") / f"role_research_attempt_{season}.json"
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          print(f"status={payload['status']}")
+          print(f"through_week={payload.get('published_through_week') or ''}")
+          PY
+        env:
+          SEASON: ${{ steps.target.outputs.season }}
+
+      - name: Independently validate published files
+        if: steps.attempt.outputs.status == 'PUBLISHED'
+        run: |
+          python scripts/validate_current_role_outputs.py --season "${{ steps.target.outputs.season }}"
+          python -m pytest -q tests/test_current_role_operations.py tests/test_current_role_dashboard_status.py
+
+      - name: Commit validated partition
+        if: steps.attempt.outputs.status == 'PUBLISHED'
+        run: |
+          git config user.name "propwar-operations"
+          git config user.email "actions@users.noreply.github.com"
+          git add outputs/role_research
+          if git diff --cached --quiet; then
+            echo "No validated output changes to commit."
+            exit 0
+          fi
+          git commit -m "Publish ${{ steps.target.outputs.season }} role research through Week ${{ steps.attempt.outputs.through_week }}"
+          git pull --rebase origin streamlit-cloud-deploy
+          git push origin HEAD:streamlit-cloud-deploy
+
+      - name: Upload operational evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-role-operations-${{ steps.target.outputs.season }}
+          path: |
+            outputs/run_reports/role_research
+            outputs/role_research/role_research_status_${{ steps.target.outputs.season }}.json
+            outputs/role_research/role_research_manifest_${{ steps.target.outputs.season }}.json
+            outputs/role_research/role_research_validation_${{ steps.target.outputs.season }}.json
+            outputs/role_research/source_input_manifest_${{ steps.target.outputs.season }}_live.csv
+            outputs/role_research/source_coverage_${{ steps.target.outputs.season }}_live.csv
+            outputs/role_research/join_coverage_${{ steps.target.outputs.season }}_live.csv
+            outputs/role_research/completion_gate_${{ steps.target.outputs.season }}.csv
+          if-no-files-found: warn
+          retention-days: 7
