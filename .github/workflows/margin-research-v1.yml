@@ -18,7 +18,7 @@ permissions:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,3 +32,5 @@ jobs:
         run: python research/margin_v1/run_margin_distribution.py
       - name: Run empirical full-margin sampler research
         run: python research/margin_v1/run_margin_empirical_sampler.py
+      - name: Run current-market sacrifice cap research
+        run: python research/margin_v1/run_margin_sacrifice_cap.py
