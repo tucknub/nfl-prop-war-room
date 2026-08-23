@@ -4,11 +4,13 @@ on:
   push:
     branches: [margin-research-v1]
     paths:
-      - 'research/margin_v1/run_margin_team_style.py'
+      - 'research/margin_v1/run_margin_future_lines.py'
+      - '.github/workflows/margin-research-v1.yml'
   pull_request:
     branches: [streamlit-cloud-deploy]
     paths:
-      - 'research/margin_v1/run_margin_team_style.py'
+      - 'research/margin_v1/run_margin_future_lines.py'
+      - '.github/workflows/margin-research-v1.yml'
 
 permissions:
   contents: read
@@ -24,5 +26,5 @@ jobs:
           python-version: '3.12'
       - name: Install research dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn nflreadpy
-      - name: Run team-style residual research
-        run: python research/margin_v1/run_margin_team_style.py
+      - name: Run future-line forecasting research
+        run: python research/margin_v1/run_margin_future_lines.py
