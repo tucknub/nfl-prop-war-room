@@ -25,3 +25,5 @@ jobs:
         run: python research/margin_v1/run_margin_research.py
       - name: Run rolling-strategy sensitivity checks
         run: python research/margin_v1/run_margin_sensitivity.py
+      - name: Run static-allocation and failure diagnostics
+        run: python research/margin_v1/run_margin_static_diagnostics.py
