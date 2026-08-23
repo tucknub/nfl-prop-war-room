@@ -4,175 +4,188 @@ Date: 2026-08-23
 
 ## Scope
 
-Historical regular-season backtest using nflverse game results and market spreads, 2006–2025. The pool rule is one NFL team per week, each team usable at most once, with weekly score equal to that team's actual point differential.
+Historical NFL regular-season research for a pool in which one team is selected each week, each team can be used at most once, and weekly score is that team's actual game point differential.
 
-The rolling models use the current week's market line when the pick is made and estimate future weeks from market-derived team power ratings. They do **not** use future closing lines when making historical rolling decisions. Future closing-line and actual-result optimizers are retained only as hindsight/reference benchmarks.
+All deployable historical decisions are reconstructed without future-week closing lines. Current-week sportsbook information may be used when it existed; future weeks must be forecast from information available at the historical decision point. Hindsight closing-line and actual-result optimizers are reference bounds only.
 
-## Baseline vs rolling
+> **Critical research correction:** historical realized Margin Pool scores are too noisy to serve as the primary evidence of allocation skill. The raw long/slow allocator's large historical actual-score advantage was driven heavily by unusually favorable realized margins relative to the spreads of the teams it selected. The primary strategy evidence is now **selected market value + walk-forward calibrated expected margin**, with realized score retained as a secondary stress test.
 
-Across 20 seasons (2006–2025):
+## What remains strongly supported
 
-- Biggest Unused Favorite mean actual score: **179.65**
-- Default Rolling Allocator mean actual score: **201.90**
-- Mean rolling improvement: **+22.25 points/season**
-- Median rolling improvement: **+26.0**
-- Rolling beat baseline in **14 of 20** seasons
-- Worst default-rolling season vs baseline: **-72**
-- Best default-rolling season vs baseline: **+99**
-- 2006 baseline checksum: **+132**, matching the independently hand-checked path
+### Weekly reoptimization
 
-## Static Week-1 allocation test
-
-A one-time Week-1 snapshot plan was created using the same market-power framework available at Week 1 and then left unchanged for the entire season.
+A one-time Week-1 allocation plan performed very poorly.
 
 Across 2006–2025:
 
-- Static Week-1 plan mean: **113.8**
-- Static minus Biggest Favorite: **-65.85 points/season**
-- Rolling minus Static: **+88.1 points/season**
-- Rolling beat Static in **19 of 20** seasons
+- Static Week-1 plan mean actual score: **113.8**
+- Biggest Favorite: **179.65**
+- Default rolling allocator: **201.9**
+- Rolling beat the static plan in **19 of 20** seasons.
 
-In the exact 18-week era (2021–2025):
+In 2021–2025:
 
-- Biggest Favorite mean: **178.4**
-- Static mean: **104.4**
-- Rolling mean: **212.6**
-- Rolling minus Biggest Favorite: **+34.2 points/season**
-- Rolling minus Static: **+108.2 points/season**
+- Static: **104.4**
+- Biggest Favorite: **178.4**
+- Default rolling: **212.6**
 
-Interpretation: a preseason/Week-1 path should be treated as a reservation map, not a locked plan. Weekly reoptimization is a central part of the observed edge.
+The preseason path is therefore a reservation map, not a commitment. Used-team inventory and future valuations should be rebuilt every week.
 
-Caveat: this static benchmark is a Week-1 market-power snapshot, not a full professional preseason forecasting system with independently sourced preseason win totals, player projections, injuries, and future-game lines.
+### Current-week sportsbook spread
 
-## 2010 and 2017 failure autopsy
+The current market remains the best V1 current-game anchor.
 
-The two worst default-rolling seasons were primarily outcome variance rather than excessive sacrifice of current market value.
+A leakage-safe four-game entering-form model using EPA/play, passing EPA, rushing EPA, yards/play, explosive rate, and turnover form made current-game margin forecasts and loss/10+/20+/30+ probabilities worse once the sportsbook spread was already known.
 
-### 2010
+**Decision:** do not use EPA/style to overrule the current week's sportsbook line.
 
-- Biggest Favorite actual: **153**; selected-market sum: **161.5**
-- Rolling actual: **81**; selected-market sum: **168.5**
-- Rolling selected-market advantage: **+7.0**
-- Actual-score deficit: **-72**
-- Relative outcome-residual deficit: **-79**
-- Total deliberate current-market sacrifice vs the best available team from rolling's own inventory: only **4.0 points** across the season
+### Game total
 
-### 2017
+Adding `total_line` to spread did not materially improve out-of-sample loss or blowout probability calibration. Bootstrap intervals for the incremental Brier-score effect crossed zero.
 
-- Biggest Favorite actual: **233**; selected-market sum: **171.0**
-- Rolling actual: **162**; selected-market sum: **180.0**
-- Rolling selected-market advantage: **+9.0**
-- Actual-score deficit: **-71**
-- Relative outcome-residual deficit: **-80**
-- Total deliberate current-market sacrifice vs the best available team from rolling's own inventory: **8.0 points**
+**Decision:** exclude total from the V1 margin-distribution model unless later evidence establishes incremental value.
 
-Interpretation: these failures do not support abandoning allocation/reoptimization. They support adding calibrated margin distributions and downside/risk controls, because teams selected with at least as much aggregate market expectation produced much worse realized margins.
+## Full-margin distribution
 
-## Rating sensitivity
+The promoted V1 simulation distribution is a **residual-centered empirical sampler**.
 
-Selected full-period results vs Biggest Favorite:
+For historical favorite games:
 
-| Model | Mean improvement | Wins-Losses | Worst season |
-|---|---:|---:|---:|
-| Default (20 periods, half-life 6, ridge 3) | +22.25 | 14-6 | -72 |
-| High ridge | +16.75 | 13-7 | -29 |
-| Long/slow (32 periods, half-life 8, ridge 3) | **+26.65** | 13-7 | **-25** |
-| Strict long prior-only | +19.85 | 14-6 | -60 |
+`spread residual = actual favorite margin - market favorite spread`
 
-Very reactive / weakly regularized variants were substantially less stable.
+For a target spread, residuals from historically similar spreads are weighted and re-centered on the target. This retains real NFL scoring/tail behavior while keeping the simulated distribution tied to the market expectation.
 
-## Temporal robustness
+Walk-forward 2011–2025, representative bandwidth 3.0:
 
-The temporal split is a robustness check, **not a pristine untouched holdout**, because the configuration family had already been inspected over the full historical sample before this split was run.
-
-Results vs Biggest Favorite:
-
-| Model | 2006–2015 | 2016–2020 | 2021–2025 |
-|---|---:|---:|---:|
-| Default | +10.5 | +33.8 | **+34.2 (5-0)** |
-| High ridge | +17.7 | +24.6 | +7.0 |
-| Long/slow | +19.0 | **+48.0** | **+20.6** |
-| Strict long prior-only | +21.2 | +40.6 | **-3.6** |
-
-A development-only rule using 2006–2015 would have selected strict-long, which then performed poorly in the 2021–2025 18-week era. This is evidence against removing current-week market information and against choosing a model solely from older NFL regimes.
-
-## Responsive + long/slow ensemble
-
-Blending future forecasts did not improve on the long/slow model. The best tested blend was 25% default / 75% long-slow:
-
-- Full 2006–2025 mean improvement: **+23.3**
-- Worst season: **-25**
-- 2021–2025 mean improvement: **+10.8**
-
-Long/slow alone was better on full-period mean (**+26.65**) and recent-era mean (**+20.6**) with the same -25 historical worst season. Therefore no ensemble complexity is justified yet.
-
-## Walk-forward margin probability calibration
-
-Favorite-side regular-season data from 2006–2025 contains **5,199 games**. Probability models were evaluated walk-forward from 2011–2025, so each test season was trained only on earlier seasons.
-
-Observed event rates over the walk-forward test period:
-
-- Favorite loses outright: **33.35%**
-- Favorite wins by 10+: **34.55%**
-- Favorite wins by 20+: **15.64%**
-- Favorite wins by 30+: **4.24%**
-
-### Does game total help beyond spread?
-
-No meaningful out-of-sample improvement was found from adding total. Across loss, 10+, 20+, and 30+ targets, spread+total was essentially flat-to-worse than spread-only, and paired bootstrap intervals for the Brier-score difference crossed zero in every case.
-
-Therefore **`total_line` is excluded from the V1 margin-distribution layer** unless a later model demonstrates incremental value.
-
-## Coherent full-margin distribution for Monte Carlo
-
-A raw-margin kernel sampler initially regressed extreme favorite spreads too strongly toward the middle. The corrected model samples **historical spread residuals**:
-
-`residual = actual favorite margin - market favorite spread`
-
-For a target projected spread, historical residuals from similar spreads are weighted and re-centered on the target spread. This preserves historical NFL tail/scoring behavior while keeping the simulated distribution centered near the current market expectation.
-
-Walk-forward 2011–2025 results for the residual-centered sampler are competitive with or better than specialized binary probability models. Representative bandwidth 3.0 results:
-
-- Mean margin error: **-0.017 points**
+- Mean error: **-0.017 points**
 - MAE: **10.045**
 - RMSE: **12.991**
 - Loss Brier: **0.21045**
-- 10+ Brier: **0.21261**
-- 20+ Brier: **0.12628**
-- 30+ Brier: **0.03976**
+- Win 10+ Brier: **0.21261**
+- Win 20+ Brier: **0.12628**
+- Win 30+ Brier: **0.03976**
 
-Bandwidth 4.0 gives near-zero overall mean error (**+0.003**) and similar probability calibration. Differences between 3.0 and 4.0 are small enough that V1 should not over-tune the bandwidth.
+Bandwidths 3–4 perform similarly; V1 should not over-tune this parameter.
 
-**Research decision:** promote the residual-centered empirical model as the coherent V1 Monte Carlo margin sampler. Keep specialized logistic/normal models as calibration references, not separate production probabilities.
+## Realized-score results: descriptive only
 
-## Current-market sacrifice-cap test
+Earlier tests found large historical realized-score gains for rolling allocators. For example, raw long/slow was one of the strongest realized-score variants and had a much better historical floor than the more responsive default model.
 
-A practical safeguard was tested on the long/slow rolling optimizer: restrict the current-week choice to teams no more than X spread points worse than the largest currently available favorite, while still choosing the candidate with the best optimized remaining-season path.
+Those figures remain useful descriptions of what happened, but they no longer justify claims of equivalent expected-value edge because the selected teams' realized margins can vary enormously around sportsbook expectation.
 
-| Max current spread sacrifice | Mean edge vs baseline | W-L-T | Worst season | 2021–2025 mean |
-|---|---:|---:|---:|---:|
-| 0.0 | +1.55 | 8-7-5 | -54 | +0.4 |
-| 0.5 | +8.55 | 11-8-1 | -54 | +3.8 |
-| 1.0 | +12.25 | 11-9 | -47 | +3.2 |
-| 1.5 | +13.85 | 10-10 | -47 | +7.6 |
-| 2.0 | +11.75 | 11-9 | -72 | 0.0 |
-| **3.0** | **+18.75** | **15-5** | -51 | **+32.0 (5-0)** |
-| Unconstrained | **+26.65** | 13-7 | **-25** | +20.6 |
+The 2011–2025 expected-allocation audit exposed this directly:
 
-Important conclusions:
+| Strategy | Mean actual score | Mean selected market sum | Actual minus selected market |
+|---|---:|---:|---:|
+| Biggest Favorite | 174.33 | 176.87 | -2.53 |
+| Raw long/slow | **206.07** | 177.40 | **+28.67** |
+| Future-style allocator | 186.00 | **181.30** | +4.70 |
 
-1. A tighter weekly cap does **not** automatically create a safer season. Inventory changes cascade into later weeks.
-2. Unconstrained long/slow retains the best mean historical edge and best observed worst season.
-3. A **3-point cap is a promising candidate** because it improved season win frequency to 15-5 and went 5-0 in 2021–2025, but it sacrifices expected historical edge and has a worse historical floor than unconstrained.
-4. Cap=3 was identified after inspecting historical results, so it is **not production-locked**. It should be treated as a candidate policy/risk signal and evaluated further rather than promoted because of its recent record.
+Raw long/slow's selected market value was only **+0.53 points/season** above Biggest Favorite, while its actual results ran **+28.67 points/season above its own selected spreads**. Therefore its large actual-score advantage must not be interpreted as a similarly large allocation edge.
+
+## Future-week line forecasting
+
+Team style does earn a narrow, important role when the future sportsbook line does **not** exist yet.
+
+Using long/slow market power plus frozen entering team style improved prediction of eventual future closing lines in **21,822 walk-forward forecasts** from 2011–2025.
+
+| Model | Future-line MAE | 2021–2025 MAE |
+|---|---:|---:|
+| Raw long/slow power | 3.723 | 3.816 |
+| Recalibrated power | 3.629 | 3.717 |
+| **Power + core style** | **3.292** | **3.345** |
+| Power + style + turnover | 3.286 | 3.341 |
+
+Core-style improvement versus recalibrated power was approximately **0.337 spread points per forecast**, with target-game-clustered uncertainty clearly favoring style.
+
+The gain persisted by horizon:
+
+- 1 week ahead: **0.436 points**
+- 2 weeks: **0.375**
+- 3–5 weeks: **0.344**
+- 6–9 weeks: **0.321**
+- 10+ weeks: **0.215**
+
+**Decision:**
+
+- current week → sportsbook spread directly;
+- future weeks → long/slow market-power forecast + validated core style correction.
+
+Turnover adds too little full-history improvement to justify a separate production feature yet.
+
+## Expected-allocation audit
+
+The correct strategy question is whether forecasting improvements translate into better one-use allocation **in expectation**.
+
+Across 2011–2025, core future style improved raw long/slow by:
+
+- selected market value: **+3.90 points/season**, bootstrap interval approximately **+1.13 to +6.90**;
+- calibrated EV, bandwidth 1.5: **+3.81**, interval +0.92 to +6.76;
+- calibrated EV, bandwidth 3.0: **+4.06**, interval +1.25 to +7.07;
+- calibrated EV, bandwidth 4.0: **+4.09**, interval +1.26 to +7.17.
+
+So style meaningfully improves the raw allocator's save/burn decisions even though its realized historical game outcomes were colder.
+
+### Versus Biggest Favorite
+
+Across 2011–2025, core style also produced positive expected allocation gains versus Biggest Favorite:
+
+- selected market sum: **+4.43 points/season**, bootstrap interval +0.73 to +8.67;
+- calibrated EV: approximately **+3.0 to +3.7 points/season** across tested empirical bandwidths, with all intervals positive.
+
+However the exact modern 18-week era remains unresolved.
+
+### 2021–2025 caution
+
+Core style versus Biggest Favorite:
+
+- selected market sum: **-1.10 points/season**;
+- calibrated EV BW 1.5: **-0.68**;
+- BW 3.0: **-1.05**;
+- BW 4.0: **-1.13**.
+
+At the same time, style improved raw long/slow by roughly **+6 calibrated EV points/season** in this period.
+
+Interpretation: the future-style forecast is useful, but the current allocator still deviates from Biggest Favorite too aggressively or at the wrong moments for the exact modern format.
+
+## Hindsight allocation opportunity
+
+The closing-line hindsight assignment has an average selected-market advantage of approximately **+18.33 points/season** over Biggest Favorite in 2011–2025.
+
+This is not deployable; it establishes only that one-use schedule allocation has meaningful theoretical value.
+
+- Raw long/slow captured about **+0.53 points**, roughly **2.9%** of that gap.
+- Core future style captured about **+4.43 points**, roughly **24.2%**.
+
+There is therefore room to improve the decision policy without inventing more current-game predictive features.
+
+## Sacrifice-cap / risk research
+
+A hard rule limiting how many current spread points the optimizer may sacrifice did not produce a robust winner.
+
+The 3-point cap reduced overall variance and looked strong in 2021–2025, but it surrendered full-history expected performance and had a worse deep historical tail than unconstrained long/slow. Because cap=3 was also identified after inspecting historical results, it is not production-locked.
+
+**Decision:** risk control should eventually come from remaining-season distributions and championship probability, not an arbitrary spread cutoff.
+
+## Current V1 architecture
+
+The evidence currently supports this structure:
+
+1. **Current-week game value:** sportsbook spread is the primary expectation.
+2. **Future-week game value:** long/slow market-power forecast plus leakage-safe core style correction.
+3. **Expected margin transform:** residual-centered empirical calibration.
+4. **Inventory:** each team is a one-use asset.
+5. **Planning:** optimize remaining weeks, then rerun from scratch every week.
+6. **Uncertainty:** use the coherent empirical margin sampler for later Monte Carlo.
+7. **Risk policy:** not yet production-locked.
 
 ## Current research conclusion
 
-1. **Weekly reoptimization is supported.** The locked Week-1 plan performed very poorly relative to both rolling and the simple baseline.
-2. **Resource allocation appears to add real historical value.** The rolling family materially outperformed Biggest Favorite across the historical sample.
-3. **Long/slow is the strongest current core optimizer.** It combines the best full-history mean edge with the best observed downside among the main tested rating models.
-4. **Current market information still matters.** Prior-only versions weakened materially in the 2021–2025 era.
-5. **Game total does not earn a V1 role in margin probabilities.** Spread-only is sufficient until further evidence says otherwise.
-6. **The residual-centered empirical margin sampler is promoted for Monte Carlo research.** It gives one coherent full-margin distribution while retaining NFL tail behavior.
-7. **No hard sacrifice cap is production-locked.** The 3-point cap is worth carrying as an alternate/risk-policy candidate, but unconstrained long/slow remains the strongest central strategy.
-8. **Next research gate:** compare season-level risk distributions for Biggest Favorite, unconstrained long/slow, and the cap-3 candidate, then use the empirical margin sampler to build championship-oriented Monte Carlo logic without sacrificing the proven allocation edge.
+1. **Weekly reoptimization remains strongly supported.**
+2. **Do not claim raw long/slow's large historical actual-score edge as proven allocation edge.** Favorable realized residuals explain much of it.
+3. **Biggest Favorite is a very strong benchmark and remains unbeaten on expected allocation in the small 2021–2025 exact-format sample.**
+4. **Core team style is validated for future-line forecasting, not current-game override.**
+5. **Core style materially improves expected allocation versus raw long/slow and versus Biggest Favorite over 2011–2025.**
+6. **The current style allocator is not yet production-ready because its modern-era expected advantage versus Biggest Favorite is slightly negative.**
+7. **Turnover and game total do not currently justify added complexity.**
+8. **Next gate:** use Biggest Favorite as the weekly anchor and deviate only when the modeled remaining-season calibrated-EV advantage of an alternate current choice clears a predefined threshold. Evaluate threshold policy on an earlier development period and report 2021–2025 separately; the latter is not a pristine holdout because it has already been inspected repeatedly.
