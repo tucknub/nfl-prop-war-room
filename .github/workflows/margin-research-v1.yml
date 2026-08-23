@@ -1,0 +1,25 @@
+name: Margin Research V1
+
+on:
+  push:
+    branches: [margin-research-v1]
+    paths:
+      - 'research/margin_v1/**'
+      - '.github/workflows/margin-research-v1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install research dependencies
+        run: python -m pip install --disable-pip-version-check numpy pandas scipy
+      - name: Run 2006-2025 Margin Pool research
+        run: python research/margin_v1/run_margin_research.py
