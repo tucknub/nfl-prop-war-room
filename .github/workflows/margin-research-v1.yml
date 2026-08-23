@@ -4,12 +4,12 @@ on:
   push:
     branches: [margin-research-v1]
     paths:
-      - 'research/margin_v1/run_margin_future_lines.py'
+      - 'research/margin_v1/run_margin_style_strategy.py'
       - '.github/workflows/margin-research-v1.yml'
   pull_request:
     branches: [streamlit-cloud-deploy]
     paths:
-      - 'research/margin_v1/run_margin_future_lines.py'
+      - 'research/margin_v1/run_margin_style_strategy.py'
       - '.github/workflows/margin-research-v1.yml'
 
 permissions:
@@ -18,7 +18,7 @@ permissions:
 jobs:
   research:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,5 +26,5 @@ jobs:
           python-version: '3.12'
       - name: Install research dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn nflreadpy
-      - name: Run future-line forecasting research
-        run: python research/margin_v1/run_margin_future_lines.py
+      - name: Run end-to-end style-aware Margin strategy research
+        run: python research/margin_v1/run_margin_style_strategy.py
