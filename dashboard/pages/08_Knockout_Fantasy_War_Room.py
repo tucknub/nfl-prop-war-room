@@ -117,6 +117,10 @@ section("Roster state", "Draft intake and every later add/drop stay private and 
 roster = list(state.get("roster") or [])
 if roster:
     st.success(f"Current roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
+    if readiness["ready"]:
+        st.caption("Current roster can fill every required starter slot.")
+    else:
+        st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
     st.dataframe(pd.DataFrame(roster), hide_index=True, width="stretch")
 else:
     st.info("No roster is loaded yet. This is expected before the draft.")
@@ -138,7 +142,12 @@ else:
         try:
             parsed = _parse_roster_csv(raw_text)
             normalized = engine.validate_roster(parsed, roster_size=int(league["roster_size"]))
-            st.success("Roster validates for the league's 14-player lineup requirements.")
+            lineup = engine.lineup_readiness(normalized)
+            st.success("Roster structure validates: 14 unique players with recognized positions and NFL teams.")
+            if lineup["ready"]:
+                st.caption("This roster can also fill every required starter slot.")
+            else:
+                st.warning("Roster can be saved, but starter coverage is incomplete: " + "; ".join(lineup["errors"]))
             st.dataframe(pd.DataFrame(normalized), hide_index=True, width="stretch")
             confirm = st.checkbox("I confirm this is my final drafted roster.", key="knockout_confirm_draft")
             if st.button("Save draft roster", type="primary", disabled=not confirm, key="knockout_save_draft"):
