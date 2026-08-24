@@ -36,8 +36,8 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Run end-to-end style-aware allocation gate
-        run: python research/margin_v1/run_margin_style_strategy.py
+      - name: Run raw long-slow cap-3 allocation gate
+        run: python research/margin_v1/run_margin_raw_cap3_gate.py
       - name: Compile Margin production files
         run: python -m py_compile src/margin/live_engine.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py
       - name: Validate live engine and rendered dashboard
