@@ -49,9 +49,12 @@ def evaluate_override(
         n_sims=n_sims,
         seed=seed,
     )
+    readiness = dict(primary.get("readiness") or {})
+    readiness["override_promoted"] = True
 
     base = {
         **primary,
+        "readiness": readiness,
         "authoritative_pick": expected_points_pick,
         "override_applied": False,
         "promotion_policy": {
