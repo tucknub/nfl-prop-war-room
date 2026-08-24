@@ -10,7 +10,8 @@
     "name": null,
     "size": null,
     "pick_deadline": null,
-    "picks_visible_before_deadline": null
+    "picks_visible_before_deadline": null,
+    "first_place_tie_rule": null
   },
   "opponents": [],
   "current_decision": {
@@ -35,15 +36,18 @@
     "future_power_half_life": 8.0,
     "future_power_ridge": 3.0,
     "style_numeric_override": false,
-    "championship_override_enabled_when_pool_state_available": true,
+    "championship_ranking_enabled_when_ready": true,
+    "championship_override_promoted": false,
+    "championship_minimum_supported_week": 10,
     "margin_sampler_bandwidth": 3.0
   },
   "notes": [
     "Live state, not a locked future pick sheet.",
     "The provisional Week-1 pick must be refreshed before the pool deadline.",
-    "Pool size, deadline, and opponent inventories are not yet loaded.",
+    "Pool size, tie rule, deadline, and complete opponent scores/inventories are not yet loaded.",
     "Weeks 1-3 remain Biggest Favorite default mode.",
     "Beginning Week 4, genuinely posted future lines retain precedence; unpriced future games use the raw long/slow market-power forecast.",
-    "Team-style correction is not used numerically in V1 because its end-to-end allocation promotion gate failed despite improving future-line MAE."
+    "Team-style correction is not used numerically in V1 because its end-to-end allocation promotion gate failed despite improving future-line MAE.",
+    "Championship simulation is research-supported only from Week 10 onward and requires complete field state. Championship ranking cannot override the expected-points pick until a separate promotion gate passes."
   ]
 }
