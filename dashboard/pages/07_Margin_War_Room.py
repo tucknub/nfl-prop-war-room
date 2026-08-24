@@ -92,12 +92,42 @@ pick = audit["pick"]
 anchor = audit["anchor"]
 policy = audit["policy"]
 data_quality = audit["data_quality"]
+championship_info = audit.get("championship") or {}
 used = set(str(x) for x in audit.get("used_teams", []))
 
-if policy.get("championship_status") != "READY_FOR_SIMULATION":
+champ_status = str(policy.get("championship_status", ""))
+override_applied = bool(policy.get("championship_override_applied", False))
+if champ_status != "READY_FOR_SIMULATION":
+    if champ_status == "UNAVAILABLE_EARLY_SEASON_RESEARCH_GATE":
+        note(
+            f"Championship override is promoted but intentionally inactive before Week "
+            f"{policy.get('championship_minimum_supported_week', 10)}. The expected-points recommendation is authoritative."
+        )
+    elif champ_status in {"UNAVAILABLE_POOL_STATE_MISSING", "UNAVAILABLE_POOL_STATE_INCOMPLETE"}:
+        note(
+            "Championship override is promoted but inactive until the complete pool field is loaded: "
+            "pool size/tie rule plus every opponent's score and burned-team inventory. "
+            "The expected-points recommendation is authoritative."
+        )
+    else:
+        note(
+            "Championship override is blocked because the loaded pool state is invalid. "
+            "The expected-points recommendation remains authoritative until the state is corrected.",
+            amber=True,
+        )
+elif override_applied:
+    sim = championship_info.get("simulation") or {}
+    confirmation = championship_info.get("confirmation") or {}
     note(
-        "Championship mode is not active yet because pool size/opponent inventories have not been loaded. "
-        "The expected-points recommendation below is authoritative for now."
+        f"Championship override ACTIVE: {policy.get('expected_points_pick')} → {pick['team']}. "
+        f"Primary first-place-share lift is {float(sim.get('first_share_lift', 0.0)) * 100:+.1f} pp; "
+        f"independent confirmation mean is {float(confirmation.get('mean_first_share_lift', 0.0)) * 100:+.1f} pp "
+        f"with a minimum seed lift of {float(confirmation.get('minimum_first_share_lift', 0.0)) * 100:+.1f} pp."
+    )
+else:
+    note(
+        "Championship mode evaluated the complete field and retained the expected-points pick. "
+        f"Gate result: {str(policy.get('championship_override_status', '')).replace('_', ' ').title()}."
     )
 
 section("Current decision", "The answer first. Refresh near the pool deadline before committing the pick.")
@@ -109,7 +139,13 @@ hero[3].metric("Expected margin", _signed(pick["calibrated_margin"]))
 hero[4].metric("Loss probability", _pct(pick["p_loss"]))
 hero[5].metric("20+ probability", _pct(pick["p_win20"]))
 
-if str(pick["team"]) == str(anchor["team"]):
+if override_applied:
+    note(
+        f"Championship-driven pick: {pick['team']} replaces expected-points choice {policy.get('expected_points_pick')} "
+        "because it cleared the historical +2.0 pp promotion threshold and all independent confirmation seeds. "
+        f"Current spread sacrifice versus the anchor is {pick['current_sacrifice_vs_anchor']:.1f} points."
+    )
+elif str(pick["team"]) == str(anchor["team"]):
     note(
         f"Anchor retained: {pick['team']} is the largest current favorite and the engine finds no qualifying reason to deviate. "
         f"Future opportunity cost is {pick['future_cost']:.2f} expected points."
@@ -219,6 +255,11 @@ with st.expander("Source mix and technical status"):
     st.json({
         "market_snapshot": audit["snapshot_utc"],
         "championship_status": policy.get("championship_status"),
+        "championship_override_promoted": policy.get("championship_override_promoted"),
+        "championship_override_applied": policy.get("championship_override_applied"),
+        "championship_override_status": policy.get("championship_override_status"),
+        "championship_primary_lift_threshold": policy.get("championship_primary_lift_threshold"),
+        "championship_confirmation_seeds": policy.get("championship_confirmation_seeds"),
         "future_forecast_status": data_quality.get("future_forecast_status"),
         "future_forecast_model": data_quality.get("future_forecast_model"),
         "style_numeric_override": policy.get("style_numeric_override"),

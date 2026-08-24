@@ -37,8 +37,11 @@
     "future_power_ridge": 3.0,
     "style_numeric_override": false,
     "championship_ranking_enabled_when_ready": true,
-    "championship_override_promoted": false,
+    "championship_override_promoted": true,
     "championship_minimum_supported_week": 10,
+    "championship_primary_first_share_lift_threshold": 0.02,
+    "championship_independent_confirmation_seeds": 3,
+    "championship_confirmation_rule": "FROZEN_CANDIDATE_POSITIVE_ON_EVERY_INDEPENDENT_SEED",
     "margin_sampler_bandwidth": 3.0
   },
   "notes": [
@@ -48,6 +51,6 @@
     "Weeks 1-3 remain Biggest Favorite default mode.",
     "Beginning Week 4, genuinely posted future lines retain precedence; unpriced future games use the raw long/slow market-power forecast.",
     "Team-style correction is not used numerically in V1 because its end-to-end allocation promotion gate failed despite improving future-line MAE.",
-    "Championship simulation is research-supported only from Week 10 onward and requires complete field state. Championship ranking cannot override the expected-points pick until a separate promotion gate passes."
+    "Championship override is eligible only from Week 10 onward with complete field state. A different championship candidate must clear a 2.0 percentage-point primary first-place-share lift and remain positive on all three independent confirmation seeds before it can become authoritative. Otherwise the expected-points pick remains authoritative."
   ]
 }
