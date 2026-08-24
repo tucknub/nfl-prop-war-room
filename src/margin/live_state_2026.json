@@ -11,7 +11,8 @@
     "size": null,
     "pick_deadline": null,
     "picks_visible_before_deadline": null,
-    "first_place_tie_rule": null
+    "first_place_tie_rule": null,
+    "payout_structure": "winner_take_all"
   },
   "opponents": [],
   "current_decision": {
@@ -47,7 +48,7 @@
   "notes": [
     "Live state, not a locked future pick sheet.",
     "The provisional Week-1 pick must be refreshed before the pool deadline.",
-    "Pool size, tie rule, deadline, and complete opponent scores/inventories are not yet loaded.",
+    "The pool is winner-take-all. Pool size, tie handling, deadline, pick visibility, and complete opponent scores/inventories are not yet loaded.",
     "Weeks 1-3 remain Biggest Favorite default mode.",
     "Beginning Week 4, genuinely posted future lines retain precedence; unpriced future games use the raw long/slow market-power forecast.",
     "Team-style correction is not used numerically in V1 because its end-to-end allocation promotion gate failed despite improving future-line MAE.",
