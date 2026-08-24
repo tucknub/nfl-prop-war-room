@@ -130,15 +130,25 @@ def test_used_team_cannot_be_committed() -> None:
         state_store.commit_pick_state(state, week2_audit, "LAC")
 
 
-def test_admin_config_requires_token_and_key() -> None:
+def test_write_config_requires_complete_owner_oidc() -> None:
     assert state_store.config_from_secrets({}) is None
     assert state_store.config_from_secrets({"MARGIN_GITHUB_TOKEN": "x"}) is None
+    assert state_store.config_from_secrets({
+        "MARGIN_GITHUB_TOKEN": "token",
+        "MARGIN_ADMIN_KEY": "legacy-secret",
+    }) is None
     config = state_store.config_from_secrets({
         "MARGIN_GITHUB_TOKEN": "token",
-        "MARGIN_ADMIN_KEY": "secret",
+        "PROPWAR_OWNER_EMAIL": "owner@example.com",
+        "auth": {
+            "redirect_uri": "https://propwar.streamlit.app/oauth2callback",
+            "cookie_secret": "cookie-secret",
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
+        },
     })
     assert config is not None
     assert config["repo"] == "tucknub/nfl-prop-war-room"
     assert config["branch"] == "streamlit-cloud-deploy"
-    assert state_store.admin_key_valid(config, "secret") is True
-    assert state_store.admin_key_valid(config, "wrong") is False
+    assert config["auth_mode"] == "OIDC_OWNER"

@@ -100,7 +100,9 @@ def render_launch_home() -> None:
 
 def _render_owner_auth(mode: str, user: dict) -> None:
     with st.sidebar:
-        if mode == "ANONYMOUS":
+        if mode == "AUTH_UNAVAILABLE":
+            st.caption("Personal tools are unavailable until owner authentication is configured.")
+        elif mode == "ANONYMOUS":
             st.caption("Personal tools are hidden.")
             if st.button("Owner sign in", key="owner_login", width="stretch"):
                 st.login()
@@ -129,8 +131,8 @@ def main() -> None:
     user = _user_snapshot()
     mode = access_mode(secrets, user)
 
-    # The legacy password widget remains in the Margin page for migration safety,
-    # but owner OIDC mode authorizes independently and removes that widget visually.
+    # The Margin page still contains a compatibility input from the migration,
+    # but OIDC owner identity is now the only authorization path.
     if mode == "OWNER":
         st.markdown("<style>.st-key-margin_admin_key { display:none !important; }</style>", unsafe_allow_html=True)
 
@@ -149,12 +151,7 @@ def main() -> None:
     ]
     pages: dict[str, list] = {"Role Intelligence": role_pages}
 
-    if mode == "LEGACY_ADMIN":
-        pages = {
-            "Margin Pool": [st.Page("pages/07_Margin_War_Room.py", title="Margin War Room", icon=":material/trophy:", url_path="margin")],
-            **pages,
-        }
-    elif mode == "OWNER":
+    if mode == "OWNER":
         pages = {
             "My Tools": [st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin")],
             **pages,
