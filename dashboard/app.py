@@ -13,7 +13,8 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from research_ui import inject_styles, section  # noqa: E402
-from research_data import operational_status_text, role_home_copy  # noqa: E402
+from research_data import operational_status_text  # noqa: E402
+from public_copy import role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
 
 
