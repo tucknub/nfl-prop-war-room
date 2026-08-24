@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from public_copy import role_home_copy
 from research_data import ROLE_LABELS, available_seasons, available_weeks, operational_status_text
 from research_ui import (
     enable_browser_history_sync,
@@ -37,10 +38,8 @@ def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: st
 
 def render_home() -> None:
     enable_browser_history_sync()
-    page_intro(
-        "This Week in NFL Roles",
-        "Start with the clearest usage changes, then open the supporting player and team evidence.",
-    )
+    copy = role_home_copy()
+    page_intro(copy["page_title"], copy["page_description"])
 
     seasons = available_seasons()
     season_state = initialize_query_control(
