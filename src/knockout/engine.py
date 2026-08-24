@@ -10,11 +10,33 @@ REQUIRED_STARTERS = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1, "DST": 1}
 
 
 def canonical_position(value: object) -> str:
-    text = str(value or "").strip().upper().replace("D/ST", "DST").replace("DEF", "DST")
-    return text
+    return str(value or "").strip().upper().replace("D/ST", "DST").replace("DEF", "DST")
 
 
-def validate_roster(roster: Iterable[dict[str, Any]], *, roster_size: int = 14) -> list[dict[str, str]]:
+def _lineup_errors(roster: Iterable[dict[str, Any]]) -> list[str]:
+    rows = list(roster)
+    counts = {pos: sum(canonical_position(row.get("position")) == pos for row in rows) for pos in VALID_POSITIONS}
+    errors: list[str] = []
+    for pos, required in REQUIRED_STARTERS.items():
+        if counts[pos] < required:
+            errors.append(f"need {required} {pos}, found {counts[pos]}")
+    flex_pool = sum(counts[pos] for pos in FLEX_POSITIONS)
+    if flex_pool < 6:  # 2 RB + 2 WR + 1 TE + 1 FLEX
+        errors.append(f"need 6 RB/WR/TE players to fill starters plus FLEX, found {flex_pool}")
+    return errors
+
+
+def lineup_readiness(roster: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    errors = _lineup_errors(roster)
+    return {"ready": not errors, "errors": errors}
+
+
+def validate_roster(
+    roster: Iterable[dict[str, Any]],
+    *,
+    roster_size: int = 14,
+    require_startable: bool = False,
+) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     seen: set[str] = set()
     for raw in roster:
@@ -35,13 +57,10 @@ def validate_roster(roster: Iterable[dict[str, Any]], *, roster_size: int = 14) 
     if len(rows) != int(roster_size):
         raise ValueError(f"roster must contain exactly {int(roster_size)} players; received {len(rows)}")
 
-    counts = {pos: sum(row["position"] == pos for row in rows) for pos in VALID_POSITIONS}
-    for pos, required in REQUIRED_STARTERS.items():
-        if counts[pos] < required:
-            raise ValueError(f"roster cannot fill required starters: need {required} {pos}, found {counts[pos]}")
-    flex_pool = sum(counts[pos] for pos in FLEX_POSITIONS)
-    if flex_pool < 6:  # 2 RB + 2 WR + 1 TE + 1 FLEX
-        raise ValueError("roster cannot fill RB/WR/TE starters plus FLEX")
+    if require_startable:
+        errors = _lineup_errors(rows)
+        if errors:
+            raise ValueError(f"roster cannot fill required starters: {'; '.join(errors)}")
     return rows
 
 
@@ -141,19 +160,29 @@ def strategy_priorities(state: dict[str, Any]) -> list[str]:
 def draft_readiness(state: dict[str, Any]) -> dict[str, Any]:
     league = state.get("league") or {}
     roster = list(state.get("roster") or [])
+    required_count = int(league.get("roster_size", 14))
     if not roster:
         return {
             "ready": False,
             "status": "AWAITING_DRAFT_ROSTER",
             "roster_count": 0,
-            "required_roster_count": int(league.get("roster_size", 14)),
+            "required_roster_count": required_count,
+            "lineup_errors": [],
         }
-    validate_roster(roster, roster_size=int(league.get("roster_size", 14)))
+    validate_roster(roster, roster_size=required_count)
+    lineup = lineup_readiness(roster)
     return {
-        "ready": True,
-        "status": "READY_FOR_WEEK_1" if int(state.get("current_week", 0)) <= 1 else "ACTIVE",
+        "ready": bool(lineup["ready"]),
+        "status": (
+            "READY_FOR_WEEK_1"
+            if lineup["ready"] and int(state.get("current_week", 0)) <= 1
+            else "ACTIVE"
+            if lineup["ready"]
+            else "ROSTER_LOADED_LINEUP_INCOMPLETE"
+        ),
         "roster_count": len(roster),
-        "required_roster_count": int(league.get("roster_size", 14)),
+        "required_roster_count": required_count,
+        "lineup_errors": list(lineup["errors"]),
     }
 
 
