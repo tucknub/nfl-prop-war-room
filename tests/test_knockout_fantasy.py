@@ -134,6 +134,44 @@ def test_faab_ledger_cannot_overspend() -> None:
         engine.record_faab_spend(updated, 776)
 
 
+def test_waiver_transaction_updates_roster_and_faab_together() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    updated = engine.record_waiver_transaction(
+        active,
+        amount=125,
+        add_player={"player": "RB New", "position": "RB", "nfl_team": "SEA"},
+        drop_player="RB Four",
+        note="Won post-elimination waiver",
+    )
+    assert updated["faab_remaining"] == 875
+    names = {row["player"] for row in updated["roster"]}
+    assert "RB New" in names
+    assert "RB Four" not in names
+    tx = updated["faab_transactions"][0]
+    assert tx["amount"] == 125
+    assert tx["add"] == "RB New"
+    assert tx["drop"] == "RB Four"
+
+
+def test_waiver_transaction_rejects_invalid_drop_or_lineup_break() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    with pytest.raises(ValueError, match="not uniquely present"):
+        engine.record_waiver_transaction(
+            active,
+            amount=0,
+            add_player={"player": "WR New", "position": "WR", "nfl_team": "SEA"},
+            drop_player="Not On Roster",
+        )
+
+    with pytest.raises(ValueError, match="required starters"):
+        engine.record_waiver_transaction(
+            active,
+            amount=0,
+            add_player={"player": "WR New", "position": "WR", "nfl_team": "SEA"},
+            drop_player="K One",
+        )
+
+
 def test_knockout_storage_reuses_private_repo_but_has_separate_path() -> None:
     secrets = {
         "auth": dict(AUTH),
