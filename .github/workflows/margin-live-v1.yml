@@ -2,7 +2,7 @@ name: Margin Live V2
 
 on:
   push:
-    branches: [margin-live-v1, margin-week4-power-v1, margin-championship-gate-v1, margin-championship-promote-v1, margin-pool-state-intake-v1]
+    branches: [margin-live-v1, margin-week4-power-v1, margin-championship-gate-v1, margin-championship-promote-v1, margin-pool-state-intake-v1, margin-pick-control-v1]
     paths:
       - 'src/margin/**'
       - 'dashboard/app.py'
@@ -11,6 +11,7 @@ on:
       - 'scripts/validate_margin_championship.py'
       - 'scripts/update_margin_pool_state.py'
       - 'tests/test_margin_pool_state.py'
+      - 'tests/test_margin_state_store.py'
       - 'requirements.txt'
       - '.github/workflows/margin-live-v1.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'scripts/validate_margin_championship.py'
       - 'scripts/update_margin_pool_state.py'
       - 'tests/test_margin_pool_state.py'
+      - 'tests/test_margin_state_store.py'
       - 'requirements.txt'
       - '.github/workflows/margin-live-v1.yml'
 
@@ -41,12 +43,12 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt pytest
       - name: Compile Margin production files
-        run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py src/margin/championship.py src/margin/championship_override.py src/margin/pool_state.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py scripts/validate_margin_championship.py scripts/update_margin_pool_state.py
+        run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py src/margin/championship.py src/margin/championship_override.py src/margin/pool_state.py src/margin/state_store.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py scripts/validate_margin_championship.py scripts/update_margin_pool_state.py
       - name: Smoke-test pool updater CLI
         run: python scripts/update_margin_pool_state.py --help >/dev/null
       - name: Validate Week 1 parity, Week 4 power, and rendered dashboard
         run: python scripts/validate_margin_live.py
       - name: Validate championship readiness, simulation, and confirmed override policy
         run: python scripts/validate_margin_championship.py
-      - name: Validate safe pool-state intake
-        run: python -m pytest -q tests/test_margin_pool_state.py
+      - name: Validate pool-state intake and pick-state transitions
+        run: python -m pytest -q tests/test_margin_pool_state.py tests/test_margin_state_store.py
