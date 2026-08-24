@@ -18,6 +18,7 @@ def auth_secrets(**extra) -> dict:
         "auth": dict(AUTH),
         "PROPWAR_OWNER_EMAIL": "owner@example.com",
         "MARGIN_GITHUB_TOKEN": "token",
+        "MARGIN_GITHUB_REPO": "tucknub/propwar-private-state",
         **extra,
     }
 
@@ -52,30 +53,29 @@ def test_oidc_write_config_requires_owner_identity(monkeypatch) -> None:
     config = state_store.config_from_secrets(secrets)
     assert config is not None
     assert config["auth_mode"] == "OIDC_OWNER"
-    assert "admin_key" not in config
 
     monkeypatch.setattr(
         state_store,
         "_current_streamlit_user",
         lambda: {"is_logged_in": True, "email": "owner@example.com", "email_verified": True},
     )
-    assert state_store.admin_key_valid(config, "ignored") is True
+    assert state_store.owner_write_authorized(config) is True
 
     monkeypatch.setattr(
         state_store,
         "_current_streamlit_user",
         lambda: {"is_logged_in": True, "email": "other@example.com", "email_verified": True},
     )
-    assert state_store.admin_key_valid(config, "ignored") is False
+    assert state_store.owner_write_authorized(config) is False
 
 
-def test_legacy_admin_key_no_longer_authorizes_writes() -> None:
+def test_legacy_admin_key_no_longer_authorizes_or_configures_writes() -> None:
     config = state_store.config_from_secrets({
         "MARGIN_GITHUB_TOKEN": "token",
         "MARGIN_ADMIN_KEY": "secret",
     })
     assert config is None
-    assert state_store.admin_key_valid({"auth_mode": "LEGACY_ADMIN", "admin_key": "secret"}, "secret") is False
+    assert state_store.owner_write_authorized({"auth_mode": "LEGACY_ADMIN", "admin_key": "secret"}) is False
 
 
 def test_public_copy_uses_historical_wording_until_current_partition_is_published(monkeypatch) -> None:

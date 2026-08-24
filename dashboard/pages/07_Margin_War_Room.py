@@ -82,7 +82,7 @@ def _current_select_index(options: list[str], value: object) -> int:
     return options.index(text) if text in options else 0
 
 
-def _write_config() -> dict[str, str] | None:
+def _state_config() -> dict[str, str] | None:
     try:
         return state_store.config_from_secrets(st.secrets)
     except Exception:
@@ -96,7 +96,7 @@ def _same_state(a: dict, b: dict) -> bool:
 def _persist_transition(config: dict[str, str], expected_state: dict, new_state: dict, message: str) -> str:
     remote_state, remote_sha = state_store.fetch_remote_state(config)
     if not _same_state(remote_state, expected_state):
-        raise RuntimeError("Authoritative GitHub state changed. Refresh the page before writing again.")
+        raise RuntimeError("Authoritative private state changed. Refresh the page before writing again.")
     return state_store.write_remote_state(
         config,
         new_state,
@@ -110,18 +110,21 @@ page_intro(
     "One-use NFL team allocation for the 2026 Margin Pool. Only the current week's recommendation is actionable; every future slot is provisional.",
 )
 
-deployed_state_text = margin_live.base.DEFAULT_STATE.read_text(encoding="utf-8")
-deployed_state = json.loads(deployed_state_text)
-written_state_text = st.session_state.get("margin_written_state")
-if written_state_text:
-    written_state = json.loads(written_state_text)
-    if _same_state(written_state, deployed_state):
-        st.session_state.pop("margin_written_state", None)
-        state = deployed_state
-    else:
-        state = written_state
-else:
-    state = deployed_state
+state_config = _state_config()
+if state_config is None:
+    st.error("Private Margin state is not configured. Add the private state repository settings in Streamlit Secrets.")
+    st.stop()
+if not state_store.owner_write_authorized(state_config):
+    st.error("Private Margin state is available only to the authenticated owner.")
+    st.stop()
+try:
+    with st.spinner("Loading private Margin state..."):
+        state, _state_sha = state_store.fetch_remote_state(state_config)
+except Exception as exc:
+    st.error("The private Margin state could not be loaded. No public fallback will be used.")
+    st.exception(exc)
+    st.stop()
+
 state_text = json.dumps(state, sort_keys=True)
 
 refresh_col, status_col = st.columns([1, 3])
@@ -132,7 +135,7 @@ with refresh_col:
 with status_col:
     st.caption(
         f"State: Week {state['current_week']} · score {float(state.get('cumulative_score', 0.0)):+.0f} · "
-        f"{len(state.get('used_teams', []))} teams used · authoritative state loaded"
+        f"{len(state.get('used_teams', []))} teams used · private authoritative state loaded"
     )
 
 try:
@@ -222,20 +225,9 @@ policy_cols[1].metric("Future cost", f"{pick['future_cost']:.2f}")
 policy_cols[2].metric("Season EV Δ vs anchor", f"{pick['total_season_ev_delta_vs_anchor']:+.2f}")
 
 section("This week's pick", "Record your actual pool selection here. This does not submit the pick to the external league site.")
-write_config = _write_config()
+authorized = True
 decision = state.get("current_decision") or {}
 committed_pick = str(decision.get("committed_pick") or "") if str(decision.get("status")) == "COMMITTED" else ""
-admin_key = st.text_input("War Room admin key", type="password", key="margin_admin_key")
-authorized = bool(write_config and state_store.admin_key_valid(write_config, admin_key))
-
-if write_config is None:
-    note(
-        "Pick recording is currently read-only because the Streamlit write secrets are not configured. "
-        "Recommendations still work normally.",
-        amber=True,
-    )
-elif admin_key and not authorized:
-    st.error("Admin key is incorrect.")
 
 if committed_pick:
     committed_row = raw_board[raw_board.team.astype(str).eq(committed_pick)]
@@ -276,14 +268,13 @@ if committed_pick:
         try:
             updated_state = state_store.complete_week_state(state, final_margin)
             commit_sha = _persist_transition(
-                write_config,
+                state_config,
                 state,
                 updated_state,
                 f"Complete Margin Week {state['current_week']}: {committed_pick} {float(final_margin):+g}",
             )
-            st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
             _calculate_snapshot.clear()
-            st.success(f"Week completed and saved to GitHub ({commit_sha[:8]}). Advancing the War Room.")
+            st.success(f"Week completed and saved to private state ({commit_sha[:8]}). Advancing the War Room.")
             st.rerun()
         except Exception as exc:
             st.error(f"Week completion was not saved: {exc}")
@@ -311,12 +302,11 @@ if committed_pick:
             try:
                 updated_state = state_store.commit_pick_state(state, audit, replacement)
                 commit_sha = _persist_transition(
-                    write_config,
+                    state_config,
                     state,
                     updated_state,
                     f"Change Margin Week {state['current_week']} pick: {committed_pick} to {replacement}",
                 )
-                st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
                 _calculate_snapshot.clear()
                 st.success(f"Recorded pick changed to {replacement} ({commit_sha[:8]}).")
                 st.rerun()
@@ -362,14 +352,13 @@ else:
         try:
             updated_state = state_store.commit_pick_state(state, audit, selected_team)
             commit_sha = _persist_transition(
-                write_config,
+                state_config,
                 state,
                 updated_state,
                 f"Commit Margin Week {state['current_week']} pick: {selected_team}",
             )
-            st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
             _calculate_snapshot.clear()
-            st.success(f"{selected_team} recorded and saved to GitHub ({commit_sha[:8]}).")
+            st.success(f"{selected_team} recorded and saved to private state ({commit_sha[:8]}).")
             st.rerun()
         except Exception as exc:
             st.error(f"Pick was not saved: {exc}")
@@ -441,7 +430,7 @@ st.dataframe(
 )
 note("Do not follow this route blindly. After every completed week, the remaining route is deleted and rebuilt.", amber=True)
 
-section("My pool state", "Authoritative state is updated after each real selection and final score.")
+section("My pool state", "Authoritative state is loaded from and written to the private state repository.")
 state_cols = st.columns(4)
 state_cols[0].metric("Current week", int(state["current_week"]))
 state_cols[1].metric("Cumulative score", f"{float(state.get('cumulative_score', 0.0)):+.0f}")
@@ -458,11 +447,11 @@ else:
 
 section(
     "Pool field preview",
-    "Validate real standings and burned-team inventories, then preview the recommendation without changing authoritative GitHub state.",
+    "Validate real standings and burned-team inventories, then preview the recommendation without changing authoritative private state.",
 )
 note(
     "Preview only: this section does not replace the authoritative field until its validated snapshot is persisted. "
-    "Pick/result controls above write only the War Room season state when admin write access is configured.",
+    "Pick/result controls above write only to the private owner state.",
     amber=True,
 )
 

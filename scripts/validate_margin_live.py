@@ -13,6 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.margin import live_engine as live_engine_v1  # noqa: E402
 from src.margin import live_engine_v2 as live_engine  # noqa: E402
+from src.margin import state_store  # noqa: E402
 
 
 def route_checksum(route: list[dict]) -> list[tuple]:
@@ -89,8 +90,33 @@ def main() -> None:
         assert float(week4_pick["total_season_ev_delta_vs_anchor"]) >= 0.5 - 1e-12
 
     page = REPO_ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
-    app = AppTest.from_file(str(page), default_timeout=45)
-    app.run()
+
+    # The production page now requires private remote state. Patch only the
+    # storage boundary in this test process so dashboard rendering can be
+    # validated without putting a real PAT/private repository into Actions.
+    private_config = {
+        "token": "test-token",
+        "repo": "tucknub/ci-private-margin-state",
+        "branch": "main",
+        "path": "margin/live_state_2026.json",
+        "auth_mode": "OIDC_OWNER",
+        "owner_email": "owner@example.com",
+    }
+    original_config_from_secrets = state_store.config_from_secrets
+    original_owner_write_authorized = state_store.owner_write_authorized
+    original_fetch_remote_state = state_store.fetch_remote_state
+    try:
+        state_store.config_from_secrets = lambda _secrets: dict(private_config)
+        state_store.owner_write_authorized = lambda _config: True
+        state_store.fetch_remote_state = lambda _config: (copy.deepcopy(state), "ci-state-sha")
+
+        app = AppTest.from_file(str(page), default_timeout=45)
+        app.run()
+    finally:
+        state_store.config_from_secrets = original_config_from_secrets
+        state_store.owner_write_authorized = original_owner_write_authorized
+        state_store.fetch_remote_state = original_fetch_remote_state
+
     if app.exception:
         raise AssertionError(f"Margin dashboard raised Streamlit exceptions: {[str(x.value) for x in app.exception]}")
 
@@ -114,21 +140,31 @@ def main() -> None:
     text_inputs = {str(x.label): x for x in app.text_input}
     selectboxes = {str(x.label): x for x in app.selectbox}
     buttons = {str(x.label): x for x in app.button}
-    assert "War Room admin key" in text_inputs
+    assert "War Room admin key" not in text_inputs
     assert "Team to record" in selectboxes
     assert f"Commit {pick['team']} for Week 1" in buttons
 
-    # Without Streamlit write secrets in CI, pick controls must render fail-closed.
-    assert any("read-only" in str(x.value).lower() for x in app.markdown)
+    # Owner identity alone must not commit a pick; the explicit acknowledgement
+    # remains required even when private storage is available.
     assert buttons[f"Commit {pick['team']} for Week 1"].disabled is True
+
+    # Also prove that an unconfigured runtime does not fall back to the public
+    # checked-in JSON. It must stop before rendering a recommendation.
+    unconfigured = AppTest.from_file(str(page), default_timeout=45)
+    unconfigured.run()
+    unconfigured_errors = "\n".join(str(x.value) for x in unconfigured.error)
+    unconfigured_metrics = {str(m.label): str(m.value) for m in unconfigured.metric}
+    assert "Private Margin state is not configured" in unconfigured_errors
+    assert "RECOMMENDED" not in unconfigured_metrics
 
     print("production_week1_v1_v2_parity=PASS")
     print("production_margin_route_invariants=PASS")
     print("production_week4_raw_long_slow=PASS")
     print("production_week4_cap3_threshold=PASS")
     print("production_no_style_numeric_override=PASS")
-    print("production_margin_dashboard_render=PASS")
-    print("production_margin_pick_controls_fail_closed=PASS")
+    print("production_margin_dashboard_private_state_render=PASS")
+    print("production_margin_private_state_fail_closed=PASS")
+    print("production_margin_dead_admin_key_removed=PASS")
     print("production_margin_pool_preview_render=PASS")
     print(f"current_pick={pick['team']} opponent={pick['opponent']} spread={pick['current_spread']:+.1f}")
 

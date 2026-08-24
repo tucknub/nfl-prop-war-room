@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import copy
+import json
 
 import pytest
 
@@ -55,6 +57,21 @@ def audit() -> dict:
                 "p_win20": 0.188,
             },
         ],
+    }
+
+
+def owner_secrets() -> dict:
+    return {
+        "MARGIN_GITHUB_TOKEN": "token",
+        "MARGIN_GITHUB_REPO": "tucknub/propwar-private-state",
+        "PROPWAR_OWNER_EMAIL": "owner@example.com",
+        "auth": {
+            "redirect_uri": "https://propwar.streamlit.app/oauth2callback",
+            "cookie_secret": "cookie-secret",
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
+        },
     }
 
 
@@ -130,25 +147,87 @@ def test_used_team_cannot_be_committed() -> None:
         state_store.commit_pick_state(state, week2_audit, "LAC")
 
 
-def test_write_config_requires_complete_owner_oidc() -> None:
+def test_write_config_requires_private_repo_secret_and_complete_owner_oidc() -> None:
     assert state_store.config_from_secrets({}) is None
     assert state_store.config_from_secrets({"MARGIN_GITHUB_TOKEN": "x"}) is None
-    assert state_store.config_from_secrets({
-        "MARGIN_GITHUB_TOKEN": "token",
-        "MARGIN_ADMIN_KEY": "legacy-secret",
-    }) is None
-    config = state_store.config_from_secrets({
-        "MARGIN_GITHUB_TOKEN": "token",
-        "PROPWAR_OWNER_EMAIL": "owner@example.com",
-        "auth": {
-            "redirect_uri": "https://propwar.streamlit.app/oauth2callback",
-            "cookie_secret": "cookie-secret",
-            "client_id": "client-id",
-            "client_secret": "client-secret",
-            "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
-        },
-    })
+
+    missing_repo = owner_secrets()
+    missing_repo.pop("MARGIN_GITHUB_REPO")
+    assert state_store.config_from_secrets(missing_repo) is None
+
+    config = state_store.config_from_secrets(owner_secrets())
     assert config is not None
-    assert config["repo"] == "tucknub/nfl-prop-war-room"
-    assert config["branch"] == "streamlit-cloud-deploy"
+    assert config["repo"] == "tucknub/propwar-private-state"
+    assert config["branch"] == "main"
+    assert config["path"] == "margin/live_state_2026.json"
     assert config["auth_mode"] == "OIDC_OWNER"
+
+
+def test_owner_write_authorization_uses_oidc_identity(monkeypatch) -> None:
+    config = state_store.config_from_secrets(owner_secrets())
+    assert config is not None
+
+    monkeypatch.setattr(
+        state_store,
+        "_current_streamlit_user",
+        lambda: {"is_logged_in": True, "email": "OWNER@example.com", "email_verified": True},
+    )
+    assert state_store.owner_write_authorized(config) is True
+
+    monkeypatch.setattr(
+        state_store,
+        "_current_streamlit_user",
+        lambda: {"is_logged_in": True, "email": "other@example.com", "email_verified": True},
+    )
+    assert state_store.owner_write_authorized(config) is False
+
+
+def test_public_app_repo_is_rejected_before_network_access(monkeypatch) -> None:
+    config = {
+        "token": "token",
+        "repo": "tucknub/nfl-prop-war-room",
+        "branch": "streamlit-cloud-deploy",
+        "path": "src/margin/live_state_2026.json",
+    }
+    monkeypatch.setattr(state_store, "_github_json", lambda *args, **kwargs: pytest.fail("network should not be called"))
+    with pytest.raises(RuntimeError, match="separate private"):
+        state_store.fetch_remote_state(config)
+
+
+def test_private_remote_state_is_loaded_as_authority(monkeypatch) -> None:
+    config = {
+        "token": "token",
+        "repo": "tucknub/propwar-private-state",
+        "branch": "main",
+        "path": "margin/live_state_2026.json",
+    }
+    state = base_state()
+    encoded = base64.b64encode(json.dumps(state).encode("utf-8")).decode("ascii")
+
+    def fake_github_json(_config, method, url, payload=None):
+        assert method == "GET"
+        if url.endswith("/repos/tucknub/propwar-private-state"):
+            return {"private": True, "visibility": "private"}
+        assert "margin/live_state_2026.json" in url
+        return {"content": encoded, "sha": "state-sha"}
+
+    monkeypatch.setattr(state_store, "_github_json", fake_github_json)
+    loaded, sha = state_store.fetch_remote_state(config)
+    assert loaded == state
+    assert sha == "state-sha"
+
+
+def test_non_private_remote_state_is_rejected(monkeypatch) -> None:
+    config = {
+        "token": "token",
+        "repo": "tucknub/not-private",
+        "branch": "main",
+        "path": "margin/live_state_2026.json",
+    }
+    monkeypatch.setattr(
+        state_store,
+        "_github_json",
+        lambda *_args, **_kwargs: {"private": False, "visibility": "public"},
+    )
+    with pytest.raises(RuntimeError, match="not private"):
+        state_store.fetch_remote_state(config)
