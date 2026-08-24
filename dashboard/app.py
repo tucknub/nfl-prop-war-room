@@ -116,7 +116,12 @@ def _render_owner_auth(mode: str, user: dict) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="PropWar: NFL Role Intelligence", page_icon="PW", layout="wide")
+    st.set_page_config(
+        page_title="PropWar: NFL Role Intelligence",
+        page_icon="PW",
+        layout="wide",
+        initial_sidebar_state="locked",
+    )
     inject_styles()
     inject_usability_styles()
 
