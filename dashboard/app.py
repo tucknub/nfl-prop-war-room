@@ -144,6 +144,9 @@ def main() -> None:
         )
 
     pages = {
+        "Margin Pool": [
+            st.Page("pages/07_Margin_War_Room.py", title="Margin War Room", icon=":material/trophy:", url_path="margin"),
+        ],
         "Role Intelligence": [
             st.Page(render_launch_home, title="Home", icon=":material/home:", url_path="", default=True),
             st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
@@ -152,7 +155,7 @@ def main() -> None:
             st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
             st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
             st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
-        ]
+        ],
     }
 
     st.navigation(pages).run()
