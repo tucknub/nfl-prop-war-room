@@ -131,11 +131,6 @@ def main() -> None:
     user = _user_snapshot()
     mode = access_mode(secrets, user)
 
-    # The Margin page still contains a compatibility input from the migration,
-    # but OIDC owner identity is now the only authorization path.
-    if mode == "OWNER":
-        st.markdown("<style>.st-key-margin_admin_key { display:none !important; }</style>", unsafe_allow_html=True)
-
     with st.sidebar:
         st.markdown('<div class="pw-brand"><strong>PropWar</strong><span>NFL ROLE INTELLIGENCE</span></div>', unsafe_allow_html=True)
     _render_owner_auth(mode, user)
