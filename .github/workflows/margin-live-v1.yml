@@ -1,0 +1,40 @@
+name: Margin Live V1
+
+on:
+  push:
+    branches: [margin-live-v1]
+    paths:
+      - 'src/margin/**'
+      - 'dashboard/app.py'
+      - 'dashboard/pages/07_Margin_War_Room.py'
+      - 'scripts/validate_margin_live.py'
+      - 'requirements.txt'
+      - '.github/workflows/margin-live-v1.yml'
+  pull_request:
+    branches: [streamlit-cloud-deploy]
+    paths:
+      - 'src/margin/**'
+      - 'dashboard/app.py'
+      - 'dashboard/pages/07_Margin_War_Room.py'
+      - 'scripts/validate_margin_live.py'
+      - 'requirements.txt'
+      - '.github/workflows/margin-live-v1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Compile Margin production files
+        run: python -m py_compile src/margin/live_engine.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py
+      - name: Validate live engine and rendered dashboard
+        run: python scripts/validate_margin_live.py

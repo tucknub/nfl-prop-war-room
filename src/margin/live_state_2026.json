@@ -1,0 +1,42 @@
+{
+  "schema_version": "margin_live_state_v1",
+  "season": 2026,
+  "current_week": 1,
+  "completed_week": 0,
+  "cumulative_score": 0.0,
+  "used_teams": [],
+  "weekly_results": [],
+  "pool": {
+    "name": null,
+    "size": null,
+    "pick_deadline": null,
+    "picks_visible_before_deadline": null
+  },
+  "opponents": [],
+  "current_decision": {
+    "status": "PROVISIONAL",
+    "provisional_pick": "LAC",
+    "committed_pick": null,
+    "anchor": "LAC",
+    "market_snapshot_utc": "2026-08-24T00:12:13Z",
+    "current_spread": 10.5,
+    "calibrated_expected_margin": 11.123705360489167,
+    "p_loss": 0.17865707828299196,
+    "p_win20": 0.2636493060782937,
+    "reason": "Largest current Week-1 favorite; current posted-market allocation and provisional roadmap both retain LAC in Week 1."
+  },
+  "model_policy": {
+    "current_market_primary": true,
+    "weeks_1_to_3_biggest_favorite_default": true,
+    "anchor_ev_threshold": 0.5,
+    "default_current_spread_sacrifice_cap": 3.0,
+    "championship_override_enabled_when_pool_state_available": true,
+    "margin_sampler_bandwidth": 3.0
+  },
+  "notes": [
+    "Live state, not a locked future pick sheet.",
+    "The provisional Week-1 pick must be refreshed before the pool deadline.",
+    "Pool size, deadline, and opponent inventories are not yet loaded.",
+    "The production engine has a hard safety gate at Week 4 until the validated in-season future-style correction is activated."
+  ]
+}
