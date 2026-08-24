@@ -38,14 +38,13 @@ def main() -> None:
     route = audit["route"]
     board = audit["board"]
 
-    # Week 1 must remain exactly compatible with the already-validated V1 engine.
     assert audit["schema_version"] == "margin_live_decision_v2"
     assert pick["team"] == v1_audit["pick"]["team"]
     assert pick["opponent"] == v1_audit["pick"]["opponent"]
     assert abs(float(pick["current_spread"]) - float(v1_audit["pick"]["current_spread"])) < 1e-12
     assert route_checksum(route) == route_checksum(v1_audit["route"])
     assert pick["team"] == policy["expected_points_pick"]
-    assert policy["anchor"] == pick["team"], "Weeks 1-3 must retain the current biggest-favorite anchor."
+    assert policy["anchor"] == pick["team"]
     assert audit["data_quality"]["current_week_games"] == audit["data_quality"]["current_week_posted_spreads"]
     assert len(route) == 18
     assert len({r["team"] for r in route}) == 18
@@ -55,7 +54,6 @@ def main() -> None:
     assert audit["data_quality"]["future_forecast_model"] == "EARLY_SEASON_MARKET_RATING_FALLBACK"
     assert policy["style_numeric_override"] is False
 
-    # Week 4+ must now activate the historically gated raw long/slow market-power model.
     week4 = copy.deepcopy(state)
     week4["current_week"] = 4
     week4["completed_week"] = 3
@@ -90,7 +88,6 @@ def main() -> None:
     if str(week4_pick["team"]) != str(week4_audit["anchor"]["team"]):
         assert float(week4_pick["total_season_ev_delta_vs_anchor"]) >= 0.5 - 1e-12
 
-    # The real dashboard must render from the same V2 engine and match its live Week-1 decision.
     page = REPO_ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
     app = AppTest.from_file(str(page), default_timeout=45)
     app.run()
@@ -98,13 +95,15 @@ def main() -> None:
         raise AssertionError(f"Margin dashboard raised Streamlit exceptions: {[str(x.value) for x in app.exception]}")
 
     metrics = {str(m.label): str(m.value) for m in app.metric}
-    assert metrics.get("PICK") == str(pick["team"])
+    assert metrics.get("RECOMMENDED") == str(pick["team"])
     assert metrics.get("Opponent") == str(pick["opponent"])
     assert metrics.get("Current spread") == f"{float(pick['current_spread']):+.1f}"
 
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in [
         "Margin War Room",
+        "Current recommendation",
+        "This week's pick",
         "Weekly board",
         "Provisional remaining route",
         "My pool state",
@@ -113,20 +112,18 @@ def main() -> None:
     ]:
         assert required in body, f"Missing dashboard section: {required}"
 
+    # Without Streamlit write secrets in CI, pick controls must render fail-closed.
+    assert any("read-only" in str(x.value).lower() for x in app.markdown)
+
     print("production_week1_v1_v2_parity=PASS")
     print("production_margin_route_invariants=PASS")
     print("production_week4_raw_long_slow=PASS")
     print("production_week4_cap3_threshold=PASS")
     print("production_no_style_numeric_override=PASS")
     print("production_margin_dashboard_render=PASS")
+    print("production_margin_pick_controls_fail_closed=PASS")
     print("production_margin_pool_preview_render=PASS")
     print(f"current_pick={pick['team']} opponent={pick['opponent']} spread={pick['current_spread']:+.1f}")
-    print(
-        "week4_test_pick="
-        f"{week4_pick['team']} anchor={week4_audit['anchor']['team']} "
-        f"sacrifice={week4_pick['current_sacrifice_vs_anchor']:.1f} "
-        f"ev_delta={week4_pick['total_season_ev_delta_vs_anchor']:+.2f}"
-    )
 
 
 if __name__ == "__main__":
