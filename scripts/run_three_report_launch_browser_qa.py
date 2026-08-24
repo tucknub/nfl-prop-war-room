@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs" / "three_report_browser_qa"
 SHOTS = OUT / "screenshots"
 
-HOME_HEADING = "What changed in NFL roles?"
+HOME_HEADINGS = ("What changed in NFL roles?", "Latest NFL role research")
 REPORT_HEADING = "NFL Role Intelligence"
 METHODOLOGY_HEADING = "Methodology"
 REPORTS = ("Backfield Control", "Target Hierarchy", "Role Movement")
@@ -83,9 +83,19 @@ def click_report(page: Page, report: str) -> None:
     raise RuntimeError(f"Could not activate report: {report}")
 
 
+def wait_for_home_heading(page: Page) -> None:
+    for _ in range(180):
+        for heading in HOME_HEADINGS:
+            locator = page.get_by_role("heading", name=heading, exact=True)
+            if locator.count() and locator.first.is_visible():
+                return
+        page.wait_for_timeout(500)
+    raise RuntimeError(f"Home heading not found; expected one of: {HOME_HEADINGS}")
+
+
 def goto_root(page: Page, base: str) -> None:
     page.goto(base, wait_until="domcontentloaded", timeout=90000)
-    page.get_by_role("heading", name=HOME_HEADING, exact=True).wait_for(timeout=90000)
+    wait_for_home_heading(page)
     page.wait_for_timeout(1200)
 
 
