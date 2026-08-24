@@ -218,3 +218,55 @@ def record_faab_spend(state: dict[str, Any], amount: int, *, note: str = "") -> 
         {"week": int(updated.get("current_week", 0)), "amount": amount, "note": str(note or "").strip()}
     )
     return updated
+
+
+def record_waiver_transaction(
+    state: dict[str, Any],
+    *,
+    amount: int,
+    add_player: dict[str, Any],
+    drop_player: str,
+    note: str = "",
+) -> dict[str, Any]:
+    """Record one completed add/drop and keep the live roster authoritative."""
+    validate_state(state)
+    if phase(state) in {"PRE_DRAFT", "ELIMINATED", "CHAMPION"}:
+        raise ValueError("waiver transactions require an active Knockout roster")
+
+    amount = int(amount)
+    if amount < 0:
+        raise ValueError("FAAB spend cannot be negative")
+    remaining = int(state.get("faab_remaining", 0))
+    if amount > remaining:
+        raise ValueError("FAAB spend exceeds remaining budget")
+
+    drop_name = str(drop_player or "").strip()
+    if not drop_name:
+        raise ValueError("drop player is required")
+
+    roster = [dict(row) for row in state.get("roster") or []]
+    matches = [i for i, row in enumerate(roster) if str(row.get("player", "")).casefold() == drop_name.casefold()]
+    if len(matches) != 1:
+        raise ValueError(f"drop player is not uniquely present on roster: {drop_name}")
+
+    replacement = {
+        "player": str(add_player.get("player", "")).strip(),
+        "position": canonical_position(add_player.get("position")),
+        "nfl_team": str(add_player.get("nfl_team", "")).strip().upper(),
+    }
+    roster[matches[0]] = replacement
+    normalized = validate_roster(roster, roster_size=int((state.get("league") or {}).get("roster_size", 14)))
+
+    updated = deepcopy(state)
+    updated["roster"] = normalized
+    updated["faab_remaining"] = remaining - amount
+    updated.setdefault("faab_transactions", []).append(
+        {
+            "week": int(updated.get("current_week", 0)),
+            "amount": amount,
+            "add": replacement["player"],
+            "drop": drop_name,
+            "note": str(note or "").strip(),
+        }
+    )
+    return updated
