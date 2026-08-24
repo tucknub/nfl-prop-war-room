@@ -160,6 +160,16 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     routes: list[str] = []
 
     goto_root(page, base)
+    if name == "desktop":
+        sidebar = page.locator('[data-testid="stSidebar"]')
+        check(sidebar.count() == 1, f"{name}: sidebar not rendered", failures)
+        if sidebar.count() == 1:
+            check(sidebar.get_attribute("aria-expanded") == "true", f"{name}: sidebar not locked expanded", failures)
+        check(
+            page.locator('[data-testid="stSidebarCollapseButton"]').count() == 0,
+            f"{name}: sidebar collapse control is available",
+            failures,
+        )
     home_text = body(page)
     for report in REPORTS:
         check(report in home_text, f"{name}: Home missing {report}", failures)
