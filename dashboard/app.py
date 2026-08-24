@@ -148,7 +148,10 @@ def main() -> None:
 
     if mode == "OWNER":
         pages = {
-            "My Tools": [st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin")],
+            "My Tools": [
+                st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin"),
+                st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="My Knockout Fantasy", icon=":material/bolt:", url_path="knockout"),
+            ],
             **pages,
         }
 
