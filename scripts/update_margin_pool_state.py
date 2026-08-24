@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
-
-from src.margin import pool_state
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.margin import pool_state  # noqa: E402
+
+
 DEFAULT_STATE = REPO_ROOT / "src" / "margin" / "live_state_2026.json"
 
 
