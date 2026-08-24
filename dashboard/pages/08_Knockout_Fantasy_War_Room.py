@@ -113,10 +113,10 @@ section("Current strategy", "The objective is survival first; the optimal risk p
 for priority in engine.strategy_priorities(state):
     st.markdown(f"- {priority}")
 
-section("Roster state", "Draft intake is private and separate from all Margin data.")
+section("Roster state", "Draft intake and every later add/drop stay private and separate from all Margin data.")
 roster = list(state.get("roster") or [])
 if roster:
-    st.success(f"Draft roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
+    st.success(f"Current roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
     st.dataframe(pd.DataFrame(roster), hide_index=True, width="stretch")
 else:
     st.info("No roster is loaded yet. This is expected before the draft.")
@@ -150,9 +150,18 @@ else:
             st.error(str(exc))
 
 if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
-    section("FAAB ledger", "Record only completed waiver spending; this does not place waiver claims.")
-    faab_col, note_col = st.columns([1, 3])
-    with faab_col:
+    section("Waiver / FAAB transaction", "Record completed add/drop results only. This does not submit a waiver claim to ESPN.")
+    add_col, pos_col, team_col = st.columns([2, 1, 1])
+    with add_col:
+        add_player = st.text_input("Player added", key="knockout_add_player")
+    with pos_col:
+        add_position = st.selectbox("Position", ["QB", "RB", "WR", "TE", "K", "DST"], key="knockout_add_position")
+    with team_col:
+        add_nfl_team = st.text_input("NFL team", max_chars=3, key="knockout_add_team")
+
+    drop_options = [str(row["player"]) for row in roster]
+    spend_col, drop_col = st.columns([1, 2])
+    with spend_col:
         spend = st.number_input(
             "FAAB spent",
             min_value=0,
@@ -161,14 +170,31 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
             step=1,
             key="knockout_faab_spend",
         )
-    with note_col:
-        faab_note = st.text_input("Transaction note", placeholder="Player added / waiver result", key="knockout_faab_note")
-    confirm_faab = st.checkbox("I confirm this FAAB amount was actually spent.", key="knockout_confirm_faab")
-    if st.button("Record FAAB spend", disabled=not confirm_faab or int(spend) <= 0, key="knockout_record_faab"):
-        updated = engine.record_faab_spend(state, int(spend), note=faab_note)
-        _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} FAAB spend")
-        st.success("FAAB ledger updated.")
-        st.rerun()
+    with drop_col:
+        drop_player = st.selectbox("Player dropped", drop_options, key="knockout_drop_player")
+    transaction_note = st.text_input("Transaction note", placeholder="Optional context", key="knockout_transaction_note")
+    confirm_transaction = st.checkbox(
+        "I confirm this add/drop is final and the FAAB amount is correct.", key="knockout_confirm_transaction"
+    )
+    can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
+    if st.button(
+        "Record waiver transaction",
+        disabled=not can_record_transaction,
+        key="knockout_record_transaction",
+    ):
+        try:
+            updated = engine.record_waiver_transaction(
+                state,
+                amount=int(spend),
+                add_player={"player": add_player, "position": add_position, "nfl_team": add_nfl_team},
+                drop_player=drop_player,
+                note=transaction_note,
+            )
+            _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} waiver transaction")
+            st.success("Roster and FAAB ledger updated.")
+            st.rerun()
+        except Exception as exc:
+            st.error(str(exc))
 
     section("Weekly survival result", "Advance the league only after the week's elimination is official.")
     result_col, eliminated_col = st.columns(2)
@@ -195,7 +221,7 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
         st.success("Weekly Knockout state updated.")
         st.rerun()
 
-section("Season history", "Private ledger of eliminations, weekly scores, and FAAB spending.")
+section("Season history", "Private ledger of eliminations, weekly scores, and waiver/FAAB moves.")
 if state.get("weekly_results"):
     results = pd.DataFrame(state["weekly_results"])
     eliminations = pd.DataFrame(state.get("eliminations") or [])
@@ -205,7 +231,7 @@ else:
     st.caption("No weekly results recorded yet.")
 
 if state.get("faab_transactions"):
-    st.markdown("**FAAB transactions**")
+    st.markdown("**Waiver / FAAB transactions**")
     st.dataframe(pd.DataFrame(state["faab_transactions"]), hide_index=True, width="stretch")
 
 st.caption(
