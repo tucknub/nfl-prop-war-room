@@ -4,12 +4,12 @@ on:
   push:
     branches: [margin-research-v1]
     paths:
-      - 'research/margin_v1/run_2026_data_readiness.py'
+      - 'research/margin_v1/run_2026_week1_board.py'
       - '.github/workflows/margin-research-v1.yml'
   pull_request:
     branches: [streamlit-cloud-deploy]
     paths:
-      - 'research/margin_v1/run_2026_data_readiness.py'
+      - 'research/margin_v1/run_2026_week1_board.py'
       - '.github/workflows/margin-research-v1.yml'
 
 permissions:
@@ -26,5 +26,5 @@ jobs:
           python-version: '3.12'
       - name: Install research dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn nflreadpy
-      - name: Audit 2026 schedule and market readiness
-        run: python research/margin_v1/run_2026_data_readiness.py
+      - name: Run first live 2026 Week 1 Margin board
+        run: python research/margin_v1/run_2026_week1_board.py
