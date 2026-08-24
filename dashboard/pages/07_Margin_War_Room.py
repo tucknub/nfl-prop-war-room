@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
 import sys
 from pathlib import Path
@@ -18,6 +20,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import note, page_intro, section, source_footer  # noqa: E402
 from src.margin import live_engine_v2 as margin_live  # noqa: E402
+from src.margin import pool_state  # noqa: E402
 
 
 NFL_TEAMS = [
@@ -61,6 +64,24 @@ def _render_inventory(used: set[str]) -> None:
                 st.markdown(f"**{prefix} {team}**  \n{status}")
 
 
+def _field_rows_from_csv_text(text: str) -> list[dict]:
+    reader = csv.DictReader(io.StringIO(text))
+    required = {"id", "name", "cumulative_score", "used_teams"}
+    headers = set(reader.fieldnames or [])
+    missing = sorted(required - headers)
+    if missing:
+        raise ValueError(f"field CSV missing columns: {missing}")
+    rows = list(reader)
+    if not rows:
+        raise ValueError("field CSV must include at least one opponent row")
+    return rows
+
+
+def _current_select_index(options: list[str], value: object) -> int:
+    text = str(value or "Unknown")
+    return options.index(text) if text in options else 0
+
+
 page_intro(
     "Margin War Room",
     "One-use NFL team allocation for the 2026 Margin Pool. Only the current week's recommendation is actionable; every future slot is provisional.",
@@ -77,7 +98,7 @@ with refresh_col:
 with status_col:
     st.caption(
         f"State: Week {state['current_week']} · score {float(state.get('cumulative_score', 0.0)):+.0f} · "
-        f"{len(state.get('used_teams', []))} teams used · read-only dashboard"
+        f"{len(state.get('used_teams', []))} teams used · authoritative state loaded"
     )
 
 try:
@@ -245,6 +266,174 @@ if not history.empty:
 else:
     st.caption("No 2026 Margin Pool picks have been completed yet.")
 
+section(
+    "Pool field preview",
+    "Validate real standings and burned-team inventories, then preview the recommendation without changing authoritative GitHub state.",
+)
+note(
+    "Preview only: Streamlit Cloud does not persist this field snapshot back to GitHub. "
+    "A validated snapshot can be handed to ChatGPT for the authoritative state update.",
+    amber=True,
+)
+
+pool = state.get("pool") or {}
+meta_a, meta_b, meta_c = st.columns(3)
+with meta_a:
+    preview_pool_name = st.text_input("Pool name", value=str(pool.get("name") or ""), key="margin_preview_pool_name")
+    preview_pool_size = st.number_input(
+        "Entrants (0 = infer from rows)",
+        min_value=0,
+        step=1,
+        value=int(pool.get("size") or 0),
+        key="margin_preview_pool_size",
+    )
+with meta_b:
+    tie_options = ["Unknown", "split", "shared"]
+    preview_tie_rule = st.selectbox(
+        "First-place tie rule",
+        tie_options,
+        index=_current_select_index(tie_options, pool.get("first_place_tie_rule")),
+        key="margin_preview_tie_rule",
+    )
+    visibility_options = ["Unknown", "hidden", "visible"]
+    current_visibility = pool.get("picks_visible_before_deadline")
+    if current_visibility is True:
+        visibility_default = "visible"
+    elif current_visibility is False:
+        visibility_default = "hidden"
+    else:
+        visibility_default = "Unknown"
+    preview_visibility = st.selectbox(
+        "Picks before deadline",
+        visibility_options,
+        index=_current_select_index(visibility_options, visibility_default),
+        key="margin_preview_visibility",
+    )
+with meta_c:
+    preview_deadline = st.text_input(
+        "Pick deadline",
+        value=str(pool.get("pick_deadline") or ""),
+        placeholder="e.g. Sunday 12:55 PM ET",
+        key="margin_preview_deadline",
+    )
+    st.text_input(
+        "Payout structure",
+        value=str(pool.get("payout_structure") or "winner_take_all"),
+        disabled=True,
+        key="margin_preview_payout",
+    )
+
+uploaded_field = st.file_uploader(
+    "Opponent field CSV",
+    type=["csv"],
+    help="Required columns: id, name, cumulative_score, used_teams",
+    key="margin_preview_upload",
+)
+pasted_field = st.text_area(
+    "Or paste the same CSV",
+    height=120,
+    placeholder="id,name,cumulative_score,used_teams\nopp-1,Team A,42,KC|BUF",
+    key="margin_preview_paste",
+)
+
+if uploaded_field is not None:
+    field_text = uploaded_field.getvalue().decode("utf-8-sig")
+else:
+    field_text = pasted_field
+
+validate_preview = st.button(
+    "Validate & preview field",
+    disabled=not bool(field_text.strip()),
+    key="margin_preview_validate",
+)
+if validate_preview:
+    try:
+        raw_rows = _field_rows_from_csv_text(field_text)
+        opponents = pool_state.normalize_opponents(raw_rows, int(state.get("completed_week", 0) or 0))
+        visibility_value = None
+        if preview_visibility == "visible":
+            visibility_value = True
+        elif preview_visibility == "hidden":
+            visibility_value = False
+        preview_state, readiness = pool_state.apply_pool_snapshot(
+            state,
+            opponents,
+            pool_name=preview_pool_name.strip() or None,
+            first_place_tie_rule=None if preview_tie_rule == "Unknown" else preview_tie_rule,
+            pick_deadline=preview_deadline.strip() or None,
+            picks_visible_before_deadline=visibility_value,
+            explicit_pool_size=None if int(preview_pool_size) == 0 else int(preview_pool_size),
+            payout_structure="winner_take_all",
+        )
+        st.session_state["margin_pool_preview_state"] = json.dumps(preview_state, sort_keys=True)
+        st.session_state["margin_pool_preview_base_state"] = state_text
+        st.success(
+            f"Field validated: {len(opponents) + 1} entrants. Championship readiness: {readiness['status']}."
+        )
+    except Exception as exc:
+        st.session_state.pop("margin_pool_preview_state", None)
+        st.session_state.pop("margin_pool_preview_base_state", None)
+        st.error(f"Field preview rejected: {exc}")
+
+preview_state_text = st.session_state.get("margin_pool_preview_state")
+if preview_state_text and st.session_state.get("margin_pool_preview_base_state") != state_text:
+    st.session_state.pop("margin_pool_preview_state", None)
+    st.session_state.pop("margin_pool_preview_base_state", None)
+    preview_state_text = None
+    st.warning("The authoritative state changed since this preview was built. Reload the field before using it.")
+
+if preview_state_text:
+    try:
+        preview_state = json.loads(preview_state_text)
+        preview_audit = _calculate_snapshot(preview_state_text)
+        preview_policy = preview_audit["policy"]
+        preview_pick = preview_audit["pick"]
+        preview_opponents = preview_state.get("opponents", [])
+
+        preview_metrics = st.columns(4)
+        preview_metrics[0].metric("Preview entrants", int((preview_state.get("pool") or {}).get("size") or 0))
+        preview_metrics[1].metric("Preview opponents", len(preview_opponents))
+        preview_metrics[2].metric("Championship status", str(preview_policy.get("championship_status", "")))
+        preview_metrics[3].metric("Preview PICK", str(preview_pick["team"]))
+
+        if bool(preview_policy.get("championship_override_applied", False)):
+            note(
+                f"Preview championship override: {preview_policy.get('expected_points_pick')} → {preview_pick['team']}. "
+                "This is not authoritative until the validated field snapshot is persisted."
+            )
+        elif str(preview_policy.get("championship_status", "")) == "READY_FOR_SIMULATION":
+            note(
+                f"Preview complete field evaluated and retained expected-points pick {preview_pick['team']}. "
+                "This is not authoritative until the snapshot is persisted."
+            )
+        else:
+            note(
+                f"Preview pick remains {preview_pick['team']}. Championship status: "
+                f"{str(preview_policy.get('championship_status', '')).replace('_', ' ').title()}."
+            )
+
+        if preview_opponents:
+            st.dataframe(pd.DataFrame(preview_opponents), hide_index=True, width="stretch")
+
+        pretty_preview_state = json.dumps(preview_state, indent=2) + "\n"
+        st.download_button(
+            "Download validated state JSON",
+            data=pretty_preview_state,
+            file_name="margin_live_state_2026_validated_preview.json",
+            mime="application/json",
+            key="margin_preview_download",
+        )
+        st.caption(
+            "To persist this snapshot, send the validated JSON (or the source CSV plus pool metadata) to ChatGPT. "
+            "The authoritative GitHub state remains unchanged until that update is made."
+        )
+        if st.button("Clear field preview", key="margin_preview_clear"):
+            st.session_state.pop("margin_pool_preview_state", None)
+            st.session_state.pop("margin_pool_preview_base_state", None)
+            st.rerun()
+    except Exception as exc:
+        st.error(f"Validated field could not produce a preview decision: {exc}")
+
 section("Data quality", "What the engine actually had available for this calculation.")
 quality_cols = st.columns(4)
 quality_cols[0].metric("Current games", int(data_quality["current_week_games"]))
@@ -273,7 +462,7 @@ with st.expander("Source mix and technical status"):
     })
 
 note(
-    "This dashboard is intentionally read-only. Tell ChatGPT the team you actually used and the final margin; "
-    "the authoritative state will be updated and the next week's dashboard will start from that inventory."
+    "The live dashboard reads authoritative state from GitHub. Tell ChatGPT the team you actually used and the final margin, "
+    "or provide a validated field snapshot; the authoritative state can then be updated and the next week's dashboard will start from that inventory."
 )
 source_footer("NFL schedule/market data: nflverse. Current games use posted market; future unpriced games use the validated V1 market-power allocator.")

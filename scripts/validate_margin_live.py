@@ -103,7 +103,14 @@ def main() -> None:
     assert metrics.get("Current spread") == f"{float(pick['current_spread']):+.1f}"
 
     body = "\n".join(str(x.value) for x in app.markdown)
-    for required in ["Margin War Room", "Weekly board", "Provisional remaining route", "My pool state", "Data quality"]:
+    for required in [
+        "Margin War Room",
+        "Weekly board",
+        "Provisional remaining route",
+        "My pool state",
+        "Pool field preview",
+        "Data quality",
+    ]:
         assert required in body, f"Missing dashboard section: {required}"
 
     print("production_week1_v1_v2_parity=PASS")
@@ -112,6 +119,7 @@ def main() -> None:
     print("production_week4_cap3_threshold=PASS")
     print("production_no_style_numeric_override=PASS")
     print("production_margin_dashboard_render=PASS")
+    print("production_margin_pool_preview_render=PASS")
     print(f"current_pick={pick['team']} opponent={pick['opponent']} spread={pick['current_spread']:+.1f}")
     print(
         "week4_test_pick="
