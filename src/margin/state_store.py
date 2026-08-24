@@ -119,18 +119,30 @@ def complete_week_state(state: dict[str, Any], actual_margin: float, *, now_iso:
     return updated
 
 
-def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+def write_config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+    """Return GitHub state-write configuration without making an auth decision.
+
+    Authorization is handled by the caller (OIDC owner identity in the preferred
+    flow, legacy admin key during migration). The GitHub token remains server-side.
+    """
     token = str(secrets.get("MARGIN_GITHUB_TOKEN", "")).strip()
-    admin_key = str(secrets.get("MARGIN_ADMIN_KEY", "")).strip()
-    if not token or not admin_key:
+    if not token:
         return None
     return {
         "token": token,
-        "admin_key": admin_key,
         "repo": str(secrets.get("MARGIN_GITHUB_REPO", DEFAULT_REPO)).strip() or DEFAULT_REPO,
         "branch": str(secrets.get("MARGIN_GITHUB_BRANCH", DEFAULT_BRANCH)).strip() or DEFAULT_BRANCH,
         "path": str(secrets.get("MARGIN_STATE_PATH", DEFAULT_STATE_PATH)).strip() or DEFAULT_STATE_PATH,
     }
+
+
+def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+    """Legacy admin-key configuration retained for migration compatibility."""
+    config = write_config_from_secrets(secrets)
+    admin_key = str(secrets.get("MARGIN_ADMIN_KEY", "")).strip()
+    if config is None or not admin_key:
+        return None
+    return {**config, "admin_key": admin_key}
 
 
 def admin_key_valid(config: Mapping[str, str], supplied_key: str) -> bool:
