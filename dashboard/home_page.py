@@ -24,6 +24,9 @@ from weekly_report import (
     report_period_notice,
 )
 
+# Current-season published mode retains the public label "This Week in NFL Roles";
+# offseason/historical mode is selected dynamically by role_home_copy().
+
 
 def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: str) -> pd.DataFrame:
     result = frame.copy()
