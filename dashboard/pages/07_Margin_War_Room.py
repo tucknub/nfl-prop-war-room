@@ -144,8 +144,8 @@ board_display = pd.DataFrame({
     "Opp": board["opponent"],
     "Spread": board["current_spread"],
     "Exp margin": board["calibrated_margin"],
-    "P(loss)": board["p_loss"],
-    "P(20+)": board["p_win20"],
+    "P(loss)": board["p_loss"] * 100.0,
+    "P(20+)": board["p_win20"] * 100.0,
     "Future cost": board["future_cost"],
     "Season EV Δ": board["total_season_ev_delta_vs_anchor"],
     "Sacrifice": board["current_sacrifice_vs_anchor"],
@@ -164,10 +164,7 @@ st.dataframe(
         "Sacrifice": st.column_config.NumberColumn(format="%.1f"),
     },
 )
-st.caption("Probability columns are shown as decimals by the engine and formatted as percentages in the table.")
 
-# Streamlit's percentage NumberColumn expects already-percent values for the desired visible scale.
-# Render a compact human-readable top-three beneath the full analytical table.
 top_three = board.sort_values(["total_season_ev", "current_spread"], ascending=[False, False]).head(3)
 for rank, (_, row) in enumerate(top_three.iterrows(), start=1):
     st.markdown(
