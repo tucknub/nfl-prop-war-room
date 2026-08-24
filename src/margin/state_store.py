@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import hmac
 import json
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -143,20 +142,15 @@ def _oidc_configured(secrets: Mapping[str, Any]) -> bool:
 
 
 def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
-    """Return write config for OIDC owner mode or the legacy admin-key flow."""
+    """Return write config only when owner OIDC is fully configured."""
     config = write_config_from_secrets(secrets)
-    if config is None:
+    if config is None or not _oidc_configured(secrets):
         return None
-    if _oidc_configured(secrets):
-        return {
-            **config,
-            "auth_mode": "OIDC_OWNER",
-            "owner_email": str(secrets.get(OWNER_EMAIL_SECRET, "")).strip().casefold(),
-        }
-    admin_key = str(secrets.get("MARGIN_ADMIN_KEY", "")).strip()
-    if not admin_key:
-        return None
-    return {**config, "auth_mode": "LEGACY_ADMIN", "admin_key": admin_key}
+    return {
+        **config,
+        "auth_mode": "OIDC_OWNER",
+        "owner_email": str(secrets.get(OWNER_EMAIL_SECRET, "")).strip().casefold(),
+    }
 
 
 def _current_streamlit_user() -> dict[str, Any]:
@@ -171,17 +165,21 @@ def _current_streamlit_user() -> dict[str, Any]:
 
 
 def admin_key_valid(config: Mapping[str, str], supplied_key: str) -> bool:
-    """Authorize writes with OIDC owner identity or the legacy password."""
-    if str(config.get("auth_mode")) == "OIDC_OWNER":
-        user = _current_streamlit_user()
-        if not bool(user.get("is_logged_in", False)):
-            return False
-        actual = str(user.get("email", "")).strip().casefold()
-        expected = str(config.get("owner_email", "")).strip().casefold()
-        if not actual or actual != expected:
-            return False
-        return user.get("email_verified") is not False
-    return hmac.compare_digest(str(config.get("admin_key", "")), str(supplied_key or ""))
+    """Authorize writes only for the authenticated configured OIDC owner.
+
+    ``supplied_key`` is retained temporarily for call-site compatibility and is
+    intentionally ignored. Legacy password authorization is disabled.
+    """
+    if str(config.get("auth_mode")) != "OIDC_OWNER":
+        return False
+    user = _current_streamlit_user()
+    if not bool(user.get("is_logged_in", False)):
+        return False
+    actual = str(user.get("email", "")).strip().casefold()
+    expected = str(config.get("owner_email", "")).strip().casefold()
+    if not actual or actual != expected:
+        return False
+    return user.get("email_verified") is not False
 
 
 def _github_json(config: Mapping[str, str], method: str, url: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

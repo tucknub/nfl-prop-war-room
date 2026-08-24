@@ -13,9 +13,7 @@ def _mapping(value: Any) -> Mapping[str, Any]:
 def owner_auth_configured(secrets: Mapping[str, Any]) -> bool:
     """Return True only when OIDC settings and an explicit owner email exist.
 
-    This intentionally treats partial configuration as disabled so deployment can
-    migrate safely from the legacy Margin admin-key flow without locking the owner
-    out of the app.
+    Personal tools fail closed when configuration is missing or incomplete.
     """
     auth = _mapping(secrets.get("auth"))
     owner_email = str(secrets.get(OWNER_EMAIL_SECRET, "")).strip()
@@ -47,16 +45,15 @@ def owner_authenticated(secrets: Mapping[str, Any], user: Mapping[str, Any] | No
 
 
 def access_mode(secrets: Mapping[str, Any], user: Mapping[str, Any] | None) -> str:
-    """Describe which Margin access path should be active.
+    """Describe public versus owner-only access.
 
-    LEGACY_ADMIN: OIDC is not fully configured, so the existing admin-key flow
-    remains available during migration.
+    AUTH_UNAVAILABLE: owner OIDC is incomplete; personal tools stay hidden.
     OWNER: the configured owner is authenticated through OIDC.
     ANONYMOUS: OIDC is configured but nobody is logged in.
     NON_OWNER: OIDC is configured and a different account is logged in.
     """
     if not owner_auth_configured(secrets):
-        return "LEGACY_ADMIN"
+        return "AUTH_UNAVAILABLE"
     if owner_authenticated(secrets, user):
         return "OWNER"
     if user_is_logged_in(user):

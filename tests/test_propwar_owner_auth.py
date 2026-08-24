@@ -22,9 +22,10 @@ def auth_secrets(**extra) -> dict:
     }
 
 
-def test_partial_auth_keeps_legacy_margin_migration_path() -> None:
-    assert access_control.access_mode({}, {}) == "LEGACY_ADMIN"
-    assert access_control.access_mode({"PROPWAR_OWNER_EMAIL": "owner@example.com"}, {}) == "LEGACY_ADMIN"
+def test_partial_auth_fails_closed_and_hides_personal_tools() -> None:
+    assert access_control.access_mode({}, {}) == "AUTH_UNAVAILABLE"
+    assert access_control.access_mode({"PROPWAR_OWNER_EMAIL": "owner@example.com"}, {}) == "AUTH_UNAVAILABLE"
+    assert access_control.access_mode({"MARGIN_ADMIN_KEY": "legacy-secret"}, {}) == "AUTH_UNAVAILABLE"
 
 
 def test_configured_auth_hides_personal_tools_until_owner_logs_in() -> None:
@@ -46,7 +47,7 @@ def test_owner_email_is_case_insensitive_and_requires_verified_email_when_claim_
     assert access_control.access_mode(secrets, unverified) == "NON_OWNER"
 
 
-def test_oidc_write_config_does_not_require_legacy_admin_key(monkeypatch) -> None:
+def test_oidc_write_config_requires_owner_identity(monkeypatch) -> None:
     secrets = auth_secrets()
     config = state_store.config_from_secrets(secrets)
     assert config is not None
@@ -58,25 +59,23 @@ def test_oidc_write_config_does_not_require_legacy_admin_key(monkeypatch) -> Non
         "_current_streamlit_user",
         lambda: {"is_logged_in": True, "email": "owner@example.com", "email_verified": True},
     )
-    assert state_store.admin_key_valid(config, "") is True
+    assert state_store.admin_key_valid(config, "ignored") is True
 
     monkeypatch.setattr(
         state_store,
         "_current_streamlit_user",
         lambda: {"is_logged_in": True, "email": "other@example.com", "email_verified": True},
     )
-    assert state_store.admin_key_valid(config, "") is False
+    assert state_store.admin_key_valid(config, "ignored") is False
 
 
-def test_legacy_admin_key_behavior_is_preserved() -> None:
+def test_legacy_admin_key_no_longer_authorizes_writes() -> None:
     config = state_store.config_from_secrets({
         "MARGIN_GITHUB_TOKEN": "token",
         "MARGIN_ADMIN_KEY": "secret",
     })
-    assert config is not None
-    assert config["auth_mode"] == "LEGACY_ADMIN"
-    assert state_store.admin_key_valid(config, "secret") is True
-    assert state_store.admin_key_valid(config, "wrong") is False
+    assert config is None
+    assert state_store.admin_key_valid({"auth_mode": "LEGACY_ADMIN", "admin_key": "secret"}, "secret") is False
 
 
 def test_public_copy_uses_historical_wording_until_current_partition_is_published(monkeypatch) -> None:
