@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from . import championship
+from . import championship_override
 from . import live_engine as base
 
 
@@ -181,10 +182,13 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
             "Current-week board is blocked because one or more current spreads are missing."
         )
 
-    rows, forecast = build_team_values(games, g, current_week, future_posted_mode)
+    raw_rows, forecast = build_team_values(games, g, current_week, future_posted_mode)
     historical_fav = base.favorite_games(games)
-    rows = base.add_calibration(rows, historical_fav)
-    rows = rows[rows.week.ge(current_week) & ~rows.team.isin(used)].copy()
+    all_remaining_rows = base.add_calibration(raw_rows, historical_fav)
+    all_remaining_rows = all_remaining_rows[
+        all_remaining_rows.week.ge(current_week)
+    ].copy()
+    rows = all_remaining_rows[~all_remaining_rows.team.isin(used)].copy()
 
     board, routes = base.score_current_candidates(rows, current_week, used)
     cap = float(
@@ -195,8 +199,24 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
     threshold = float(
         state.get("model_policy", {}).get("anchor_ev_threshold", base.EV_THRESHOLD)
     )
-    pick, pick_reason = base.choose_expected_points_pick(
+    expected_points_pick, expected_points_reason = base.choose_expected_points_pick(
         board, current_week, cap, threshold
+    )
+
+    championship_decision = championship_override.evaluate_override(
+        state,
+        all_remaining_rows,
+        board,
+        routes,
+        historical_fav,
+        expected_points_pick,
+    )
+    pick = str(championship_decision["authoritative_pick"])
+    override_applied = bool(championship_decision.get("override_applied", False))
+    pick_reason = (
+        "CHAMPIONSHIP_FIRST_PLACE_SHARE_OVERRIDE"
+        if override_applied
+        else expected_points_reason
     )
     board = base.classify_board(board, pick, cap)
 
@@ -205,7 +225,7 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
     anchor_row = board[board.team.eq(anchor)].iloc[0]
     selected_route = routes[pick]
 
-    championship_state = championship.championship_readiness(state)
+    championship_state = championship_decision["readiness"]
     forecast_status = (
         "RAW_LONG_SLOW_ACTIVE"
         if current_week >= 4
@@ -240,13 +260,18 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
             "championship_readiness": championship_state,
         },
         "policy": {
-            "expected_points_pick": pick,
+            "expected_points_pick": expected_points_pick,
+            "authoritative_pick": pick,
             "pick_reason": pick_reason,
             "anchor": anchor,
             "anchor_ev_threshold": threshold,
             "current_spread_sacrifice_cap": cap,
             "championship_status": championship_state["status"],
-            "championship_override_promoted": False,
+            "championship_override_promoted": True,
+            "championship_override_applied": override_applied,
+            "championship_override_status": championship_decision.get("override_status"),
+            "championship_primary_lift_threshold": championship_override.PRIMARY_LIFT_THRESHOLD,
+            "championship_confirmation_seeds": len(championship_override.CONFIRMATION_SEED_OFFSETS),
             "championship_minimum_supported_week": championship.MIN_CHAMPIONSHIP_WEEK,
             "future_forecast_model": forecast["forecast_model"],
             "style_numeric_override": False,
@@ -273,6 +298,7 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
             "calibrated_margin": float(anchor_row.calibrated_margin),
             "total_season_ev": float(anchor_row.total_season_ev),
         },
+        "championship": championship_decision,
         "route": selected_route[
             [
                 "week",
