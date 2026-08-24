@@ -103,7 +103,6 @@ def main() -> None:
     for required in [
         "Margin War Room",
         "Current recommendation",
-        "This week's pick",
         "Weekly board",
         "Provisional remaining route",
         "My pool state",
@@ -112,8 +111,16 @@ def main() -> None:
     ]:
         assert required in body, f"Missing dashboard section: {required}"
 
+    text_inputs = {str(x.label): x for x in app.text_input}
+    selectboxes = {str(x.label): x for x in app.selectbox}
+    buttons = {str(x.label): x for x in app.button}
+    assert "War Room admin key" in text_inputs
+    assert "Team to record" in selectboxes
+    assert f"Commit {pick['team']} for Week 1" in buttons
+
     # Without Streamlit write secrets in CI, pick controls must render fail-closed.
     assert any("read-only" in str(x.value).lower() for x in app.markdown)
+    assert buttons[f"Commit {pick['team']} for Week 1"].disabled is True
 
     print("production_week1_v1_v2_parity=PASS")
     print("production_margin_route_invariants=PASS")
