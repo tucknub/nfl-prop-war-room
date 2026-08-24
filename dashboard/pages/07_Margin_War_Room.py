@@ -20,7 +20,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import note, page_intro, section, source_footer  # noqa: E402
 from src.margin import live_engine_v2 as margin_live  # noqa: E402
-from src.margin import pool_state  # noqa: E402
+from src.margin import pool_state, state_store  # noqa: E402
 
 
 NFL_TEAMS = [
@@ -82,13 +82,47 @@ def _current_select_index(options: list[str], value: object) -> int:
     return options.index(text) if text in options else 0
 
 
+def _write_config() -> dict[str, str] | None:
+    try:
+        return state_store.config_from_secrets(st.secrets)
+    except Exception:
+        return None
+
+
+def _same_state(a: dict, b: dict) -> bool:
+    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
+def _persist_transition(config: dict[str, str], expected_state: dict, new_state: dict, message: str) -> str:
+    remote_state, remote_sha = state_store.fetch_remote_state(config)
+    if not _same_state(remote_state, expected_state):
+        raise RuntimeError("Authoritative GitHub state changed. Refresh the page before writing again.")
+    return state_store.write_remote_state(
+        config,
+        new_state,
+        expected_sha=remote_sha,
+        message=message,
+    )
+
+
 page_intro(
     "Margin War Room",
     "One-use NFL team allocation for the 2026 Margin Pool. Only the current week's recommendation is actionable; every future slot is provisional.",
 )
 
-state_text = margin_live.base.DEFAULT_STATE.read_text(encoding="utf-8")
-state = json.loads(state_text)
+deployed_state_text = margin_live.base.DEFAULT_STATE.read_text(encoding="utf-8")
+deployed_state = json.loads(deployed_state_text)
+written_state_text = st.session_state.get("margin_written_state")
+if written_state_text:
+    written_state = json.loads(written_state_text)
+    if _same_state(written_state, deployed_state):
+        st.session_state.pop("margin_written_state", None)
+        state = deployed_state
+    else:
+        state = written_state
+else:
+    state = deployed_state
+state_text = json.dumps(state, sort_keys=True)
 
 refresh_col, status_col = st.columns([1, 3])
 with refresh_col:
@@ -105,6 +139,9 @@ try:
     with st.spinner("Rebuilding current board and remaining-season allocation..."):
         audit = _calculate_snapshot(state_text)
 except Exception as exc:
+    if bool(state.get("season_complete")):
+        st.success("The 2026 Margin Pool season is complete.")
+        st.stop()
     st.error("The live Margin engine could not produce a valid board.")
     st.exception(exc)
     st.stop()
@@ -115,6 +152,7 @@ policy = audit["policy"]
 data_quality = audit["data_quality"]
 championship_info = audit.get("championship") or {}
 used = set(str(x) for x in audit.get("used_teams", []))
+raw_board = pd.DataFrame(audit["board"]).copy()
 
 champ_status = str(policy.get("championship_status", ""))
 override_applied = bool(policy.get("championship_override_applied", False))
@@ -151,19 +189,19 @@ else:
         f"Gate result: {str(policy.get('championship_override_status', '')).replace('_', ' ').title()}."
     )
 
-section("Current decision", "The answer first. Refresh near the pool deadline before committing the pick.")
-hero = st.columns(6)
-hero[0].metric("PICK", str(pick["team"]))
-hero[1].metric("Opponent", str(pick["opponent"]))
-hero[2].metric("Current spread", _signed(pick["current_spread"]))
-hero[3].metric("Expected margin", _signed(pick["calibrated_margin"]))
-hero[4].metric("Loss probability", _pct(pick["p_loss"]))
-hero[5].metric("20+ probability", _pct(pick["p_win20"]))
+section("Current recommendation", "Refresh near the pool deadline, then record the team you actually submit to the league.")
+hero_top = st.columns(3)
+hero_top[0].metric("RECOMMENDED", str(pick["team"]))
+hero_top[1].metric("Opponent", str(pick["opponent"]))
+hero_top[2].metric("Current spread", _signed(pick["current_spread"]))
+hero_bottom = st.columns(3)
+hero_bottom[0].metric("Expected margin", _signed(pick["calibrated_margin"]))
+hero_bottom[1].metric("Loss probability", _pct(pick["p_loss"]))
+hero_bottom[2].metric("20+ probability", _pct(pick["p_win20"]))
 
 if override_applied:
     note(
-        f"Championship-driven pick: {pick['team']} replaces expected-points choice {policy.get('expected_points_pick')} "
-        "because it cleared the historical +2.0 pp promotion threshold and all independent confirmation seeds. "
+        f"Championship-driven recommendation: {pick['team']} replaces expected-points choice {policy.get('expected_points_pick')}. "
         f"Current spread sacrifice versus the anchor is {pick['current_sacrifice_vs_anchor']:.1f} points."
     )
 elif str(pick["team"]) == str(anchor["team"]):
@@ -178,14 +216,166 @@ else:
         f"{pick['total_season_ev_delta_vs_anchor']:+.2f}."
     )
 
-policy_cols = st.columns(4)
+policy_cols = st.columns(3)
 policy_cols[0].metric("Anchor", str(anchor["team"]))
 policy_cols[1].metric("Future cost", f"{pick['future_cost']:.2f}")
 policy_cols[2].metric("Season EV Δ vs anchor", f"{pick['total_season_ev_delta_vs_anchor']:+.2f}")
-policy_cols[3].metric("Policy", str(policy.get("pick_reason", "")).replace("_", " ").title())
+
+section("This week's pick", "Record your actual pool selection here. This does not submit the pick to the external league site.")
+write_config = _write_config()
+decision = state.get("current_decision") or {}
+committed_pick = str(decision.get("committed_pick") or "") if str(decision.get("status")) == "COMMITTED" else ""
+admin_key = st.text_input("War Room admin key", type="password", key="margin_admin_key")
+authorized = bool(write_config and state_store.admin_key_valid(write_config, admin_key))
+
+if write_config is None:
+    note(
+        "Pick recording is currently read-only because the Streamlit write secrets are not configured. "
+        "Recommendations still work normally.",
+        amber=True,
+    )
+elif admin_key and not authorized:
+    st.error("Admin key is incorrect.")
+
+if committed_pick:
+    committed_row = raw_board[raw_board.team.astype(str).eq(committed_pick)]
+    if not committed_row.empty:
+        r = committed_row.iloc[0]
+        commit_cols = st.columns(4)
+        commit_cols[0].metric("COMMITTED", committed_pick)
+        commit_cols[1].metric("Opponent", str(r.opponent))
+        commit_cols[2].metric("Spread at refresh", _signed(r.current_spread))
+        commit_cols[3].metric("Expected margin", _signed(r.calibrated_margin, 2))
+    else:
+        st.success(f"War Room pick committed: {committed_pick}")
+    note(
+        f"{committed_pick} is recorded in the War Room for Week {state['current_week']}. "
+        "Make sure the same team is submitted on the official Margin Pool site."
+    )
+
+    final_col, action_col = st.columns([2, 1])
+    with final_col:
+        final_margin = st.number_input(
+            "Final point differential",
+            step=1.0,
+            value=0.0,
+            help="Example: team wins 27-20 = +7; loses 17-24 = -7.",
+            key="margin_final_margin",
+        )
+    with action_col:
+        st.write("")
+        st.write("")
+        complete_week = st.button(
+            f"Complete Week {state['current_week']}",
+            type="primary",
+            disabled=not authorized,
+            width="stretch",
+            key="margin_complete_week",
+        )
+    if complete_week:
+        try:
+            updated_state = state_store.complete_week_state(state, final_margin)
+            commit_sha = _persist_transition(
+                write_config,
+                state,
+                updated_state,
+                f"Complete Margin Week {state['current_week']}: {committed_pick} {float(final_margin):+g}",
+            )
+            st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
+            _calculate_snapshot.clear()
+            st.success(f"Week completed and saved to GitHub ({commit_sha[:8]}). Advancing the War Room.")
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Week completion was not saved: {exc}")
+
+    with st.expander("Change the recorded team before the deadline"):
+        available_rows = raw_board[~raw_board.team.astype(str).isin(used)].sort_values(
+            ["current_spread", "total_season_ev"], ascending=[False, False]
+        )
+        change_options = available_rows.team.astype(str).tolist()
+        change_index = change_options.index(committed_pick) if committed_pick in change_options else 0
+        replacement = st.selectbox(
+            "Replacement team",
+            change_options,
+            index=change_index,
+            format_func=lambda t: f"{t} vs {available_rows[available_rows.team.eq(t)].iloc[0].opponent} "
+                                  f"({_signed(available_rows[available_rows.team.eq(t)].iloc[0].current_spread)})",
+            key="margin_replace_team",
+        )
+        replace_pick = st.button(
+            "Replace recorded pick",
+            disabled=not authorized or replacement == committed_pick,
+            key="margin_replace_pick",
+        )
+        if replace_pick:
+            try:
+                updated_state = state_store.commit_pick_state(state, audit, replacement)
+                commit_sha = _persist_transition(
+                    write_config,
+                    state,
+                    updated_state,
+                    f"Change Margin Week {state['current_week']} pick: {committed_pick} to {replacement}",
+                )
+                st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
+                _calculate_snapshot.clear()
+                st.success(f"Recorded pick changed to {replacement} ({commit_sha[:8]}).")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Pick change was not saved: {exc}")
+else:
+    available_rows = raw_board[~raw_board.team.astype(str).isin(used)].sort_values(
+        ["current_spread", "total_season_ev"], ascending=[False, False]
+    )
+    team_options = available_rows.team.astype(str).tolist()
+    default_team = str(pick["team"])
+    default_index = team_options.index(default_team) if default_team in team_options else 0
+    selected_team = st.selectbox(
+        "Team to record",
+        team_options,
+        index=default_index,
+        format_func=lambda t: (
+            f"{t} vs {available_rows[available_rows.team.eq(t)].iloc[0].opponent} · "
+            f"spread {_signed(available_rows[available_rows.team.eq(t)].iloc[0].current_spread)} · "
+            f"expected {_signed(available_rows[available_rows.team.eq(t)].iloc[0].calibrated_margin, 2)}"
+        ),
+        key="margin_commit_team",
+    )
+    selected_row = available_rows[available_rows.team.eq(selected_team)].iloc[0]
+    selection_cols = st.columns(4)
+    selection_cols[0].metric("Selected", selected_team)
+    selection_cols[1].metric("Opponent", str(selected_row.opponent))
+    selection_cols[2].metric("Spread", _signed(selected_row.current_spread))
+    selection_cols[3].metric("Expected margin", _signed(selected_row.calibrated_margin, 2))
+
+    acknowledge = st.checkbox(
+        "I understand this records my War Room state only; I still submit the official pick on the pool site.",
+        key="margin_commit_ack",
+    )
+    commit_pick = st.button(
+        f"Commit {selected_team} for Week {state['current_week']}",
+        type="primary",
+        disabled=not (authorized and acknowledge),
+        width="stretch",
+        key="margin_commit_pick",
+    )
+    if commit_pick:
+        try:
+            updated_state = state_store.commit_pick_state(state, audit, selected_team)
+            commit_sha = _persist_transition(
+                write_config,
+                state,
+                updated_state,
+                f"Commit Margin Week {state['current_week']} pick: {selected_team}",
+            )
+            st.session_state["margin_written_state"] = json.dumps(updated_state, sort_keys=True)
+            _calculate_snapshot.clear()
+            st.success(f"{selected_team} recorded and saved to GitHub ({commit_sha[:8]}).")
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Pick was not saved: {exc}")
 
 section("Weekly board", "Unused teams ranked from current market value through remaining-season opportunity cost.")
-board = pd.DataFrame(audit["board"]).copy()
+board = raw_board.copy()
 status_order = {"PICK": 0, "ANCHOR": 1, "SAVE/PIVOT": 2, "WATCH": 3, "AVOID_CAP": 4}
 board["_status_order"] = board["status"].map(status_order).fillna(9)
 board = board.sort_values(["_status_order", "total_season_ev", "current_spread"], ascending=[True, False, False])
@@ -271,8 +461,8 @@ section(
     "Validate real standings and burned-team inventories, then preview the recommendation without changing authoritative GitHub state.",
 )
 note(
-    "Preview only: Streamlit Cloud does not persist this field snapshot back to GitHub. "
-    "A validated snapshot can be handed to ChatGPT for the authoritative state update.",
+    "Preview only: this section does not replace the authoritative field until its validated snapshot is persisted. "
+    "Pick/result controls above write only the War Room season state when admin write access is configured.",
     amber=True,
 )
 
@@ -297,12 +487,7 @@ with meta_b:
     )
     visibility_options = ["Unknown", "hidden", "visible"]
     current_visibility = pool.get("picks_visible_before_deadline")
-    if current_visibility is True:
-        visibility_default = "visible"
-    elif current_visibility is False:
-        visibility_default = "hidden"
-    else:
-        visibility_default = "Unknown"
+    visibility_default = "visible" if current_visibility is True else "hidden" if current_visibility is False else "Unknown"
     preview_visibility = st.selectbox(
         "Picks before deadline",
         visibility_options,
@@ -335,11 +520,7 @@ pasted_field = st.text_area(
     placeholder="id,name,cumulative_score,used_teams\nopp-1,Team A,42,KC|BUF",
     key="margin_preview_paste",
 )
-
-if uploaded_field is not None:
-    field_text = uploaded_field.getvalue().decode("utf-8-sig")
-else:
-    field_text = pasted_field
+field_text = uploaded_field.getvalue().decode("utf-8-sig") if uploaded_field is not None else pasted_field
 
 validate_preview = st.button(
     "Validate & preview field",
@@ -350,11 +531,7 @@ if validate_preview:
     try:
         raw_rows = _field_rows_from_csv_text(field_text)
         opponents = pool_state.normalize_opponents(raw_rows, int(state.get("completed_week", 0) or 0))
-        visibility_value = None
-        if preview_visibility == "visible":
-            visibility_value = True
-        elif preview_visibility == "hidden":
-            visibility_value = False
+        visibility_value = True if preview_visibility == "visible" else False if preview_visibility == "hidden" else None
         preview_state, readiness = pool_state.apply_pool_snapshot(
             state,
             opponents,
@@ -423,10 +600,6 @@ if preview_state_text:
             mime="application/json",
             key="margin_preview_download",
         )
-        st.caption(
-            "To persist this snapshot, send the validated JSON (or the source CSV plus pool metadata) to ChatGPT. "
-            "The authoritative GitHub state remains unchanged until that update is made."
-        )
         if st.button("Clear field preview", key="margin_preview_clear"):
             st.session_state.pop("margin_pool_preview_state", None)
             st.session_state.pop("margin_pool_preview_base_state", None)
@@ -461,8 +634,4 @@ with st.expander("Source mix and technical status"):
         "current_spread_sacrifice_cap": policy.get("current_spread_sacrifice_cap"),
     })
 
-note(
-    "The live dashboard reads authoritative state from GitHub. Tell ChatGPT the team you actually used and the final margin, "
-    "or provide a validated field snapshot; the authoritative state can then be updated and the next week's dashboard will start from that inventory."
-)
 source_footer("NFL schedule/market data: nflverse. Current games use posted market; future unpriced games use the validated V1 market-power allocator.")
