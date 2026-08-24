@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import copy
+import sys
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
-from src.margin import live_engine
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.margin import live_engine  # noqa: E402
 
 
 def main() -> None:
@@ -26,7 +32,6 @@ def main() -> None:
     assert len(board) == 32
     assert audit["data_quality"]["future_style_status"] == "INACTIVE_WEEKS_1_TO_3"
 
-    # Safety invariant: this package must refuse Week 4+ until the validated style layer is promoted.
     blocked = copy.deepcopy(state)
     blocked["current_week"] = 4
     blocked["completed_week"] = 3
@@ -44,8 +49,7 @@ def main() -> None:
         if "future-style correction" not in str(exc):
             raise
 
-    repo_root = Path(__file__).resolve().parents[1]
-    page = repo_root / "dashboard" / "pages" / "07_Margin_War_Room.py"
+    page = REPO_ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
     app = AppTest.from_file(str(page), default_timeout=45)
     app.run()
     if app.exception:
