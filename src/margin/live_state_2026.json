@@ -30,6 +30,11 @@
     "weeks_1_to_3_biggest_favorite_default": true,
     "anchor_ev_threshold": 0.5,
     "default_current_spread_sacrifice_cap": 3.0,
+    "future_unpriced_model_week4_plus": "RAW_LONG_SLOW_MARKET_POWER",
+    "future_power_window_periods": 32,
+    "future_power_half_life": 8.0,
+    "future_power_ridge": 3.0,
+    "style_numeric_override": false,
     "championship_override_enabled_when_pool_state_available": true,
     "margin_sampler_bandwidth": 3.0
   },
@@ -37,6 +42,8 @@
     "Live state, not a locked future pick sheet.",
     "The provisional Week-1 pick must be refreshed before the pool deadline.",
     "Pool size, deadline, and opponent inventories are not yet loaded.",
-    "The production engine has a hard safety gate at Week 4 until the validated in-season future-style correction is activated."
+    "Weeks 1-3 remain Biggest Favorite default mode.",
+    "Beginning Week 4, genuinely posted future lines retain precedence; unpriced future games use the raw long/slow market-power forecast.",
+    "Team-style correction is not used numerically in V1 because its end-to-end allocation promotion gate failed despite improving future-line MAE."
   ]
 }

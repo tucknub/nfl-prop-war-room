@@ -1,8 +1,8 @@
-name: Margin Live V1
+name: Margin Live V2
 
 on:
   push:
-    branches: [margin-live-v1]
+    branches: [margin-live-v1, margin-week4-power-v1]
     paths:
       - 'src/margin/**'
       - 'dashboard/app.py'
@@ -35,6 +35,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Compile Margin production files
-        run: python -m py_compile src/margin/live_engine.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py
-      - name: Validate live engine and rendered dashboard
+        run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py
+      - name: Validate Week 1 parity, Week 4 power, and rendered dashboard
         run: python scripts/validate_margin_live.py

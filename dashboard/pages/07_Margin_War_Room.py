@@ -17,7 +17,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import note, page_intro, section, source_footer  # noqa: E402
-from src.margin import live_engine as margin_live  # noqa: E402
+from src.margin import live_engine_v2 as margin_live  # noqa: E402
 
 
 NFL_TEAMS = [
@@ -45,7 +45,8 @@ def _friendly_source(value: str) -> str:
     return {
         "CURRENT_MARKET": "Current market",
         "POSTED_LOOKAHEAD": "Posted look-ahead",
-        "MARKET_RATING_INFERRED": "Model forecast",
+        "MARKET_POWER_FORECAST": "Market-power forecast",
+        "MARKET_RATING_INFERRED": "Early market forecast",
     }.get(str(value), str(value).replace("_", " ").title())
 
 
@@ -65,12 +66,12 @@ page_intro(
     "One-use NFL team allocation for the 2026 Margin Pool. Only the current week's recommendation is actionable; every future slot is provisional.",
 )
 
-state_text = margin_live.DEFAULT_STATE.read_text(encoding="utf-8")
+state_text = margin_live.base.DEFAULT_STATE.read_text(encoding="utf-8")
 state = json.loads(state_text)
 
 refresh_col, status_col = st.columns([1, 3])
 with refresh_col:
-    if st.button("Refresh live markets", type="primary", use_container_width=True):
+    if st.button("Refresh live markets", type="primary", width="stretch"):
         _calculate_snapshot.clear()
         st.rerun()
 with status_col:
@@ -152,7 +153,7 @@ board_display = pd.DataFrame({
 st.dataframe(
     board_display,
     hide_index=True,
-    use_container_width=True,
+    width="stretch",
     column_config={
         "Spread": st.column_config.NumberColumn(format="%+.1f"),
         "Exp margin": st.column_config.NumberColumn(format="%+.2f"),
@@ -172,7 +173,7 @@ for rank, (_, row) in enumerate(top_three.iterrows(), start=1):
         f"{row['status']}"
     )
 
-section("Provisional remaining route", "Reservation map only. Posted look-ahead lines outrank model forecasts while they genuinely exist.")
+section("Provisional remaining route", "Reservation map only. Posted look-ahead lines outrank market-power forecasts while they genuinely exist.")
 route = pd.DataFrame(audit["route"]).copy()
 route_display = pd.DataFrame({
     "Week": route["week"].astype(int),
@@ -185,7 +186,7 @@ route_display = pd.DataFrame({
 st.dataframe(
     route_display,
     hide_index=True,
-    use_container_width=True,
+    width="stretch",
     column_config={
         "Projected spread": st.column_config.NumberColumn(format="%+.2f"),
         "Calibrated EV": st.column_config.NumberColumn(format="%+.2f"),
@@ -204,7 +205,7 @@ _render_inventory(used)
 history = pd.DataFrame(state.get("weekly_results", []))
 if not history.empty:
     st.markdown("#### Completed picks")
-    st.dataframe(history, hide_index=True, use_container_width=True)
+    st.dataframe(history, hide_index=True, width="stretch")
 else:
     st.caption("No 2026 Margin Pool picks have been completed yet.")
 
@@ -213,20 +214,25 @@ quality_cols = st.columns(4)
 quality_cols[0].metric("Current games", int(data_quality["current_week_games"]))
 quality_cols[1].metric("Current spreads", int(data_quality["current_week_posted_spreads"]))
 quality_cols[2].metric("Season games", int(data_quality["season_games"]))
-quality_cols[3].metric("Fallback HFA", f"{float(data_quality['fallback_hfa']):.2f}")
+quality_cols[3].metric("Market HFA", f"{float(data_quality['fallback_hfa']):.2f}")
 with st.expander("Source mix and technical status"):
     st.json({
         "market_snapshot": audit["snapshot_utc"],
         "championship_status": policy.get("championship_status"),
-        "future_style_status": data_quality.get("future_style_status"),
+        "future_forecast_status": data_quality.get("future_forecast_status"),
+        "future_forecast_model": data_quality.get("future_forecast_model"),
+        "style_numeric_override": policy.get("style_numeric_override"),
         "value_source_counts": data_quality.get("remaining_value_source_counts", {}),
         "posted_market_games_used_for_fallback": data_quality.get("snapshot_posted_market_games_used_for_fallback"),
+        "power_window_periods": data_quality.get("power_window_periods"),
+        "power_half_life": data_quality.get("power_half_life"),
+        "power_ridge": data_quality.get("power_ridge"),
         "anchor_ev_threshold": policy.get("anchor_ev_threshold"),
         "current_spread_sacrifice_cap": policy.get("current_spread_sacrifice_cap"),
     })
 
 note(
-    "This first dashboard version is intentionally read-only. Tell ChatGPT the team you actually used and the final margin; "
+    "This dashboard is intentionally read-only. Tell ChatGPT the team you actually used and the final margin; "
     "the authoritative state will be updated and the next week's dashboard will start from that inventory."
 )
-source_footer("NFL schedule/market data: nflverse. Margin probabilities and allocation logic: validated Margin V1 engine.")
+source_footer("NFL schedule/market data: nflverse. Current games use posted market; future unpriced games use the validated V1 market-power allocator.")
