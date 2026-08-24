@@ -2,9 +2,10 @@ name: Margin Live V2
 
 on:
   push:
-    branches: [margin-live-v1, margin-week4-power-v1, margin-championship-gate-v1]
+    branches: [margin-live-v1, margin-week4-power-v1, margin-championship-gate-v1, margin-championship-raw-gate-clean]
     paths:
       - 'src/margin/**'
+      - 'research/margin_v1/**'
       - 'dashboard/app.py'
       - 'dashboard/pages/07_Margin_War_Room.py'
       - 'scripts/validate_margin_live.py'
@@ -15,6 +16,7 @@ on:
     branches: [streamlit-cloud-deploy]
     paths:
       - 'src/margin/**'
+      - 'research/margin_v1/**'
       - 'dashboard/app.py'
       - 'dashboard/pages/07_Margin_War_Room.py'
       - 'scripts/validate_margin_live.py'
@@ -28,7 +30,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +38,8 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Run production-aligned raw-power championship gate
+        run: python research/margin_v1/run_margin_standings_game_theory_raw_power.py
       - name: Compile Margin production files
         run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py src/margin/championship.py dashboard/app.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py scripts/validate_margin_championship.py
       - name: Validate Week 1 parity, Week 4 power, and rendered dashboard
