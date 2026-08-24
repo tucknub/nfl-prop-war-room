@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from streamlit.testing.v1 import AppTest
 
 
 def main() -> None:
-    app = AppTest.from_file("dashboard/pages/07_Margin_War_Room.py", default_timeout=45)
+    repo_root = Path(__file__).resolve().parents[2]
+    page = repo_root / "dashboard" / "pages" / "07_Margin_War_Room.py"
+    app = AppTest.from_file(str(page), default_timeout=45)
     app.run()
 
     if app.exception:
@@ -19,7 +23,6 @@ def main() -> None:
     if metrics.get("Current spread") != "+10.5":
         raise AssertionError(f"Expected current spread +10.5, got {metrics.get('Current spread')!r}")
 
-    # Required operating surfaces should all render in the page body.
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in ["Margin War Room", "Weekly board", "Provisional remaining route", "My pool state", "Data quality"]:
         if required not in body:
