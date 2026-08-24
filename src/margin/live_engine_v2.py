@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
+from . import championship
 from . import live_engine as base
 
 
@@ -204,12 +205,7 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
     anchor_row = board[board.team.eq(anchor)].iloc[0]
     selected_route = routes[pick]
 
-    pool = state.get("pool", {})
-    opponents = state.get("opponents", [])
-    champ_ready = bool(pool.get("size")) and len(opponents) > 0
-    championship_status = (
-        "READY_FOR_SIMULATION" if champ_ready else "UNAVAILABLE_POOL_STATE_MISSING"
-    )
+    championship_state = championship.championship_readiness(state)
     forecast_status = (
         "RAW_LONG_SLOW_ACTIVE"
         if current_week >= 4
@@ -241,6 +237,7 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
             "power_half_life": forecast.get("half_life"),
             "power_ridge": forecast.get("ridge"),
             "power_training_market_rows": forecast.get("training_market_rows"),
+            "championship_readiness": championship_state,
         },
         "policy": {
             "expected_points_pick": pick,
@@ -248,7 +245,9 @@ def run(state: dict, future_posted_mode: str = "live") -> dict:
             "anchor": anchor,
             "anchor_ev_threshold": threshold,
             "current_spread_sacrifice_cap": cap,
-            "championship_status": championship_status,
+            "championship_status": championship_state["status"],
+            "championship_override_promoted": False,
+            "championship_minimum_supported_week": championship.MIN_CHAMPIONSHIP_WEEK,
             "future_forecast_model": forecast["forecast_model"],
             "style_numeric_override": False,
         },
