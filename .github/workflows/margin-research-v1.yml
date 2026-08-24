@@ -4,12 +4,14 @@ on:
   push:
     branches: [margin-research-v1]
     paths:
-      - 'research/margin_v1/run_2026_full_preseason_roadmap.py'
+      - 'research/margin_v1/run_live_margin_2026.py'
+      - 'research/margin_v1/live_state_2026.json'
       - '.github/workflows/margin-research-v1.yml'
   pull_request:
     branches: [streamlit-cloud-deploy]
     paths:
-      - 'research/margin_v1/run_2026_full_preseason_roadmap.py'
+      - 'research/margin_v1/run_live_margin_2026.py'
+      - 'research/margin_v1/live_state_2026.json'
       - '.github/workflows/margin-research-v1.yml'
 
 permissions:
@@ -26,5 +28,5 @@ jobs:
           python-version: '3.12'
       - name: Install research dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn nflreadpy
-      - name: Run full 2026 preseason roadmap
-        run: python research/margin_v1/run_2026_full_preseason_roadmap.py
+      - name: Run reusable live Margin 2026 engine
+        run: python research/margin_v1/run_live_margin_2026.py
