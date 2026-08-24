@@ -11,9 +11,9 @@ from urllib.request import Request, urlopen
 from . import championship
 
 
-DEFAULT_REPO = "tucknub/nfl-prop-war-room"
-DEFAULT_BRANCH = "streamlit-cloud-deploy"
-DEFAULT_STATE_PATH = "src/margin/live_state_2026.json"
+PUBLIC_APP_REPO = "tucknub/nfl-prop-war-room"
+DEFAULT_BRANCH = "main"
+DEFAULT_STATE_PATH = "margin/live_state_2026.json"
 OWNER_EMAIL_SECRET = "PROPWAR_OWNER_EMAIL"
 
 
@@ -120,13 +120,14 @@ def complete_week_state(state: dict[str, Any], actual_margin: float, *, now_iso:
 
 
 def write_config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
-    """Return GitHub state-write configuration without making an auth decision."""
+    """Return private GitHub state configuration without making an auth decision."""
     token = str(secrets.get("MARGIN_GITHUB_TOKEN", "")).strip()
-    if not token:
+    repo = str(secrets.get("MARGIN_GITHUB_REPO", "")).strip()
+    if not token or not repo:
         return None
     return {
         "token": token,
-        "repo": str(secrets.get("MARGIN_GITHUB_REPO", DEFAULT_REPO)).strip() or DEFAULT_REPO,
+        "repo": repo,
         "branch": str(secrets.get("MARGIN_GITHUB_BRANCH", DEFAULT_BRANCH)).strip() or DEFAULT_BRANCH,
         "path": str(secrets.get("MARGIN_STATE_PATH", DEFAULT_STATE_PATH)).strip() or DEFAULT_STATE_PATH,
     }
@@ -142,7 +143,7 @@ def _oidc_configured(secrets: Mapping[str, Any]) -> bool:
 
 
 def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
-    """Return write config only when owner OIDC is fully configured."""
+    """Return private state config only when owner OIDC is fully configured."""
     config = write_config_from_secrets(secrets)
     if config is None or not _oidc_configured(secrets):
         return None
@@ -164,12 +165,8 @@ def _current_streamlit_user() -> dict[str, Any]:
         return {}
 
 
-def admin_key_valid(config: Mapping[str, str], supplied_key: str) -> bool:
-    """Authorize writes only for the authenticated configured OIDC owner.
-
-    ``supplied_key`` is retained temporarily for call-site compatibility and is
-    intentionally ignored. Legacy password authorization is disabled.
-    """
+def owner_write_authorized(config: Mapping[str, str]) -> bool:
+    """Authorize Margin writes only for the authenticated configured OIDC owner."""
     if str(config.get("auth_mode")) != "OIDC_OWNER":
         return False
     user = _current_streamlit_user()
@@ -201,20 +198,36 @@ def _github_json(config: Mapping[str, str], method: str, url: str, payload: dict
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"GitHub state write failed ({exc.code}): {body[:300]}") from exc
+        raise RuntimeError(f"GitHub state request failed ({exc.code}): {body[:300]}") from exc
+
+
+def assert_private_repository(config: Mapping[str, str]) -> None:
+    """Fail closed unless the configured Margin state repository is private."""
+    repo = str(config.get("repo", "")).strip()
+    if not repo or repo.casefold() == PUBLIC_APP_REPO.casefold():
+        raise RuntimeError("Margin state repository must be a separate private GitHub repository.")
+    metadata = _github_json(config, "GET", f"https://api.github.com/repos/{repo}")
+    is_private = bool(metadata.get("private")) or str(metadata.get("visibility", "")).casefold() == "private"
+    if not is_private:
+        raise RuntimeError("Configured Margin state repository is not private; refusing to load or write personal pool data.")
 
 
 def fetch_remote_state(config: Mapping[str, str]) -> tuple[dict[str, Any], str]:
+    assert_private_repository(config)
     repo = config["repo"]
     path = config["path"]
     branch = config["branch"]
     url = f"https://api.github.com/repos/{repo}/contents/{path}?ref={branch}"
     payload = _github_json(config, "GET", url)
     raw = base64.b64decode(payload["content"]).decode("utf-8")
-    return json.loads(raw), str(payload["sha"])
+    state = json.loads(raw)
+    if not isinstance(state, dict):
+        raise RuntimeError("Private Margin state file must contain one JSON object.")
+    return state, str(payload["sha"])
 
 
 def write_remote_state(config: Mapping[str, str], state: dict[str, Any], *, expected_sha: str, message: str) -> str:
+    assert_private_repository(config)
     repo = config["repo"]
     path = config["path"]
     branch = config["branch"]
