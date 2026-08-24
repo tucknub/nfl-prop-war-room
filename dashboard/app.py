@@ -11,8 +11,9 @@ DASHBOARD_DIR = Path(__file__).resolve().parent
 if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
+from access_control import access_mode  # noqa: E402
 from research_ui import inject_styles, section  # noqa: E402
-from research_data import operational_status_text  # noqa: E402
+from research_data import operational_status_text, role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
 
 
@@ -30,6 +31,24 @@ REPORT_CARDS = (
         "See which player roles gained or lost the most share versus the prior period.",
     ),
 )
+
+
+def _secrets_snapshot() -> dict:
+    try:
+        if hasattr(st.secrets, "to_dict"):
+            return dict(st.secrets.to_dict())
+        return dict(st.secrets)
+    except Exception:
+        return {}
+
+
+def _user_snapshot() -> dict:
+    try:
+        if hasattr(st.user, "to_dict"):
+            return dict(st.user.to_dict())
+        return dict(st.user)
+    except Exception:
+        return {}
 
 
 def inject_usability_styles() -> None:
@@ -99,12 +118,13 @@ def inject_usability_styles() -> None:
 
 
 def render_launch_home() -> None:
+    copy = role_home_copy()
     st.markdown(
-        """
+        f"""
         <section class="pw-home-hero">
-          <span>PROP WAR · NFL ROLE INTELLIGENCE</span>
-          <h1>What changed in NFL roles?</h1>
-          <p>Start with a clear answer, then inspect the player counts, team totals, and supporting evidence behind it.</p>
+          <span>PROP WAR · NFL ROLE INTELLIGENCE · PUBLIC BETA</span>
+          <h1>{copy['hero_title']}</h1>
+          <p>{copy['hero_description']}</p>
         </section>
         """,
         unsafe_allow_html=True,
@@ -133,30 +153,67 @@ def render_launch_home() -> None:
     render_home()
 
 
+def _render_owner_auth(mode: str, user: dict) -> None:
+    with st.sidebar:
+        if mode == "ANONYMOUS":
+            st.caption("Personal tools are hidden.")
+            if st.button("Owner sign in", key="owner_login", width="stretch"):
+                st.login()
+        elif mode == "OWNER":
+            email = str(user.get("email") or "Owner")
+            st.caption(f"Owner mode · {email}")
+            if st.button("Sign out", key="owner_logout", width="stretch"):
+                st.logout()
+        elif mode == "NON_OWNER":
+            st.caption("Signed in · public access only")
+            if st.button("Sign out", key="non_owner_logout", width="stretch"):
+                st.logout()
+
+
 def main() -> None:
     st.set_page_config(page_title="PropWar: NFL Role Intelligence", page_icon="PW", layout="wide")
     inject_styles()
     inject_usability_styles()
+
+    secrets = _secrets_snapshot()
+    user = _user_snapshot()
+    mode = access_mode(secrets, user)
+
     with st.sidebar:
         st.markdown(
             '<div class="pw-brand"><strong>PropWar</strong><span>NFL ROLE INTELLIGENCE</span></div>',
             unsafe_allow_html=True,
         )
+    _render_owner_auth(mode, user)
 
-    pages = {
-        "Margin Pool": [
-            st.Page("pages/07_Margin_War_Room.py", title="Margin War Room", icon=":material/trophy:", url_path="margin"),
-        ],
-        "Role Intelligence": [
-            st.Page(render_launch_home, title="Home", icon=":material/home:", url_path="", default=True),
-            st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
-            st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
-            st.Page("pages/02_Players.py", title="Players", icon=":material/person_search:", url_path="players"),
-            st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
-            st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
-            st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
-        ],
-    }
+    role_pages = [
+        st.Page(render_launch_home, title="Home", icon=":material/home:", url_path="", default=True),
+        st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
+        st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
+        st.Page("pages/02_Players.py", title="Players", icon=":material/person_search:", url_path="players"),
+        st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
+        st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
+        st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
+    ]
+    pages: dict[str, list] = {"Role Intelligence": role_pages}
+
+    # Migration-safe behavior: before OIDC is fully configured, preserve the
+    # current legacy Margin route. Once configured, only the authenticated owner
+    # gets the personal navigation group.
+    if mode == "LEGACY_ADMIN":
+        pages = {
+            "Margin Pool": [
+                st.Page("pages/07_Margin_War_Room.py", title="Margin War Room", icon=":material/trophy:", url_path="margin"),
+            ],
+            **pages,
+        }
+    elif mode == "OWNER":
+        pages = {
+            "My Tools": [
+                st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin"),
+            ],
+            **pages,
+        }
 
     st.navigation(pages).run()
 
