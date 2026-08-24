@@ -71,10 +71,11 @@ def test_trade_free_rule_is_hard_invariant() -> None:
         engine.validate_state(bad)
 
 
-def test_roster_validation_enforces_size_uniqueness_and_startable_lineup() -> None:
+def test_roster_validation_enforces_size_uniqueness_and_reports_lineup_readiness() -> None:
     normalized = engine.validate_roster(roster())
     assert len(normalized) == 14
     assert normalized[-1]["position"] == "DST"
+    assert engine.lineup_readiness(normalized)["ready"] is True
 
     too_short = roster()[:-1]
     with pytest.raises(ValueError, match="exactly 14"):
@@ -84,6 +85,15 @@ def test_roster_validation_enforces_size_uniqueness_and_startable_lineup() -> No
     duplicate[-1] = dict(duplicate[0])
     with pytest.raises(ValueError, match="duplicate"):
         engine.validate_roster(duplicate)
+
+    no_kicker = roster()
+    no_kicker[-2] = {"player": "WR Five", "position": "WR", "nfl_team": "SEA"}
+    normalized_no_kicker = engine.validate_roster(no_kicker)
+    readiness = engine.lineup_readiness(normalized_no_kicker)
+    assert readiness["ready"] is False
+    assert any("K" in error for error in readiness["errors"])
+    with pytest.raises(ValueError, match="required starters"):
+        engine.validate_roster(no_kicker, require_startable=True)
 
 
 def test_draft_transition_starts_week_one_without_touching_faab() -> None:
@@ -95,6 +105,7 @@ def test_draft_transition_starts_week_one_without_touching_faab() -> None:
     assert updated["faab_remaining"] == 1000
     assert len(updated["roster"]) == 14
     assert engine.phase(updated) == "EARLY_SURVIVAL"
+    assert engine.draft_readiness(updated)["ready"] is True
 
 
 def test_survival_week_advances_and_shrinks_field() -> None:
@@ -153,7 +164,7 @@ def test_waiver_transaction_updates_roster_and_faab_together() -> None:
     assert tx["drop"] == "RB Four"
 
 
-def test_waiver_transaction_rejects_invalid_drop_or_lineup_break() -> None:
+def test_waiver_transaction_allows_intermediate_lineup_gap_but_flags_readiness() -> None:
     active = engine.record_draft_state(base_state(), roster())
     with pytest.raises(ValueError, match="not uniquely present"):
         engine.record_waiver_transaction(
@@ -163,13 +174,14 @@ def test_waiver_transaction_rejects_invalid_drop_or_lineup_break() -> None:
             drop_player="Not On Roster",
         )
 
-    with pytest.raises(ValueError, match="required starters"):
-        engine.record_waiver_transaction(
-            active,
-            amount=0,
-            add_player={"player": "WR New", "position": "WR", "nfl_team": "SEA"},
-            drop_player="K One",
-        )
+    updated = engine.record_waiver_transaction(
+        active,
+        amount=0,
+        add_player={"player": "WR New", "position": "WR", "nfl_team": "SEA"},
+        drop_player="K One",
+    )
+    assert engine.draft_readiness(updated)["ready"] is False
+    assert any("K" in error for error in engine.draft_readiness(updated)["lineup_errors"])
 
 
 def test_knockout_storage_reuses_private_repo_but_has_separate_path() -> None:
