@@ -13,6 +13,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.margin import championship  # noqa: E402
+from src.margin import championship_override  # noqa: E402
 from src.margin import live_engine as base  # noqa: E402
 
 
@@ -165,7 +166,6 @@ def assert_tie_splitting() -> None:
         [7, 10, 9, 8],
     ], dtype=int)
     metrics = championship._first_place_metrics(hero, opponents)
-    # Shares are 1/2, 1/2, 1/2, 0 => 0.375.
     assert abs(metrics["expected_first_share"] - 0.375) < 1e-12
     assert abs(metrics["outright_first_probability"] - 0.0) < 1e-12
     assert abs(metrics["tie_or_first_probability"] - 0.75) < 1e-12
@@ -181,24 +181,12 @@ def assert_deterministic_simulation() -> None:
     expected_pick, _ = base.choose_expected_points_pick(board, 10, 3.0, 0.5)
 
     first = championship.simulate_championship(
-        state,
-        rows,
-        board,
-        routes,
-        train_fav,
-        expected_pick,
-        n_sims=3000,
-        seed=20260823,
+        state, rows, board, routes, train_fav, expected_pick,
+        n_sims=3000, seed=20260823,
     )
     second = championship.simulate_championship(
-        state,
-        rows,
-        board,
-        routes,
-        train_fav,
-        expected_pick,
-        n_sims=3000,
-        seed=20260823,
+        state, rows, board, routes, train_fav, expected_pick,
+        n_sims=3000, seed=20260823,
     )
 
     assert first == second, "fixed-seed championship simulation must be deterministic"
@@ -212,16 +200,86 @@ def assert_deterministic_simulation() -> None:
     assert first["simulation"]["championship_first_share"] + 1e-12 >= first["simulation"]["expected_points_first_share"]
 
 
+def _fake_result(seed: int, *, primary_lift: float = 0.03, fail_seed: int | None = None) -> dict:
+    expected_share = 0.30
+    if seed == championship.DEFAULT_SEED:
+        lift = primary_lift
+    elif fail_seed is not None and seed == fail_seed:
+        lift = -0.005
+    else:
+        lift = 0.025
+    champ_share = expected_share + lift
+    return {
+        "readiness": {"ready": True, "status": "READY_FOR_SIMULATION", "override_promoted": False},
+        "simulation": {
+            "first_share_lift": lift,
+            "candidate_results": [
+                {"team": "BAL", "expected_first_share": expected_share},
+                {"team": "BUF", "expected_first_share": champ_share},
+            ],
+        },
+        "championship_pick": "BUF",
+        "authoritative_pick": "BAL",
+        "override_status": "RANKING_ONLY_OVERRIDE_NOT_PROMOTED",
+    }
+
+
+def assert_override_promotion_policy() -> None:
+    original = championship.simulate_championship
+    dummy = pd.DataFrame()
+    try:
+        championship.simulate_championship = lambda *args, **kwargs: _fake_result(
+            int(kwargs["seed"]), primary_lift=0.019
+        )
+        below = championship_override.evaluate_override(
+            complete_state(), dummy, dummy, {}, dummy, "BAL"
+        )
+        assert below["authoritative_pick"] == "BAL"
+        assert below["override_applied"] is False
+        assert below["override_status"] == "PRIMARY_LIFT_BELOW_PROMOTION_THRESHOLD"
+
+        fail_seed = championship.DEFAULT_SEED + championship_override.CONFIRMATION_SEED_OFFSETS[1]
+        championship.simulate_championship = lambda *args, **kwargs: _fake_result(
+            int(kwargs["seed"]), primary_lift=0.03, fail_seed=fail_seed
+        )
+        failed = championship_override.evaluate_override(
+            complete_state(), dummy, dummy, {}, dummy, "BAL"
+        )
+        assert failed["authoritative_pick"] == "BAL"
+        assert failed["override_applied"] is False
+        assert failed["override_status"] == "INDEPENDENT_CONFIRMATION_FAILED"
+        assert failed["confirmation"]["all_positive"] is False
+
+        championship.simulate_championship = lambda *args, **kwargs: _fake_result(
+            int(kwargs["seed"]), primary_lift=0.03
+        )
+        passed = championship_override.evaluate_override(
+            complete_state(), dummy, dummy, {}, dummy, "BAL"
+        )
+        assert passed["authoritative_pick"] == "BUF"
+        assert passed["override_applied"] is True
+        assert passed["override_status"] == "CHAMPIONSHIP_OVERRIDE_PROMOTED_AND_CONFIRMED"
+        assert passed["confirmation"]["all_positive"] is True
+        assert len(passed["confirmation"]["rows"]) == 3
+        assert passed["readiness"]["override_promoted"] is True
+    finally:
+        championship.simulate_championship = original
+
+
 def main() -> None:
     assert_readiness_guards()
     assert_tie_splitting()
     assert_deterministic_simulation()
+    assert_override_promotion_policy()
     print("championship_readiness_fail_closed=PASS")
     print("championship_complete_field_required=PASS")
     print("championship_week10_research_gate=PASS")
     print("championship_tie_split=PASS")
     print("championship_fixed_seed_determinism=PASS")
-    print("championship_ranking_only_no_override=PASS")
+    print("championship_base_simulator_ranking_only=PASS")
+    print("championship_primary_2pp_threshold=PASS")
+    print("championship_independent_confirmation_fail_closed=PASS")
+    print("championship_confirmed_override_promotion=PASS")
 
 
 if __name__ == "__main__":
