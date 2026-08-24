@@ -15,6 +15,7 @@ from . import championship
 DEFAULT_REPO = "tucknub/nfl-prop-war-room"
 DEFAULT_BRANCH = "streamlit-cloud-deploy"
 DEFAULT_STATE_PATH = "src/margin/live_state_2026.json"
+OWNER_EMAIL_SECRET = "PROPWAR_OWNER_EMAIL"
 
 
 def _now_iso() -> str:
@@ -119,21 +120,67 @@ def complete_week_state(state: dict[str, Any], actual_margin: float, *, now_iso:
     return updated
 
 
-def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+def write_config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+    """Return GitHub state-write configuration without making an auth decision."""
     token = str(secrets.get("MARGIN_GITHUB_TOKEN", "")).strip()
-    admin_key = str(secrets.get("MARGIN_ADMIN_KEY", "")).strip()
-    if not token or not admin_key:
+    if not token:
         return None
     return {
         "token": token,
-        "admin_key": admin_key,
         "repo": str(secrets.get("MARGIN_GITHUB_REPO", DEFAULT_REPO)).strip() or DEFAULT_REPO,
         "branch": str(secrets.get("MARGIN_GITHUB_BRANCH", DEFAULT_BRANCH)).strip() or DEFAULT_BRANCH,
         "path": str(secrets.get("MARGIN_STATE_PATH", DEFAULT_STATE_PATH)).strip() or DEFAULT_STATE_PATH,
     }
 
 
+def _oidc_configured(secrets: Mapping[str, Any]) -> bool:
+    auth = secrets.get("auth")
+    if not isinstance(auth, Mapping):
+        return False
+    owner_email = str(secrets.get(OWNER_EMAIL_SECRET, "")).strip()
+    required = ["redirect_uri", "cookie_secret", "client_id", "client_secret", "server_metadata_url"]
+    return bool(owner_email and all(str(auth.get(key, "")).strip() for key in required))
+
+
+def config_from_secrets(secrets: Mapping[str, Any]) -> dict[str, str] | None:
+    """Return write config for OIDC owner mode or the legacy admin-key flow."""
+    config = write_config_from_secrets(secrets)
+    if config is None:
+        return None
+    if _oidc_configured(secrets):
+        return {
+            **config,
+            "auth_mode": "OIDC_OWNER",
+            "owner_email": str(secrets.get(OWNER_EMAIL_SECRET, "")).strip().casefold(),
+        }
+    admin_key = str(secrets.get("MARGIN_ADMIN_KEY", "")).strip()
+    if not admin_key:
+        return None
+    return {**config, "auth_mode": "LEGACY_ADMIN", "admin_key": admin_key}
+
+
+def _current_streamlit_user() -> dict[str, Any]:
+    try:
+        import streamlit as st
+
+        if hasattr(st.user, "to_dict"):
+            return dict(st.user.to_dict())
+        return dict(st.user)
+    except Exception:
+        return {}
+
+
 def admin_key_valid(config: Mapping[str, str], supplied_key: str) -> bool:
+    """Authorize writes with OIDC owner identity or the legacy password."""
+    if str(config.get("auth_mode")) == "OIDC_OWNER":
+        user = _current_streamlit_user()
+        if not bool(user.get("is_logged_in", False)):
+            return False
+        actual = str(user.get("email", "")).strip().casefold()
+        expected = str(config.get("owner_email", "")).strip().casefold()
+        if not actual or actual != expected:
+            return False
+        return user.get("email_verified") is not False
     return hmac.compare_digest(str(config.get("admin_key", "")), str(supplied_key or ""))
 
 
