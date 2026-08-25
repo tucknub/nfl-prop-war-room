@@ -89,8 +89,10 @@ def test_ev_filter_collapses_same_wager_across_my_books_to_best_price():
     assert len(result) == 1
     assert result[0]["book"] == "DraftKings"
     assert result[0]["price"] == 144
-    assert "San Francisco 49ers ML" in result[0]["side"]
-    assert "Caesars +142" in result[0]["side"]
+    assert result[0]["side"] == "San Francisco 49ers ML"
+    assert "alt" not in result[0]["side"].lower()
+    assert result[0]["alternate_books"][0]["book"] == "Caesars"
+    assert result[0]["alternate_books"][0]["price"] == 142
 
 
 def test_arbs_and_middles_require_both_legs_at_user_books():

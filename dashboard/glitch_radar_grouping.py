@@ -64,7 +64,10 @@ def group_ev_wagers(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         best = dict(options[0])
         original_side = str(best.get("side") or "Bet").strip()
+        display_market = market_label(best)
         best["selection"] = original_side
+        best["display_market"] = display_market
+        best["side"] = f"{original_side} {display_market}".strip()
         best["alternate_books"] = [
             {
                 "book": option.get("book"),
@@ -74,17 +77,6 @@ def group_ev_wagers(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             for option in options[1:]
         ]
         best["book_count"] = len(options)
-
-        display = f"{original_side} {market_label(best)}".strip()
-        if best["alternate_books"]:
-            alternatives = ", ".join(
-                f"{alt.get('book')} {int(float(alt.get('price'))):+d}"
-                for alt in best["alternate_books"]
-                if alt.get("book") and alt.get("price") is not None
-            )
-            if alternatives:
-                display += f" — alt {alternatives}"
-        best["side"] = display
         grouped.append(best)
 
     grouped.sort(

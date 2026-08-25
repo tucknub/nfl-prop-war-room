@@ -20,7 +20,9 @@ from glitch_radar_books import (  # noqa: E402
     filter_actionable_two_leg,
     user_books_seen,
 )
+from glitch_radar_grouping import market_label  # noqa: E402
 from glitch_radar_present import (  # noqa: E402
+    event_phase_label,
     expected_ev_pct,
     fair_american_from_probability,
     format_american,
@@ -108,8 +110,36 @@ def _evidence_table(items: list[tuple[str, object]]) -> None:
     )
 
 
+def _event_context(row: dict) -> str:
+    pieces = [game_name(row)]
+    phase = event_phase_label(row.get("commence_time"))
+    if phase:
+        pieces.append(phase)
+    if row.get("commence_time"):
+        pieces.append(local_start_label(row.get("commence_time")))
+    return " · ".join(pieces)
+
+
+def _alternate_text(row: dict) -> str:
+    alternates = row.get("alternate_books", []) or []
+    values: list[str] = []
+    for alternate in alternates:
+        if not isinstance(alternate, dict) or not alternate.get("book"):
+            continue
+        values.append(f"{alternate.get('book')} {format_american(alternate.get('price'))}")
+    return ", ".join(values)
+
+
+def _ev_sort_key(row: dict) -> tuple[int, float]:
+    phase_rank = 1 if event_phase_label(row.get("commence_time")) == "PRESEASON" else 0
+    ev = expected_ev_pct(row.get("price"), row.get("fair_prob_pct"))
+    return phase_rank, -(ev if ev is not None else -999.0)
+
+
 def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
-    side = str(row.get("side") or "Bet").strip()
+    selection = str(row.get("selection") or row.get("side") or "Bet").strip()
+    display_market = str(row.get("display_market") or market_label(row)).strip()
+    bet_name = f"{selection} {display_market}".strip()
     book = str(row.get("book") or "Sportsbook").strip()
     price = format_american(row.get("price"))
     fair_probability = row.get("fair_prob_pct")
@@ -120,12 +150,16 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
     tier = value_tier(ev)
     anchor = str(row.get("sharp_anchor") or "market").strip().title()
     implied = row.get("book_implied_pct")
+    phase = event_phase_label(row.get("commence_time"))
+    alternate_text = _alternate_text(row)
 
     with st.container(border=True):
         title_col, tier_col = st.columns([4, 1])
         with title_col:
-            st.markdown(f"#### {side} · {book} {price}")
-            st.caption(f"{game_name(row)} · {local_start_label(row.get('commence_time'))}")
+            st.markdown(f"#### {bet_name} · {book} {price}")
+            st.caption(_event_context(row))
+            if alternate_text:
+                st.caption(f"Alternate: {alternate_text}")
         with tier_col:
             st.markdown(f"**{tier}**")
 
@@ -143,19 +177,27 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
         else:
             st.markdown("**Why it surfaced:** the market feed identified this as a positive expected-value price at one of my books.")
 
-        st.caption(
-            "Price/value signal — not classified as a sportsbook error. Estimated EV assumes the feed's fair probability is accurate."
-        )
+        if phase == "PRESEASON":
+            st.warning(
+                "PRESEASON price signal. Rotations, inactive decisions, and late lineup news can move these markets quickly; "
+                "this is not a regular-season confidence grade."
+            )
+        else:
+            st.caption(
+                "Price/value signal — not classified as a sportsbook error. Estimated EV assumes the feed's fair probability is accurate."
+            )
 
         if show_evidence:
             with st.expander("Market evidence"):
                 _evidence_table(
                     [
                         ("Game", game_name(row)),
+                        ("Phase", phase or "Not labeled by current preview"),
                         ("Start", local_start_label(row.get("commence_time"))),
-                        ("Bet", side),
+                        ("Bet", bet_name),
                         ("Sportsbook", book),
                         ("Current price", price),
+                        ("Alternate prices", alternate_text or "None at another configured book"),
                         ("Book implied probability", _pct(implied)),
                         ("Fair probability", _pct(fair_probability)),
                         ("Fair line", fair_price),
@@ -208,7 +250,10 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
                         ("Flagged price", price),
                         ("Peer consensus probability", _pct(consensus_pct)),
                         ("Peer fair line", format_american(fair_odds)),
-                        ("Relative probability deviation", f"{float(relative) * 100:.1f}%" if isinstance(relative, (int, float)) else "—"),
+                        (
+                            "Relative probability deviation",
+                            f"{float(relative) * 100:.1f}%" if isinstance(relative, (int, float)) else "—",
+                        ),
                         ("Profit multiple vs peers", f"{_number(payout_multiple)}×"),
                         ("Sign mismatch", "Yes" if sign_mismatch else "No"),
                     ]
@@ -270,7 +315,10 @@ def _render_generic_opportunity(row: dict, label: str) -> None:
 
 def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict], evs: list[dict]) -> None:
     st.markdown("### Best opportunities now")
-    st.caption("Highest-priority actionable signals across my sportsbooks. Glitches and arbs outrank ordinary +EV prices.")
+    st.caption(
+        "Highest-priority actionable signals across my sportsbooks. Glitches and arbs outrank ordinary +EV prices; "
+        "regular/postseason value ranks ahead of routine preseason value."
+    )
 
     shown = 0
     for alert in alerts:
@@ -319,12 +367,7 @@ books = snapshot.get("books", []) or []
 alerts = filter_actionable_alerts(raw_alerts)
 arbs = filter_actionable_two_leg(raw_arbs)
 middles = filter_actionable_two_leg(raw_middles)
-evs = filter_actionable_ev(raw_evs)
-evs = sorted(
-    evs,
-    key=lambda row: expected_ev_pct(row.get("price"), row.get("fair_prob_pct")) or -999,
-    reverse=True,
-)
+evs = sorted(filter_actionable_ev(raw_evs), key=_ev_sort_key)
 rank = {"P0": 0, "P1": 1, "P2": 2, "TEST": 3}
 alerts = sorted(alerts, key=lambda row: rank.get(row.get("severity", "P2"), 9))
 my_books_seen = user_books_seen(books)
@@ -344,7 +387,10 @@ with status_col:
         f"last scan {local_start_label(snapshot.get('fetched_at'))} · demo requests left: {snapshot.get('demo_remaining_hour', '—')}"
     )
     if missing_books:
-        st.caption(f"Not returned in this preview: {', '.join(missing_books)}. This does not remove them from my configured sportsbook list.")
+        st.caption(
+            f"Not returned in this preview: {', '.join(missing_books)}. "
+            "This does not remove them from my configured sportsbook list."
+        )
 with refresh_col:
     if st.button("Force fresh scan", type="primary", width="stretch"):
         _live_snapshot.clear()
@@ -428,7 +474,10 @@ with boost_tab:
                 st.success("The boost creates a positive estimated price edge versus the fair line you entered.")
             else:
                 st.warning("The boost does not overcome the fair-price gap you entered.")
-            st.caption("The result is only as good as the fair line entered. Always benchmark a boost against the current market, not its advertised pre-boost price.")
+            st.caption(
+                "The result is only as good as the fair line entered. Always benchmark a boost against the current market, "
+                "not its advertised pre-boost price."
+            )
 
 with source_tab:
     st.markdown("### Sportsbook and feed coverage")

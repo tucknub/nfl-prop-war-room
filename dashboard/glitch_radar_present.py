@@ -67,17 +67,38 @@ def game_name(row: dict) -> str:
     return away or home or str(row.get("event") or "Game").strip() or "Game"
 
 
+def _parse_datetime(value: object) -> datetime | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
 def local_start_label(value: object) -> str:
     raw = str(value or "").strip()
     if not raw:
         return "Start time unavailable"
-    try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        local = parsed.astimezone(INDIANA_TZ)
-    except (TypeError, ValueError):
+    parsed = _parse_datetime(value)
+    if parsed is None:
         return raw
+    local = parsed.astimezone(INDIANA_TZ)
     hour = local.strftime("%I").lstrip("0") or "12"
     return f"{local.strftime('%a %b')} {local.day} · {hour}:{local.strftime('%M %p')} ET"
+
+
+def event_phase_label(value: object) -> str:
+    """Return a conservative NFL phase label when it can be inferred safely from the date.
+
+    NFL games in July/August are preseason. Other months remain unlabeled rather than
+    guessing regular season versus postseason without authoritative schedule metadata.
+    """
+    parsed = _parse_datetime(value)
+    if parsed is None:
+        return ""
+    return "PRESEASON" if parsed.month in {7, 8} else ""
 
 
 def value_tier(ev_pct: float | None) -> str:
