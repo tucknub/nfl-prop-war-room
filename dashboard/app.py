@@ -143,7 +143,7 @@ def main() -> None:
         page_title="PropWar: NFL Role Intelligence",
         page_icon="PW",
         layout="wide",
-        initial_sidebar_state="auto",
+        initial_sidebar_state="locked",
     )
     inject_styles()
     inject_usability_styles()
