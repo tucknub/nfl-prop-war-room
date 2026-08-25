@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from glitch_radar_grouping import group_ev_wagers
+try:
+    from glitch_radar_grouping import group_ev_wagers
+except ImportError:  # package import path used by pytest
+    from dashboard.glitch_radar_grouping import group_ev_wagers
 
 
 USER_BOOKS: tuple[str, ...] = (
