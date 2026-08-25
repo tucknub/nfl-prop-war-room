@@ -1,4 +1,5 @@
 from dashboard.glitch_radar_present import (
+    event_phase_label,
     expected_ev_pct,
     fair_american_from_probability,
     format_american,
@@ -26,6 +27,12 @@ def test_price_format_and_game_name_are_human_readable():
     assert game_name({"away_team": "San Francisco 49ers", "home_team": "Las Vegas Raiders"}) == (
         "San Francisco 49ers @ Las Vegas Raiders"
     )
+
+
+def test_august_nfl_game_is_labeled_preseason_without_guessing_other_phases():
+    assert event_phase_label("2026-08-28T00:00:00.000Z") == "PRESEASON"
+    assert event_phase_label("2026-09-10T00:00:00.000Z") == ""
+    assert event_phase_label("") == ""
 
 
 def test_value_tier_is_based_on_calculated_ev_not_probability_gap():
