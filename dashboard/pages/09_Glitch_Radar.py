@@ -11,6 +11,14 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from glitch_radar_live import build_snapshot, evaluate_profit_boost  # noqa: E402
+from glitch_radar_books import (  # noqa: E402
+    USER_BOOKS,
+    comparison_books_seen,
+    filter_actionable_alerts,
+    filter_actionable_ev,
+    filter_actionable_two_leg,
+    user_books_seen,
+)
 
 
 def _mapping(value) -> dict:
@@ -51,17 +59,24 @@ def _detail_rows(rows: list[dict], empty_message: str, label: str) -> None:
 _require_owner()
 
 st.markdown("## My Glitch Radar")
-st.caption("No-key NFL market scanner · current public preview · cached 10 minutes")
+st.caption("No-key NFL market scanner · personalized to my sportsbooks · cached 10 minutes")
 
 with st.spinner("Checking current NFL market data..."):
     snapshot = _live_snapshot()
 
-alerts = snapshot.get("alerts", []) or []
-arbs = snapshot.get("arbs", []) or []
-middles = snapshot.get("middles", []) or []
-evs = snapshot.get("ev", []) or []
+raw_alerts = snapshot.get("alerts", []) or []
+raw_arbs = snapshot.get("arbs", []) or []
+raw_middles = snapshot.get("middles", []) or []
+raw_evs = snapshot.get("ev", []) or []
 quotes = snapshot.get("quotes", []) or []
 books = snapshot.get("books", []) or []
+
+alerts = filter_actionable_alerts(raw_alerts)
+arbs = filter_actionable_two_leg(raw_arbs)
+middles = filter_actionable_two_leg(raw_middles)
+evs = filter_actionable_ev(raw_evs)
+my_books_seen = user_books_seen(books)
+comparison_books = comparison_books_seen(books)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Glitch alerts", len(alerts))
@@ -71,8 +86,13 @@ m4.metric("+EV", len(evs))
 
 st.caption(
     f"Fetched {snapshot.get('fetched_at', '—')} · {len(quotes)} quotes · "
-    f"books seen: {', '.join(books) if books else 'none'} · "
+    f"my books currently seen: {', '.join(my_books_seen) if my_books_seen else 'none in preview'} · "
     f"demo requests left this hour: {snapshot.get('demo_remaining_hour', '—')}"
+)
+
+st.info(
+    "Actionable books: FanDuel, DraftKings, Caesars, bet365, Hard Rock Bet. "
+    "Other books may still be used as market references, but Glitch Radar will not tell me to place a bet there."
 )
 
 if st.button("Force fresh scan", type="primary"):
@@ -91,7 +111,7 @@ radar_tab, arb_tab, middle_tab, ev_tab, boost_tab, source_tab = st.tabs(
 
 with radar_tab:
     if not alerts:
-        st.success("No major same-market price outlier is visible in the current no-key preview.")
+        st.success("No major same-market price outlier is visible at one of my books in the current preview.")
     else:
         rank = {"P0": 0, "P1": 1, "P2": 2, "TEST": 3}
         for alert in sorted(alerts, key=lambda row: rank.get(row.get("severity", "P2"), 9)):
@@ -112,16 +132,20 @@ with radar_tab:
             with st.expander("Why it flagged"):
                 st.json(alert)
     st.caption(
-        "No-key mode is intentionally limited to the provider's public preview. "
-        "A clean screen does not mean every player prop and alt line at every sportsbook was checked."
+        "The full visible market can contribute to the comparison baseline, including books I do not use. "
+        "Only a mispriced side at one of my five sportsbooks is surfaced as an actionable alert."
     )
 
 with arb_tab:
-    _detail_rows(arbs, "No arbitrage opportunity is in the current public preview.", "Arbitrage")
+    _detail_rows(
+        arbs,
+        "No arbitrage opportunity using only two of my sportsbooks is in the current public preview.",
+        "Arbitrage",
+    )
 
 with middle_tab:
     if not middles:
-        st.info("No middle opportunity is in the current public preview.")
+        st.info("No middle using only my sportsbooks is in the current public preview.")
     for index, row in enumerate(middles, start=1):
         over = row.get("over", {}) or {}
         under = row.get("under", {}) or {}
@@ -135,7 +159,7 @@ with middle_tab:
 
 with ev_tab:
     if not evs:
-        st.info("No +EV opportunity is in the current public preview.")
+        st.info("No +EV opportunity at one of my sportsbooks is in the current public preview.")
     for index, row in enumerate(evs, start=1):
         st.write(
             f"**{row.get('side', '')}** · **{row.get('book', '')} {row.get('price', '')}** · "
@@ -143,9 +167,11 @@ with ev_tab:
         )
         with st.expander(f"+EV #{index} details"):
             st.json(row)
+    st.caption("The fair-value anchor can still be Pinnacle or another comparison source; the bet itself must be at one of my books.")
 
 with boost_tab:
     st.caption("For account-specific sportsbook boosts that public market feeds cannot see.")
+    sportsbook = st.selectbox("Sportsbook", USER_BOOKS, key="glitch_boost_book")
     c1, c2 = st.columns(2)
     original_odds = c1.number_input("Original American odds", value=300, step=5)
     fair_odds = c2.number_input("Consensus/fair American odds", value=300, step=5)
@@ -156,17 +182,22 @@ with boost_tab:
         result = evaluate_profit_boost(
             int(original_odds), int(fair_odds), float(boost_pct) / 100, float(stake)
         )
+        st.caption(f"Evaluating {sportsbook}")
         b1, b2, b3 = st.columns(3)
         b1.metric("Boosted odds", f"{result['boosted_odds']:+d}")
         b2.metric("Estimated EV", f"{result['ev_pct'] * 100:.1f}%")
         b3.metric("Expected value", f"${result['expected_value_dollars']:.2f}")
 
 with source_tab:
-    st.write("Books visible in the current no-key odds preview:")
-    st.write(", ".join(books) if books else "None returned")
+    st.write("My actionable books:")
+    st.write(", ".join(USER_BOOKS))
+    st.write("My books currently visible in this preview:")
+    st.write(", ".join(my_books_seen) if my_books_seen else "None returned in this preview")
+    st.write("Comparison-only books currently visible in this preview:")
+    st.write(", ".join(comparison_books) if comparison_books else "None returned")
     with st.expander("Command-center snapshot"):
         st.json(snapshot.get("command_center", {}))
     st.caption(
-        "This page uses official no-auth public API surfaces. It does not scrape sportsbook pages "
-        "and does not require a separate PropWar API key."
+        "Comparison-only books can help establish fair value or expose an outlier, but they are never presented as a place for me to bet. "
+        "This page uses official no-auth public API surfaces and does not require a separate PropWar API key."
     )
