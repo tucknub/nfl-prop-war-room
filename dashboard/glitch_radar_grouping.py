@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from glitch_radar_present import expected_ev_pct
+try:
+    from glitch_radar_present import expected_ev_pct
+except ImportError:  # package import path used by pytest
+    from dashboard.glitch_radar_present import expected_ev_pct
 
 
 def wager_key(row: dict[str, Any]) -> tuple[str, str, str, object]:
