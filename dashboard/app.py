@@ -78,11 +78,6 @@ def inject_usability_styles() -> None:
             pointer-events:auto !important;
             z-index:1000000 !important;
           }
-          [data-testid="stSidebarCollapsedControl"] {
-            position:fixed !important;
-            top:.75rem !important;
-            left:.75rem !important;
-          }
           [data-testid="stSidebarCollapsedControl"] button { width:auto; min-width:5.4rem; height:2.5rem; padding:0 .72rem; border:1px solid #cbd9ef; border-radius:8px; background:#fff; box-shadow:0 1px 4px rgba(15,35,60,.08); }
           [data-testid="stSidebarCollapsedControl"] button::after { content:"Menu"; margin-left:.35rem; font-size:.78rem; font-weight:800; color:var(--pw-ink); }
           .pw-home-hero { margin-top:.05rem; }
