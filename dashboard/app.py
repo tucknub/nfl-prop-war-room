@@ -43,8 +43,10 @@ def inject_usability_styles() -> None:
     st.markdown(
         """
         <style>
-        footer, #viewerBadge_link, [data-testid="stToolbar"],
-        [data-testid="stHeaderActionElements"], [data-testid="stAppDeployButton"] { display:none !important; }
+        footer, #viewerBadge_link, [data-testid="stAppDeployButton"] { display:none !important; }
+        @media (min-width:521px) {
+          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] { display:none !important; }
+        }
         .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }
         .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }
         .pw-home-hero h1 { font-size:clamp(2.3rem,4vw,4.2rem)!important; font-weight:820; line-height:.98!important; margin:0 0 .6rem!important; padding:0!important; }
@@ -57,14 +59,38 @@ def inject_usability_styles() -> None:
         .pw-overview strong { line-height:1.25!important; white-space:normal!important; overflow-wrap:anywhere!important; }
         @media (max-width:900px) { .pw-home-hero h1 { font-size:2.55rem!important; line-height:1.02!important; } .pw-home-hero p { font-size:.92rem; } }
         @media (max-width:520px) {
+          [data-testid="stHeader"] {
+            display:flex !important;
+            visibility:visible !important;
+            background:transparent !important;
+          }
+          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
+            display:flex !important;
+            visibility:visible !important;
+          }
+          [data-testid="stSidebarCollapsedControl"],
+          [data-testid="stSidebarCollapseButton"],
+          button[aria-label="Open sidebar"],
+          button[aria-label="Expand sidebar"] {
+            display:flex !important;
+            visibility:visible !important;
+            opacity:1 !important;
+            pointer-events:auto !important;
+            z-index:1000000 !important;
+          }
+          [data-testid="stSidebarCollapsedControl"] {
+            position:fixed !important;
+            top:.75rem !important;
+            left:.75rem !important;
+          }
+          [data-testid="stSidebarCollapsedControl"] button { width:auto; min-width:5.4rem; height:2.5rem; padding:0 .72rem; border:1px solid #cbd9ef; border-radius:8px; background:#fff; box-shadow:0 1px 4px rgba(15,35,60,.08); }
+          [data-testid="stSidebarCollapsedControl"] button::after { content:"Menu"; margin-left:.35rem; font-size:.78rem; font-weight:800; color:var(--pw-ink); }
           .pw-home-hero { margin-top:.05rem; }
           .pw-home-hero>span { font-size:.64rem; margin-bottom:.35rem; }
           .pw-home-hero h1 { font-size:2.08rem!important; line-height:1.02!important; }
           .pw-home-hero p { font-size:.84rem; line-height:1.4; }
           .pw-status-line { display:block; padding:.55rem .62rem; }
           .pw-status-line strong { display:block; margin-bottom:.12rem; }
-          [data-testid="stSidebarCollapsedControl"] button { width:auto; min-width:4.6rem; height:2.4rem; padding:0 .65rem; }
-          [data-testid="stSidebarCollapsedControl"] button::after { content:"Menu"; margin-left:.3rem; font-size:.76rem; font-weight:760; color:var(--pw-ink); }
         }
         </style>
         """,
@@ -122,7 +148,7 @@ def main() -> None:
         page_title="PropWar: NFL Role Intelligence",
         page_icon="PW",
         layout="wide",
-        initial_sidebar_state="locked",
+        initial_sidebar_state="auto",
     )
     inject_styles()
     inject_usability_styles()
