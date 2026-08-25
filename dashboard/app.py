@@ -151,6 +151,7 @@ def main() -> None:
             "My Tools": [
                 st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin"),
                 st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="My Knockout Fantasy", icon=":material/bolt:", url_path="knockout"),
+                st.Page("pages/09_Glitch_Radar.py", title="My Glitch Radar", icon=":material/radar:", url_path="glitch-radar"),
             ],
             **pages,
         }
