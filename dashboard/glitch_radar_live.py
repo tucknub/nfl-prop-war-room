@@ -7,6 +7,11 @@ from typing import Any
 
 import httpx
 
+try:
+    from glitch_radar_enrich import enrich_ev_markets
+except ImportError:  # package import path used by pytest
+    from dashboard.glitch_radar_enrich import enrich_ev_markets
+
 BASE = "https://parlay-api.com"
 SPORT = "americanfootball_nfl"
 
@@ -232,16 +237,18 @@ def build_snapshot() -> dict[str, Any]:
         errors.append(err)
 
     quotes = parse_odds(odds or {})
+    packed_quotes = [_pack_quote(q) for q in quotes]
     alerts = detect_price_outliers(quotes)
     books = sorted({q.book for q in quotes})
+    ev_rows = enrich_ev_markets(_opportunities(ev), packed_quotes)
 
     return {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
-        "quotes": [_pack_quote(q) for q in quotes],
+        "quotes": packed_quotes,
         "alerts": alerts,
         "arbs": _opportunities(arbitrage),
         "middles": _opportunities(middles),
-        "ev": _opportunities(ev),
+        "ev": ev_rows,
         "books": books,
         "command_center": command_center or {},
         "demo_remaining_hour": odds.get("demo_remaining_hour") if isinstance(odds, dict) else None,
