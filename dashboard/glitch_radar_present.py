@@ -76,7 +76,8 @@ def local_start_label(value: object) -> str:
         local = parsed.astimezone(INDIANA_TZ)
     except (TypeError, ValueError):
         return raw
-    return local.strftime("%a %b %-d · %-I:%M %p ET")
+    hour = local.strftime("%I").lstrip("0") or "12"
+    return f"{local.strftime('%a %b')} {local.day} · {hour}:{local.strftime('%M %p')} ET"
 
 
 def value_tier(ev_pct: float | None) -> str:
