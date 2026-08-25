@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+from glitch_radar_grouping import group_ev_wagers
+
 
 USER_BOOKS: tuple[str, ...] = (
     "FanDuel",
@@ -76,11 +78,14 @@ def filter_actionable_alerts(rows: Iterable[dict[str, Any]]) -> list[dict[str, A
 
 
 def filter_actionable_ev(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep +EV recommendations only when the bet itself is at one of the owner's books.
+    """Keep +EV recommendations at the owner's books and collapse duplicate wager choices.
 
-    The fair-value/sharp anchor may still be Pinnacle or another comparison source.
+    The fair-value/sharp anchor may still be Pinnacle or another comparison source. If the
+    same underlying wager is +EV at multiple owner books, only the best price is returned;
+    the other prices are retained on the row as alternate_books.
     """
-    return [row for row in rows if isinstance(row, dict) and is_user_book(row.get("book"))]
+    actionable = [dict(row) for row in rows if isinstance(row, dict) and is_user_book(row.get("book"))]
+    return group_ev_wagers(actionable)
 
 
 def _book_values(value: Any, *, parent_key: str = "") -> list[str]:
