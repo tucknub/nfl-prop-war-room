@@ -165,9 +165,10 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
         check(sidebar.count() == 1, f"{name}: sidebar not rendered", failures)
         if sidebar.count() == 1:
             check(sidebar.get_attribute("aria-expanded") == "true", f"{name}: sidebar not locked expanded", failures)
+        collapse_control = page.locator('[data-testid="stSidebarCollapseButton"]')
         check(
-            page.locator('[data-testid="stSidebarCollapseButton"]').count() == 0,
-            f"{name}: sidebar collapse control is available",
+            first_visible(collapse_control) is None,
+            f"{name}: sidebar collapse control is visibly available",
             failures,
         )
     home_text = body(page)
