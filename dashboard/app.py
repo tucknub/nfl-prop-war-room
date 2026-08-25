@@ -45,7 +45,11 @@ def inject_usability_styles() -> None:
         <style>
         footer, #viewerBadge_link, [data-testid="stAppDeployButton"] { display:none !important; }
         @media (min-width:521px) {
-          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] { display:none !important; }
+          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"],
+          [data-testid="stSidebarCollapsedControl"], [data-testid="stSidebarCollapseButton"],
+          button[aria-label="Collapse sidebar"], button[aria-label="Close sidebar"] {
+            display:none !important;
+          }
         }
         .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }
         .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }
