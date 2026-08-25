@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -18,6 +19,15 @@ from glitch_radar_books import (  # noqa: E402
     filter_actionable_ev,
     filter_actionable_two_leg,
     user_books_seen,
+)
+from glitch_radar_present import (  # noqa: E402
+    expected_ev_pct,
+    fair_american_from_probability,
+    format_american,
+    game_name,
+    local_start_label,
+    probability_edge_points,
+    value_tier,
 )
 
 
@@ -47,19 +57,254 @@ def _live_snapshot() -> dict:
     return build_snapshot()
 
 
-def _detail_rows(rows: list[dict], empty_message: str, label: str) -> None:
-    if not rows:
-        st.info(empty_message)
-        return
-    for index, row in enumerate(rows, start=1):
-        with st.expander(f"{label} #{index}", expanded=index == 1):
-            st.json(row)
+def _pct(value: object, digits: int = 2) -> str:
+    try:
+        return f"{float(value):.{digits}f}%"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _number(value: object, digits: int = 2) -> str:
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _humanize(key: str) -> str:
+    return key.replace("_", " ").replace(".", " · ").strip().title()
+
+
+def _flat_rows(value: Any, prefix: str = "", limit: int = 32) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+
+    def visit(node: Any, path: str) -> None:
+        if len(rows) >= limit:
+            return
+        if isinstance(node, dict):
+            for key, child in node.items():
+                visit(child, f"{path}.{key}" if path else str(key))
+            return
+        if isinstance(node, (list, tuple)):
+            simple = all(not isinstance(item, (dict, list, tuple)) for item in node)
+            if simple:
+                rows.append({"Field": _humanize(path), "Value": ", ".join(str(item) for item in node) or "—"})
+            else:
+                for index, child in enumerate(node, start=1):
+                    visit(child, f"{path}.{index}")
+            return
+        rows.append({"Field": _humanize(path), "Value": "—" if node is None else str(node)})
+
+    visit(value, prefix)
+    return rows
+
+
+def _evidence_table(items: list[tuple[str, object]]) -> None:
+    st.table(
+        [
+            {"Field": label, "Value": "—" if value is None or value == "" else str(value)}
+            for label, value in items
+        ]
+    )
+
+
+def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
+    side = str(row.get("side") or "Bet").strip()
+    book = str(row.get("book") or "Sportsbook").strip()
+    price = format_american(row.get("price"))
+    fair_probability = row.get("fair_prob_pct")
+    fair_odds = fair_american_from_probability(fair_probability)
+    fair_price = format_american(fair_odds)
+    ev = expected_ev_pct(row.get("price"), fair_probability)
+    edge = probability_edge_points(row)
+    tier = value_tier(ev)
+    anchor = str(row.get("sharp_anchor") or "market").strip().title()
+    implied = row.get("book_implied_pct")
+
+    with st.container(border=True):
+        title_col, tier_col = st.columns([4, 1])
+        with title_col:
+            st.markdown(f"#### {side} · {book} {price}")
+            st.caption(f"{game_name(row)} · {local_start_label(row.get('commence_time'))}")
+        with tier_col:
+            st.markdown(f"**{tier}**")
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Current price", price)
+        c2.metric("Fair line", fair_price)
+        c3.metric("Estimated EV", f"{ev:+.1f}%" if ev is not None else "—")
+
+        if implied is not None and fair_probability is not None and edge is not None:
+            st.markdown(
+                f"**Why it surfaced:** {book} implies **{_pct(implied)}**, while the {anchor}-derived "
+                f"fair estimate is **{_pct(fair_probability)}**. That is a **+{edge:.2f} percentage-point** "
+                f"gap, with {price} available versus roughly {fair_price} fair."
+            )
+        else:
+            st.markdown("**Why it surfaced:** the market feed identified this as a positive expected-value price at one of my books.")
+
+        st.caption(
+            "Price/value signal — not classified as a sportsbook error. Estimated EV assumes the feed's fair probability is accurate."
+        )
+
+        if show_evidence:
+            with st.expander("Market evidence"):
+                _evidence_table(
+                    [
+                        ("Game", game_name(row)),
+                        ("Start", local_start_label(row.get("commence_time"))),
+                        ("Bet", side),
+                        ("Sportsbook", book),
+                        ("Current price", price),
+                        ("Book implied probability", _pct(implied)),
+                        ("Fair probability", _pct(fair_probability)),
+                        ("Fair line", fair_price),
+                        ("Probability gap", f"+{edge:.3f} pts" if edge is not None else "—"),
+                        ("Estimated EV", f"{ev:+.2f}%" if ev is not None else "—"),
+                        ("Sharp/fair anchor", anchor),
+                    ]
+                )
+
+
+def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
+    quote = alert.get("quote", {}) or {}
+    severity = str(alert.get("severity") or "P2")
+    book = str(quote.get("book") or "Sportsbook")
+    price = format_american(quote.get("odds_american"))
+    event = str(quote.get("event") or "Game")
+    market = str(quote.get("market") or "market").replace("_", " ")
+    side = str(quote.get("side") or "").strip()
+    threshold = quote.get("threshold")
+    consensus = alert.get("consensus_implied_prob")
+    try:
+        consensus_pct = float(consensus) * 100
+    except (TypeError, ValueError):
+        consensus_pct = None
+    fair_odds = fair_american_from_probability(consensus_pct)
+    payout_multiple = alert.get("profit_multiple_vs_peers")
+    relative = alert.get("relative_prob_deviation")
+    sign_mismatch = bool(alert.get("sign_mismatch"))
+
+    with st.container(border=True):
+        st.markdown(f"#### {severity} GLITCH WATCH · {book} {price}")
+        detail = " ".join(part for part in [market, side, str(threshold) if threshold is not None else ""] if part).strip()
+        st.caption(f"{event} · {detail or 'same-market price anomaly'}")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Flagged price", price)
+        c2.metric("Peer fair line", format_american(fair_odds))
+        c3.metric("Peer payout multiple", f"{_number(payout_multiple)}×")
+        if sign_mismatch:
+            st.error("Sign inversion detected: this book is on the opposite side of zero from multiple peers.")
+        else:
+            st.warning("This price is materially different from the same market at peer books.")
+        st.caption("Potential sportsbook pricing anomaly. Settlement/obvious-error void risk is not yet scored by this preview.")
+        if show_evidence:
+            with st.expander("Anomaly evidence"):
+                _evidence_table(
+                    [
+                        ("Event", event),
+                        ("Sportsbook", book),
+                        ("Market", detail or market),
+                        ("Flagged price", price),
+                        ("Peer consensus probability", _pct(consensus_pct)),
+                        ("Peer fair line", format_american(fair_odds)),
+                        ("Relative probability deviation", f"{float(relative) * 100:.1f}%" if isinstance(relative, (int, float)) else "—"),
+                        ("Profit multiple vs peers", f"{_number(payout_multiple)}×"),
+                        ("Sign mismatch", "Yes" if sign_mismatch else "No"),
+                    ]
+                )
+
+
+def _render_middle_card(row: dict, *, show_evidence: bool = True) -> None:
+    over = row.get("over", {}) or {}
+    under = row.get("under", {}) or {}
+    try:
+        window = float(under.get("line")) - float(over.get("line"))
+    except (TypeError, ValueError):
+        window = None
+
+    with st.container(border=True):
+        st.markdown(f"#### MIDDLE · {game_name(row)}")
+        if window is not None:
+            st.caption(f"{window:g}-point middle window")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"**OVER {over.get('line', '—')} · {over.get('book', '—')}**")
+            st.write(format_american(over.get("price")))
+        with c2:
+            st.markdown(f"**UNDER {under.get('line', '—')} · {under.get('book', '—')}**")
+            st.write(format_american(under.get("price")))
+        st.caption("Both required legs are restricted to sportsbooks I actually use.")
+        if show_evidence:
+            with st.expander("Middle evidence"):
+                _evidence_table(
+                    [
+                        ("Game", game_name(row)),
+                        ("Over book", over.get("book")),
+                        ("Over line", over.get("line")),
+                        ("Over price", format_american(over.get("price"))),
+                        ("Under book", under.get("book")),
+                        ("Under line", under.get("line")),
+                        ("Under price", format_american(under.get("price"))),
+                        ("Middle window", f"{window:g} points" if window is not None else "—"),
+                    ]
+                )
+
+
+def _render_generic_opportunity(row: dict, label: str) -> None:
+    with st.container(border=True):
+        st.markdown(f"#### {label.upper()} · {game_name(row)}")
+        summary_bits: list[str] = []
+        for key, label_text in (("profit_pct", "profit"), ("arb_pct", "arb"), ("edge_pct", "edge")):
+            if row.get(key) is not None:
+                summary_bits.append(f"{label_text} {_pct(row.get(key))}")
+        if summary_bits:
+            st.caption(" · ".join(summary_bits))
+        with st.expander(f"{label} evidence"):
+            rows = _flat_rows(row)
+            if rows:
+                st.table(rows)
+            else:
+                st.write("No additional structured evidence was returned by the feed.")
+
+
+def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict], evs: list[dict]) -> None:
+    st.markdown("### Best opportunities now")
+    st.caption("Highest-priority actionable signals across my sportsbooks. Glitches and arbs outrank ordinary +EV prices.")
+
+    shown = 0
+    for alert in alerts:
+        if shown >= 3:
+            break
+        _render_glitch_card(alert, show_evidence=False)
+        shown += 1
+
+    for row in arbs:
+        if shown >= 3:
+            break
+        _render_generic_opportunity(row, "Arbitrage")
+        shown += 1
+
+    for row in middles:
+        if shown >= 3:
+            break
+        _render_middle_card(row, show_evidence=False)
+        shown += 1
+
+    for row in evs:
+        if shown >= 3:
+            break
+        _render_ev_card(row, show_evidence=False)
+        shown += 1
+
+    if shown == 0:
+        st.info("Nothing actionable is showing in the current preview scan.")
 
 
 _require_owner()
 
 st.markdown("## My Glitch Radar")
-st.caption("No-key NFL market scanner · personalized to my sportsbooks · cached 10 minutes")
+st.caption("NFL sportsbook opportunity scanner · my five books only for actionable bets · cached 10 minutes")
 
 with st.spinner("Checking current NFL market data..."):
     snapshot = _live_snapshot()
@@ -75,29 +320,35 @@ alerts = filter_actionable_alerts(raw_alerts)
 arbs = filter_actionable_two_leg(raw_arbs)
 middles = filter_actionable_two_leg(raw_middles)
 evs = filter_actionable_ev(raw_evs)
+evs = sorted(
+    evs,
+    key=lambda row: expected_ev_pct(row.get("price"), row.get("fair_prob_pct")) or -999,
+    reverse=True,
+)
+rank = {"P0": 0, "P1": 1, "P2": 2, "TEST": 3}
+alerts = sorted(alerts, key=lambda row: rank.get(row.get("severity", "P2"), 9))
 my_books_seen = user_books_seen(books)
 comparison_books = comparison_books_seen(books)
+missing_books = [book for book in USER_BOOKS if book not in my_books_seen]
 
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Glitch alerts", len(alerts))
+m1.metric("Glitch watches", len(alerts))
 m2.metric("Arbs", len(arbs))
 m3.metric("Middles", len(middles))
-m4.metric("+EV", len(evs))
+m4.metric("Value plays", len(evs))
 
-st.caption(
-    f"Fetched {snapshot.get('fetched_at', '—')} · {len(quotes)} quotes · "
-    f"my books currently seen: {', '.join(my_books_seen) if my_books_seen else 'none in preview'} · "
-    f"demo requests left this hour: {snapshot.get('demo_remaining_hour', '—')}"
-)
-
-st.info(
-    "Actionable books: FanDuel, DraftKings, Caesars, bet365, Hard Rock Bet. "
-    "Other books may still be used as market references, but Glitch Radar will not tell me to place a bet there."
-)
-
-if st.button("Force fresh scan", type="primary"):
-    _live_snapshot.clear()
-    st.rerun()
+status_col, refresh_col = st.columns([4, 1])
+with status_col:
+    st.caption(
+        f"{len(quotes)} quotes scanned · {len(my_books_seen)}/{len(USER_BOOKS)} of my books visible · "
+        f"last scan {local_start_label(snapshot.get('fetched_at'))} · demo requests left: {snapshot.get('demo_remaining_hour', '—')}"
+    )
+    if missing_books:
+        st.caption(f"Not returned in this preview: {', '.join(missing_books)}. This does not remove them from my configured sportsbook list.")
+with refresh_col:
+    if st.button("Force fresh scan", type="primary", width="stretch"):
+        _live_snapshot.clear()
+        st.rerun()
 
 errors = snapshot.get("errors", []) or []
 if errors:
@@ -105,72 +356,52 @@ if errors:
         for error in errors:
             st.warning(error)
 
-radar_tab, arb_tab, middle_tab, ev_tab, boost_tab, source_tab = st.tabs(
-    ["Radar", "Arbs", "Middles", "+EV", "Boost Lab", "Source"]
+_render_top_board(alerts, arbs, middles, evs)
+
+st.divider()
+
+glitch_tab, arb_tab, middle_tab, ev_tab, boost_tab, source_tab = st.tabs(
+    ["Glitches", "Arbs", "Middles", "+EV Prices", "Boost Lab", "Coverage"]
 )
 
-with radar_tab:
+with glitch_tab:
+    st.markdown("### Potential sportsbook errors")
+    st.caption("Same-market prices that materially disagree with peers at one of my sportsbooks.")
     if not alerts:
-        st.success("No major same-market price outlier is visible at one of my books in the current preview.")
-    else:
-        rank = {"P0": 0, "P1": 1, "P2": 2, "TEST": 3}
-        for alert in sorted(alerts, key=lambda row: rank.get(row.get("severity", "P2"), 9)):
-            quote = alert.get("quote", {}) or {}
-            severity = alert.get("severity", "")
-            title = (
-                f"{severity} · {quote.get('book', '')} · {quote.get('event', '')} · "
-                f"{quote.get('market', '')} {quote.get('side', '')} "
-                f"{quote.get('threshold') if quote.get('threshold') is not None else ''} · "
-                f"{quote.get('odds_american', ''):+d}"
-                if isinstance(quote.get("odds_american"), int)
-                else f"{severity} · Price outlier"
-            )
-            if severity == "P0":
-                st.error(title)
-            else:
-                st.warning(title)
-            with st.expander("Why it flagged"):
-                st.json(alert)
-    st.caption(
-        "The full visible market can contribute to the comparison baseline, including books I do not use. "
-        "Only a mispriced side at one of my five sportsbooks is surfaced as an actionable alert."
-    )
+        st.success("No major same-market pricing anomaly is visible at one of my books in the current preview.")
+    for alert in alerts:
+        _render_glitch_card(alert)
 
 with arb_tab:
-    _detail_rows(
-        arbs,
-        "No arbitrage opportunity using only two of my sportsbooks is in the current public preview.",
-        "Arbitrage",
-    )
+    st.markdown("### Guaranteed-price opportunities")
+    st.caption("Only shown when every required leg is at a sportsbook I use.")
+    if not arbs:
+        st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
+    for row in arbs:
+        _render_generic_opportunity(row, "Arbitrage")
 
 with middle_tab:
+    st.markdown("### Middle windows")
+    st.caption("Different lines at my books that can create a range where both bets win.")
     if not middles:
-        st.info("No middle using only my sportsbooks is in the current public preview.")
-    for index, row in enumerate(middles, start=1):
-        over = row.get("over", {}) or {}
-        under = row.get("under", {}) or {}
-        st.warning(
-            f"{row.get('away_team', '')} @ {row.get('home_team', '')} · "
-            f"{over.get('book', '')} O{over.get('line', '')} {over.get('price', '')} / "
-            f"{under.get('book', '')} U{under.get('line', '')} {under.get('price', '')}"
-        )
-        with st.expander(f"Middle #{index} details"):
-            st.json(row)
+        st.info("No middle using only my sportsbooks is in the current preview.")
+    for row in middles:
+        _render_middle_card(row)
 
 with ev_tab:
+    st.markdown("### Positive expected-value prices")
+    st.caption(
+        "These are ordinary market prices that look better than the feed's sharp-derived fair line. "
+        "They are not automatically sportsbook glitches."
+    )
     if not evs:
-        st.info("No +EV opportunity at one of my sportsbooks is in the current public preview.")
-    for index, row in enumerate(evs, start=1):
-        st.write(
-            f"**{row.get('side', '')}** · **{row.get('book', '')} {row.get('price', '')}** · "
-            f"edge **{row.get('edge_pct', '?')}%** · fair **{row.get('fair_prob_pct', '?')}%**"
-        )
-        with st.expander(f"+EV #{index} details"):
-            st.json(row)
-    st.caption("The fair-value anchor can still be Pinnacle or another comparison source; the bet itself must be at one of my books.")
+        st.info("No +EV price at one of my sportsbooks is in the current preview.")
+    for row in evs:
+        _render_ev_card(row)
 
 with boost_tab:
-    st.caption("For account-specific sportsbook boosts that public market feeds cannot see.")
+    st.markdown("### Account-specific Boost Lab")
+    st.caption("Use this for a boost shown inside one of my sportsbook accounts that the public feed cannot see.")
     sportsbook = st.selectbox("Sportsbook", USER_BOOKS, key="glitch_boost_book")
     c1, c2 = st.columns(2)
     original_odds = c1.number_input("Original American odds", value=300, step=5)
@@ -178,26 +409,61 @@ with boost_tab:
     c3, c4 = st.columns(2)
     boost_pct = c3.number_input("Profit boost %", value=100.0, step=5.0)
     stake = c4.number_input("Stake", value=20.0, min_value=0.0, step=1.0)
-    if st.button("Evaluate boost"):
+    if st.button("Evaluate boost", type="primary"):
         result = evaluate_profit_boost(
             int(original_odds), int(fair_odds), float(boost_pct) / 100, float(stake)
         )
-        st.caption(f"Evaluating {sportsbook}")
-        b1, b2, b3 = st.columns(3)
-        b1.metric("Boosted odds", f"{result['boosted_odds']:+d}")
-        b2.metric("Estimated EV", f"{result['ev_pct'] * 100:.1f}%")
-        b3.metric("Expected value", f"${result['expected_value_dollars']:.2f}")
+        ev_pct = float(result["ev_pct"]) * 100
+        with st.container(border=True):
+            st.markdown(f"#### {value_tier(ev_pct)} · {sportsbook}")
+            b1, b2, b3 = st.columns(3)
+            b1.metric("Boosted odds", format_american(result["boosted_odds"]))
+            b2.metric("Estimated EV", f"{ev_pct:+.1f}%")
+            b3.metric("Expected value", f"${result['expected_value_dollars']:.2f}")
+            st.write(
+                f"Original price **{format_american(original_odds)}** · fair line **{format_american(fair_odds)}** · "
+                f"profit boost **{boost_pct:.0f}%** · stake **${stake:.2f}**"
+            )
+            if ev_pct > 0:
+                st.success("The boost creates a positive estimated price edge versus the fair line you entered.")
+            else:
+                st.warning("The boost does not overcome the fair-price gap you entered.")
+            st.caption("The result is only as good as the fair line entered. Always benchmark a boost against the current market, not its advertised pre-boost price.")
 
 with source_tab:
-    st.write("My actionable books:")
-    st.write(", ".join(USER_BOOKS))
-    st.write("My books currently visible in this preview:")
-    st.write(", ".join(my_books_seen) if my_books_seen else "None returned in this preview")
-    st.write("Comparison-only books currently visible in this preview:")
-    st.write(", ".join(comparison_books) if comparison_books else "None returned")
-    with st.expander("Command-center snapshot"):
-        st.json(snapshot.get("command_center", {}))
-    st.caption(
-        "Comparison-only books can help establish fair value or expose an outlier, but they are never presented as a place for me to bet. "
-        "This page uses official no-auth public API surfaces and does not require a separate PropWar API key."
+    st.markdown("### Sportsbook and feed coverage")
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.container(border=True):
+            st.markdown("#### My actionable books")
+            for book in USER_BOOKS:
+                status = "VISIBLE NOW" if book in my_books_seen else "NOT IN CURRENT PREVIEW"
+                st.write(f"**{book}** — {status}")
+    with c2:
+        with st.container(border=True):
+            st.markdown("#### Comparison-only books")
+            if comparison_books:
+                for book in comparison_books:
+                    st.write(book)
+            else:
+                st.write("None returned in this preview.")
+            st.caption("These books can help establish fair value but are never presented as a place for me to bet.")
+
+    _evidence_table(
+        [
+            ("Quotes scanned", len(quotes)),
+            ("My books visible", f"{len(my_books_seen)}/{len(USER_BOOKS)}"),
+            ("Last scan", local_start_label(snapshot.get("fetched_at"))),
+            ("Demo requests left this hour", snapshot.get("demo_remaining_hour", "—")),
+            ("Actionable books", ", ".join(USER_BOOKS)),
+            ("Comparison books visible", ", ".join(comparison_books) if comparison_books else "None"),
+        ]
     )
+
+    with st.expander("Feed diagnostics"):
+        diagnostics = _flat_rows(snapshot.get("command_center", {}), limit=40)
+        if diagnostics:
+            st.table(diagnostics)
+        else:
+            st.write("No command-center diagnostic fields were returned.")
+        st.caption("Diagnostics are kept here for troubleshooting; the betting tabs above are the decision interface.")
