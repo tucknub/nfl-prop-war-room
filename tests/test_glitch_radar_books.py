@@ -41,10 +41,56 @@ def test_alerts_only_surface_when_mispriced_quote_is_at_user_book():
 
 def test_ev_can_use_sharp_anchor_but_bet_must_be_at_user_book():
     rows = [
-        {"book": "Hard Rock Bet", "sharp_anchor": "pinnacle"},
-        {"book": "BetRivers", "sharp_anchor": "pinnacle"},
+        {
+            "book": "Hard Rock Bet",
+            "sharp_anchor": "pinnacle",
+            "away_team": "A",
+            "home_team": "B",
+            "side": "A",
+            "price": 140,
+            "fair_prob_pct": 45.0,
+        },
+        {
+            "book": "BetRivers",
+            "sharp_anchor": "pinnacle",
+            "away_team": "A",
+            "home_team": "B",
+            "side": "A",
+            "price": 145,
+            "fair_prob_pct": 45.0,
+        },
     ]
-    assert filter_actionable_ev(rows) == [rows[0]]
+    result = filter_actionable_ev(rows)
+    assert len(result) == 1
+    assert result[0]["book"] == "Hard Rock Bet"
+    assert result[0]["side"].startswith("A ML")
+
+
+def test_ev_filter_collapses_same_wager_across_my_books_to_best_price():
+    rows = [
+        {
+            "book": "DraftKings",
+            "away_team": "San Francisco 49ers",
+            "home_team": "Las Vegas Raiders",
+            "side": "San Francisco 49ers",
+            "price": 144,
+            "fair_prob_pct": 45.13,
+        },
+        {
+            "book": "Caesars",
+            "away_team": "San Francisco 49ers",
+            "home_team": "Las Vegas Raiders",
+            "side": "San Francisco 49ers",
+            "price": 142,
+            "fair_prob_pct": 45.13,
+        },
+    ]
+    result = filter_actionable_ev(rows)
+    assert len(result) == 1
+    assert result[0]["book"] == "DraftKings"
+    assert result[0]["price"] == 144
+    assert "San Francisco 49ers ML" in result[0]["side"]
+    assert "Caesars +142" in result[0]["side"]
 
 
 def test_arbs_and_middles_require_both_legs_at_user_books():
