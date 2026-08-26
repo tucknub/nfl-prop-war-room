@@ -51,14 +51,19 @@ def _implied(odds: int) -> float:
 
 
 def _event_key(row: dict[str, Any]) -> tuple[str, str, str]:
-    event_id = _norm(row.get("event_id"))
-    if event_id:
-        return (event_id, "", "")
-    return (
-        _norm(row.get("commence_time")),
-        _norm(row.get("away_team")).casefold(),
-        _norm(row.get("home_team")).casefold(),
-    )
+    """Use the normalized matchup signature for cross-book diagnostic grouping.
+
+    The deep feed has had more than one documented event-id field over time. Team names and
+    commence time are already normalized on prop rows and are the safer compatibility key for
+    this non-settlement diagnostic surface.
+    """
+    commence = _norm(row.get("commence_time"))
+    away = _norm(row.get("away_team")).casefold()
+    home = _norm(row.get("home_team")).casefold()
+    if commence or away or home:
+        return (commence, away, home)
+    event_id = _norm(row.get("canonical_event_id") or row.get("event_id"))
+    return (event_id, "", "")
 
 
 def _exact_key(row: dict[str, Any]) -> tuple:
@@ -77,15 +82,16 @@ def _is_dfs(book: object) -> bool:
 def build_near_miss_anomalies(
     rows: Iterable[dict[str, Any]],
     *,
-    min_books: int = 3,
-    min_relative_prob_deviation: float = 0.08,
-    min_payout_multiple: float = 1.15,
+    min_books: int = 2,
+    min_relative_prob_deviation: float = 0.01,
+    min_payout_multiple: float = 1.02,
     limit: int = 30,
 ) -> list[dict[str, Any]]:
-    """Show the largest same-line discrepancies below the true glitch threshold.
+    """Rank the largest same-line discrepancies below the true glitch threshold.
 
     This is a diagnostic surface only. It intentionally excludes rows already large enough
-    to satisfy the main glitch detector and excludes DFS pick'em midpoint pricing.
+    to satisfy the main glitch detector and excludes DFS pick'em midpoint pricing. Unlike the
+    strict glitch detector, two real books are enough for a diagnostic comparison.
     """
     groups: dict[tuple, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -99,13 +105,15 @@ def build_near_miss_anomalies(
 
     results: list[dict[str, Any]] = []
     for group in groups.values():
-        if len({_norm(row.get("book")).casefold() for row in group if row.get("book")}) < min_books:
+        distinct_books = {_norm(row.get("book")).casefold() for row in group if row.get("book")}
+        if len(distinct_books) < min_books:
             continue
         for side in ("over", "under"):
             field = f"{side}_price"
             priced = [(row, _as_int(row.get(field))) for row in group]
             priced = [(row, price) for row, price in priced if price not in (None, 0)]
-            if len({_norm(row.get("book")).casefold() for row, _ in priced}) < min_books:
+            priced_books = {_norm(row.get("book")).casefold() for row, _ in priced if row.get("book")}
+            if len(priced_books) < min_books:
                 continue
             probabilities = [_implied(int(price)) for _, price in priced]
             consensus = median(probabilities)
@@ -146,12 +154,19 @@ def build_near_miss_anomalies(
                         "line": _as_float(row.get("line")),
                         "side": side,
                         "price": price,
+                        "num_books": len(priced_books),
                         "peer_median_implied_prob_pct": consensus * 100,
                         "book_implied_prob_pct": own_prob * 100,
                         "relative_prob_deviation_pct": relative * 100,
                         "payout_multiple_vs_peers": payout_multiple,
                         "glitch_threshold_proximity_pct": min(99.9, proximity * 100),
-                        "peer_books": sorted({_norm(peer.get("book")) for peer, _ in priced if peer.get("book") and peer is not row}),
+                        "peer_books": sorted(
+                            {
+                                _norm(peer.get("book"))
+                                for peer, _ in priced
+                                if peer.get("book") and _norm(peer.get("book")).casefold() != _norm(row.get("book")).casefold()
+                            }
+                        ),
                     }
                 )
 
@@ -159,6 +174,7 @@ def build_near_miss_anomalies(
         key=lambda row: (
             float(row.get("glitch_threshold_proximity_pct") or 0),
             float(row.get("relative_prob_deviation_pct") or 0),
+            int(row.get("num_books") or 0),
         ),
         reverse=True,
     )

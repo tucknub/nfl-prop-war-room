@@ -1,9 +1,9 @@
 from dashboard.glitch_radar_near_miss import build_near_miss_anomalies
 
 
-def _row(book, *, player="A Receiver", line=50.5, over=100, under=-120, market="receiving_yards"):
+def _row(book, *, player="A Receiver", line=50.5, over=100, under=-120, market="receiving_yards", event_id="evt1"):
     return {
-        "event_id": "evt1",
+        "event_id": event_id,
         "commence_time": "2026-09-10T00:20:00Z",
         "home_team": "Home",
         "away_team": "Away",
@@ -32,6 +32,7 @@ def test_near_miss_surfaces_user_book_below_true_glitch_threshold():
     assert 0 < dk_over[0]["glitch_threshold_proximity_pct"] < 100
     assert dk_over[0]["relative_prob_deviation_pct"] < 25
     assert dk_over[0]["payout_multiple_vs_peers"] < 1.60
+    assert dk_over[0]["num_books"] == 4
 
 
 def test_near_miss_excludes_true_glitch_level_price():
@@ -45,14 +46,37 @@ def test_near_miss_excludes_true_glitch_level_price():
     assert not [row for row in watches if row["book"] == "DraftKings" and row["side"] == "over"]
 
 
-def test_near_miss_ignores_dfs_midpoint_as_comparable_price_peer():
+def test_near_miss_two_real_books_are_enough_for_diagnostic():
     rows = [
-        _row("DraftKings", over=130, under=-160),
+        _row("DraftKings", over=120, under=-150),
         _row("FanDuel", over=105, under=-125),
-        _row("Sleeper", over=100, under=100),
     ]
     watches = build_near_miss_anomalies(rows)
-    assert watches == []
+    dk_over = [row for row in watches if row["book"] == "DraftKings" and row["side"] == "over"]
+    assert dk_over
+    assert dk_over[0]["num_books"] == 2
+    assert dk_over[0]["peer_books"] == ["FanDuel"]
+
+
+def test_near_miss_ignores_dfs_midpoint_as_comparable_price_peer():
+    rows = [
+        _row("DraftKings", over=120, under=-150),
+        _row("FanDuel", over=105, under=-125),
+        _row("Sleeper", over=300, under=-300),
+    ]
+    watches = build_near_miss_anomalies(rows)
+    assert watches
+    assert all("Sleeper" not in row["peer_books"] for row in watches)
+    assert all(row["num_books"] == 2 for row in watches)
+
+
+def test_near_miss_groups_same_matchup_even_when_source_event_ids_differ():
+    rows = [
+        _row("DraftKings", over=120, under=-150, event_id="dk_evt"),
+        _row("FanDuel", over=105, under=-125, event_id="fd_evt"),
+    ]
+    watches = build_near_miss_anomalies(rows)
+    assert [row for row in watches if row["book"] == "DraftKings" and row["side"] == "over"]
 
 
 def test_near_miss_requires_actionable_user_book():
