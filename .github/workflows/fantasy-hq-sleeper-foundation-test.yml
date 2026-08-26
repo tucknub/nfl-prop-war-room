@@ -1,0 +1,72 @@
+name: Fantasy HQ Sleeper Foundation Test
+
+on:
+  pull_request:
+    paths:
+      - "src/fantasy/**"
+      - "tests/test_fantasy_sleeper.py"
+      - ".github/workflows/fantasy-hq-sleeper-foundation-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest 'httpx>=0.27,<1.0'
+      - name: Run unit tests
+        run: pytest -q tests/test_fantasy_sleeper.py
+      - name: Verify both live 2026 Sleeper leagues
+        run: |
+          python - <<'PY'
+          from src.fantasy.sleeper import SleeperClient, normalize_sleeper_bundle
+
+          LEAGUES = {
+              "ffl": "1383849993151987712",
+              "papa": "1356381517693079553",
+          }
+
+          with SleeperClient() as client:
+              states = {}
+              for key, league_id in LEAGUES.items():
+                  bundle = client.fetch_league_bundle(league_id)
+                  me = next(
+                      (str(user.get("user_id")) for user in bundle.users if str(user.get("display_name") or "").casefold() == "tucknub"),
+                      None,
+                  )
+                  assert me, f"owner user not found in {key}"
+                  states[key] = normalize_sleeper_bundle(bundle, current_user_id=me)
+
+          ffl = states["ffl"]
+          assert ffl.name == "Franchise Football League"
+          assert ffl.team_count == 10
+          assert ffl.rules.starter_positions == ("QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX", "DEF")
+          assert "SUPER_FLEX" not in ffl.rules.roster_positions
+          assert ffl.rules.waiver_budget == 100
+          assert ffl.rules.max_keepers == 1
+          assert ffl.draft and ffl.draft.rounds == 16
+          assert ffl.my_platform_roster_id == "1"
+          assert ffl.ownership_ready is False
+
+          papa = states["papa"]
+          assert papa.name == "Papa Johns #2"
+          assert papa.team_count == 12
+          assert papa.rules.starter_positions == ("QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX", "FLEX")
+          assert "K" not in papa.rules.roster_positions
+          assert "DEF" not in papa.rules.roster_positions
+          assert papa.rules.waiver_budget == 150
+          assert papa.rules.position_limits.get("QB") == 3
+          assert papa.draft and papa.draft.rounds == 15
+          assert papa.my_platform_roster_id == "2"
+          assert papa.ownership_ready is False
+
+          assert ffl.rules_fingerprint != papa.rules_fingerprint
+          print("live Sleeper acceptance passed")
+          PY
