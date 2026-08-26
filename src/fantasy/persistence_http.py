@@ -5,7 +5,7 @@ import math
 import os
 from dataclasses import dataclass
 from typing import Any, Mapping
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import httpx
 
@@ -19,11 +19,16 @@ from .persistence_protocol import (
 
 
 PERSISTENCE_PATH = "/v1/fantasy/persistence"
+READ_PATH_PREFIX = "/v1/fantasy/read"
 HEALTH_PATH = "/health"
 MAX_COMMAND_BODY_BYTES = 512 * 1024
 MAX_RESPONSE_BODY_BYTES = 64 * 1024
+MAX_SNAPSHOT_RESPONSE_BODY_BYTES = MAX_COMMAND_BODY_BYTES + 16 * 1024
 DEFAULT_TIMEOUT_SECONDS = 15.0
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 5.0
+READ_LEAGUE_SEASON = "READ_LEAGUE_SEASON"
+READ_SYNC_RUN = "READ_SYNC_RUN"
+READ_LATEST_SNAPSHOT = "READ_LATEST_SNAPSHOT"
 SUPPORTED_COMMAND_KINDS = frozenset(
     {LEAGUE_SEASON_UPSERT, SYNC_START, SYNC_FAILED, SYNC_SUCCESS}
 )
@@ -58,20 +63,18 @@ class FantasyPersistenceClientConfig:
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS
     connect_timeout_seconds: float = DEFAULT_CONNECT_TIMEOUT_SECONDS
     max_response_body_bytes: int = MAX_RESPONSE_BODY_BYTES
+    max_snapshot_response_body_bytes: int = MAX_SNAPSHOT_RESPONSE_BODY_BYTES
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "endpoint", _validated_endpoint(self.endpoint))
         object.__setattr__(self, "token", _validated_token(self.token))
         _positive_number(self.timeout_seconds, "timeout_seconds")
         _positive_number(self.connect_timeout_seconds, "connect_timeout_seconds")
-        if (
-            isinstance(self.max_response_body_bytes, bool)
-            or not isinstance(self.max_response_body_bytes, int)
-            or self.max_response_body_bytes <= 0
-        ):
-            raise UnsafeFantasyPersistenceTransport(
-                "max_response_body_bytes must be a positive integer"
-            )
+        _positive_int(self.max_response_body_bytes, "max_response_body_bytes")
+        _positive_int(
+            self.max_snapshot_response_body_bytes,
+            "max_snapshot_response_body_bytes",
+        )
 
     @classmethod
     def from_env(
@@ -94,11 +97,11 @@ class FantasyPersistenceClientConfig:
 
 
 class FantasyPersistenceHttpClient:
-    """One-shot transport for versioned Fantasy HQ Worker commands.
+    """One-shot transport for versioned Fantasy HQ Worker commands and recovery reads.
 
     Automatic retries are intentionally absent. A caller cannot safely infer that
-    a failed HTTP response means a write did not reach D1, so retry policy must be
-    explicit at a higher layer and tied to command-specific idempotency semantics.
+    a failed HTTP response means a write did not reach D1, so retry/recovery policy
+    must be explicit at a higher layer and may use the authenticated read methods.
     """
 
     def __init__(
@@ -164,6 +167,103 @@ class FantasyPersistenceHttpClient:
             expected_identifier_key=expected_identifier_key,
             expected_identifier=expected_identifier,
         )
+        return payload
+
+    def read_league_season(self, league_season_id: str) -> Mapping[str, Any]:
+        identifier = _validated_read_identifier(league_season_id, "league_season_id")
+        payload = self._read_resource(
+            kind=READ_LEAGUE_SEASON,
+            identifier=identifier,
+            path=f"{READ_PATH_PREFIX}/league-seasons/{quote(identifier, safe='')}",
+            max_bytes=self.config.max_response_body_bytes,
+        )
+        record = payload["record"]
+        if payload["found"]:
+            if record.get("league_season_id") != identifier:
+                raise FantasyPersistenceProtocolError(
+                    "Fantasy league-season read returned the wrong league_season_id"
+                )
+            if not isinstance(record.get("metadata"), Mapping):
+                raise FantasyPersistenceProtocolError(
+                    "Fantasy league-season read metadata must be an object"
+                )
+        return payload
+
+    def read_sync_run(self, sync_run_id: str) -> Mapping[str, Any]:
+        identifier = _validated_read_identifier(sync_run_id, "sync_run_id")
+        payload = self._read_resource(
+            kind=READ_SYNC_RUN,
+            identifier=identifier,
+            path=f"{READ_PATH_PREFIX}/sync-runs/{quote(identifier, safe='')}",
+            max_bytes=self.config.max_response_body_bytes,
+        )
+        record = payload["record"]
+        if payload["found"] and record.get("sync_run_id") != identifier:
+            raise FantasyPersistenceProtocolError(
+                "Fantasy sync-run read returned the wrong sync_run_id"
+            )
+        return payload
+
+    def read_latest_snapshot(self, league_season_id: str) -> Mapping[str, Any]:
+        identifier = _validated_read_identifier(league_season_id, "league_season_id")
+        payload = self._read_resource(
+            kind=READ_LATEST_SNAPSHOT,
+            identifier=identifier,
+            path=(
+                f"{READ_PATH_PREFIX}/league-seasons/{quote(identifier, safe='')}"
+                "/latest-snapshot"
+            ),
+            max_bytes=self.config.max_snapshot_response_body_bytes,
+        )
+        record = payload["record"]
+        if payload["found"]:
+            if record.get("league_season_id") != identifier:
+                raise FantasyPersistenceProtocolError(
+                    "Fantasy latest-snapshot read returned the wrong league_season_id"
+                )
+            if not isinstance(record.get("normalized_state"), Mapping):
+                raise FantasyPersistenceProtocolError(
+                    "Fantasy latest-snapshot normalized_state must be an object"
+                )
+            if not isinstance(record.get("source_metadata"), Mapping):
+                raise FantasyPersistenceProtocolError(
+                    "Fantasy latest-snapshot source_metadata must be an object"
+                )
+            for key in ("rules_ready", "draft_ready", "ownership_ready"):
+                if not isinstance(record.get(key), bool):
+                    raise FantasyPersistenceProtocolError(
+                        f"Fantasy latest-snapshot {key} must be boolean"
+                    )
+        return payload
+
+    def _read_resource(
+        self,
+        *,
+        kind: str,
+        identifier: str,
+        path: str,
+        max_bytes: int,
+    ) -> Mapping[str, Any]:
+        url = f"{_origin_url(self.config.endpoint)}{path}"
+        try:
+            with self._client.stream(
+                "GET",
+                url,
+                headers={
+                    "Authorization": f"Bearer {self.config.token}",
+                    "Accept": "application/json",
+                },
+            ) as response:
+                body = _read_limited_response(response, max_bytes)
+        except httpx.HTTPError as exc:
+            raise FantasyPersistenceTransportError(
+                "Fantasy persistence read could not be completed"
+            ) from exc
+
+        payload = _decode_json_response(response, body)
+        if response.status_code != 200:
+            raise _rejection_from_payload(response.status_code, payload)
+        _validate_read_response(payload, expected_kind=kind, expected_identifier=identifier)
         return payload
 
     def health(self) -> Mapping[str, Any]:
@@ -348,6 +448,44 @@ def _validate_success_response(
         )
 
 
+def _validate_read_response(
+    payload: Mapping[str, Any],
+    *,
+    expected_kind: str,
+    expected_identifier: str,
+) -> None:
+    if payload.get("ok") is not True:
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read response must set ok=true"
+        )
+    if payload.get("protocol_version") != FANTASY_PERSISTENCE_PROTOCOL_VERSION:
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read protocol version does not match Python"
+        )
+    if payload.get("kind") != expected_kind:
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read kind does not match request"
+        )
+    if payload.get("requested_id") != expected_identifier:
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read identifier does not match request"
+        )
+    found = payload.get("found")
+    if not isinstance(found, bool):
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read found must be boolean"
+        )
+    record = payload.get("record")
+    if found and not isinstance(record, Mapping):
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence read found record must be an object"
+        )
+    if not found and record is not None:
+        raise FantasyPersistenceProtocolError(
+            "Fantasy persistence missing read must return record=null"
+        )
+
+
 def _validated_endpoint(value: Any) -> str:
     endpoint = _required_text(value, "endpoint")
     parts = urlsplit(endpoint)
@@ -390,9 +528,25 @@ def _validated_token(value: Any) -> str:
     return value
 
 
-def _health_url(endpoint: str) -> str:
+def _validated_read_identifier(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise UnsafeFantasyPersistenceTransport(
+            f"{label} must be nonblank without surrounding whitespace"
+        )
+    if len(value) > 256:
+        raise UnsafeFantasyPersistenceTransport(f"{label} exceeds 256 characters")
+    if any(ord(char) < 32 or ord(char) == 127 or char in {"/", "\\"} for char in value):
+        raise UnsafeFantasyPersistenceTransport(f"{label} contains prohibited characters")
+    return value
+
+
+def _origin_url(endpoint: str) -> str:
     parts = urlsplit(endpoint)
-    return f"https://{parts.netloc}{HEALTH_PATH}"
+    return f"https://{parts.netloc}"
+
+
+def _health_url(endpoint: str) -> str:
+    return f"{_origin_url(endpoint)}{HEALTH_PATH}"
 
 
 def _required_text(value: Any, label: str) -> str:
@@ -417,3 +571,8 @@ def _positive_number(value: Any, label: str) -> None:
         or value <= 0
     ):
         raise UnsafeFantasyPersistenceTransport(f"{label} must be a positive finite number")
+
+
+def _positive_int(value: Any, label: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise UnsafeFantasyPersistenceTransport(f"{label} must be a positive integer")
