@@ -201,10 +201,11 @@ def build_successful_sync_write_plan(
 ) -> SuccessfulSyncWritePlan:
     """Build statements intended for one D1/SQLite transactional batch.
 
-    The accepted snapshot INSERT is conditional on the exact sync row still being
-    STARTED. This prevents an orphan snapshot if success orchestration is invoked
-    with a missing/already-finished sync. Executors must also verify statement
-    result metadata against `expected_affected_rows`.
+    The snapshot INSERT resolves its non-null league-season ID from the exact
+    matching STARTED sync row. A missing, mismatched, or already-finished sync
+    therefore produces a NOT NULL SQL error instead of a harmless zero-row write.
+    D1 batch execution can then roll back the entire sequence at the database
+    boundary rather than depending on a post-commit affected-row check.
     """
 
     sync_run_id = _required_text(sync_run_id, "sync_run_id")
@@ -227,9 +228,7 @@ def build_successful_sync_write_plan(
     _validate_events(identity, snapshot, events)
 
     normalized_state_json = canonical_json(serialize_fantasy_snapshot(snapshot))
-    content_fingerprint = sha256(
-        normalized_state_json.encode("utf-8")
-    ).hexdigest()
+    content_fingerprint = persistence_content_fingerprint(snapshot)
 
     snapshot_statement = PersistenceStatement(
         sql=(
@@ -237,14 +236,18 @@ def build_successful_sync_write_plan(
             "snapshot_id, league_season_id, content_fingerprint, observed_at_ms, accepted_at_ms, "
             "provider_status, rules_ready, draft_ready, ownership_ready, normalized_state_json, "
             "source_metadata_json"
-            ") SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
-            "WHERE EXISTS (SELECT 1 FROM fantasy_sync_runs WHERE sync_run_id = ? "
-            "AND league_season_id = ? AND platform = ? AND platform_league_id = ? "
-            "AND season = ? AND status = 'STARTED')"
+            ") VALUES (?, (SELECT league_season_id FROM fantasy_sync_runs "
+            "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? "
+            "AND platform_league_id = ? AND season = ? AND status = 'STARTED'), "
+            "?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ),
         parameters=(
             snapshot.snapshot_id,
+            sync_run_id,
             identity.league_season_id,
+            identity.platform,
+            identity.platform_league_id,
+            identity.season,
             content_fingerprint,
             observed_at_ms,
             accepted_at_ms,
@@ -254,11 +257,6 @@ def build_successful_sync_write_plan(
             int(bool(snapshot.league.ownership_ready)),
             normalized_state_json,
             canonical_json(dict(source_metadata or {})),
-            sync_run_id,
-            identity.league_season_id,
-            identity.platform,
-            identity.platform_league_id,
-            identity.season,
         ),
     )
 
