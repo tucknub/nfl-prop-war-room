@@ -51,12 +51,7 @@ def _implied(odds: int) -> float:
 
 
 def _event_key(row: dict[str, Any]) -> tuple[str, str, str]:
-    """Use the normalized matchup signature for cross-book diagnostic grouping.
-
-    The deep feed has had more than one documented event-id field over time. Team names and
-    commence time are already normalized on prop rows and are the safer compatibility key for
-    this non-settlement diagnostic surface.
-    """
+    """Use the normalized matchup signature for cross-book diagnostic grouping."""
     commence = _norm(row.get("commence_time"))
     away = _norm(row.get("away_team")).casefold()
     home = _norm(row.get("home_team")).casefold()
@@ -83,15 +78,14 @@ def build_near_miss_anomalies(
     rows: Iterable[dict[str, Any]],
     *,
     min_books: int = 2,
-    min_relative_prob_deviation: float = 0.01,
-    min_payout_multiple: float = 1.02,
+    min_relative_prob_deviation: float = 0.0,
+    min_payout_multiple: float = 1.0,
     limit: int = 30,
 ) -> list[dict[str, Any]]:
-    """Rank the largest same-line discrepancies below the true glitch threshold.
+    """Rank any real same-line sportsbook price differences below the glitch threshold.
 
-    This is a diagnostic surface only. It intentionally excludes rows already large enough
-    to satisfy the main glitch detector and excludes DFS pick'em midpoint pricing. Unlike the
-    strict glitch detector, two real books are enough for a diagnostic comparison.
+    This is diagnostic only. It excludes DFS pick'em midpoint pricing and excludes true
+    glitch-level rows. Two real sportsbook/exchange books are enough for comparison.
     """
     groups: dict[tuple, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -121,6 +115,16 @@ def build_near_miss_anomalies(
             for row, price in priced:
                 if not is_user_book(row.get("book")):
                     continue
+
+                own_book = _norm(row.get("book")).casefold()
+                peer_prices = [
+                    int(other)
+                    for peer, other in priced
+                    if _norm(peer.get("book")).casefold() != own_book
+                ]
+                if not peer_prices or all(other == int(price) for other in peer_prices):
+                    continue
+
                 own_prob = _implied(int(price))
                 relative = abs(own_prob - consensus) / consensus if consensus else 0.0
                 own_profit = _decimal(int(price)) - 1
@@ -164,7 +168,7 @@ def build_near_miss_anomalies(
                             {
                                 _norm(peer.get("book"))
                                 for peer, _ in priced
-                                if peer.get("book") and _norm(peer.get("book")).casefold() != _norm(row.get("book")).casefold()
+                                if peer.get("book") and _norm(peer.get("book")).casefold() != own_book
                             }
                         ),
                     }
