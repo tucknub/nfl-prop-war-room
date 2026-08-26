@@ -347,7 +347,7 @@ def test_success_plan_rejects_duplicate_event_fingerprints():
         )
 
 
-def test_missing_started_sync_cannot_create_orphan_snapshot():
+def test_missing_started_sync_fails_sql_and_cannot_create_orphan_snapshot():
     connection = _db()
     snapshot = FantasySnapshot("orphan-candidate", _state())
     plan = build_successful_sync_write_plan(
@@ -362,10 +362,59 @@ def test_missing_started_sync_cannot_create_orphan_snapshot():
         provider_status="HEALTHY",
     )
 
-    assert _execute(connection, plan.statements[0]) == 0
-    assert plan.statements[0].expected_affected_rows == 1
-    assert _execute(connection, plan.statements[-1]) == 0
-    assert plan.statements[-1].expected_affected_rows == 1
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="fantasy_state_snapshots.league_season_id",
+    ):
+        _execute(connection, plan.statements[0])
+
+    assert (
+        connection.execute(
+            "SELECT COUNT(*) FROM fantasy_state_snapshots"
+        ).fetchone()[0]
+        == 0
+    )
+
+
+def test_finished_sync_fails_sql_and_cannot_accept_later_snapshot():
+    connection = _db()
+    assert _execute(
+        connection,
+        build_sync_start_statement(
+            _identity(),
+            sync_run_id="sync-finished",
+            started_at_ms=20,
+        ),
+    ) == 1
+    assert _execute(
+        connection,
+        build_failed_sync_statement(
+            _identity(),
+            sync_run_id="sync-finished",
+            completed_at_ms=21,
+            error_code="PROVIDER_FAILED",
+            error_summary="failed before normalization",
+        ),
+    ) == 1
+
+    plan = build_successful_sync_write_plan(
+        _identity(),
+        sync_run_id="sync-finished",
+        snapshot=FantasySnapshot("too-late", _state()),
+        events=(),
+        observed_at_ms=22,
+        accepted_at_ms=22,
+        completed_at_ms=23,
+        derived_at_ms=22,
+        provider_status="HEALTHY",
+    )
+
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="fantasy_state_snapshots.league_season_id",
+    ):
+        _execute(connection, plan.statements[0])
+
     assert (
         connection.execute(
             "SELECT COUNT(*) FROM fantasy_state_snapshots"
