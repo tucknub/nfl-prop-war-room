@@ -442,6 +442,50 @@ def test_full_metadata_change_persists_new_snapshot_even_with_zero_change_events
     assert _kinds(transport)[-1] == SYNC_SUCCESS
 
 
+
+def test_quiet_week_preserves_older_transaction_history_and_can_no_change():
+    tx2 = _tx("tx-2", 2)
+    tx3 = _tx("tx-3", 3)
+    previous = _latest_record(
+        transactions=(tx2, tx3),
+        source_metadata={"provider": "SLEEPER", "transaction_round": 3},
+    )
+    reader = FakeReader(
+        _state(),
+        {
+            3: (tx3,),
+            4: (),
+        },
+    )
+    transport = FakeTransport(latest_payload=_found(previous))
+
+    result = _run(reader, transport)
+
+    assert result.mode == SLEEPER_PERSIST_NO_CHANGE
+    assert result.transaction_rounds == (3, 4)
+    assert _kinds(transport)[-1] == SYNC_NO_CHANGE
+
+
+def test_quiet_ownership_ready_prior_without_round_metadata_is_state_conflict():
+    previous = _latest_record(
+        transactions=(),
+        source_metadata={"provider": "SLEEPER"},
+    )
+    reader = FakeReader(_state())
+    transport = FakeTransport(latest_payload=_found(previous))
+
+    with pytest.raises(
+        FantasyPersistenceStateConflict,
+        match="transaction_round metadata is required",
+    ):
+        _run(reader, transport)
+
+    assert reader.league_calls == 0
+    assert transport.sync_record is not None
+    assert transport.sync_record["status"] == "STARTED"
+    assert SYNC_FAILED not in _kinds(transport)
+
+
 def test_provider_http_failure_after_started_sync_is_recorded_safely():
     request = httpx.Request("GET", "https://api.sleeper.app/v1/league/test")
     reader = FakeReader(
