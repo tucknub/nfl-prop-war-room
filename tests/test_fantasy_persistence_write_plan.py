@@ -28,8 +28,7 @@ def _db() -> sqlite3.Connection:
     connection.executescript(MIGRATION.read_text(encoding="utf-8"))
     connection.execute(
         "INSERT INTO fantasy_league_families "
-        "(league_family_id, display_name, created_at_ms, metadata_json) "
-        "VALUES (?, ?, ?, ?)",
+        "(league_family_id, display_name, created_at_ms, metadata_json) VALUES (?, ?, ?, ?)",
         ("ffl", "Franchise Football League", 1, "{}"),
     )
     connection.execute(
@@ -86,8 +85,7 @@ def _identity() -> LeagueSeasonIdentity:
 
 
 def _execute(connection: sqlite3.Connection, statement) -> int:
-    cursor = connection.execute(statement.sql, statement.parameters)
-    return cursor.rowcount
+    return connection.execute(statement.sql, statement.parameters).rowcount
 
 
 def _seed_snapshot(connection: sqlite3.Connection, snapshot: FantasySnapshot, observed_at_ms=10) -> None:
@@ -128,7 +126,7 @@ def test_snapshot_serialization_uses_normalized_facts_not_raw_provider_settings(
     assert "provider_only" not in encoded
 
 
-def test_success_plan_executes_against_the_actual_migration_and_completes_sync_atomically():
+def test_success_plan_executes_against_actual_migration_and_completes_sync():
     connection = _db()
     previous = FantasySnapshot("snap-before", _state(players=("1",), starters=("1",)))
     current = FantasySnapshot("snap-after", _state(players=("1", "2"), starters=("1",)))
@@ -136,13 +134,15 @@ def test_success_plan_executes_against_the_actual_migration_and_completes_sync_a
     assert [event.event_type for event in events] == ["PLAYER_ADDED"]
 
     _seed_snapshot(connection, previous)
-    start = build_sync_start_statement(
-        _identity(),
-        sync_run_id="sync-1",
-        started_at_ms=20,
-        request_metadata={"trigger": "manual"},
-    )
-    assert _execute(connection, start) == 1
+    assert _execute(
+        connection,
+        build_sync_start_statement(
+            _identity(),
+            sync_run_id="sync-1",
+            started_at_ms=20,
+            request_metadata={"trigger": "manual"},
+        ),
+    ) == 1
 
     plan = build_successful_sync_write_plan(
         _identity(),
@@ -155,8 +155,6 @@ def test_success_plan_executes_against_the_actual_migration_and_completes_sync_a
         derived_at_ms=32,
         source_metadata={"catalog_status": "HIT"},
     )
-
-    connection.execute("BEGIN") if not connection.in_transaction else None
     for statement in plan.statements:
         affected = _execute(connection, statement)
         if statement.expected_affected_rows is not None:
@@ -220,7 +218,6 @@ def test_success_plan_rejects_wrong_league_identity_before_generating_sql():
         platform_league_id="other-league",
         season="2026",
     )
-
     with pytest.raises(UnsafePersistencePlan, match="does not match"):
         build_successful_sync_write_plan(
             wrong_identity,
@@ -234,7 +231,7 @@ def test_success_plan_rejects_wrong_league_identity_before_generating_sql():
         )
 
 
-def test_success_plan_rejects_event_not_bound_to_the_accepted_snapshot():
+def test_success_plan_rejects_event_not_bound_to_accepted_snapshot():
     snapshot = FantasySnapshot("snap-after", _state())
     event = FantasyChangeEvent(
         event_type="TEST_EVENT",
@@ -244,7 +241,6 @@ def test_success_plan_rejects_event_not_bound_to_the_accepted_snapshot():
         before_snapshot_id="snap-before",
         after_snapshot_id="different-after",
     )
-
     with pytest.raises(UnsafePersistencePlan, match="after_snapshot_id"):
         build_successful_sync_write_plan(
             _identity(),
@@ -262,7 +258,6 @@ def test_success_plan_rejects_duplicate_event_fingerprints():
     previous = FantasySnapshot("before", _state(players=("1",)))
     current = FantasySnapshot("after", _state(players=("1", "2")))
     event = derive_fantasy_change_events(previous, current)[0]
-
     with pytest.raises(UnsafePersistencePlan, match="duplicate event fingerprints"):
         build_successful_sync_write_plan(
             _identity(),
@@ -276,25 +271,22 @@ def test_success_plan_rejects_duplicate_event_fingerprints():
         )
 
 
-def test_schema_foreign_keys_reject_success_plan_when_sync_run_was_never_started():
+def test_missing_started_sync_cannot_create_orphan_snapshot():
     connection = _db()
-    previous = FantasySnapshot("before", _state(players=("1",)))
-    current = FantasySnapshot("after", _state(players=("1", "2")))
-    _seed_snapshot(connection, previous)
+    snapshot = FantasySnapshot("orphan-candidate", _state())
     plan = build_successful_sync_write_plan(
         _identity(),
         sync_run_id="missing-sync",
-        snapshot=current,
-        events=derive_fantasy_change_events(previous, current),
+        snapshot=snapshot,
+        events=(),
         observed_at_ms=20,
         accepted_at_ms=20,
         completed_at_ms=21,
         derived_at_ms=20,
     )
 
-    # Snapshot/event statements themselves are valid. The final completion update
-    # affects zero rows, which the future D1 executor must treat as a failed batch.
-    for statement in plan.statements[:-1]:
-        assert _execute(connection, statement) == 1
+    assert _execute(connection, plan.statements[0]) == 0
+    assert plan.statements[0].expected_affected_rows == 1
     assert _execute(connection, plan.statements[-1]) == 0
     assert plan.statements[-1].expected_affected_rows == 1
+    assert connection.execute("SELECT COUNT(*) FROM fantasy_state_snapshots").fetchone()[0] == 0
