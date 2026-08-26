@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -284,3 +286,68 @@ def test_public_package_exports_runtime_handshake_contract():
         fantasy.run_fantasy_runtime_deployment_handshake_from_env
         is run_fantasy_runtime_deployment_handshake_from_env
     )
+
+
+def _load_handshake_script_module():
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "check_fantasy_hq_runtime_handshake.py"
+    )
+    spec = importlib.util.spec_from_file_location("fantasy_handshake_script_test", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_operator_command_prints_only_sanitized_success_summary(monkeypatch, capsys):
+    module = _load_handshake_script_module()
+    result = FantasyRuntimeDeploymentHandshakeResult(
+        handshake_version=1,
+        protocol_version=1,
+        health_ready=True,
+        authenticated_read_ready=True,
+        probe_absent=True,
+    )
+    monkeypatch.setattr(
+        module,
+        "run_fantasy_runtime_deployment_handshake_from_env",
+        lambda: result,
+    )
+
+    assert module.main() == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert payload == result.safe_summary()
+    assert captured.err == ""
+    assert TOKEN not in captured.out
+    assert ENDPOINT not in captured.out
+
+
+def test_operator_command_failure_never_prints_exception_message_or_secret(
+    monkeypatch,
+    capsys,
+):
+    module = _load_handshake_script_module()
+    private_message = f"Worker rejected secret={TOKEN} endpoint={ENDPOINT}"
+
+    def fail():
+        raise RuntimeError(private_message)
+
+    monkeypatch.setattr(
+        module,
+        "run_fantasy_runtime_deployment_handshake_from_env",
+        fail,
+    )
+
+    assert module.main() == 1
+    captured = capsys.readouterr()
+    payload = json.loads(captured.err)
+
+    assert payload == {"ready": False, "error_type": "RuntimeError"}
+    assert captured.out == ""
+    assert private_message not in captured.err
+    assert TOKEN not in captured.err
+    assert ENDPOINT not in captured.err
