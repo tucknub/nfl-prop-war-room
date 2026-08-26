@@ -1,0 +1,63 @@
+name: Fantasy Change Events Acceptance
+
+on:
+  pull_request:
+    paths:
+      - "src/fantasy/**"
+      - "tests/test_fantasy_change*.py"
+      - ".github/workflows/fantasy-change-events-acceptance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest playwright
+
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Compile application
+        run: python -m compileall -q dashboard src scripts tests
+
+      - name: Run focused fantasy tests
+        run: pytest -q tests/test_fantasy_sleeper.py tests/test_fantasy_sleeper_weekly.py tests/test_fantasy_changes.py tests/test_fantasy_change_event_contract.py
+
+      - name: Run repository tests
+        run: pytest -q
+
+      - name: Start Streamlit
+        run: |
+          mkdir -p outputs/fantasy_change_events_browser_qa
+          nohup streamlit run dashboard/Home.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8514 \
+            > outputs/fantasy_change_events_browser_qa/streamlit.log 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8514/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat outputs/fantasy_change_events_browser_qa/streamlit.log
+          exit 1
+
+      - name: Run browser QA
+        run: python scripts/run_three_report_launch_browser_qa.py
