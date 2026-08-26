@@ -85,7 +85,11 @@ class SleeperScheduledLeague:
 
 @dataclass(frozen=True)
 class SleeperScheduledSyncPlan:
-    """Deterministic persistence inputs for one scheduler slot."""
+    """Deterministic persistence inputs for one scheduler slot.
+
+    Batch identity is order-insensitive, while specs preserve caller order for
+    deterministic execution and result reporting.
+    """
 
     schedule_name: str
     scheduled_at_ms: int
