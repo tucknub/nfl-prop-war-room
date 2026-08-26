@@ -12,6 +12,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from glitch_radar_books import USER_BOOKS  # noqa: E402
+from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
 from glitch_radar_props_feed import (  # noqa: E402
     PROP_CREDITS_PER_SCAN,
@@ -103,6 +104,31 @@ def _render_price_glitch(row: dict) -> None:
             deviation = float(row.get("relative_prob_deviation") or 0) * 100
             st.warning(f"Same player, market and line differ materially from peers ({deviation:.1f}% relative probability deviation).")
         st.caption("Candidate pricing error, not a guaranteed payout. Obvious-error/void risk still needs rule review before betting.")
+
+
+def _render_near_miss(row: dict) -> None:
+    side = str(row.get("side") or "over").upper()
+    line = float(row.get("line") or 0)
+    price = format_american(row.get("price"))
+    proximity = float(row.get("glitch_threshold_proximity_pct") or 0)
+    with st.container(border=True):
+        st.markdown(f"#### WATCH · {row.get('player', 'Player')} · {_market(row)} {line:g} {side} · {row.get('book')} {price}")
+        st.caption(_context(row))
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Book price", price)
+        c2.metric("Probability deviation", f"{float(row.get('relative_prob_deviation_pct') or 0):.1f}%")
+        c3.metric("Glitch-threshold proximity", f"{proximity:.0f}%")
+        st.write(
+            f"Book implied probability: **{float(row.get('book_implied_prob_pct') or 0):.2f}%** · "
+            f"same-line peer median: **{float(row.get('peer_median_implied_prob_pct') or 0):.2f}%** · "
+            f"payout vs peer median: **{float(row.get('payout_multiple_vs_peers') or 0):.2f}×**"
+        )
+        peers = ", ".join(row.get("peer_books", []) or [])
+        if peers:
+            st.caption(f"Comparable price peers: {peers}")
+        st.caption(
+            "Near-miss diagnostic only. It is below the strict sportsbook-error threshold and is not classified as a glitch or a recommendation."
+        )
 
 
 def _render_line_gap(row: dict) -> None:
@@ -229,6 +255,7 @@ coverage = deep.get("coverage", {}) or {}
 rows = deep.get("rows", []) or []
 quality = coverage_quality(rows)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
+near_misses = build_near_miss_anomalies(rows)
 line_gaps = deep.get("line_gaps", []) or []
 ladder_violations = deep.get("ladder_violations", []) or []
 stale_props = enrich_stale_alerts(deep.get("stale_props", []) or [], rows)
@@ -241,8 +268,8 @@ m4.metric("Stale price watches", len(stale_props))
 
 st.caption(
     f"{coverage.get('rows', 0):,} prop rows · {quality.get('cross_book_players', 0):,} cross-book player identities · "
-    f"{len(coverage.get('markets', []) or []):,} market families · refreshed {local_start_label(deep.get('fetched_at'))} · "
-    f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
+    f"{len(coverage.get('markets', []) or []):,} market families · {len(near_misses):,} near-miss diagnostics · "
+    f"refreshed {local_start_label(deep.get('fetched_at'))} · {PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
 
 if st.button("Force new deep scan (uses 3 credits)", type="primary"):
@@ -269,9 +296,18 @@ for row in line_gaps:
 if shown == 0:
     st.success("No major prop-price, ladder, or material line-gap anomaly is visible at one of my books in this deep scan.")
 
+if near_misses:
+    st.markdown("### Closest pricing discrepancies")
+    st.caption(
+        "These are the largest exact same-line differences that remain below the strict glitch threshold. "
+        "They help show what the radar is seeing even when nothing is extreme enough to call an error."
+    )
+    for row in near_misses[:5]:
+        _render_near_miss(row)
+
 st.divider()
-price_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = st.tabs(
-    ["Prop Glitches", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"]
+price_tab, watch_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = st.tabs(
+    ["Prop Glitches", "Near Misses", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"]
 )
 
 with price_tab:
@@ -281,6 +317,17 @@ with price_tab:
         st.info("No actionable exact-line prop price outlier crossed the current threshold.")
     for row in price_outliers:
         _render_price_glitch(row)
+
+with watch_tab:
+    st.markdown("### Near-miss same-line anomalies")
+    st.caption(
+        "Largest exact event/player/market/line price differences below the true glitch threshold. "
+        "DFS pick'em midpoint pricing is excluded from these comparisons."
+    )
+    if not near_misses:
+        st.info("No same-line price discrepancy crossed the near-miss diagnostic floor in this scan.")
+    for row in near_misses:
+        _render_near_miss(row)
 
 with gap_tab:
     st.markdown("### Cross-book prop line discrepancies")
