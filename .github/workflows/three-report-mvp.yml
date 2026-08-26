@@ -7,6 +7,9 @@ on:
   pull_request:
     paths:
       - "dashboard/**"
+      - "src/fantasy/**"
+      - "workers/fantasy-hq/**"
+      - "migrations/**"
       - "scripts/run_three_report_launch_browser_qa.py"
       - "tests/**"
       - "requirements.txt"
@@ -19,6 +22,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Run Fantasy HQ Worker tests
+        run: node --test workers/fantasy-hq/*.test.mjs
 
       - name: Set up Python
         uses: actions/setup-python@v5
