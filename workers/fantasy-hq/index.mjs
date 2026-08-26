@@ -68,6 +68,13 @@ export async function handleFantasyPersistenceRequest(request, env = {}, options
     if (readRequest === null) {
       return errorResponse(404, "NOT_FOUND", "Not found");
     }
+    if (url.search) {
+      return errorResponse(
+        400,
+        "INVALID_READ_REQUEST",
+        "Read request must not include query parameters",
+      );
+    }
   } else if (url.pathname !== PERSISTENCE_PATH) {
     return errorResponse(404, "NOT_FOUND", "Not found");
   }
