@@ -1,10 +1,23 @@
-"""Fantasy League HQ provider-normalization and change-detection foundation."""
+"""Fantasy League HQ provider-normalization, identity, and change-detection foundation."""
 
 from .changes import (
     FantasyChangeEvent,
     FantasySnapshot,
     UnsafeSnapshotTransition,
     derive_fantasy_change_events,
+)
+from .identity import (
+    MATCHED,
+    NEEDS_REVIEW,
+    PRE_GSIS,
+    TEAM_DEFENSE,
+    UNRESOLVED,
+    SleeperIdentityResolution,
+    extract_propwar_player_ids,
+    load_ffverse_player_ids,
+    resolve_sleeper_player,
+    resolve_sleeper_players,
+    validate_ffverse_player_ids,
 )
 from .models import (
     DraftPick,
@@ -37,17 +50,28 @@ __all__ = [
     "FantasySnapshot",
     "LeagueRules",
     "LeagueTransaction",
+    "MATCHED",
     "Manager",
     "MatchupTeam",
+    "NEEDS_REVIEW",
+    "PRE_GSIS",
     "Roster",
     "SleeperClient",
+    "SleeperIdentityResolution",
     "SleeperLeagueBundle",
+    "TEAM_DEFENSE",
     "TradedPick",
+    "UNRESOLVED",
     "UnsafeSnapshotTransition",
     "WeeklyLeagueState",
     "derive_fantasy_change_events",
+    "extract_propwar_player_ids",
+    "load_ffverse_player_ids",
     "normalize_sleeper_bundle",
     "normalize_sleeper_draft_picks",
     "normalize_sleeper_matchups",
     "normalize_sleeper_transactions",
+    "resolve_sleeper_player",
+    "resolve_sleeper_players",
+    "validate_ffverse_player_ids",
 ]
