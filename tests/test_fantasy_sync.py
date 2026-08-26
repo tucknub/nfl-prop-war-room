@@ -14,14 +14,23 @@ from src.fantasy.sync import (
 )
 
 
-def _state(*, players=("1", "2", "3", "IND", "4"), ownership_ready=True) -> FantasyLeagueState:
+def _state(
+    *,
+    players=("1", "2", "3", "IND", "4"),
+    starters=None,
+    reserve=(),
+    taxi=(),
+    ownership_ready=True,
+) -> FantasyLeagueState:
+    player_tuple = tuple(players)
+    starter_tuple = tuple(starters) if starters is not None else tuple(player_tuple[:2]) + ("0",)
     roster = Roster(
         platform_roster_id="1",
         platform_user_id="me",
-        players=tuple(players),
-        starters=("1", "2", "0"),
-        reserve=("2",),
-        taxi=("4",),
+        players=player_tuple,
+        starters=starter_tuple,
+        reserve=tuple(reserve),
+        taxi=tuple(taxi),
         settings={},
     )
     return FantasyLeagueState(
@@ -69,7 +78,12 @@ def _player_map():
 
 
 def test_collect_league_player_ids_is_deterministic_and_ignores_sleeper_zero_placeholder():
-    state = _state(players=("2", "1", "2", "IND"))
+    state = _state(
+        players=("2", "1", "2", "IND"),
+        starters=("1", "2", "0"),
+        reserve=("2",),
+        taxi=("4",),
+    )
 
     assert collect_league_player_ids(state) == ("2", "1", "IND", "4")
 
