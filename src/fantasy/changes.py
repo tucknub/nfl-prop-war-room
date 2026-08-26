@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 import json
 from typing import Any, Iterable, Mapping
@@ -12,11 +12,19 @@ from .models import DraftState, FantasyLeagueState, LeagueRules, LeagueTransacti
 class FantasySnapshot:
     """One accepted provider-state observation used only for deterministic diffing."""
 
+    snapshot_id: str
     league: FantasyLeagueState
     transactions: tuple[LeagueTransaction, ...] = ()
 
+    def __post_init__(self) -> None:
+        normalized = str(self.snapshot_id or "").strip()
+        if not normalized:
+            raise ValueError("snapshot_id is required")
+        object.__setattr__(self, "snapshot_id", normalized)
+
     @property
     def fingerprint(self) -> str:
+        """Content fingerprint intentionally excludes snapshot_id."""
         return _fingerprint(_snapshot_payload(self))
 
 
@@ -32,6 +40,8 @@ class FantasyChangeEvent:
     after_value: Any = None
     source_transaction_ids: tuple[str, ...] = ()
     reason_codes: tuple[str, ...] = ()
+    before_snapshot_id: str = ""
+    after_snapshot_id: str = ""
     event_fingerprint: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -46,6 +56,8 @@ class FantasyChangeEvent:
             "after_value": self.after_value,
             "source_transaction_ids": list(self.source_transaction_ids),
             "reason_codes": list(self.reason_codes),
+            "before_snapshot_id": self.before_snapshot_id,
+            "after_snapshot_id": self.after_snapshot_id,
         }
         object.__setattr__(self, "event_fingerprint", _fingerprint(payload))
 
@@ -109,7 +121,11 @@ def derive_fantasy_change_events(
         events.extend(_derive_roster_events(before, after, current.transactions))
 
     events.extend(_derive_new_transaction_events(previous, current))
-    return tuple(sorted(events, key=_event_sort_key))
+    bound = tuple(
+        _bind_snapshot_pair(event, previous.snapshot_id, current.snapshot_id)
+        for event in events
+    )
+    return tuple(sorted(bound, key=_event_sort_key))
 
 
 def _validate_transition(previous: FantasySnapshot, current: FantasySnapshot) -> None:
@@ -120,6 +136,10 @@ def _validate_transition(previous: FantasySnapshot, current: FantasySnapshot) ->
     if identity_before != identity_after:
         raise UnsafeSnapshotTransition(
             "snapshots must represent the same platform league and season"
+        )
+    if previous.snapshot_id == current.snapshot_id and previous.fingerprint != current.fingerprint:
+        raise UnsafeSnapshotTransition(
+            "one snapshot_id cannot represent two different accepted states"
         )
     if before.rules_ready and not after.rules_ready:
         raise UnsafeSnapshotTransition("rules readiness regressed; fail closed")
@@ -411,6 +431,18 @@ def _event(
         after_value=after_value,
         source_transaction_ids=tuple(sorted(source_transaction_ids)),
         reason_codes=reason_codes,
+    )
+
+
+def _bind_snapshot_pair(
+    event: FantasyChangeEvent,
+    before_snapshot_id: str,
+    after_snapshot_id: str,
+) -> FantasyChangeEvent:
+    return replace(
+        event,
+        before_snapshot_id=before_snapshot_id,
+        after_snapshot_id=after_snapshot_id,
     )
 
 
