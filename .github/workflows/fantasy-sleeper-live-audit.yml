@@ -1,0 +1,36 @@
+name: Fantasy Sleeper Live Audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fantasy-sleeper-live-audit.yml"
+      - "scripts/audit_sleeper_league.py"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out audit branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch and validate 2026 FFL
+        run: python scripts/audit_sleeper_league.py 1383849993151987712 /tmp/sleeper-audit
+
+      - name: Show audit summary
+        run: cat /tmp/sleeper-audit/summary.json
+
+      - name: Upload raw audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sleeper-ffl-2026-live-audit
+          path: /tmp/sleeper-audit
+          retention-days: 7
