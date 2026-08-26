@@ -1,5 +1,20 @@
 """Fantasy League HQ provider-normalization, identity, sync, ownership, and change-detection foundation."""
 
+from .catalog import (
+    CATALOG_FORCED_REFRESH,
+    CATALOG_HIT,
+    CATALOG_MISS,
+    CATALOG_REFRESHED,
+    CATALOG_STALE_FALLBACK,
+    MemorySleeperPlayerCatalogStore,
+    SleeperPlayerCatalogClient,
+    SleeperPlayerCatalogLoadResult,
+    SleeperPlayerCatalogReader,
+    SleeperPlayerCatalogSnapshot,
+    SleeperPlayerCatalogStore,
+    load_sleeper_player_catalog,
+    normalize_sleeper_player_catalog,
+)
 from .changes import (
     FantasyChangeEvent,
     FantasySnapshot,
@@ -48,10 +63,12 @@ from .ownership import (
     build_multi_league_ownership_index,
 )
 from .service import (
+    CatalogBackedMultiSleeperSyncResult,
     MultiSleeperSyncResult,
     SleeperLeagueReader,
     sync_sleeper_league,
     sync_sleeper_leagues,
+    sync_sleeper_leagues_with_catalog,
 )
 from .sleeper import (
     SleeperClient,
@@ -72,6 +89,12 @@ from .sync import (
 __all__ = [
     "AVAILABLE",
     "BENCH",
+    "CATALOG_FORCED_REFRESH",
+    "CATALOG_HIT",
+    "CATALOG_MISS",
+    "CATALOG_REFRESHED",
+    "CATALOG_STALE_FALLBACK",
+    "CatalogBackedMultiSleeperSyncResult",
     "DraftPick",
     "DraftState",
     "FaabTransfer",
@@ -85,6 +108,7 @@ __all__ = [
     "MATCHED",
     "Manager",
     "MatchupTeam",
+    "MemorySleeperPlayerCatalogStore",
     "MultiLeagueOwnershipIndex",
     "MultiSleeperSyncResult",
     "NEEDS_REVIEW",
@@ -98,6 +122,11 @@ __all__ = [
     "SleeperIdentityResolution",
     "SleeperLeagueBundle",
     "SleeperLeagueReader",
+    "SleeperPlayerCatalogClient",
+    "SleeperPlayerCatalogLoadResult",
+    "SleeperPlayerCatalogReader",
+    "SleeperPlayerCatalogSnapshot",
+    "SleeperPlayerCatalogStore",
     "SleeperSyncResult",
     "TAXI",
     "TEAM_DEFENSE",
@@ -115,13 +144,16 @@ __all__ = [
     "derive_fantasy_change_events",
     "extract_propwar_player_ids",
     "load_ffverse_player_ids",
+    "load_sleeper_player_catalog",
     "normalize_sleeper_bundle",
     "normalize_sleeper_draft_picks",
     "normalize_sleeper_matchups",
+    "normalize_sleeper_player_catalog",
     "normalize_sleeper_transactions",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
     "sync_sleeper_league",
     "sync_sleeper_leagues",
+    "sync_sleeper_leagues_with_catalog",
     "validate_ffverse_player_ids",
 ]

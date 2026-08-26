@@ -5,6 +5,12 @@ from typing import Any, Mapping, Protocol, Sequence
 
 import pandas as pd
 
+from .catalog import (
+    SleeperPlayerCatalogLoadResult,
+    SleeperPlayerCatalogReader,
+    SleeperPlayerCatalogStore,
+    load_sleeper_player_catalog,
+)
 from .models import FantasyLeagueState
 from .sync import SleeperSyncResult, build_sleeper_sync_result
 
@@ -78,6 +84,30 @@ class MultiSleeperSyncResult:
         return bool(self.leagues) and all(result.role_join_ready for result in self.leagues)
 
 
+@dataclass(frozen=True)
+class CatalogBackedMultiSleeperSyncResult:
+    """One shared player-catalog load plus the resulting multi-league sync."""
+
+    sync_result: MultiSleeperSyncResult
+    catalog_result: SleeperPlayerCatalogLoadResult
+
+    @property
+    def league_ids(self) -> tuple[str, ...]:
+        return self.sync_result.league_ids
+
+    @property
+    def catalog_cache_status(self) -> str:
+        return self.catalog_result.cache_status
+
+    @property
+    def catalog_age_seconds(self) -> float:
+        return self.catalog_result.age_seconds
+
+    @property
+    def catalog_stale(self) -> bool:
+        return self.catalog_result.stale
+
+
 def _validated_league_ids(league_ids: Sequence[Any]) -> tuple[str, ...]:
     normalized = tuple(str(value or "").strip() for value in league_ids)
     if not normalized or any(not value for value in normalized):
@@ -140,3 +170,42 @@ def sync_sleeper_leagues(
         for league_id in normalized_ids
     )
     return MultiSleeperSyncResult(leagues=results)
+
+
+def sync_sleeper_leagues_with_catalog(
+    reader: SleeperLeagueReader,
+    catalog_reader: SleeperPlayerCatalogReader,
+    catalog_store: SleeperPlayerCatalogStore,
+    league_ids: Sequence[Any],
+    *,
+    current_user_id: str | None,
+    ffverse_player_ids: pd.DataFrame,
+    propwar_identity_crosswalk: pd.DataFrame,
+    now_ms: int,
+    catalog_ttl_seconds: float = 24 * 60 * 60,
+    catalog_max_stale_seconds: float = 7 * 24 * 60 * 60,
+    force_catalog_refresh: bool = False,
+) -> CatalogBackedMultiSleeperSyncResult:
+    """Load the shared Sleeper catalog once, then sync every requested league."""
+
+    normalized_ids = _validated_league_ids(league_ids)
+    catalog_result = load_sleeper_player_catalog(
+        catalog_reader,
+        catalog_store,
+        now_ms=now_ms,
+        ttl_seconds=catalog_ttl_seconds,
+        max_stale_seconds=catalog_max_stale_seconds,
+        force_refresh=force_catalog_refresh,
+    )
+    sync_result = sync_sleeper_leagues(
+        reader,
+        normalized_ids,
+        current_user_id=current_user_id,
+        ffverse_player_ids=ffverse_player_ids,
+        propwar_identity_crosswalk=propwar_identity_crosswalk,
+        sleeper_player_map=catalog_result.snapshot.players,
+    )
+    return CatalogBackedMultiSleeperSyncResult(
+        sync_result=sync_result,
+        catalog_result=catalog_result,
+    )
