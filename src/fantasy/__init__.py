@@ -44,6 +44,10 @@ from .identity import (
     resolve_sleeper_players,
     validate_ffverse_player_ids,
 )
+from .league_registration_protocol import (
+    LEAGUE_SEASON_UPSERT,
+    build_league_season_upsert_command,
+)
 from .models import (
     DraftPick,
     DraftState,
@@ -139,6 +143,7 @@ __all__ = [
     "FantasyLeagueState",
     "FantasySnapshot",
     "JAVASCRIPT_MAX_SAFE_INTEGER",
+    "LEAGUE_SEASON_UPSERT",
     "LeagueOwnership",
     "LeagueRules",
     "LeagueSeasonIdentity",
@@ -190,6 +195,7 @@ __all__ = [
     "backfill_sleeper_league_history",
     "build_failed_sync_command",
     "build_failed_sync_statement",
+    "build_league_season_upsert_command",
     "build_multi_league_ownership_index",
     "build_sleeper_identity_audit",
     "build_sleeper_sync_result",

@@ -1,0 +1,16 @@
+{
+  "protocol_version": 1,
+  "kind": "LEAGUE_SEASON_UPSERT",
+  "identity": {
+    "league_season_id": "ffl:2026",
+    "platform": "SLEEPER",
+    "platform_league_id": "league-2026",
+    "season": "2026"
+  },
+  "league_family_id": "ffl",
+  "family_display_name": "Franchise Football League",
+  "season_display_name": "Franchise Football League 2026",
+  "created_at_ms": 1787760000000,
+  "family_metadata_json": "{\"source\":\"owner_config\"}",
+  "season_metadata_json": "{\"platform_status\":\"in_season\"}"
+}
