@@ -302,6 +302,14 @@ test("recovery routes require auth and GET while malformed canonical IDs fail cl
     );
     assert.equal(nonCanonical.status, 400);
     assert.equal((await responseJson(nonCanonical)).error.code, "INVALID_READ_REQUEST");
+
+    const queryVariant = await handleFantasyPersistenceRequest(
+      authRequest("/v1/fantasy/read/sync-runs/sync-1?unused=1"),
+      { FANTASY_PERSISTENCE_TOKEN: TOKEN, FANTASY_DB: db },
+      { subtle: workerSubtle() },
+    );
+    assert.equal(queryVariant.status, 400);
+    assert.equal((await responseJson(queryVariant)).error.code, "INVALID_READ_REQUEST");
   } finally {
     sqlite.close();
   }
