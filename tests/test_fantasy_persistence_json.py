@@ -106,3 +106,50 @@ def test_text_primary_keys_explicitly_reject_null_ids() -> None:
             ) VALUES (NULL, 'PLAYER', 'Player One', 1000, 1000)
             """
         )
+
+
+def test_existing_gsis_player_id_can_remain_the_propwar_entity_id() -> None:
+    connection = _database()
+    existing_player_id = "00-0031234"
+
+    connection.execute(
+        """
+        INSERT INTO football_entities (
+            propwar_entity_id,
+            entity_type,
+            canonical_name,
+            position,
+            nfl_team,
+            created_at_ms,
+            updated_at_ms
+        ) VALUES (?, 'PLAYER', 'Existing Player', 'WR', 'IND', 1000, 1000)
+        """,
+        (existing_player_id,),
+    )
+    connection.execute(
+        """
+        INSERT INTO football_external_ids (
+            external_identity_id,
+            propwar_entity_id,
+            provider,
+            provider_scope,
+            external_id,
+            linked_at_ms,
+            verification_method
+        ) VALUES (?, ?, 'gsis', '', ?, 1000, 'EXISTING_PRODUCTION_PLAYER_ID')
+        """,
+        (f"gsis:{existing_player_id}", existing_player_id, existing_player_id),
+    )
+
+    stored = connection.execute(
+        """
+        SELECT e.propwar_entity_id, x.provider, x.external_id
+        FROM football_entities AS e
+        JOIN football_external_ids AS x
+          ON x.propwar_entity_id = e.propwar_entity_id
+        WHERE e.propwar_entity_id = ?
+        """,
+        (existing_player_id,),
+    ).fetchone()
+
+    assert stored == (existing_player_id, "gsis", existing_player_id)
