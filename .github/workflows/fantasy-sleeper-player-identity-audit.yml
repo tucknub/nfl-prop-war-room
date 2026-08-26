@@ -1,0 +1,28 @@
+name: Fantasy Sleeper Player Identity Audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fantasy-sleeper-player-identity-audit.yml"
+      - "scripts/audit_sleeper_player_identity.py"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit Sleeper to PropWar player identity coverage
+        run: python scripts/audit_sleeper_player_identity.py /tmp/sleeper-player-identity-audit
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sleeper-player-identity-audit
+          path: /tmp/sleeper-player-identity-audit
+          retention-days: 7
