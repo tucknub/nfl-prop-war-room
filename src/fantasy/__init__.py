@@ -89,6 +89,12 @@ from .persistence import (
     serialize_fantasy_league_state,
     serialize_fantasy_snapshot,
 )
+from .persistence_rehydrate import (
+    PersistedFantasySnapshot,
+    UnsafePersistedFantasySnapshot,
+    rehydrate_latest_snapshot_read,
+    rehydrate_persisted_snapshot_record,
+)
 from .persistence_http import (
     READ_LATEST_SNAPSHOT,
     READ_LEAGUE_SEASON,
@@ -202,6 +208,7 @@ __all__ = [
     "PERSISTENCE_SOURCE_RECOVERY",
     "PERSISTENCE_SOURCE_WRITE",
     "PERSISTENCE_STARTED",
+    "PersistedFantasySnapshot",
     "PersistenceStatement",
     "READ_LATEST_SNAPSHOT",
     "READ_LEAGUE_SEASON",
@@ -236,6 +243,7 @@ __all__ = [
     "UnsafeLeagueHistory",
     "UnsafeOwnershipState",
     "UnsafePersistenceCommand",
+    "UnsafePersistedFantasySnapshot",
     "UnsafePersistencePlan",
     "UnsafeSnapshotTransition",
     "WeeklyLeagueState",
@@ -263,6 +271,8 @@ __all__ = [
     "normalize_sleeper_player_catalog",
     "normalize_sleeper_transactions",
     "persistence_content_fingerprint",
+    "rehydrate_latest_snapshot_read",
+    "rehydrate_persisted_snapshot_record",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
     "serialize_fantasy_league_state",
