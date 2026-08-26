@@ -13,7 +13,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 from access_control import access_mode  # noqa: E402
 from glitch_radar_books import USER_BOOKS  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
-from glitch_radar_props import (  # noqa: E402
+from glitch_radar_props_feed import (  # noqa: E402
     PROP_CREDITS_PER_SCAN,
     analyze_props,
     fetch_full_props,
@@ -84,7 +84,7 @@ def _context(row: dict) -> str:
 
 def _render_price_glitch(row: dict) -> None:
     side = str(row.get("side") or "over").upper()
-    line = row.get("line")
+    line = float(row.get("line") or 0)
     price = format_american(row.get("price"))
     with st.container(border=True):
         c1, c2 = st.columns([4, 1])
