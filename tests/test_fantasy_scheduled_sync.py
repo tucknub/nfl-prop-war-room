@@ -143,7 +143,21 @@ def test_plan_uses_scheduled_slot_as_retry_stable_logical_timestamp():
     }
 
 
-def test_batch_id_changes_when_ordered_league_set_changes():
+def test_batch_id_is_stable_when_only_league_order_changes():
+    first = build_sleeper_scheduled_sync_plan(
+        (_league(1), _league(2)),
+        scheduled_at_ms=2_000,
+    )
+    second = build_sleeper_scheduled_sync_plan(
+        (_league(2), _league(1)),
+        scheduled_at_ms=2_000,
+    )
+
+    assert first.batch_id == second.batch_id
+    assert first.league_ids != second.league_ids
+
+
+def test_batch_id_changes_when_league_set_changes():
     first = build_sleeper_scheduled_sync_plan(
         (_league(1), _league(2)),
         scheduled_at_ms=2_000,
