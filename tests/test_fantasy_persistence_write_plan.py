@@ -328,6 +328,7 @@ def test_success_plan_rejects_event_not_bound_to_accepted_snapshot():
             completed_at_ms=1,
             derived_at_ms=1,
             provider_status="HEALTHY",
+            expected_previous_snapshot_id="snap-before",
         )
 
 
@@ -346,6 +347,7 @@ def test_success_plan_rejects_duplicate_event_fingerprints():
             completed_at_ms=1,
             derived_at_ms=1,
             provider_status="HEALTHY",
+            expected_previous_snapshot_id="before",
         )
 
 
