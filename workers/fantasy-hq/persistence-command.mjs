@@ -4,6 +4,7 @@ export const FANTASY_PERSISTENCE_PROTOCOL_VERSION = 1;
 export const SYNC_START = "SYNC_START";
 export const SYNC_FAILED = "SYNC_FAILED";
 export const SYNC_SUCCESS = "SYNC_SUCCESS";
+export const SYNC_UNCHANGED = "SYNC_UNCHANGED";
 
 const FINGERPRINT = /^[0-9a-f]{64}$/;
 
@@ -36,6 +37,9 @@ export async function buildPersistenceStatementsFromCommand(command) {
   }
   if (kind === SYNC_SUCCESS) {
     return _buildSyncSuccess(command);
+  }
+  if (kind === SYNC_UNCHANGED) {
+    return _buildSyncUnchanged(command);
   }
 
   throw new UnsafeFantasyPersistenceCommand(
@@ -129,6 +133,84 @@ function _buildSyncFailed(command) {
       identity.platform_league_id,
       identity.season,
       "STARTED",
+    ],
+    expected_affected_rows: 1,
+  }];
+}
+
+
+function _buildSyncUnchanged(command) {
+  _assertAllowedKeys(command, [
+    "protocol_version",
+    "kind",
+    "identity",
+    "sync_run_id",
+    "completed_at_ms",
+    "accepted_snapshot_id",
+    "content_fingerprint",
+  ], "command");
+
+  const identity = _identity(command.identity);
+  const syncRunId = _requiredText(command.sync_run_id, "command.sync_run_id");
+  const completedAt = _nonnegativeSafeInteger(
+    command.completed_at_ms,
+    "command.completed_at_ms",
+  );
+  const acceptedSnapshotId = _requiredText(
+    command.accepted_snapshot_id,
+    "command.accepted_snapshot_id",
+  );
+  const contentFingerprint = _fingerprint(
+    command.content_fingerprint,
+    "command.content_fingerprint",
+  );
+
+  return [{
+    sql: (
+      "UPDATE fantasy_sync_runs SET completed_at_ms = ?, status = ?, " +
+      "accepted_snapshot_id = ?, error_code = NULL, error_summary = NULL " +
+      "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? " +
+      "AND platform_league_id = ? AND season = ? AND status = ? " +
+      "AND ? = (" +
+      "SELECT s.snapshot_id FROM fantasy_state_snapshots AS s " +
+      "WHERE s.league_season_id = ? AND s.snapshot_id = ? " +
+      "AND s.content_fingerprint = ? " +
+      "AND EXISTS (" +
+      "SELECT 1 FROM fantasy_sync_runs AS accepted " +
+      "WHERE accepted.league_season_id = s.league_season_id " +
+      "AND accepted.accepted_snapshot_id = s.snapshot_id " +
+      "AND accepted.status = 'COMPLETED'" +
+      ") " +
+      "ORDER BY s.accepted_at_ms DESC, s.snapshot_id DESC LIMIT 1" +
+      ") " +
+      "AND ? = (" +
+      "SELECT latest.snapshot_id FROM fantasy_state_snapshots AS latest " +
+      "WHERE latest.league_season_id = ? " +
+      "AND EXISTS (" +
+      "SELECT 1 FROM fantasy_sync_runs AS accepted_latest " +
+      "WHERE accepted_latest.league_season_id = latest.league_season_id " +
+      "AND accepted_latest.accepted_snapshot_id = latest.snapshot_id " +
+      "AND accepted_latest.status = 'COMPLETED'" +
+      ") " +
+      "ORDER BY latest.accepted_at_ms DESC, latest.snapshot_id DESC LIMIT 1" +
+      ")"
+    ),
+    parameters: [
+      completedAt,
+      "COMPLETED",
+      acceptedSnapshotId,
+      syncRunId,
+      identity.league_season_id,
+      identity.platform,
+      identity.platform_league_id,
+      identity.season,
+      "STARTED",
+      acceptedSnapshotId,
+      identity.league_season_id,
+      acceptedSnapshotId,
+      contentFingerprint,
+      acceptedSnapshotId,
+      identity.league_season_id,
     ],
     expected_affected_rows: 1,
   }];
