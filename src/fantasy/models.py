@@ -66,6 +66,20 @@ class DraftState:
 
 
 @dataclass(frozen=True)
+class DraftPick:
+    platform_draft_id: str
+    platform_player_id: str
+    picked_by_user_id: str | None
+    platform_roster_id: str | None
+    round: int | None
+    draft_slot: int | None
+    pick_no: int | None
+    is_keeper: bool | None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+    raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
+
+
+@dataclass(frozen=True)
 class Manager:
     platform_user_id: str
     display_name: str
@@ -86,6 +100,65 @@ class Roster:
     @property
     def has_players(self) -> bool:
         return bool(self.players)
+
+
+@dataclass(frozen=True)
+class MatchupTeam:
+    week: int
+    platform_roster_id: str
+    matchup_id: str | None
+    players: tuple[str, ...]
+    starters: tuple[str, ...]
+    points: int | float | None
+    custom_points: int | float | None
+    players_points: Mapping[str, Any] = field(default_factory=dict)
+    starters_points: tuple[Any, ...] = ()
+    raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
+
+
+@dataclass(frozen=True)
+class TradedPick:
+    season: str
+    round: int | None
+    original_roster_id: str | None
+    previous_owner_roster_id: str | None
+    owner_roster_id: str | None
+
+
+@dataclass(frozen=True)
+class FaabTransfer:
+    sender_roster_id: str | None
+    receiver_roster_id: str | None
+    amount: int | float | None
+
+
+@dataclass(frozen=True)
+class LeagueTransaction:
+    platform_transaction_id: str
+    transaction_type: str
+    status: str
+    week: int | None
+    roster_ids: tuple[str, ...]
+    creator_user_id: str | None
+    created_at_ms: int | None
+    status_updated_at_ms: int | None
+    consenter_roster_ids: tuple[str, ...]
+    adds: Mapping[str, str]
+    drops: Mapping[str, str]
+    traded_picks: tuple[TradedPick, ...]
+    faab_transfers: tuple[FaabTransfer, ...]
+    waiver_bid: int | float | None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+    raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
+
+
+@dataclass(frozen=True)
+class WeeklyLeagueState:
+    platform: str
+    platform_league_id: str
+    week: int
+    matchups: tuple[MatchupTeam, ...]
+    transactions: tuple[LeagueTransaction, ...]
 
 
 @dataclass(frozen=True)
