@@ -100,14 +100,19 @@ def goto_root(page: Page, base: str) -> None:
 
 
 def navigate(page: Page, base: str, route: str, heading: str) -> None:
-    """Navigate through Streamlit's sidebar even when it is collapsed on mobile."""
+    """Navigate through an available Streamlit page route.
+
+    Top-navigation child links may be lazily rendered inside a menu. Prefer the live
+    navigation link when present; otherwise exercise the registered route directly.
+    """
     goto_root(page, base)
     locator = page.locator(f'a[href="{base}/{route}"]')
     if locator.count() == 0:
         locator = page.locator(f'a[href="/{route}"]')
-    if locator.count() == 0:
-        raise RuntimeError(f"Navigation link not found for route: {route}")
-    locator.first.evaluate("element => element.click()")
+    if locator.count() > 0:
+        locator.first.evaluate("element => element.click()")
+    else:
+        page.goto(f"{base}/{route}", wait_until="domcontentloaded", timeout=90000)
     page.get_by_role("heading", name=heading, exact=True).wait_for(timeout=90000)
     page.wait_for_timeout(1500)
 
@@ -142,24 +147,13 @@ def record_page_state(page: Page, label: str, failures: list[str], overflow: lis
         overflow.append(label)
 
 
-def desktop_sidebar_recoverable(page: Page) -> bool:
-    """Desktop navigation must never become a one-way collapsed state.
-
-    A visible sidebar is valid and may expose its collapse button. A collapsed sidebar is
-    also valid only when Streamlit exposes a visible control that can reopen it.
-    """
-    sidebar = page.locator('[data-testid="stSidebar"]')
-    if sidebar.count() != 1:
+def desktop_top_navigation_visible(page: Page) -> bool:
+    """Desktop must expose a visible Streamlit header and top navigation group."""
+    header = first_visible(page.locator('[data-testid="stHeader"]'))
+    if header is None:
         return False
-    expanded = sidebar.get_attribute("aria-expanded") == "true"
-    if expanded:
-        return True
-    reopen_controls = (
-        page.locator('[data-testid="stSidebarCollapsedControl"]'),
-        page.get_by_role("button", name="Open sidebar"),
-        page.get_by_role("button", name="Expand sidebar"),
-    )
-    return any(first_visible(control) is not None for control in reopen_controls)
+    role_group = first_visible(page.get_by_text("Role Intelligence", exact=True))
+    return role_group is not None
 
 
 def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict[str, object]:
@@ -181,11 +175,9 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
 
     goto_root(page, base)
     if name == "desktop":
-        sidebar = page.locator('[data-testid="stSidebar"]')
-        check(sidebar.count() == 1, f"{name}: sidebar not rendered", failures)
         check(
-            desktop_sidebar_recoverable(page),
-            f"{name}: sidebar can be collapsed without a visible recovery control",
+            desktop_top_navigation_visible(page),
+            f"{name}: native top navigation is not visibly available",
             failures,
         )
     home_text = body(page)
