@@ -11,7 +11,7 @@ Status: deployment-readiness contract only. Following this runbook creates remot
 - D1 database name: `propwar-fantasy-hq`
 - D1 migrations: repository `migrations/` directory
 - Required Worker secret: `FANTASY_PERSISTENCE_TOKEN`
-- The secret value must never be committed, placed in Wrangler `vars`, written into the generated config, or pasted into documentation
+- The secret value must never be committed, placed in Wrangler `vars`, written into the generated config, pasted into documentation, or placed on a shell command line
 - The real D1 UUID is resource identity, not a secret, but the generated config is ignored so provisioning remains an explicit operator step
 
 ## 1. Authenticate and record the tool version
@@ -47,40 +47,49 @@ The renderer refuses invalid/nil UUIDs and validates every v1 binding invariant 
 
 Inspect the generated file. It should contain the D1 UUID but no secret value and no league/player data.
 
-## 4. Configure the Worker secret
-
-Generate a high-entropy token outside the repository/password history and store it in the password manager used for this project. Then set it directly in Cloudflare:
-
-```powershell
-npx wrangler secret put FANTASY_PERSISTENCE_TOKEN --config workers/fantasy-hq/wrangler.generated.jsonc
-```
-
-Wrangler should prompt for the value. Do not pass the token on the command line, commit it, or save it to `.env` unless doing an intentionally local-only test in an ignored file.
-
-## 5. Apply the D1 migration before serving writes
+## 4. Apply the D1 migration before serving writes
 
 List first, then apply only the tracked migration set to the named remote database:
 
 ```powershell
 npx wrangler d1 migrations list propwar-fantasy-hq --remote --config workers/fantasy-hq/wrangler.generated.jsonc
 npx wrangler d1 migrations apply propwar-fantasy-hq --remote --config workers/fantasy-hq/wrangler.generated.jsonc
+npx wrangler d1 migrations list propwar-fantasy-hq --remote --config workers/fantasy-hq/wrangler.generated.jsonc
 ```
 
-Re-run `migrations list` and confirm there are no unapplied migrations. Do not execute ad-hoc schema SQL against production when a tracked migration can represent the change.
+Confirm there are no unexpected or unapplied migrations. Do not execute ad-hoc schema SQL against production when a tracked migration can represent the change.
 
-## 6. Build-only preflight
+## 5. Build-only preflight
 
 ```powershell
 npx wrangler deploy --dry-run --config workers/fantasy-hq/wrangler.generated.jsonc
 ```
 
-A dry run must succeed before a remote deployment is attempted.
+A dry run must succeed before a remote deployment is attempted. This step does not authorize a remote deploy.
 
-## 7. Deploy the Worker
+## 6. Prepare the first-deploy secret outside the repository
+
+Generate a high-entropy token outside Git history and store the durable copy in the password manager used for this project.
+
+For the first deployment, create a temporary `.env`-format secrets file in the operating system's temporary directory, not inside the repository. Its only line is:
+
+```text
+FANTASY_PERSISTENCE_TOKEN=<value from password manager>
+```
+
+Do not type the token as part of a PowerShell command because shell history may retain it. Open the temporary file in a trusted editor, paste the value, save, and close the editor. Keep the path available as `<TEMP_SECRETS_FILE>` for the next command.
+
+This temporary file is a bootstrap mechanism only. It is not a source-of-truth secret store.
+
+## 7. Perform the intentional first deploy with the secret attached
 
 ```powershell
-npx wrangler deploy --config workers/fantasy-hq/wrangler.generated.jsonc
+npx wrangler deploy --secrets-file <TEMP_SECRETS_FILE> --config workers/fantasy-hq/wrangler.generated.jsonc
 ```
+
+Using `--secrets-file` uploads the required secret alongside the code in the same deliberate deployment instead of calling `wrangler secret put` first. Current Wrangler behavior for `secret put` creates and deploys a new Worker version immediately, so it is not used as a harmless pre-deploy configuration step.
+
+After the deployment succeeds or fails, delete `<TEMP_SECRETS_FILE>` immediately. Do not move it into the repository, OneDrive, a synced folder, or an artifacts/log directory.
 
 Record the exact deployed URL and deployment/version identifier. Do not add a custom domain until the workers.dev deployment has passed the smoke tests below.
 
@@ -97,14 +106,18 @@ Do not perform an authenticated write merely to prove connectivity. The first au
 
 The deployed Worker URL becomes `FANTASY_PERSISTENCE_URL`; the same secret value becomes `FANTASY_PERSISTENCE_TOKEN` for the trusted Python runtime. Those values must live in runtime secret storage, not GitHub source. The Python client performs a public health check and strict response validation before any higher-level sync workflow is enabled.
 
+## Later secret rotation
+
+`wrangler secret put FANTASY_PERSISTENCE_TOKEN` is appropriate only when an immediate secret-version deployment is intended and understood. It must not be treated as a passive settings update. Coordinate the Worker secret and the trusted Python runtime secret so one side is not left using a stale token.
+
 ## Rollback / stop conditions
 
 Stop instead of deploying if any of these occur:
 
 - D1 name/UUID does not match the generated config
 - migration list is unexpected
-- required Worker secret is missing
 - Wrangler dry-run fails
+- the first-deploy secret file is inside the repository or a synced folder
 - `/health` protocol version differs from Python
 - unauthenticated persistence POST is accepted
 - logs contain secret or request-body material
