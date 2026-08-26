@@ -7,6 +7,7 @@ from .persistence import (
     LeagueSeasonIdentity,
     build_failed_sync_statement,
     build_successful_sync_write_plan,
+    build_unchanged_sync_statement,
     build_sync_start_statement,
     canonical_json,
     persistence_content_fingerprint,
@@ -18,6 +19,7 @@ FANTASY_PERSISTENCE_PROTOCOL_VERSION = 1
 SYNC_START = "SYNC_START"
 SYNC_FAILED = "SYNC_FAILED"
 SYNC_SUCCESS = "SYNC_SUCCESS"
+SYNC_UNCHANGED = "SYNC_UNCHANGED"
 JAVASCRIPT_MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
 
@@ -153,6 +155,50 @@ def build_successful_sync_command(
     }
 
 
+
+def build_unchanged_sync_command(
+    identity: LeagueSeasonIdentity,
+    *,
+    sync_run_id: str,
+    completed_at_ms: int,
+    accepted_snapshot_id: str,
+    content_fingerprint: str,
+) -> Mapping[str, Any]:
+    """Build protocol-v1 SYNC_UNCHANGED without inserting duplicate state."""
+
+    completed_at_ms = _javascript_safe_nonnegative_int(
+        completed_at_ms,
+        "completed_at_ms",
+    )
+    accepted_snapshot_id = _required_text(
+        accepted_snapshot_id,
+        "accepted_snapshot_id",
+    )
+    content_fingerprint = _sha256_fingerprint(
+        content_fingerprint,
+        "content_fingerprint",
+    )
+
+    # Keep the Python SQL contract as the source of truth for identity/text/time
+    # validation even though the Worker will construct its own fixed statement.
+    build_unchanged_sync_statement(
+        identity,
+        sync_run_id=sync_run_id,
+        completed_at_ms=completed_at_ms,
+        accepted_snapshot_id=accepted_snapshot_id,
+        content_fingerprint=content_fingerprint,
+    )
+
+    return {
+        "protocol_version": FANTASY_PERSISTENCE_PROTOCOL_VERSION,
+        "kind": SYNC_UNCHANGED,
+        "identity": _identity_payload(identity),
+        "sync_run_id": _required_text(sync_run_id, "sync_run_id"),
+        "completed_at_ms": completed_at_ms,
+        "accepted_snapshot_id": accepted_snapshot_id,
+        "content_fingerprint": content_fingerprint,
+    }
+
 def _identity_payload(identity: LeagueSeasonIdentity) -> Mapping[str, str]:
     return {
         "league_season_id": identity.league_season_id,
@@ -211,6 +257,15 @@ def _event_payload(
         ),
     }
 
+
+
+def _sha256_fingerprint(value: Any, label: str) -> str:
+    result = _required_text(value, label)
+    if len(result) != 64 or any(char not in "0123456789abcdef" for char in result):
+        raise UnsafePersistenceCommand(
+            f"{label} must be a lowercase 64-character SHA-256 hex fingerprint"
+        )
+    return result
 
 def _required_text(value: Any, label: str) -> str:
     result = str(value or "").strip()
