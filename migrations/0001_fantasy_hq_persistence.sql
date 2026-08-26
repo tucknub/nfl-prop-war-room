@@ -216,3 +216,42 @@ CREATE INDEX idx_football_identity_reviews_lookup
     ON football_identity_review_events(
         provider, provider_scope, external_id, created_at_ms DESC
     );
+
+-- Accepted observations and their derived audit events are append-only. A future
+-- retention or repair migration must explicitly drop/replace these guards rather
+-- than silently rewriting historical evidence.
+CREATE TRIGGER trg_fantasy_state_snapshots_no_update
+BEFORE UPDATE ON fantasy_state_snapshots
+BEGIN
+    SELECT RAISE(ABORT, 'fantasy_state_snapshots are append-only');
+END;
+
+CREATE TRIGGER trg_fantasy_state_snapshots_no_delete
+BEFORE DELETE ON fantasy_state_snapshots
+BEGIN
+    SELECT RAISE(ABORT, 'fantasy_state_snapshots are append-only');
+END;
+
+CREATE TRIGGER trg_fantasy_change_events_no_update
+BEFORE UPDATE ON fantasy_change_events
+BEGIN
+    SELECT RAISE(ABORT, 'fantasy_change_events are append-only');
+END;
+
+CREATE TRIGGER trg_fantasy_change_events_no_delete
+BEFORE DELETE ON fantasy_change_events
+BEGIN
+    SELECT RAISE(ABORT, 'fantasy_change_events are append-only');
+END;
+
+CREATE TRIGGER trg_football_identity_review_events_no_update
+BEFORE UPDATE ON football_identity_review_events
+BEGIN
+    SELECT RAISE(ABORT, 'football_identity_review_events are append-only');
+END;
+
+CREATE TRIGGER trg_football_identity_review_events_no_delete
+BEFORE DELETE ON football_identity_review_events
+BEGIN
+    SELECT RAISE(ABORT, 'football_identity_review_events are append-only');
+END;
