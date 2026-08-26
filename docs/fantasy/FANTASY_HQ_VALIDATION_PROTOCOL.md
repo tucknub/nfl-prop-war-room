@@ -13,8 +13,9 @@ Fantasy League HQ must be validated as a point-in-time decision system rather th
 3. **Ownership is timestamped evidence.** A waiver recommendation is invalid if roster ownership is not known as of that point.
 4. **Provider phase matters.** Pre-draft empty rosters are not a free-agent pool.
 5. **Draft resource is authoritative for draft configuration.** Do not validate draft behavior from conflicting league convenience fields.
-6. **No retrospective recommendation editing.** Persist the original recommendation/evidence version.
-7. **Fail closed.** Missing identity, ownership, rules, or required evidence suppresses the affected recommendation rather than being silently filled.
+6. **Identity is point-in-time evidence too.** A later GSIS/external bridge must not be backdated into an earlier recommendation replay unless that bridge was actually available then.
+7. **No retrospective recommendation editing.** Persist the original recommendation/evidence version.
+8. **Fail closed.** Missing identity, ownership, rules, or required evidence suppresses the affected recommendation rather than being silently filled.
 
 ## Existing PropWar foundations to reuse
 
@@ -80,15 +81,32 @@ For a `pre_draft` league with empty/uninitialized rosters:
 
 ## Stage 2 — Identity correctness
 
-Measure:
+Measure separately:
 
-- direct authoritative ID resolution rate
-- externally bridged ID resolution rate
-- reviewed fallback rate
-- unresolved rate
-- ambiguous/conflicting rate
+- direct existing PropWar/NFL-ID resolution rate;
+- current PropWar/nflverse bridge rate;
+- reviewed external-ID bridge rate;
+- unique name + team + position reviewed fallback rate;
+- provisional provider-entity rate;
+- review-required/unresolved rate;
+- ambiguous/conflicting rate.
 
-Any duplicate-name case must demonstrate that team/provider ID context prevents cross-player contamination.
+Real source-audit acceptance fixtures currently include:
+
+- 330 distinct historical FFL/Papa Johns player/team-defense IDs with 98.79% canonicalizable using existing authority plus controlled extensions;
+- a current top-500 Sleeper player pool where the unresolved population is overwhelmingly 2026 rookies/new identities rather than established-player collisions.
+
+Identity validation must explicitly test:
+
+1. duplicate normalized player names;
+2. traded players whose current team differs from historical crosswalk rows;
+3. common-name/short-name aliases;
+4. team defenses as `TEAM_DEFENSE`, not pseudo-players;
+5. a rookie created as `PROVISIONAL_PROVIDER_ENTITY` and later promoted to `VERIFIED_NFL_ID` without changing `propwar_entity_id`;
+6. a provider ID conflict that enters review rather than silently moving an alias to another entity;
+7. a later identity bridge not being retroactively treated as known in a point-in-time replay.
+
+A provisional entity may be shown in draft/ownership state, but recommendations requiring historical/current NFL role or market joins must remain blocked until a safe NFL bridge exists.
 
 ## Stage 3 — Change-event correctness
 
@@ -103,6 +121,8 @@ Replay controlled snapshots and verify exact deterministic events:
 - ownership initialization
 
 Unchanged repeated syncs create no duplicate event history.
+
+Identity promotion itself should create an identity audit event, not a fake roster add/drop event.
 
 ## Stage 4 — Historical fantasy decision replay
 
@@ -135,8 +155,11 @@ Candidate questions:
 - does team/roster change require faster prior decay?
 - does validated current role improve waiver/start decisions after Week 1?
 - when does current-season role become more informative than positional/prior fallback?
+- how should true rookies with no NFL history differ from veterans with sparse current-season samples?
 
 Existing fixed blend weights are challengers, not production truth.
+
+A rookie with no prior NFL role must not be assigned fabricated observed historical role. Draft/preseason evidence may still exist, but it must be labeled separately from NFL role history.
 
 ## Stage 6 — Prospective 2026 audit
 
@@ -144,6 +167,8 @@ Persist every actionable recommendation with:
 
 - generation timestamp
 - league/rules fingerprint
+- immutable `propwar_entity_id`
+- identity status and bridge known at generation time
 - Player Evidence version
 - source freshness
 - exact action and reason codes
@@ -156,6 +181,7 @@ At season end, audit:
 - recommendation usefulness by family
 - false positives caused by transient roles
 - suppressed recommendations that would have been unsafe due to stale/missing ownership
+- identity-related suppressed/incorrect joins
 - value of market confirmation
 - value of role evidence vs baseline/projection-only alternatives
 - early-season prior behavior
