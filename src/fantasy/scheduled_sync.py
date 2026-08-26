@@ -10,9 +10,9 @@ from .sleeper_multi_persistence import (
     MultiSleeperPersistenceRunResult,
     SleeperMultiPersistenceReader,
     SleeperPersistenceLeagueSpec,
-    SleeperPersistenceTransport,
     run_multi_sleeper_persistence_sync,
 )
+from .sleeper_persistence import SleeperPersistenceTransport
 
 
 SLEEPER_SCHEDULE_VERSION = "SLEEPER_SCHEDULE_V1"
