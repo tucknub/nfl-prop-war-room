@@ -1,0 +1,23 @@
+{
+  "name": "propwar-fantasy-hq",
+  "main": "./index.mjs",
+  "compatibility_date": "2026-08-26",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "secrets": {
+    "required": [
+      "FANTASY_PERSISTENCE_TOKEN"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "FANTASY_DB",
+      "database_name": "propwar-fantasy-hq",
+      "database_id": "__FANTASY_D1_DATABASE_ID__",
+      "migrations_dir": "../../migrations"
+    }
+  ]
+}
