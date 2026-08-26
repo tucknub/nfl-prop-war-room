@@ -247,6 +247,7 @@ def test_commit_no_change_directly_reuses_previous_snapshot():
         previous=_previous(),
         current_snapshot=_current(),
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
 
     assert outcome.state == PERSISTENCE_COMPLETED
@@ -269,6 +270,23 @@ def test_commit_no_change_rejects_any_full_persistence_content_change_before_net
             previous=_previous(),
             current_snapshot=_current(name="Changed Name"),
             completed_at_ms=250,
+            provider_status="HEALTHY",
+        )
+    assert transport.calls == []
+
+
+def test_commit_no_change_rejects_provider_health_change_before_network():
+    transport = FakeTransport()
+    with pytest.raises(
+        FantasyPersistenceStateConflict,
+        match="Provider status changed",
+    ):
+        FantasyPersistenceCoordinator(transport).commit_no_change(
+            _session(),
+            previous=_previous(),
+            current_snapshot=_current(),
+            completed_at_ms=250,
+            provider_status="STALE",
         )
     assert transport.calls == []
 
@@ -285,6 +303,7 @@ def test_commit_no_change_rejects_inconsistent_previous_fingerprint():
             previous=previous,
             current_snapshot=_current(),
             completed_at_ms=250,
+            provider_status="HEALTHY",
         )
     assert transport.calls == []
 
@@ -306,6 +325,7 @@ def test_commit_no_change_is_idempotent_only_for_same_accepted_snapshot():
         previous=_previous(),
         current_snapshot=_current(),
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
     assert outcome.source == PERSISTENCE_SOURCE_EXISTING
     assert not any(call[0] == "send" for call in same.calls)
@@ -330,6 +350,7 @@ def test_commit_no_change_is_idempotent_only_for_same_accepted_snapshot():
             previous=_previous(),
             current_snapshot=_current(),
             completed_at_ms=250,
+            provider_status="HEALTHY",
         )
 
 
@@ -352,6 +373,7 @@ def test_ambiguous_no_change_recovers_exact_completed_snapshot_without_retry():
         previous=_previous(),
         current_snapshot=_current(),
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
 
     assert outcome.source == PERSISTENCE_SOURCE_RECOVERY
@@ -370,6 +392,7 @@ def test_ambiguous_no_change_still_started_is_unknown_and_never_retries():
             previous=_previous(),
             current_snapshot=_current(),
             completed_at_ms=250,
+            provider_status="HEALTHY",
         )
 
     assert captured.value.observed_state == PERSISTENCE_STARTED
