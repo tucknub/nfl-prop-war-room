@@ -110,3 +110,16 @@ def test_migrations_directory_resolves_to_repository_migrations_folder() -> None
     resolved = (TEMPLATE_PATH.parent / EXPECTED_MIGRATIONS_DIR).resolve()
     assert resolved == (REPO_ROOT / "migrations").resolve()
     assert (resolved / "0001_fantasy_hq_persistence.sql").is_file()
+
+
+def test_gitignore_keeps_generated_and_local_secret_state_out_of_source() -> None:
+    ignored = set((REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines())
+    required = {
+        "workers/fantasy-hq/wrangler.generated.jsonc",
+        "workers/fantasy-hq/.wrangler/",
+        "workers/fantasy-hq/.dev.vars*",
+        "workers/fantasy-hq/.env*",
+        "workers/fantasy-hq/.deploy-secrets.env",
+        "workers/fantasy-hq/*secrets*.env",
+    }
+    assert required.issubset(ignored)
