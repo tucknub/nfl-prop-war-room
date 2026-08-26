@@ -3,7 +3,7 @@
 -- This migration defines storage only; it does not configure or deploy a D1 database.
 
 CREATE TABLE fantasy_league_families (
-    league_family_id TEXT PRIMARY KEY,
+    league_family_id TEXT NOT NULL PRIMARY KEY,
     display_name TEXT NOT NULL,
     created_at_ms INTEGER NOT NULL CHECK (created_at_ms >= 0),
     metadata_json TEXT NOT NULL DEFAULT '{}',
@@ -13,7 +13,7 @@ CREATE TABLE fantasy_league_families (
 );
 
 CREATE TABLE fantasy_league_seasons (
-    league_season_id TEXT PRIMARY KEY,
+    league_season_id TEXT NOT NULL PRIMARY KEY,
     league_family_id TEXT NOT NULL,
     platform TEXT NOT NULL,
     platform_league_id TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE fantasy_league_seasons (
 );
 
 CREATE TABLE fantasy_state_snapshots (
-    snapshot_id TEXT PRIMARY KEY,
+    snapshot_id TEXT NOT NULL PRIMARY KEY,
     league_season_id TEXT NOT NULL,
     content_fingerprint TEXT NOT NULL,
     observed_at_ms INTEGER NOT NULL CHECK (observed_at_ms >= 0),
@@ -60,7 +60,7 @@ CREATE TABLE fantasy_state_snapshots (
 );
 
 CREATE TABLE fantasy_change_events (
-    event_fingerprint TEXT PRIMARY KEY,
+    event_fingerprint TEXT NOT NULL PRIMARY KEY,
     league_season_id TEXT NOT NULL,
     event_type TEXT NOT NULL,
     platform TEXT NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE fantasy_change_events (
 );
 
 CREATE TABLE fantasy_sync_runs (
-    sync_run_id TEXT PRIMARY KEY,
+    sync_run_id TEXT NOT NULL PRIMARY KEY,
     league_season_id TEXT NOT NULL,
     platform TEXT NOT NULL,
     platform_league_id TEXT NOT NULL,
@@ -124,7 +124,7 @@ CREATE TABLE fantasy_sync_runs (
 );
 
 CREATE TABLE football_entities (
-    propwar_entity_id TEXT PRIMARY KEY,
+    propwar_entity_id TEXT NOT NULL PRIMARY KEY,
     entity_type TEXT NOT NULL,
     canonical_name TEXT NOT NULL,
     position TEXT,
@@ -139,7 +139,7 @@ CREATE TABLE football_entities (
 );
 
 CREATE TABLE football_external_ids (
-    external_identity_id TEXT PRIMARY KEY,
+    external_identity_id TEXT NOT NULL PRIMARY KEY,
     propwar_entity_id TEXT NOT NULL,
     provider TEXT NOT NULL,
     provider_scope TEXT NOT NULL DEFAULT '',
@@ -160,7 +160,7 @@ CREATE TABLE football_external_ids (
 );
 
 CREATE TABLE football_identity_review_events (
-    identity_review_event_id TEXT PRIMARY KEY,
+    identity_review_event_id TEXT NOT NULL PRIMARY KEY,
     provider TEXT NOT NULL,
     provider_scope TEXT NOT NULL DEFAULT '',
     external_id TEXT NOT NULL,
