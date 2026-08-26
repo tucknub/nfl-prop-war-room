@@ -14,6 +14,8 @@ from src.fantasy.cloudflare_config import (
     EXPECTED_D1_DATABASE_NAME,
     EXPECTED_MAIN,
     EXPECTED_MIGRATIONS_DIR,
+    EXPECTED_CRONS,
+    EXPECTED_SCHEDULE_MODE,
     EXPECTED_SECRET_NAME,
     EXPECTED_WORKER_NAME,
     UnsafeFantasyCloudflareConfig,
@@ -39,7 +41,9 @@ def test_template_contains_only_one_resource_placeholder_and_no_secret_value() -
     assert config["compatibility_date"] == EXPECTED_COMPATIBILITY_DATE
     assert config["workers_dev"] is True
     assert config["secrets"] == {"required": [EXPECTED_SECRET_NAME]}
-    assert EXPECTED_SECRET_NAME not in config.get("vars", {})
+    assert config["vars"] == {"FANTASY_SCHEDULE_MODE": EXPECTED_SCHEDULE_MODE}
+    assert config["triggers"] == {"crons": list(EXPECTED_CRONS)}
+    assert EXPECTED_SECRET_NAME not in config["vars"]
     assert config["d1_databases"] == [
         {
             "binding": EXPECTED_D1_BINDING,
@@ -60,7 +64,9 @@ def test_renderer_substitutes_canonical_uuid_and_preserves_invariants() -> None:
     assert DATABASE_ID_PLACEHOLDER not in rendered
     assert config["d1_databases"][0]["database_id"] == TEST_DATABASE_ID
     assert config["secrets"] == {"required": [EXPECTED_SECRET_NAME]}
-    assert EXPECTED_SECRET_NAME not in config.get("vars", {})
+    assert config["vars"] == {"FANTASY_SCHEDULE_MODE": EXPECTED_SCHEDULE_MODE}
+    assert config["triggers"] == {"crons": list(EXPECTED_CRONS)}
+    assert EXPECTED_SECRET_NAME not in config["vars"]
 
 
 def test_renderer_refuses_missing_duplicate_or_nil_placeholder() -> None:
@@ -88,6 +94,8 @@ def test_renderer_rejects_drift_in_secret_binding_or_worker_contract() -> None:
         template.replace('"FANTASY_DB"', '"DB"'),
         template.replace('"FANTASY_PERSISTENCE_TOKEN"', '"OTHER_SECRET"'),
         template.replace('"../../migrations"', '"./migrations"'),
+        template.replace('"FANTASY_SCHEDULE_MODE": "SHADOW"', '"FANTASY_SCHEDULE_MODE": "LIVE"'),
+        template.replace('"crons": []', '"crons": ["17 * * * *"]'),
     ]
     for mutated in mutations:
         with pytest.raises(UnsafeFantasyCloudflareConfig):
@@ -106,6 +114,8 @@ def test_atomic_writer_creates_generated_config_without_secret_material(tmp_path
     config = json.loads(output.read_text(encoding="utf-8"))
     assert config["d1_databases"][0]["database_id"] == TEST_DATABASE_ID
     assert config["secrets"] == {"required": [EXPECTED_SECRET_NAME]}
+    assert config["vars"] == {"FANTASY_SCHEDULE_MODE": EXPECTED_SCHEDULE_MODE}
+    assert config["triggers"] == {"crons": list(EXPECTED_CRONS)}
     assert not list(tmp_path.glob("*.tmp"))
 
 
