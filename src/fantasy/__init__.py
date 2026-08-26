@@ -1,4 +1,4 @@
-"""Fantasy League HQ provider-normalization, identity, and change-detection foundation."""
+"""Fantasy League HQ provider-normalization, identity, sync, and change-detection foundation."""
 
 from .changes import (
     FantasyChangeEvent,
@@ -40,12 +40,20 @@ from .sleeper import (
     normalize_sleeper_matchups,
     normalize_sleeper_transactions,
 )
+from .sync import (
+    FantasyIdentityAudit,
+    SleeperSyncResult,
+    build_sleeper_identity_audit,
+    build_sleeper_sync_result,
+    collect_league_player_ids,
+)
 
 __all__ = [
     "DraftPick",
     "DraftState",
     "FaabTransfer",
     "FantasyChangeEvent",
+    "FantasyIdentityAudit",
     "FantasyLeagueState",
     "FantasySnapshot",
     "LeagueRules",
@@ -59,11 +67,15 @@ __all__ = [
     "SleeperClient",
     "SleeperIdentityResolution",
     "SleeperLeagueBundle",
+    "SleeperSyncResult",
     "TEAM_DEFENSE",
     "TradedPick",
     "UNRESOLVED",
     "UnsafeSnapshotTransition",
     "WeeklyLeagueState",
+    "build_sleeper_identity_audit",
+    "build_sleeper_sync_result",
+    "collect_league_player_ids",
     "derive_fantasy_change_events",
     "extract_propwar_player_ids",
     "load_ffverse_player_ids",
