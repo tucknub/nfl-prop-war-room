@@ -137,6 +137,8 @@ def normalize_sleeper_player_catalog(payload: Any) -> Mapping[str, Mapping[str, 
         if not isinstance(raw_metadata, Mapping):
             raise ValueError(f"Sleeper player catalog metadata is malformed for {player_id}")
         normalized[player_id] = dict(raw_metadata)
+    if not normalized:
+        raise ValueError("Sleeper returned an empty NFL player catalog")
     return normalized
 
 
