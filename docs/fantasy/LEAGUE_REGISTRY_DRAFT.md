@@ -106,6 +106,115 @@ Between the confirmed 2025 and live 2026 league objects:
 
 The Superflex → WR change is strategically material because it lowers quarterback scarcity/value while increasing required weekly WR depth.
 
+## Papa Johns
+
+Logical family: `papa_johns`
+
+Platform: Sleeper
+
+Provider league name: `Papa Johns #2`
+
+Known season chain:
+
+| Season | Sleeper league ID | Status | Notes |
+|---|---|---|---|
+| 2024 | `1041254319653720064` | historical / not yet backfilled | Referenced by the 2025 league object's `previous_league_id`. |
+| 2025 | `1237498478561603584` | complete / verified source comparison | Direct predecessor of current 2026 league. |
+| 2026 | `1356381517693079553` | current / verified | Live Sleeper audit passed on 2026-08-26. |
+
+### Verified 2026 live rules
+
+Live league facts as of 2026-08-26:
+
+- League name: Papa Johns #2.
+- Season: 2026.
+- Status: `pre_draft`.
+- 12 teams / 12 current managers.
+- Full PPR (`rec = 1`).
+- Passing TD = 6.
+- Passing interception = -1.
+- Rushing/receiving yards = 0.1 per yard.
+- Rushing/receiving TD = 6.
+- Starter slots, in provider order: `QB, RB, RB, WR, WR, WR, TE, FLEX, FLEX`.
+- No Superflex / OP slot.
+- **No K or DEF starter slots**, even though the raw Sleeper scoring object retains kicking and D/ST scoring fields.
+- 6 bench slots.
+- Provider setting `reserve_slots = 1`; reserve eligibility flags should be preserved exactly rather than assuming generic IR behavior.
+- No taxi slots.
+- $150 waiver budget.
+- Sleeper `waiver_type = 2`.
+- 2-day waiver clear period.
+- 1 keeper maximum.
+- 6 playoff teams.
+- Playoffs start Week 15.
+- Trade deadline Week 12.
+- QB roster limit = 3.
+- Previous Sleeper league ID is the confirmed 2025 Papa Johns ID.
+
+### Verified 2026 draft state
+
+The live Sleeper draft resource reports:
+
+- Status: `pre_draft`.
+- Type: snake.
+- 15 rounds.
+- 12 teams.
+- Draft roster slots: 1 QB, 2 RB, 3 WR, 1 TE, 2 FLEX, 6 bench.
+- No K, DEF, or Superflex draft slot.
+- Current scheduled start: 2026-09-06 12:00 PM America/Indiana/Indianapolis (16:00 UTC).
+- Draft order is not yet assigned in the provider response.
+
+As with FFL, the league object's `settings.draft_rounds` reports `3`; the actual current draft resource is authoritative and reports 15 rounds.
+
+### Current ownership state
+
+All 12 current Papa Johns rosters are empty because the league is pre-draft. Therefore ownership-dependent features remain blocked until authoritative roster ownership is initialized.
+
+### 2025 → 2026 rule comparison
+
+The fetched 2025 predecessor and 2026 current league have the same:
+
+- scoring settings;
+- ordered roster positions;
+- waiver/keeper/playoff/trade configuration;
+- team count.
+
+Differences observed are season/status/current-leg reporting fields only. Therefore Papa Johns' current rules fingerprint should be treated as strategically unchanged from 2025 unless a later live provider sync changes the rule fields.
+
+### Normalization lessons from Papa Johns
+
+Papa Johns validates several platform rules the common Fantasy HQ model must handle:
+
+1. A league can have scoring fields for K/DST even when K/DST are not roster positions. Active lineup positions come from `roster_positions`, not from the presence of scoring keys.
+2. Reserve/IR configuration can be represented in provider `settings` separately from `roster_positions`; normalize reserve slots and eligibility flags explicitly.
+3. Two leagues can both be Full PPR/1QB yet still require materially different player valuation because of team count, starting WR/FLEX depth, FAAB budget, defense usage, bench depth, and other rules.
+4. Draft settings must come from the draft resource; both verified Sleeper leagues currently expose misleading `settings.draft_rounds = 3` values relative to their actual draft objects.
+
+## Cross-league 2026 comparison
+
+| Setting | Franchise Football League | Papa Johns #2 |
+|---|---:|---:|
+| Teams | 10 | 12 |
+| PPR | Full | Full |
+| Pass TD | 6 | 6 |
+| Pass INT | -2 | -1 |
+| QB | 1 | 1 |
+| RB | 2 | 2 |
+| WR | 3 | 3 |
+| TE | 1 | 1 |
+| FLEX | 1 | 2 |
+| Superflex | 0 | 0 |
+| DEF | 1 | 0 |
+| K | 0 | 0 |
+| Bench | 7 | 6 |
+| Reserve slots | 1 | 1 provider setting |
+| FAAB budget | $100 | $150 |
+| Keepers | 1 | 1 |
+| Playoff teams | 6 | 6 |
+| Draft rounds | 16 | 15 |
+
+This proves the normalized model must be league-specific even when the headline scoring format appears similar.
+
 ### Rules fingerprint
 
 Each accepted season state should persist a deterministic `rules_fingerprint` computed from normalized scoring, ordered roster positions, waiver/transaction rules, keeper rules, and playoff settings.
