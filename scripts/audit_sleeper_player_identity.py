@@ -32,7 +32,7 @@ TEAM_VARIANTS = {
 def fetch_json(path: str):
     req = urllib.request.Request(
         f"{API_BASE}{path}",
-        headers={"Accept": "application/json", "User-Agent": "PropWar-IdentityAudit/1.0"},
+        headers={"Accept": "application/json", "User-Agent": "PropWar-IdentityAudit/1.1"},
     )
     with urllib.request.urlopen(req, timeout=35) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
@@ -101,7 +101,6 @@ def resolve_one(sleeper_id, player, gsis_ids, by_name_team_pos, by_name_pos):
     if gsis and gsis in gsis_ids:
         return "GSIS_DIRECT", gsis, None
     if gsis:
-        # GSIS itself is authoritative identity evidence even if the committed crosswalk export predates this player.
         return "GSIS_EXTENSION_REQUIRED", gsis, None
 
     exact = by_name_team_pos.get((norm, team, position), [])
@@ -126,6 +125,7 @@ def summarize_set(label, sleeper_ids, players, indexes):
     counts = Counter()
     ext_presence = Counter()
     yahoo_seen = defaultdict(list)
+    sleeper_statuses = Counter()
     for sid in sorted(sleeper_ids):
         p = players.get(str(sid))
         if not isinstance(p, dict):
@@ -134,6 +134,7 @@ def summarize_set(label, sleeper_ids, players, indexes):
             continue
         status, propwar_candidate, note = resolve_one(sid, p, gsis_ids, by_name_team_pos, by_name_pos)
         counts[status] += 1
+        sleeper_statuses[str(p.get("status") or "UNKNOWN")] += 1
         for key in ["gsis_id", "yahoo_id", "sportradar_id", "fantasy_data_id", "espn_id"]:
             if p.get(key) not in (None, ""):
                 ext_presence[key] += 1
@@ -145,6 +146,9 @@ def summarize_set(label, sleeper_ids, players, indexes):
             "team": p.get("team"),
             "position": p.get("position"),
             "active": p.get("active"),
+            "sleeper_status": p.get("status"),
+            "search_rank": p.get("search_rank"),
+            "depth_chart_order": p.get("depth_chart_order"),
             "years_exp": p.get("years_exp"),
             "gsis_id": p.get("gsis_id"),
             "yahoo_id": p.get("yahoo_id"),
@@ -162,11 +166,17 @@ def summarize_set(label, sleeper_ids, players, indexes):
         "label": label,
         "total": total,
         "status_counts": dict(counts),
+        "sleeper_status_counts": dict(sleeper_statuses),
         "existing_crosswalk_or_team_defense_pct": round(100 * directish / total, 2) if total else None,
         "canonicalizable_with_extensions_pct": round(100 * canonicalizable / total, 2) if total else None,
         "external_id_presence": dict(ext_presence),
         "duplicate_yahoo_id_count": sum(1 for ids in yahoo_seen.values() if len(ids) > 1),
     }, rows
+
+
+def numeric_rank(player):
+    rank = player.get("search_rank")
+    return rank if isinstance(rank, (int, float)) else None
 
 
 def main():
@@ -189,39 +199,55 @@ def main():
         and p.get("active") is True
         and str(p.get("position") or "").upper() in (PLAYER_POSITIONS | {"DEF"})
     }
-    active_skill_ids = {
-        sid for sid in active_ids
-        if str((players.get(sid) or {}).get("position") or "").upper() in PLAYER_POSITIONS
+    team_skill_ids = {
+        str(sid) for sid, p in players.items()
+        if isinstance(p, dict)
+        and p.get("active") is True
+        and p.get("team") not in (None, "")
+        and str(p.get("position") or "").upper() in PLAYER_POSITIONS
     }
-    active_rookie_ids = {
-        sid for sid in active_skill_ids
-        if (players.get(sid) or {}).get("years_exp") in (0, "0")
+    team_plus_def_ids = team_skill_ids | {
+        str(sid) for sid, p in players.items()
+        if isinstance(p, dict)
+        and p.get("active") is True
+        and str(p.get("position") or "").upper() == "DEF"
     }
+    ranked_500_ids = {sid for sid in team_skill_ids if numeric_rank(players[sid]) is not None and numeric_rank(players[sid]) <= 500}
+    ranked_750_ids = {sid for sid in team_skill_ids if numeric_rank(players[sid]) is not None and numeric_rank(players[sid]) <= 750}
+    ranked_1000_ids = {sid for sid in team_skill_ids if numeric_rank(players[sid]) is not None and numeric_rank(players[sid]) <= 1000}
+    ranked_500_rookies = {sid for sid in ranked_500_ids if (players[sid] or {}).get("years_exp") in (0, "0")}
+    ranked_1000_rookies = {sid for sid in ranked_1000_ids if (players[sid] or {}).get("years_exp") in (0, "0")}
 
     summary = {}
     all_rows = {}
     for label, ids in [
         ("historical_real_league_players", historical_ids),
-        ("current_active_player_pool", active_ids),
-        ("current_active_skill_players", active_skill_ids),
-        ("current_active_rookies", active_rookie_ids),
+        ("current_team_attached_player_pool", team_plus_def_ids),
+        ("current_team_attached_skill_players", team_skill_ids),
+        ("current_search_rank_500", ranked_500_ids),
+        ("current_search_rank_750", ranked_750_ids),
+        ("current_search_rank_1000", ranked_1000_ids),
+        ("current_search_rank_500_rookies", ranked_500_rookies),
+        ("current_search_rank_1000_rookies", ranked_1000_rookies),
+        ("raw_sleeper_active_flag_pool", active_ids),
     ]:
         s, rows = summarize_set(label, ids, players, indexes)
         summary[label] = s
         all_rows[label] = rows
 
-    # Attach historical provenance only to the historical detail file.
     for row in all_rows["historical_real_league_players"]:
         row["historical_sources"] = sorted(sources.get(row["sleeper_player_id"], []))
 
     (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
     (out / "historical_identity_rows.json").write_text(json.dumps(all_rows["historical_real_league_players"], indent=2, sort_keys=True), encoding="utf-8")
-    (out / "current_active_identity_rows.json").write_text(json.dumps(all_rows["current_active_player_pool"], indent=2, sort_keys=True), encoding="utf-8")
-    (out / "current_rookie_identity_rows.json").write_text(json.dumps(all_rows["current_active_rookies"], indent=2, sort_keys=True), encoding="utf-8")
+    (out / "ranked_500_identity_rows.json").write_text(json.dumps(all_rows["current_search_rank_500"], indent=2, sort_keys=True), encoding="utf-8")
+    (out / "ranked_1000_identity_rows.json").write_text(json.dumps(all_rows["current_search_rank_1000"], indent=2, sort_keys=True), encoding="utf-8")
+    (out / "ranked_1000_rookie_rows.json").write_text(json.dumps(all_rows["current_search_rank_1000_rookies"], indent=2, sort_keys=True), encoding="utf-8")
 
     problem_rows = []
-    for label, rows in all_rows.items():
-        for row in rows:
+    reviewed_sets = {"historical_real_league_players", "current_search_rank_500", "current_search_rank_1000"}
+    for label in reviewed_sets:
+        for row in all_rows[label]:
             if row.get("status") in {"GSIS_EXTENSION_REQUIRED", "NAME_TEAM_POSITION_UNIQUE", "NAME_POSITION_UNIQUE", "AMBIGUOUS", "UNRESOLVED", "SLEEPER_PLAYER_MISSING"}:
                 problem_rows.append({"set": label, **row})
     (out / "identity_extension_review.json").write_text(json.dumps(problem_rows, indent=2, sort_keys=True), encoding="utf-8")
