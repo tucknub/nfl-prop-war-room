@@ -487,3 +487,84 @@ def test_success_plan_requires_explicit_provider_health_status():
             derived_at_ms=1,
             provider_status=" ",
         )
+
+
+def test_initial_success_guard_rejects_existing_accepted_snapshot():
+    connection = _db()
+    previous = FantasySnapshot("existing-prior", _state())
+    _seed_accepted_snapshot(connection, previous, observed_at_ms=10)
+    assert _execute(
+        connection,
+        build_sync_start_statement(
+            _identity(),
+            sync_run_id="sync-initial-stale",
+            started_at_ms=20,
+        ),
+    ) == 1
+
+    plan = build_successful_sync_write_plan(
+        _identity(),
+        sync_run_id="sync-initial-stale",
+        snapshot=FantasySnapshot("illegal-first", _state()),
+        events=(),
+        observed_at_ms=30,
+        accepted_at_ms=31,
+        completed_at_ms=35,
+        derived_at_ms=32,
+        provider_status="HEALTHY",
+        expected_previous_snapshot_id=None,
+    )
+
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="fantasy_state_snapshots.league_season_id",
+    ):
+        _execute(connection, plan.statements[0])
+
+    assert connection.execute(
+        "SELECT COUNT(*) FROM fantasy_state_snapshots WHERE snapshot_id='illegal-first'"
+    ).fetchone()[0] == 0
+
+
+def test_success_guard_rejects_stale_expected_previous_snapshot():
+    connection = _db()
+    old = FantasySnapshot("old-prior", _state(players=("1",)))
+    newer = FantasySnapshot("newer-prior", _state(players=("1", "2")))
+    _seed_accepted_snapshot(connection, old, observed_at_ms=10)
+    _seed_accepted_snapshot(connection, newer, observed_at_ms=15)
+    assert _execute(
+        connection,
+        build_sync_start_statement(
+            _identity(),
+            sync_run_id="sync-stale-previous",
+            started_at_ms=20,
+        ),
+    ) == 1
+
+    current = FantasySnapshot("stale-candidate", _state(players=("1", "3")))
+    events = derive_fantasy_change_events(old, current)
+    plan = build_successful_sync_write_plan(
+        _identity(),
+        sync_run_id="sync-stale-previous",
+        snapshot=current,
+        events=events,
+        observed_at_ms=30,
+        accepted_at_ms=31,
+        completed_at_ms=35,
+        derived_at_ms=32,
+        provider_status="HEALTHY",
+        expected_previous_snapshot_id="old-prior",
+    )
+
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="fantasy_state_snapshots.league_season_id",
+    ):
+        _execute(connection, plan.statements[0])
+
+    assert connection.execute(
+        "SELECT COUNT(*) FROM fantasy_state_snapshots WHERE snapshot_id='stale-candidate'"
+    ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT status FROM fantasy_sync_runs WHERE sync_run_id='sync-stale-previous'"
+    ).fetchone()[0] == "STARTED"
