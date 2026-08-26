@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from hashlib import sha256
 import json
 from pathlib import Path
 import sqlite3
 
 import pytest
 
-from src.fantasy.changes import FantasyChangeEvent, FantasySnapshot, derive_fantasy_change_events
+from src.fantasy.changes import (
+    FantasyChangeEvent,
+    FantasySnapshot,
+    derive_fantasy_change_events,
+)
 from src.fantasy.models import FantasyLeagueState, LeagueRules, Roster
 from src.fantasy.persistence import (
     LeagueSeasonIdentity,
@@ -15,11 +21,16 @@ from src.fantasy.persistence import (
     build_successful_sync_write_plan,
     build_sync_start_statement,
     canonical_json,
+    persistence_content_fingerprint,
     serialize_fantasy_snapshot,
 )
 
 
-MIGRATION = Path(__file__).resolve().parents[1] / "migrations" / "0001_fantasy_hq_persistence.sql"
+MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "0001_fantasy_hq_persistence.sql"
+)
 
 
 def _db() -> sqlite3.Connection:
@@ -28,19 +39,34 @@ def _db() -> sqlite3.Connection:
     connection.executescript(MIGRATION.read_text(encoding="utf-8"))
     connection.execute(
         "INSERT INTO fantasy_league_families "
-        "(league_family_id, display_name, created_at_ms, metadata_json) VALUES (?, ?, ?, ?)",
+        "(league_family_id, display_name, created_at_ms, metadata_json) "
+        "VALUES (?, ?, ?, ?)",
         ("ffl", "Franchise Football League", 1, "{}"),
     )
     connection.execute(
         "INSERT INTO fantasy_league_seasons "
         "(league_season_id, league_family_id, platform, platform_league_id, season, "
         "display_name, created_at_ms, metadata_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        ("ffl:2026", "ffl", "SLEEPER", "league-2026", "2026", "FFL 2026", 1, "{}"),
+        (
+            "ffl:2026",
+            "ffl",
+            "SLEEPER",
+            "league-2026",
+            "2026",
+            "FFL 2026",
+            1,
+            "{}",
+        ),
     )
     return connection
 
 
-def _state(*, players=("1",), starters=("1",), status="in_season") -> FantasyLeagueState:
+def _state(
+    *,
+    players=("1",),
+    starters=("1",),
+    status="in_season",
+) -> FantasyLeagueState:
     roster = Roster(
         platform_roster_id="1",
         platform_user_id="me",
@@ -64,7 +90,9 @@ def _state(*, players=("1",), starters=("1",), status="in_season") -> FantasyLea
             roster_positions=("QB", "RB", "WR", "BN"),
             scoring_settings={"rec": 1, "pass_td": 6},
             waiver_budget=100,
-            raw_settings={"provider_only": "must not leak into normalized state"},
+            raw_settings={
+                "provider_only": "must not leak into normalized state",
+            },
         ),
         draft=None,
         managers=(),
@@ -88,7 +116,11 @@ def _execute(connection: sqlite3.Connection, statement) -> int:
     return connection.execute(statement.sql, statement.parameters).rowcount
 
 
-def _seed_snapshot(connection: sqlite3.Connection, snapshot: FantasySnapshot, observed_at_ms=10) -> None:
+def _seed_snapshot(
+    connection: sqlite3.Connection,
+    snapshot: FantasySnapshot,
+    observed_at_ms=10,
+) -> None:
     connection.execute(
         "INSERT INTO fantasy_state_snapshots ("
         "snapshot_id, league_season_id, content_fingerprint, observed_at_ms, accepted_at_ms, "
@@ -97,10 +129,10 @@ def _seed_snapshot(connection: sqlite3.Connection, snapshot: FantasySnapshot, ob
         (
             snapshot.snapshot_id,
             "ffl:2026",
-            snapshot.fingerprint,
+            persistence_content_fingerprint(snapshot),
             observed_at_ms,
             observed_at_ms,
-            snapshot.league.status,
+            "HEALTHY",
             1,
             1,
             1,
@@ -126,10 +158,33 @@ def test_snapshot_serialization_uses_normalized_facts_not_raw_provider_settings(
     assert "provider_only" not in encoded
 
 
+def test_persistence_fingerprint_hashes_exact_stored_normalized_content():
+    first = FantasySnapshot("snap-a", _state())
+    renamed = FantasySnapshot(
+        "snap-b",
+        replace(_state(), name="Franchise Football League Renamed"),
+    )
+
+    # Change detection intentionally ignores display-name churn.
+    assert first.fingerprint == renamed.fingerprint
+
+    # Persistence must still fingerprint the exact JSON stored in the row.
+    first_json = canonical_json(serialize_fantasy_snapshot(first))
+    expected = sha256(first_json.encode("utf-8")).hexdigest()
+    assert persistence_content_fingerprint(first) == expected
+    assert persistence_content_fingerprint(first) != persistence_content_fingerprint(renamed)
+
+
 def test_success_plan_executes_against_actual_migration_and_completes_sync():
     connection = _db()
-    previous = FantasySnapshot("snap-before", _state(players=("1",), starters=("1",)))
-    current = FantasySnapshot("snap-after", _state(players=("1", "2"), starters=("1",)))
+    previous = FantasySnapshot(
+        "snap-before",
+        _state(players=("1",), starters=("1",)),
+    )
+    current = FantasySnapshot(
+        "snap-after",
+        _state(players=("1", "2"), starters=("1",)),
+    )
     events = derive_fantasy_change_events(previous, current)
     assert [event.event_type for event in events] == ["PLAYER_ADDED"]
 
@@ -153,6 +208,7 @@ def test_success_plan_executes_against_actual_migration_and_completes_sync():
         accepted_at_ms=31,
         completed_at_ms=35,
         derived_at_ms=32,
+        provider_status="HEALTHY",
         source_metadata={"catalog_status": "HIT"},
     )
     for statement in plan.statements:
@@ -162,15 +218,17 @@ def test_success_plan_executes_against_actual_migration_and_completes_sync():
     connection.commit()
 
     snapshot_row = connection.execute(
-        "SELECT content_fingerprint, normalized_state_json, source_metadata_json "
-        "FROM fantasy_state_snapshots WHERE snapshot_id = ?",
+        "SELECT content_fingerprint, provider_status, normalized_state_json, "
+        "source_metadata_json FROM fantasy_state_snapshots WHERE snapshot_id = ?",
         ("snap-after",),
     ).fetchone()
-    assert snapshot_row[0] == current.fingerprint
-    stored_state = json.loads(snapshot_row[1])
+    assert snapshot_row[0] == persistence_content_fingerprint(current)
+    assert snapshot_row[1] == "HEALTHY"
+    stored_state = json.loads(snapshot_row[2])
     assert stored_state["league"]["platform_league_id"] == "league-2026"
+    assert stored_state["league"]["status"] == "in_season"
     assert stored_state["league"]["rosters"][0]["players"] == ["1", "2"]
-    assert json.loads(snapshot_row[2]) == {"catalog_status": "HIT"}
+    assert json.loads(snapshot_row[3]) == {"catalog_status": "HIT"}
 
     event_row = connection.execute(
         "SELECT event_type, before_snapshot_id, after_snapshot_id, after_value_json "
@@ -191,7 +249,11 @@ def test_failed_sync_update_records_failure_without_creating_snapshot():
     connection = _db()
     assert _execute(
         connection,
-        build_sync_start_statement(_identity(), sync_run_id="sync-fail", started_at_ms=20),
+        build_sync_start_statement(
+            _identity(),
+            sync_run_id="sync-fail",
+            started_at_ms=20,
+        ),
     ) == 1
     assert _execute(
         connection,
@@ -205,10 +267,21 @@ def test_failed_sync_update_records_failure_without_creating_snapshot():
     ) == 1
 
     row = connection.execute(
-        "SELECT status, accepted_snapshot_id, error_code, error_summary FROM fantasy_sync_runs"
+        "SELECT status, accepted_snapshot_id, error_code, error_summary "
+        "FROM fantasy_sync_runs"
     ).fetchone()
-    assert row == ("FAILED", None, "SLEEPER_TIMEOUT", "provider unavailable")
-    assert connection.execute("SELECT COUNT(*) FROM fantasy_state_snapshots").fetchone()[0] == 0
+    assert row == (
+        "FAILED",
+        None,
+        "SLEEPER_TIMEOUT",
+        "provider unavailable",
+    )
+    assert (
+        connection.execute(
+            "SELECT COUNT(*) FROM fantasy_state_snapshots"
+        ).fetchone()[0]
+        == 0
+    )
 
 
 def test_success_plan_rejects_wrong_league_identity_before_generating_sql():
@@ -228,6 +301,7 @@ def test_success_plan_rejects_wrong_league_identity_before_generating_sql():
             accepted_at_ms=1,
             completed_at_ms=1,
             derived_at_ms=1,
+            provider_status="HEALTHY",
         )
 
 
@@ -251,6 +325,7 @@ def test_success_plan_rejects_event_not_bound_to_accepted_snapshot():
             accepted_at_ms=1,
             completed_at_ms=1,
             derived_at_ms=1,
+            provider_status="HEALTHY",
         )
 
 
@@ -268,6 +343,7 @@ def test_success_plan_rejects_duplicate_event_fingerprints():
             accepted_at_ms=1,
             completed_at_ms=1,
             derived_at_ms=1,
+            provider_status="HEALTHY",
         )
 
 
@@ -283,10 +359,61 @@ def test_missing_started_sync_cannot_create_orphan_snapshot():
         accepted_at_ms=20,
         completed_at_ms=21,
         derived_at_ms=20,
+        provider_status="HEALTHY",
     )
 
     assert _execute(connection, plan.statements[0]) == 0
     assert plan.statements[0].expected_affected_rows == 1
     assert _execute(connection, plan.statements[-1]) == 0
     assert plan.statements[-1].expected_affected_rows == 1
-    assert connection.execute("SELECT COUNT(*) FROM fantasy_state_snapshots").fetchone()[0] == 0
+    assert (
+        connection.execute(
+            "SELECT COUNT(*) FROM fantasy_state_snapshots"
+        ).fetchone()[0]
+        == 0
+    )
+
+
+@pytest.mark.parametrize(
+    ("observed", "accepted", "derived", "completed", "message"),
+    [
+        (10, 9, 10, 11, "accepted_at_ms"),
+        (10, 10, 9, 11, "derived_at_ms"),
+        (10, 11, 10, 10, "completed_at_ms"),
+        (10, 10, 12, 11, "completed_at_ms"),
+    ],
+)
+def test_success_plan_rejects_impossible_timestamp_ordering(
+    observed,
+    accepted,
+    derived,
+    completed,
+    message,
+):
+    with pytest.raises(UnsafePersistencePlan, match=message):
+        build_successful_sync_write_plan(
+            _identity(),
+            sync_run_id="sync-time",
+            snapshot=FantasySnapshot("snap", _state()),
+            events=(),
+            observed_at_ms=observed,
+            accepted_at_ms=accepted,
+            completed_at_ms=completed,
+            derived_at_ms=derived,
+            provider_status="HEALTHY",
+        )
+
+
+def test_success_plan_requires_explicit_provider_health_status():
+    with pytest.raises(ValueError, match="provider_status"):
+        build_successful_sync_write_plan(
+            _identity(),
+            sync_run_id="sync-health",
+            snapshot=FantasySnapshot("snap", _state()),
+            events=(),
+            observed_at_ms=1,
+            accepted_at_ms=1,
+            completed_at_ms=1,
+            derived_at_ms=1,
+            provider_status=" ",
+        )
