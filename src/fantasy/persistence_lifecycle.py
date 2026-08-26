@@ -327,6 +327,7 @@ class FantasyPersistenceCoordinator:
         previous: PersistedFantasySnapshot,
         current_snapshot: FantasySnapshot,
         completed_at_ms: int,
+        provider_status: str,
     ) -> FantasyPersistenceLifecycleOutcome:
         """Complete a STARTED sync without inserting duplicate snapshot state."""
 
@@ -353,6 +354,10 @@ class FantasyPersistenceCoordinator:
         if current_fingerprint != previous.content_fingerprint:
             raise FantasyPersistenceStateConflict(
                 "Current snapshot content differs from the previously accepted snapshot"
+            )
+        if _required_text(provider_status, "provider_status") != previous.provider_status:
+            raise FantasyPersistenceStateConflict(
+                "Provider status differs from the previously accepted snapshot"
             )
 
         live = self.transport.read_sync_run(session.sync_run_id)
