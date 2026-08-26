@@ -14,17 +14,6 @@ The contract is evidence-first. Missing or unresolved evidence is explicit; it i
 
 The canonical PropWar identity should remain anchored to the existing NFL identity authority (currently GSIS-backed where available). External platform/provider identifiers extend that identity rather than replace it.
 
-## Identity bootstrap opportunity
-
-Sleeper's current official NFL player map exposes its own `player_id` together with fields including `sportradar_id`, `fantasy_data_id`, `espn_id`, and `yahoo_id` when populated. Use those provider IDs as candidate deterministic bridges before considering name-based matching.
-
-Rules:
-
-1. An external ID supplied by Sleeper is a candidate mapping, not automatic proof that two internal records are the same person.
-2. Cross-check available team/position/name context before promoting the mapping to `RESOLVED`.
-3. Conflicting authoritative IDs go to review; they are never overwritten by fuzzy matching.
-4. Cache the Sleeper player map locally/persistently and refresh it sparingly rather than fetching it for each league request.
-
 ## Contract
 
 ```text
@@ -57,10 +46,8 @@ External IDs when known:
 - `pfr_id`
 - `sleeper_player_id`
 - `yahoo_player_key`
-- `yahoo_player_id` when exposed by a provider crosswalk
 - `sportradar_id`
 - `fantasydata_id`
-- `espn_id`
 - `provider_ids` object for reviewed market/vendor identifiers
 
 Rules:
@@ -68,6 +55,7 @@ Rules:
 - Never auto-resolve an ambiguous duplicate name by name alone.
 - Team-qualified aliases may assist matching but may not override a conflicting authoritative ID.
 - Provider aliases should retain source + first/last verified timestamps.
+- Sleeper's player payload may expose candidate cross-provider fields including `sportradar_id`, `fantasy_data_id`, `espn_id`, and `yahoo_id`. Treat these as high-value crosswalk evidence when populated, but validate them before promotion to `RESOLVED`; never assume every external ID field is complete or current merely because Sleeper returned it.
 
 ### historical_role
 
@@ -218,6 +206,17 @@ If a required join is unresolved or league ownership is stale, downstream recomm
 Combines Player Evidence with league-specific state:
 
 `Player Evidence + League Rules + User Roster + Ownership + Matchup = Fantasy Action`
+
+League phase is part of that decision boundary. A valid Player Evidence record does not make a waiver/start-sit recommendation safe when the fantasy league is still pre-draft and ownership is uninitialized.
+
+Pre-draft Fantasy HQ may still use Player Evidence for:
+
+- keeper comparisons;
+- draft preparation;
+- player watchlists;
+- league-specific draft values once scoring/roster rules are verified.
+
+Ownership-dependent actions remain blocked until the platform reports meaningful roster ownership.
 
 ### Role Shock
 
