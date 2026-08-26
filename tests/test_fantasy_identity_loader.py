@@ -59,3 +59,26 @@ def test_integral_numeric_provider_ids_do_not_create_false_identity_conflicts():
     assert result.status == MATCHED
     assert result.sleeper_id == "4984"
     assert result.yahoo_id == "30123"
+
+
+def test_current_sleeper_team_is_preferred_when_ffverse_team_lags():
+    frame = pd.DataFrame(
+        {
+            "sleeper_id": ["123"],
+            "gsis_id": ["00-0000123"],
+            "name": ["Player One"],
+            "position": ["WR"],
+            "team": ["TEN"],
+        }
+    )
+
+    result = resolve_sleeper_player(
+        "123",
+        ffverse_player_ids=frame,
+        propwar_player_ids={"00-0000123"},
+        sleeper_metadata={"full_name": "Player One", "position": "WR", "team": "IND"},
+    )
+
+    assert result.status == MATCHED
+    assert result.team == "IND"
+    assert "TEAM_METADATA_DIFFERS" in result.reason_codes
