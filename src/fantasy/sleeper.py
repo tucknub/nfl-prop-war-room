@@ -52,6 +52,15 @@ _DRAFT_SLOT_KEYS = {
     "BN": "slots_bn",
 }
 
+_DRAFT_POSITION_LIMIT_KEYS = {
+    "QB": "position_limit_qb",
+    "RB": "position_limit_rb",
+    "WR": "position_limit_wr",
+    "TE": "position_limit_te",
+    "K": "position_limit_k",
+    "DEF": "position_limit_def",
+}
+
 
 @dataclass(frozen=True)
 class SleeperLeagueBundle:
@@ -165,6 +174,11 @@ def _normalize_draft(drafts: Sequence[Mapping[str, Any]]) -> DraftState | None:
         for slot, key in _DRAFT_SLOT_KEYS.items()
         if _as_int(settings.get(key)) is not None and int(settings[key]) > 0
     }
+    position_limits = {
+        position: int(settings[key])
+        for position, key in _DRAFT_POSITION_LIMIT_KEYS.items()
+        if _as_int(settings.get(key)) is not None and int(settings[key]) > 0
+    }
     raw_order = draft.get("draft_order") or {}
     draft_order = (
         {
@@ -184,6 +198,8 @@ def _normalize_draft(drafts: Sequence[Mapping[str, Any]]) -> DraftState | None:
         start_time_ms=_as_int(draft.get("start_time")),
         draft_order=draft_order,
         slot_counts=slot_counts,
+        position_limits=position_limits,
+        enforce_position_limits=bool(_as_int(settings.get("enforce_position_limits")) or 0),
         raw=draft,
     )
 
