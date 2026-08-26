@@ -31,10 +31,13 @@ class SleeperPlayerCatalogSnapshot:
     fetched_at_ms: int
     players: Mapping[str, Mapping[str, Any]]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "fetched_at_ms", _valid_timestamp(self.fetched_at_ms, "fetched_at_ms"))
+        object.__setattr__(self, "players", normalize_sleeper_player_catalog(self.players))
+
     def age_seconds(self, now_ms: int) -> float:
         now_ms = _valid_timestamp(now_ms, "now_ms")
-        fetched_at_ms = _valid_timestamp(self.fetched_at_ms, "fetched_at_ms")
-        delta_ms = now_ms - fetched_at_ms
+        delta_ms = now_ms - self.fetched_at_ms
         if delta_ms < -_MAX_CLOCK_SKEW_MS:
             raise ValueError("Sleeper player catalog timestamp is materially in the future")
         return max(0.0, delta_ms / 1000.0)
@@ -103,6 +106,8 @@ class SleeperPlayerCatalogClient:
 
 def _valid_timestamp(value: Any, label: str) -> int:
     if isinstance(value, bool):
+        raise ValueError(f"{label} must be a non-negative integer timestamp")
+    if isinstance(value, float) and not value.is_integer():
         raise ValueError(f"{label} must be a non-negative integer timestamp")
     try:
         result = int(value)
