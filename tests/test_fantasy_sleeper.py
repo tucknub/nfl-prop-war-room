@@ -143,11 +143,12 @@ def test_completed_draft_with_real_players_initializes_ownership():
 
 
 def test_client_uses_public_read_only_league_resources():
+    ffl = _ffl_bundle()
     payloads = {
-        "/league/test": _ffl_bundle().league,
-        "/league/test/users": _ffl_bundle().users,
-        "/league/test/rosters": _ffl_bundle().rosters,
-        "/league/test/drafts": _ffl_bundle().drafts,
+        "/v1/league/test": {**ffl.league, "league_id": "test"},
+        "/v1/league/test/users": ffl.users,
+        "/v1/league/test/rosters": ffl.rosters,
+        "/v1/league/test/drafts": ffl.drafts,
     }
     seen = []
 
@@ -156,7 +157,7 @@ def test_client_uses_public_read_only_league_resources():
         payload = payloads.get(request.url.path)
         return httpx.Response(200 if payload is not None else 404, json=payload or {})
 
-    http = httpx.Client(base_url="https://api.sleeper.app/v1", transport=httpx.MockTransport(handler))
+    http = httpx.Client(base_url="https://api.sleeper.app/v1/", transport=httpx.MockTransport(handler))
     client = SleeperClient(client=http)
     bundle = client.fetch_league_bundle("test")
 
