@@ -47,10 +47,14 @@ def test_methodology_is_scannable_without_a_wide_contract_table() -> None:
     assert "overview(" in source
 
 
-def test_mobile_menu_and_hosted_chrome_cleanup_are_present() -> None:
+def test_native_top_navigation_and_hosted_chrome_cleanup_are_present() -> None:
     source = (DASHBOARD / "app.py").read_text(encoding="utf-8")
+    assert '[data-testid="stHeader"]' in source
     assert '[data-testid="stToolbar"]' in source
     assert "#viewerBadge_link" in source
-    assert 'content:"Menu"' in source
+    assert 'st.navigation(pages, position="top").run()' in source
+    assert '"My Tools"' in source
+    assert '"Role Intelligence"' in source
+    assert "with st.sidebar" not in source
     assert ".pw-home-hero" in source
     assert ".pw-status-line" in source
