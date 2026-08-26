@@ -32,6 +32,12 @@ from .models import (
     TradedPick,
     WeeklyLeagueState,
 )
+from .service import (
+    MultiSleeperSyncResult,
+    SleeperLeagueReader,
+    sync_sleeper_league,
+    sync_sleeper_leagues,
+)
 from .sleeper import (
     SleeperClient,
     SleeperLeagueBundle,
@@ -61,12 +67,14 @@ __all__ = [
     "MATCHED",
     "Manager",
     "MatchupTeam",
+    "MultiSleeperSyncResult",
     "NEEDS_REVIEW",
     "PRE_GSIS",
     "Roster",
     "SleeperClient",
     "SleeperIdentityResolution",
     "SleeperLeagueBundle",
+    "SleeperLeagueReader",
     "SleeperSyncResult",
     "TEAM_DEFENSE",
     "TradedPick",
@@ -85,5 +93,7 @@ __all__ = [
     "normalize_sleeper_transactions",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
+    "sync_sleeper_league",
+    "sync_sleeper_leagues",
     "validate_ffverse_player_ids",
 ]
