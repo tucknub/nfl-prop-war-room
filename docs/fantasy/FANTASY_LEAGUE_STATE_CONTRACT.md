@@ -15,6 +15,7 @@ FantasyLeagueState
 ├── source_health
 ├── league
 ├── rules
+├── draft_state
 ├── managers
 ├── teams
 ├── rosters
@@ -48,11 +49,11 @@ Never inherit lineup, scoring, waiver, playoff, keeper, or transaction settings 
 
 Cross-season league history exists for comparison and learning only. A renewed league may materially change format between seasons.
 
-Example already known from Franchise Football League:
+Example already verified from Franchise Football League:
 
 - 2025 was Superflex.
-- 2026 is no longer Superflex.
-- Fantasy HQ must value quarterbacks, roster scarcity, lineup decisions, waivers, and replacement-level players using the 2026 current league settings once the 2026 league object is ingested.
+- 2026 is 1QB.
+- Fantasy HQ must value quarterbacks, roster scarcity, lineup decisions, waivers, and replacement-level players using the 2026 current league settings.
 
 On every accepted league sync:
 
@@ -127,6 +128,26 @@ Normalize where available:
 - trade deadline/settings
 - acquisition limits
 
+## draft_state
+
+Draft-specific settings must come from the provider's **draft resource**, not from similarly named convenience fields on the league object when a draft resource exists.
+
+Normalize:
+
+- `platform_draft_id`
+- `status`
+- `type`
+- `start_time_utc`
+- `rounds`
+- `teams`
+- draft slot counts by position
+- bench rounds/slots
+- pick timer
+- draft order when assigned
+- keeper picks/flags when available
+
+Reason: provider league settings can contain fields that are not the authoritative current draft configuration. Verified 2026 FFL example: the league object reports `draft_rounds = 3`, while the actual Sleeper draft resource reports a 16-round snake draft matching the 16 roster slots. Fantasy HQ must use the draft resource for draft-specific decisions.
+
 ## managers
 
 - `platform_user_id`
@@ -161,6 +182,20 @@ Each roster row contains:
 - `identity_status`
 
 The normalized league state must preserve unresolved platform players rather than drop them.
+
+### Pre-draft ownership guard
+
+A pre-draft league with empty rosters is **not** a valid free-agent pool.
+
+If league/draft status is `pre_draft` (or provider equivalent) and roster player lists are empty/uninitialized:
+
+- do not classify every unrostered NFL player as `AVAILABLE`;
+- set ownership state to `PRE_DRAFT_UNASSIGNED` where appropriate;
+- suppress Waiver Radar, drop recommendations, lineup decisions, and ownership-driven alerts;
+- permit draft/keeper preparation features that explicitly operate before roster assignment;
+- re-evaluate recommendation readiness after keeper assignment/draft completion or once authoritative roster ownership exists.
+
+Verified 2026 FFL currently satisfies this guard: the league is `pre_draft` and all 10 Sleeper rosters are currently empty with placeholder starter IDs.
 
 ## matchup_state
 
@@ -227,6 +262,8 @@ Sleeper IDs should be stored as strings even when they look numeric.
 
 For renewed Sleeper leagues, `previous_league_id` is history linkage only. It must not be used to inherit current scoring or roster settings.
 
+For draft configuration, use `/league/<league_id>/drafts` and the corresponding draft object rather than assuming `league.settings.draft_rounds` represents the live draft length.
+
 ### Yahoo
 
 Yahoo Fantasy Sports API models game, league, team and player resources and private league access requires OAuth. League scoring, roster positions and scoring modifiers are league-context data and should map into this normalized contract.
@@ -249,6 +286,8 @@ If roster/ownership state is stale or partial, waiver/drop recommendations must 
 
 If current-season rules cannot be retrieved, Fantasy HQ must not substitute a prior-season ruleset for recommendations. The league may be shown with `RULES_UNAVAILABLE`, but league-specific valuation must fail closed until current rules are verified.
 
+Pre-draft empty ownership is a distinct state from a healthy in-season free-agent pool and must not set `recommendations_requiring_ownership_safe = true`.
+
 ## Change-event derivation
 
 Compare the newly normalized state with the previous accepted state and create events only for meaningful differences:
@@ -264,6 +303,8 @@ Compare the newly normalized state with the previous accepted state and create e
 - `MATCHUP_CHANGED`
 - `STANDINGS_CHANGED`
 - `LEAGUE_RULE_CHANGED`
+- `DRAFT_STATE_CHANGED`
+- `OWNERSHIP_INITIALIZED`
 
 Do not create duplicate history merely because a scheduled sync returned the same state.
 
