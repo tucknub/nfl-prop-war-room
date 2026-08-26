@@ -62,8 +62,10 @@ jobs:
           assert "K" not in papa.rules.roster_positions
           assert "DEF" not in papa.rules.roster_positions
           assert papa.rules.waiver_budget == 150
-          assert papa.rules.position_limits.get("QB") == 3
+          assert papa.rules.position_limits == {}
           assert papa.draft and papa.draft.rounds == 15
+          assert papa.draft.enforce_position_limits is True
+          assert papa.draft.position_limits.get("QB") == 3
           assert papa.my_platform_roster_id == "2"
           assert papa.ownership_ready is False
 
