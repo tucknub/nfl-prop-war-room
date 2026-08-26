@@ -116,7 +116,9 @@ class SleeperClient:
         return response.json()
 
     def _get_list(self, path: str, *, label: str) -> list[Any]:
-        payload = self._get_json(path) or []
+        payload = self._get_json(path)
+        if payload is None:
+            return []
         if not isinstance(payload, list):
             raise ValueError(f"Sleeper returned malformed {label}")
         return payload
@@ -211,6 +213,21 @@ def _as_number(value: Any) -> int | float | None:
         return float(text) if "." in text else int(text)
     except (TypeError, ValueError):
         return None
+
+
+def _as_optional_bool(value: Any) -> bool | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value)
+    text = str(value).strip().casefold()
+    if text in {"true", "1"}:
+        return True
+    if text in {"false", "0"}:
+        return False
+    return None
 
 
 def _id_or_none(value: Any) -> str | None:
@@ -450,7 +467,6 @@ def normalize_sleeper_draft_picks(
         if not draft_id or not player_id:
             continue
         metadata = pick.get("metadata")
-        raw_keeper = pick.get("is_keeper")
         rows.append(
             DraftPick(
                 platform_draft_id=draft_id,
@@ -460,7 +476,7 @@ def normalize_sleeper_draft_picks(
                 round=_as_int(pick.get("round")),
                 draft_slot=_as_int(pick.get("draft_slot")),
                 pick_no=_as_int(pick.get("pick_no")),
-                is_keeper=None if raw_keeper is None else bool(raw_keeper),
+                is_keeper=_as_optional_bool(pick.get("is_keeper")),
                 metadata=dict(metadata) if isinstance(metadata, Mapping) else {},
                 raw=dict(pick),
             )
