@@ -1,6 +1,6 @@
 # Fantasy HQ Cloudflare deployment runbook
 
-Status: deployment-readiness contract only. Following this runbook creates remote Cloudflare resources; repository CI does not.
+Status: shadow-deployment contract. Following the remote steps creates Cloudflare resources; repository CI does not. The tracked Wrangler config keeps automatic Cron Triggers explicitly disabled.
 
 ## Fixed v1 invariants
 
@@ -11,6 +11,10 @@ Status: deployment-readiness contract only. Following this runbook creates remot
 - D1 database name: `propwar-fantasy-hq`
 - D1 migrations: repository `migrations/` directory
 - Required Worker secret: `FANTASY_PERSISTENCE_TOKEN`
+- Non-secret schedule mode: `FANTASY_SCHEDULE_MODE=SHADOW`
+- Automatic Cron Triggers: explicitly disabled with `crons=[]`
+- The Worker exports a Cloudflare `scheduled()` handler, but in this slice it performs only a fixed read-only D1 schema probe and structured readiness log
+- The shadow scheduled handler never calls D1 `batch()`, never writes a sync run/snapshot/event, and never invokes the Python #76 scheduled-sync contract
 - The secret value must never be committed, placed in Wrangler `vars`, written into the generated config, pasted into documentation, or placed on a shell command line
 - The real D1 UUID is resource identity, not a secret, but the generated config is ignored so provisioning remains an explicit operator step
 
@@ -67,6 +71,21 @@ npx wrangler deploy --dry-run --config workers/fantasy-hq/wrangler.generated.jso
 
 A dry run must succeed before a remote deployment is attempted. This step does not authorize a remote deploy.
 
+Confirm the rendered config still contains both of these exact shadow safeguards:
+
+```json
+"vars": {
+  "FANTASY_SCHEDULE_MODE": "SHADOW"
+},
+"triggers": {
+  "crons": []
+}
+```
+
+An empty `crons` list is intentional. Do not replace it with a schedule during the first Worker/D1 shadow deployment.
+
+The repository Worker tests exercise the `scheduled()` boundary directly. If a local Wrangler scheduled-event test is desired, use Wrangler's `--test-scheduled` mode only after applying the migration to the local D1 state. Do not add a real remote Cron Trigger merely to test the handler.
+
 ## 6. Prepare the first-deploy secret outside the repository
 
 Generate a high-entropy token outside Git history and store the durable copy in the password manager used for this project.
@@ -98,15 +117,32 @@ Record the exact deployed URL and deployment/version identifier. Do not add a cu
 1. `GET /health` must return HTTP 200, `ok=true`, `status="ok"`, and protocol version 1.
 2. A POST to `/v1/fantasy/persistence` with no bearer token must return HTTP 401.
 3. A POST with an incorrect bearer token must return HTTP 401.
-4. Logs must not expose bearer tokens, command bodies, SQL parameters, or league/player payloads.
+4. Remote D1 migration listing must show the tracked migration applied.
+5. The deployed Worker configuration must still show no Cron Triggers.
+6. Logs must not expose bearer tokens, command bodies, SQL parameters, league/player payloads, or secret values.
 
 Do not perform an authenticated write merely to prove connectivity. The first authenticated write should be the intentional registration of a verified real league season after the Python runtime is wired to the endpoint.
 
-## 9. Python/runtime wiring is a separate gate
+## 9. Scheduled shadow boundary
+
+The Worker now exports `scheduled(controller, env)`, but automatic dispatch remains disabled by `crons=[]`.
+
+When explicitly exercised in a controlled test, the handler:
+
+1. requires `FANTASY_SCHEDULE_MODE=SHADOW`;
+2. validates the scheduled timestamp and cron identity;
+3. executes only the fixed read-only query `SELECT COUNT(*) AS row_count FROM fantasy_league_seasons`;
+4. logs a compact readiness record with `write_enabled=false`;
+5. does not read the persistence token;
+6. does not call the Python scheduler or write fantasy state.
+
+Activating a remote recurring Cron Trigger is a separate reviewed change. Do not add a cron expression to the deployment config as part of this shadow deployment.
+
+## 10. Python/runtime wiring is a separate gate
 
 The deployed Worker URL becomes `FANTASY_PERSISTENCE_URL`; the same secret value becomes `FANTASY_PERSISTENCE_TOKEN` for the trusted Python runtime. Those values must live in runtime secret storage, not GitHub source. The Python client performs a public health check and strict response validation before any higher-level sync workflow is enabled.
 
-## Later secret rotation
+## 11. Later secret rotation
 
 `wrangler secret put FANTASY_PERSISTENCE_TOKEN` is appropriate only when an immediate secret-version deployment is intended and understood. It must not be treated as a passive settings update. Coordinate the Worker secret and the trusted Python runtime secret so one side is not left using a stale token.
 
@@ -121,6 +157,9 @@ Stop instead of deploying if any of these occur:
 - `/health` protocol version differs from Python
 - unauthenticated persistence POST is accepted
 - logs contain secret or request-body material
+- `FANTASY_SCHEDULE_MODE` is not exactly `SHADOW`
+- the generated deployment config contains any Cron Trigger
+- the scheduled shadow test performs any D1 write
 
 A code rollback does not reverse a D1 migration. Database migrations therefore remain explicit, versioned, and separately audited.
 
@@ -130,3 +169,6 @@ A code rollback does not reverse a D1 migration. Database migrations therefore r
 - Cloudflare D1 migrations: https://developers.cloudflare.com/d1/reference/migrations/
 - Cloudflare D1 Wrangler commands: https://developers.cloudflare.com/d1/wrangler-commands/
 - Cloudflare Workers secrets: https://developers.cloudflare.com/workers/configuration/secrets/
+- Cloudflare Cron Triggers: https://developers.cloudflare.com/workers/configuration/cron-triggers/
+- Cloudflare scheduled handler: https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/
+- Cloudflare D1 prepared statements: https://developers.cloudflare.com/d1/worker-api/prepared-statements/
