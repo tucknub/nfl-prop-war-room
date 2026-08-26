@@ -1,230 +1,171 @@
 # Fantasy League HQ — Validation Protocol
 
-**Status:** Pre-implementation validation contract  
-**Purpose:** Prevent hindsight leakage and require evidence that Fantasy HQ recommendations add decision value beyond simple baselines.
+**Status:** Pre-implementation validation contract
 
-## Principle
+## Goal
 
-Fantasy HQ may always display factual league/NFL evidence. It may not claim that a recommendation method is superior merely because its component signals correlate with historical production.
+Fantasy League HQ must be validated as a point-in-time decision system rather than judged from hindsight. It may reuse existing PropWar historical NFL features, role research, and backtest patterns, but it must not silently import future information or provider state that did not yet exist at the decision timestamp.
 
-The unit of validation is the **decision available at the historical timestamp**, using only information that existed then.
+## Validation principles
 
-## Primary decision families
+1. **Point-in-time only.** Every replay decision sees only evidence available before the replay timestamp.
+2. **Current league rules only.** Historical seasons use that season's actual scoring/roster rules; current seasons never inherit old rules.
+3. **Ownership is timestamped evidence.** A waiver recommendation is invalid if roster ownership is not known as of that point.
+4. **Provider phase matters.** Pre-draft empty rosters are not a free-agent pool.
+5. **Draft resource is authoritative for draft configuration.** Do not validate draft behavior from conflicting league convenience fields.
+6. **No retrospective recommendation editing.** Persist the original recommendation/evidence version.
+7. **Fail closed.** Missing identity, ownership, rules, or required evidence suppresses the affected recommendation rather than being silently filled.
 
-Validate separately:
+## Existing PropWar foundations to reuse
 
-1. **Waiver add / hold / pass**
-2. **Drop candidate**
-3. **Start / sit between genuinely plausible lineup options**
-4. **Roster-risk / bye-week planning**
+- `before_target_mask` / historical feature-window leakage checks.
+- rolling features shifted before the target week.
+- normal-game context and partial-game handling.
+- canonical 2018–2025 role research.
+- historical role-report replay patterns.
+- historical signal component audits.
 
-Do not allow strong performance in one family to rescue another.
+Do not assume an older model/weight is correct for fantasy simply because its infrastructure is reusable.
 
-## Historical replay grain
+## Stage 1 — Platform-state correctness
 
-Recommended base row:
+For each connected league, verify exact parity with provider facts before testing recommendations.
 
-`season × week × league_rules_profile × decision_id`
+### Rules parity
 
-Each replay stores:
+- team count
+- ordered roster positions
+- scoring settings
+- waiver/FAAB rules
+- keeper rules
+- playoff/trade rules
+- unmapped custom settings surfaced
 
-- simulated `as_of_utc`
-- league/rules profile
-- player identities
-- candidate set that would have been known then
-- ownership/availability assumptions used
-- all source timestamps or historical cutoffs
-- recommendation method/version
-- recommendation
-- evidence available at recommendation time
-- outcome window
-- realized outcome
+### Draft parity
 
-## Point-in-time rule
+- provider draft ID
+- status/type
+- rounds
+- team count
+- slot counts
+- start time
+- draft order when assigned
 
-For a Week N recommendation, no feature may use Week N outcome data or any information first available after the simulated recommendation timestamp.
+A provider draft object wins over conflicting draft convenience fields in the league settings. Verified acceptance fixture: 2026 FFL has `league.settings.draft_rounds = 3` but an actual 16-round Sleeper draft resource.
 
-Existing PropWar utilities such as `before_target_mask`, shifted rolling features, history-window audits, role-validation folds, and Week-N-uses-through-N-1 backtests should be reused rather than reimplemented.
+### Manager/team parity
 
-Any feature whose historical timestamp cannot be reconstructed reliably must either:
+- stable provider manager identities
+- seasonal roster/team IDs
+- user's team resolved through provider ownership
 
-- be excluded from the historical test, or
-- be explicitly labeled unavailable for that validation slice.
+### Roster parity
 
-Never backfill modern knowledge into an older replay.
+When ownership is initialized:
 
-## Comparison ladder
+- every platform player retained
+- starter/bench/IR/taxi state exact
+- unresolved identities retained and reported
 
-Where evidence is available, compare at least:
+### Pre-draft guard
 
-### Baseline A — simple historical production / projection
+For a `pre_draft` league with empty/uninitialized rosters:
 
-A deliberately simple reasonable baseline without PropWar role-change intelligence.
+- rules may be marked ready;
+- draft preparation may be enabled;
+- ownership must remain not-ready;
+- waiver/drop/start-sit recommendations must be suppressed;
+- all NFL players must not be labeled free agents;
+- the first valid ownership population creates one initialization transition rather than thousands of fake transaction events.
 
-### Challenger B — baseline + PropWar role evidence
+## Stage 2 — Identity correctness
 
-Adds validated role/change information available at the decision timestamp.
+Measure:
 
-### Challenger C — baseline + role + market context
+- direct authoritative ID resolution rate
+- externally bridged ID resolution rate
+- reviewed fallback rate
+- unresolved rate
+- ambiguous/conflicting rate
 
-Adds sportsbook market context only when historical market timestamps/lines can be reconstructed without leakage.
+Any duplicate-name case must demonstrate that team/provider ID context prevents cross-player contamination.
 
-### Challenger D — baseline + role + market + contextual evidence
+## Stage 3 — Change-event correctness
 
-Adds only separately sourced context such as opponent fit or injury/availability when point-in-time evidence exists.
+Replay controlled snapshots and verify exact deterministic events:
 
-Do not compare challengers at different candidate volumes without controlling for selection volume or decision difficulty.
+- roster add/drop
+- player becomes available
+- starter/IR changes
+- FAAB changes
+- league-rule changes
+- draft-state changes
+- ownership initialization
 
-## Waiver validation
+Unchanged repeated syncs create no duplicate event history.
 
-### Candidate set
+## Stage 4 — Historical fantasy decision replay
 
-A historical waiver replay should operate on players plausibly available under the simulated league depth/rules.
+Reconstruct historical decision timestamps using only information that existed then.
 
-If exact historical league ownership is unavailable, use transparent simulated ownership rules (for example roster-rate/depth constraints) and label the result as a **synthetic-league replay**, not a replay of a real user league.
+Candidate replay families:
 
-Once 2026 real league history exists, run a separate real-league prospective audit using actual Sleeper/Yahoo ownership and transaction state.
+- waiver add ranking
+- drop/replacement comparison
+- start/sit decisions
+- early-season role alerts
 
-### Outcomes
+Compare staged evidence sets rather than immediately testing one opaque score:
 
-No single outcome is sufficient. Track a window such as next 1, 2, 3 and 4 qualifying games where appropriate:
+1. projection/baseline only
+2. + PropWar usage/role evidence
+3. + market evidence when historically available
+4. + matchup/opponent context
+5. + league-specific roster need
 
-- fantasy points under the tested scoring profile
-- starter-level weeks
-- role persistence
-- roster utility over replacement-level available alternatives
-- immediate reversion / bust rate
-- missed-opportunity cost for passed players
+Evaluate whether each added layer improves the relevant decision metric. Do not assign production weights merely because a component sounds useful.
 
-A waiver recommendation should not be judged only by whether the player had one spike week.
+## Stage 5 — Early-season prior research
 
-## Start/sit validation
+Test the existing `PRIOR_HEAVY / CURRENT_BLEND / CURRENT_STRONG` concept against historical early-season replays.
 
-Only evaluate decisions where both players were reasonable lineup candidates at the recommendation timestamp.
+Candidate questions:
 
-Avoid inflating accuracy with obvious decisions such as elite healthy starters versus non-startable bench players.
+- how quickly should prior-season player role decay?
+- does team/roster change require faster prior decay?
+- does validated current role improve waiver/start decisions after Week 1?
+- when does current-season role become more informative than positional/prior fallback?
 
-Track:
+Existing fixed blend weights are challengers, not production truth.
 
-- win/loss/tie of the head-to-head decision
-- fantasy-point difference
-- expected decision value when projection distributions are available
-- whether the chosen player was available/active at lock
-- late injury/inactive states separately
+## Stage 6 — Prospective 2026 audit
 
-Report accuracy by margin/difficulty bucket so easy calls do not hide poor close-call performance.
+Persist every actionable recommendation with:
 
-## Drop validation
-
-A drop recommendation is successful only if the released player was expendable relative to alternatives and did not produce meaningful near-term regret that the evidence should reasonably have anticipated.
-
-Track:
-
-- next 1–4 week production
-- role resurgence
-- re-add / opponent add where real league history is available
-- replacement player's value
-- roster-slot opportunity cost
-
-## Role evidence validation inheritance
-
-Fantasy HQ does not redefine role persistence.
-
-Use the existing PropWar role-validation methodology for supported role families. A factual weekly screening category such as `OPPORTUNITY_GAINED` is not automatically a persistent-role claim.
-
-Fantasy recommendation evidence should distinguish:
-
-- factual role screen
-- detector alert
-- persistence pending
-- historically persistent / reverted after outcome is known
-
-## Early-season prior testing
-
-Do not assume the existing research weights (for example fixed 25%/50%/70% current-season weighting) are optimal for fantasy.
-
-Test alternative prior-decay schedules using historical replay, while preserving a final holdout/prospective period.
-
-Candidate state labels may include:
-
-- `PRIOR_HEAVY`
-- `CURRENT_BLEND`
-- `CURRENT_STRONG`
-- `DISRUPTED`
-
-The state labels are explanatory. Exact weights must be empirically justified.
-
-## Recommendation volume
-
-A method that emits far more recommendations can appear better merely by finding more easy wins.
-
-For fair comparisons:
-
-- match candidate/alert volume where practical
-- stratify by position and decision family
-- report no-action rate
-- report suppressed recommendations due to stale/unresolved evidence
-
-## Data-quality gates
-
-A historical or prospective recommendation is not eligible for the primary audit if a required input has:
-
-- unresolved canonical player identity
-- future leakage
-- incomplete league ownership when ownership is essential
-- incomplete NFL week under the role pipeline's completion policy
-- confirmed partial-game distortion not handled by policy
-- stale provider state beyond the decision's safety threshold
-
-Excluded rows remain in an exclusion ledger with reason codes.
-
-## 2026 prospective ledger
-
-All live Fantasy HQ recommendations must be append-only and retain:
-
-- recommendation ID
-- generated timestamp
-- league ID / scoring-rules version
-- player IDs
-- action
-- evidence schema version
-- evidence snapshot or reproducible evidence references
+- generation timestamp
+- league/rules fingerprint
+- Player Evidence version
 - source freshness
-- rules/model version
-- safety/quality status
-- superseded recommendation ID if the recommendation later changes
+- exact action and reason codes
+- unavailable/blocked evidence
 
-Never delete or rewrite a prior recommendation after the result is known.
+Do not overwrite recommendations when evidence changes later. Append a new record.
 
-## Promotion gates
+At season end, audit:
 
-Do not promote a recommendation family from experimental to trusted solely because it is directionally promising.
+- recommendation usefulness by family
+- false positives caused by transient roles
+- suppressed recommendations that would have been unsafe due to stale/missing ownership
+- value of market confirmation
+- value of role evidence vs baseline/projection-only alternatives
+- early-season prior behavior
 
-Before a stronger label, require:
+## Promotion rule
 
-- adequate historical sample
-- consistent improvement versus a simple baseline
-- acceptable immediate-regret/reversion behavior
-- consistency across multiple seasons/periods or a credible prospective sample
-- no evidence of leakage
-- no one-component dominance that contradicts the intended method
-- transparent failure cases
+A recommendation family is production-ready only after:
 
-Exact numerical gates should be set after the first replay distribution is generated, then frozen before the final holdout/prospective evaluation.
-
-## Reporting
-
-Every validation report should include:
-
-- sample size
-- seasons/weeks
-- decision-family breakdown
-- position breakdown
-- easy/close decision breakdown where applicable
-- baseline and challenger results
-- exclusions and missing evidence
-- confidence intervals/uncertainty where appropriate
-- known limitations
-- recommendation-volume comparison
-
-A result is research evidence, not a profitability or guaranteed fantasy-performance claim.
+1. state/identity correctness passes;
+2. point-in-time replay shows useful incremental performance or decision quality;
+3. known failure modes have suppression rules;
+4. prospective logging is enabled;
+5. no opaque component is promoted solely by subjective weighting.
