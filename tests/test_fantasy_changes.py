@@ -114,28 +114,40 @@ def _transaction(
     )
 
 
+def _snapshot(snapshot_id: str, state: FantasyLeagueState, *, transactions=()) -> FantasySnapshot:
+    return FantasySnapshot(snapshot_id=snapshot_id, league=state, transactions=tuple(transactions))
+
+
 def _types(events):
     return [event.event_type for event in events]
 
 
-def test_identical_snapshots_emit_no_events():
+def test_snapshot_id_is_required_and_normalized():
+    state = _state([_roster("1", ["A"], starters=["A"]), _roster("2", ["C"], starters=["C"])])
+    with pytest.raises(ValueError, match="snapshot_id is required"):
+        FantasySnapshot(snapshot_id="  ", league=state)
+    assert FantasySnapshot(snapshot_id=" snap-1 ", league=state).snapshot_id == "snap-1"
+
+
+def test_identical_snapshot_content_emits_no_events_even_with_new_observation_id():
     state = _state([
         _roster("1", ["A", "B"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ])
-    before = FantasySnapshot(state)
-    after = FantasySnapshot(state)
+    before = _snapshot("snap-1", state)
+    after = _snapshot("snap-2", state)
     assert before.fingerprint == after.fingerprint
     assert derive_fantasy_change_events(before, after) == ()
 
 
 def test_first_authoritative_ownership_emits_initialization_without_player_churn():
-    before = FantasySnapshot(_state([_roster("1"), _roster("2")], ownership_ready=False))
-    after = FantasySnapshot(
+    before = _snapshot("pre-draft", _state([_roster("1"), _roster("2")], ownership_ready=False))
+    after = _snapshot(
+        "post-draft",
         _state([
             _roster("1", ["A", "B"], starters=["A"]),
             _roster("2", ["C", "D"], starters=["C"]),
-        ], ownership_ready=True)
+        ], ownership_ready=True),
     )
     events = derive_fantasy_change_events(before, after)
     assert "OWNERSHIP_INITIALIZED" in _types(events)
@@ -143,15 +155,18 @@ def test_first_authoritative_ownership_emits_initialization_without_player_churn
     init = next(event for event in events if event.event_type == "OWNERSHIP_INITIALIZED")
     assert init.after_value["owned_player_count"] == 4
     assert init.after_value["rosters_with_players"] == 2
+    assert init.before_snapshot_id == "pre-draft"
+    assert init.after_snapshot_id == "post-draft"
 
 
 def test_owned_player_transfer_emits_drop_and_add_with_transaction_link():
-    before = FantasySnapshot(_state([
+    before = _snapshot("snap-1", _state([
         _roster("1", ["A", "B"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ]))
     tx = _transaction("tx-transfer", adds={"B": "2"}, drops={"B": "1"})
-    after = FantasySnapshot(
+    after = _snapshot(
+        "snap-2",
         _state([
             _roster("1", ["A"], starters=["A"]),
             _roster("2", ["B", "C"], starters=["C"]),
@@ -161,14 +176,15 @@ def test_owned_player_transfer_emits_drop_and_add_with_transaction_link():
     events = [event for event in derive_fantasy_change_events(before, after) if event.platform_player_id == "B"]
     assert {event.event_type for event in events} == {"PLAYER_ADDED", "PLAYER_DROPPED"}
     assert all(event.source_transaction_ids == ("tx-transfer",) for event in events)
+    assert all(event.before_snapshot_id == "snap-1" and event.after_snapshot_id == "snap-2" for event in events)
 
 
 def test_unowned_and_newly_owned_players_have_distinct_events():
-    before = FantasySnapshot(_state([
+    before = _snapshot("snap-1", _state([
         _roster("1", ["A", "B"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ]))
-    after = FantasySnapshot(_state([
+    after = _snapshot("snap-2", _state([
         _roster("1", ["A", "D"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ]))
@@ -180,42 +196,52 @@ def test_unowned_and_newly_owned_players_have_distinct_events():
 
 
 def test_starter_reserve_faab_and_waiver_priority_changes_are_explicit():
-    before = FantasySnapshot(_state([
+    before = _snapshot("snap-1", _state([
         _roster("1", ["A", "B"], starters=["A"], reserve=["B"], faab_used=10, waiver_position=2),
         _roster("2", ["C"], starters=["C"], faab_used=0, waiver_position=1),
     ]))
-    after = FantasySnapshot(_state([
-        _roster("1", ["A", "B"], starters=["B"], reserve=[], faab_used=25, waiver_position=1),
-        _roster("2", ["C"], starters=["C"], faab_used=0, waiver_position=2),
-    ]))
+    tx = _transaction("tx-faab", adds={"B": "1"}, waiver_bid=15)
+    after = _snapshot(
+        "snap-2",
+        _state([
+            _roster("1", ["A", "B"], starters=["B"], reserve=[], faab_used=25, waiver_position=1),
+            _roster("2", ["C"], starters=["C"], faab_used=0, waiver_position=2),
+        ]),
+        transactions=(tx,),
+    )
     events = derive_fantasy_change_events(before, after)
     assert {event.platform_player_id for event in events if event.event_type == "STARTER_CHANGED"} == {"A", "B"}
     assert {event.platform_player_id for event in events if event.event_type == "IR_CHANGED"} == {"B"}
-    assert any(event.event_type == "FAAB_CHANGED" and event.platform_roster_id == "1" for event in events)
+    faab = next(event for event in events if event.event_type == "FAAB_CHANGED" and event.platform_roster_id == "1")
+    assert faab.source_transaction_ids == ("tx-faab",)
     assert {event.platform_roster_id for event in events if event.event_type == "WAIVER_PRIORITY_CHANGED"} == {"1", "2"}
 
 
 def test_missing_faab_value_does_not_invent_change():
-    before = FantasySnapshot(_state([
+    before = _snapshot("snap-1", _state([
         _roster("1", ["A"], starters=["A"], faab_used=None),
         _roster("2", ["C"], starters=["C"]),
     ]))
-    after = FantasySnapshot(_state([
+    after = _snapshot("snap-2", _state([
         _roster("1", ["A"], starters=["A"], faab_used=12),
         _roster("2", ["C"], starters=["C"]),
     ]))
     assert "FAAB_CHANGED" not in _types(derive_fantasy_change_events(before, after))
 
 
-def test_rule_and_draft_state_changes_are_detected_without_strategy_inference():
+def test_rule_and_draft_state_changes_include_auditable_before_after_payloads():
     before_state = _state([
         _roster("1", ["A"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ])
     after_state = replace(before_state, rules=_rules(pass_td=4), draft=_draft(start_time_ms=2000))
-    events = derive_fantasy_change_events(FantasySnapshot(before_state), FantasySnapshot(after_state))
-    assert "LEAGUE_RULE_CHANGED" in _types(events)
-    assert "DRAFT_STATE_CHANGED" in _types(events)
+    events = derive_fantasy_change_events(_snapshot("snap-1", before_state), _snapshot("snap-2", after_state))
+    rule = next(event for event in events if event.event_type == "LEAGUE_RULE_CHANGED")
+    draft = next(event for event in events if event.event_type == "DRAFT_STATE_CHANGED")
+    assert rule.before_value["scoring_settings"]["pass_td"] == 6
+    assert rule.after_value["scoring_settings"]["pass_td"] == 4
+    assert draft.before_value["start_time_ms"] == 1000
+    assert draft.after_value["start_time_ms"] == 2000
 
 
 def test_pending_transaction_becoming_complete_emits_completion_once():
@@ -226,24 +252,25 @@ def test_pending_transaction_becoming_complete_emits_completion_once():
     pending = _transaction("tx-1", status="pending", waiver_bid=11)
     complete = _transaction("tx-1", status="complete", waiver_bid=11)
     events = derive_fantasy_change_events(
-        FantasySnapshot(state, transactions=(pending,)),
-        FantasySnapshot(state, transactions=(complete,)),
+        _snapshot("snap-1", state, transactions=(pending,)),
+        _snapshot("snap-2", state, transactions=(complete,)),
     )
     completed = [event for event in events if event.event_type == "TRANSACTION_COMPLETED"]
     assert len(completed) == 1
     assert completed[0].source_transaction_ids == ("tx-1",)
+    assert completed[0].after_value["waiver_bid"] == 11
     assert derive_fantasy_change_events(
-        FantasySnapshot(state, transactions=(complete,)),
-        FantasySnapshot(state, transactions=(complete,)),
+        _snapshot("snap-2", state, transactions=(complete,)),
+        _snapshot("snap-3", state, transactions=(complete,)),
     ) == ()
 
 
-def test_event_fingerprints_are_deterministic():
-    before = FantasySnapshot(_state([
+def test_same_snapshot_pair_replay_has_identical_event_fingerprints():
+    before = _snapshot("snap-1", _state([
         _roster("1", ["A", "B"], starters=["A"]),
         _roster("2", ["C"], starters=["C"]),
     ]))
-    after = FantasySnapshot(_state([
+    after = _snapshot("snap-2", _state([
         _roster("1", ["A"], starters=["A"]),
         _roster("2", ["B", "C"], starters=["C"]),
     ]))
@@ -253,6 +280,42 @@ def test_event_fingerprints_are_deterministic():
     assert len({event.event_fingerprint for event in first}) == len(first)
 
 
+def test_same_logical_change_later_gets_distinct_historical_event_identity():
+    before_state = _state([
+        _roster("1", ["A", "B"], starters=["A"]),
+        _roster("2", ["C"], starters=["C"]),
+    ])
+    after_state = _state([
+        _roster("1", ["A", "B"], starters=["B"]),
+        _roster("2", ["C"], starters=["C"]),
+    ])
+    first = derive_fantasy_change_events(
+        _snapshot("week3-a", before_state),
+        _snapshot("week3-b", after_state),
+    )
+    later = derive_fantasy_change_events(
+        _snapshot("week10-a", before_state),
+        _snapshot("week10-b", after_state),
+    )
+    first_by_key = {(event.event_type, event.platform_player_id): event.event_fingerprint for event in first}
+    later_by_key = {(event.event_type, event.platform_player_id): event.event_fingerprint for event in later}
+    assert set(first_by_key) == set(later_by_key)
+    assert all(first_by_key[key] != later_by_key[key] for key in first_by_key)
+
+
+def test_reusing_snapshot_id_for_different_content_is_rejected():
+    before = _state([
+        _roster("1", ["A", "B"], starters=["A"]),
+        _roster("2", ["C"], starters=["C"]),
+    ])
+    after = _state([
+        _roster("1", ["A", "B"], starters=["B"]),
+        _roster("2", ["C"], starters=["C"]),
+    ])
+    with pytest.raises(UnsafeSnapshotTransition, match="one snapshot_id"):
+        derive_fantasy_change_events(_snapshot("same-id", before), _snapshot("same-id", after))
+
+
 def test_readiness_regression_fails_closed():
     ready = _state([
         _roster("1", ["A"], starters=["A"]),
@@ -260,7 +323,7 @@ def test_readiness_regression_fails_closed():
     ])
     degraded = replace(ready, ownership_ready=False, status="pre_draft")
     with pytest.raises(UnsafeSnapshotTransition, match="ownership readiness regressed"):
-        derive_fantasy_change_events(FantasySnapshot(ready), FantasySnapshot(degraded))
+        derive_fantasy_change_events(_snapshot("snap-1", ready), _snapshot("snap-2", degraded))
 
 
 def test_duplicate_player_ownership_fails_closed():
@@ -269,7 +332,7 @@ def test_duplicate_player_ownership_fails_closed():
         _roster("2", ["A", "C"], starters=["C"]),
     ])
     with pytest.raises(UnsafeSnapshotTransition, match="multiple rosters"):
-        derive_fantasy_change_events(FantasySnapshot(invalid), FantasySnapshot(invalid))
+        derive_fantasy_change_events(_snapshot("snap-1", invalid), _snapshot("snap-2", invalid))
 
 
 def test_cross_league_diff_is_rejected():
@@ -279,4 +342,4 @@ def test_cross_league_diff_is_rejected():
     ])
     other = replace(base, platform_league_id="league-2")
     with pytest.raises(UnsafeSnapshotTransition, match="same platform league and season"):
-        derive_fantasy_change_events(FantasySnapshot(base), FantasySnapshot(other))
+        derive_fantasy_change_events(_snapshot("snap-1", base), _snapshot("snap-2", other))
