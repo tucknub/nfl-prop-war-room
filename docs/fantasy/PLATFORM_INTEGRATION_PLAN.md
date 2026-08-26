@@ -113,11 +113,11 @@ Historical backfill failures must not block current-season roster sync. They sho
 
 For Franchise Football League, the currently known chain is:
 
-- 2026: `1383849993151987712` (current; complete live settings still need provider ingestion)
+- 2026: `1383849993151987712` (live rules verified on 2026-08-26 through temporary read-only source audit)
 - 2025: `1242463021108838400`
 - 2024: `1112703068749058048`
 
-The 2025→2026 manager continuity can be used as a validation checkpoint, but the 2026 provider response remains the authority.
+The temporary audit workflow/PR used to verify the public 2026 provider payload is evidence gathering only and should not become part of the production integration. The real adapter remains the intended implementation.
 
 ## Yahoo adapter
 
@@ -244,5 +244,7 @@ Before building the full Fantasy HQ UI:
 9. Change fixture/source state and prove the correct deterministic event is emitted.
 10. Follow the league's `previous_league_id` one generation and prove historical settings are stored separately rather than inherited.
 11. Prove stable manager identities link across seasons while season roster IDs remain separate.
+12. Prove a `pre_draft` empty-roster league does not create false free-agent availability.
+13. Prove draft-specific settings come from the provider draft resource rather than conflicting league convenience fields.
 
 Only after this passes should the second Sleeper league be added, followed by Yahoo OAuth.
