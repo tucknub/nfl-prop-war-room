@@ -1,4 +1,4 @@
-"""Fantasy League HQ provider-normalization, identity, sync, ownership, and change-detection foundation."""
+"""Fantasy League HQ provider-normalization, identity, sync, ownership, history, and change-detection foundation."""
 
 from .catalog import (
     CATALOG_FORCED_REFRESH,
@@ -20,6 +20,16 @@ from .changes import (
     FantasySnapshot,
     UnsafeSnapshotTransition,
     derive_fantasy_change_events,
+)
+from .history import (
+    CompletedSleeperSeasonBackfill,
+    SleeperHistoryBackfill,
+    SleeperHistoryReader,
+    SleeperLeagueHistoryChain,
+    UnsafeLeagueHistory,
+    backfill_completed_sleeper_season,
+    backfill_sleeper_league_history,
+    walk_sleeper_league_history,
 )
 from .identity import (
     MATCHED,
@@ -95,6 +105,7 @@ __all__ = [
     "CATALOG_REFRESHED",
     "CATALOG_STALE_FALLBACK",
     "CatalogBackedMultiSleeperSyncResult",
+    "CompletedSleeperSeasonBackfill",
     "DraftPick",
     "DraftState",
     "FaabTransfer",
@@ -119,8 +130,11 @@ __all__ = [
     "Roster",
     "STARTER",
     "SleeperClient",
+    "SleeperHistoryBackfill",
+    "SleeperHistoryReader",
     "SleeperIdentityResolution",
     "SleeperLeagueBundle",
+    "SleeperLeagueHistoryChain",
     "SleeperLeagueReader",
     "SleeperPlayerCatalogClient",
     "SleeperPlayerCatalogLoadResult",
@@ -134,9 +148,12 @@ __all__ = [
     "UNKNOWN_IDENTITY_GAPS",
     "UNKNOWN_OWNERSHIP_NOT_READY",
     "UNRESOLVED",
+    "UnsafeLeagueHistory",
     "UnsafeOwnershipState",
     "UnsafeSnapshotTransition",
     "WeeklyLeagueState",
+    "backfill_completed_sleeper_season",
+    "backfill_sleeper_league_history",
     "build_multi_league_ownership_index",
     "build_sleeper_identity_audit",
     "build_sleeper_sync_result",
@@ -156,4 +173,5 @@ __all__ = [
     "sync_sleeper_leagues",
     "sync_sleeper_leagues_with_catalog",
     "validate_ffverse_player_ids",
+    "walk_sleeper_league_history",
 ]
