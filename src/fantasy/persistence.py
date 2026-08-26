@@ -290,6 +290,84 @@ def build_successful_sync_write_plan(
     )
 
 
+
+def build_unchanged_sync_statement(
+    identity: LeagueSeasonIdentity,
+    *,
+    sync_run_id: str,
+    completed_at_ms: int,
+    accepted_snapshot_id: str,
+    content_fingerprint: str,
+) -> PersistenceStatement:
+    """Complete one STARTED sync by reusing the current latest accepted snapshot.
+
+    This path deliberately inserts no snapshot and no change events. The UPDATE
+    succeeds only when the referenced snapshot belongs to the same league season,
+    matches the supplied content fingerprint, and is still the league's latest
+    snapshot accepted by a COMPLETED sync. A stale comparison therefore affects
+    zero rows and is rejected by the D1 affected-row invariant.
+    """
+
+    sync_run_id = _required_text(sync_run_id, "sync_run_id")
+    completed_at_ms = _nonnegative_int(completed_at_ms, "completed_at_ms")
+    accepted_snapshot_id = _required_text(
+        accepted_snapshot_id,
+        "accepted_snapshot_id",
+    )
+    content_fingerprint = _required_text(
+        content_fingerprint,
+        "content_fingerprint",
+    )
+
+    return PersistenceStatement(
+        sql=(
+            "UPDATE fantasy_sync_runs SET completed_at_ms = ?, status = ?, "
+            "accepted_snapshot_id = ?, error_code = NULL, error_summary = NULL "
+            "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? "
+            "AND platform_league_id = ? AND season = ? AND status = ? "
+            "AND ? = ("
+            "SELECT s.snapshot_id FROM fantasy_state_snapshots AS s "
+            "WHERE s.league_season_id = ? AND s.snapshot_id = ? "
+            "AND s.content_fingerprint = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM fantasy_sync_runs AS accepted "
+            "WHERE accepted.league_season_id = s.league_season_id "
+            "AND accepted.accepted_snapshot_id = s.snapshot_id "
+            "AND accepted.status = 'COMPLETED'"
+            ") "
+            "ORDER BY s.accepted_at_ms DESC, s.snapshot_id DESC LIMIT 1"
+            ") "
+            "AND ? = ("
+            "SELECT latest.snapshot_id FROM fantasy_state_snapshots AS latest "
+            "WHERE latest.league_season_id = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM fantasy_sync_runs AS accepted_latest "
+            "WHERE accepted_latest.league_season_id = latest.league_season_id "
+            "AND accepted_latest.accepted_snapshot_id = latest.snapshot_id "
+            "AND accepted_latest.status = 'COMPLETED'"
+            ") "
+            "ORDER BY latest.accepted_at_ms DESC, latest.snapshot_id DESC LIMIT 1"
+            ")"
+        ),
+        parameters=(
+            completed_at_ms,
+            "COMPLETED",
+            accepted_snapshot_id,
+            sync_run_id,
+            identity.league_season_id,
+            identity.platform,
+            identity.platform_league_id,
+            identity.season,
+            "STARTED",
+            accepted_snapshot_id,
+            identity.league_season_id,
+            accepted_snapshot_id,
+            content_fingerprint,
+            accepted_snapshot_id,
+            identity.league_season_id,
+        ),
+    )
+
 def _build_event_statement(
     identity: LeagueSeasonIdentity,
     event: FantasyChangeEvent,
