@@ -297,9 +297,9 @@ def _scheduled_batch_identifier(
         "version": SLEEPER_SCHEDULE_VERSION,
         "kind": "batch",
         "scheduled_at_ms": scheduled_at_ms,
-        "league_season_ids": [
+        "league_season_ids": sorted(
             row.identity.league_season_id for row in leagues
-        ],
+        ),
     }
     digest = sha256(canonical_json(payload).encode("utf-8")).hexdigest()
     return f"fhq-sleeper-batch-v1-{digest}"
