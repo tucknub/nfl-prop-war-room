@@ -102,6 +102,17 @@ class FantasySyncSession:
     registration: FantasyPersistenceLifecycleOutcome
     sync: FantasyPersistenceLifecycleOutcome
 
+    def __post_init__(self) -> None:
+        normalized = _required_text(self.sync_run_id, "sync_run_id")
+        object.__setattr__(self, "sync_run_id", normalized)
+        if (
+            self.registration.state != PERSISTENCE_REGISTERED
+            or self.registration.identifier != self.identity.league_season_id
+        ):
+            raise ValueError("session registration does not match league-season identity")
+        if self.sync.identifier != normalized or self.sync.state not in _KNOWN_SYNC_STATES:
+            raise ValueError("session sync outcome does not match sync_run_id")
+
     @property
     def can_commit(self) -> bool:
         return self.sync.state == PERSISTENCE_STARTED
@@ -656,7 +667,43 @@ def _sync_state(record: Mapping[str, Any]) -> str:
         raise FantasyPersistenceStateConflict(
             "Persisted sync run has an unsupported lifecycle status"
         )
-    return str(value)
+    state = str(value)
+    _validate_sync_state_shape(record, state)
+    return state
+
+
+def _validate_sync_state_shape(record: Mapping[str, Any], state: str) -> None:
+    completed_at = record.get("completed_at_ms")
+    accepted_snapshot_id = record.get("accepted_snapshot_id")
+    error_code = record.get("error_code")
+
+    if state == PERSISTENCE_STARTED:
+        if (
+            completed_at is not None
+            or accepted_snapshot_id is not None
+            or error_code is not None
+        ):
+            raise FantasyPersistenceStateConflict(
+                "Persisted STARTED sync contains final-state fields"
+            )
+        return
+
+    if isinstance(completed_at, bool) or not isinstance(completed_at, int) or completed_at < 0:
+        raise FantasyPersistenceStateConflict(
+            "Persisted final sync has invalid completed_at_ms"
+        )
+
+    if state == PERSISTENCE_COMPLETED:
+        if _optional_text(accepted_snapshot_id) is None or error_code is not None:
+            raise FantasyPersistenceStateConflict(
+                "Persisted COMPLETED sync has inconsistent final-state fields"
+            )
+        return
+
+    if accepted_snapshot_id is not None or _optional_text(error_code) is None:
+        raise FantasyPersistenceStateConflict(
+            "Persisted FAILED sync has inconsistent final-state fields"
+        )
 
 
 def _found(payload: Mapping[str, Any]) -> bool:
