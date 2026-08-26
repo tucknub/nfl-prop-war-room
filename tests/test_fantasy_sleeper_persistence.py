@@ -109,11 +109,12 @@ def _tx(
     week: int,
     *,
     adds: Mapping[str, str] | None = None,
+    status: str = "complete",
 ) -> LeagueTransaction:
     return LeagueTransaction(
         platform_transaction_id=transaction_id,
         transaction_type="free_agent",
-        status="complete",
+        status=status,
         week=week,
         roster_ids=("1",),
         creator_user_id="me",
@@ -425,6 +426,31 @@ def test_changed_roster_and_transaction_derive_events_and_accept_new_snapshot():
         event["before_snapshot_id"] == "snapshot-old"
         for event in success["events"]
     )
+
+
+
+def test_current_provider_row_replaces_prior_pending_transaction_and_emits_completion():
+    pending = _tx("tx-4", 4, adds={"p2": "1"}, status="pending")
+    completed = _tx("tx-4", 4, adds={"p2": "1"}, status="complete")
+    previous = _latest_record(
+        state=_state(players=("p1",), starters=("p1",)),
+        transactions=(pending,),
+        source_metadata={"provider": "SLEEPER", "transaction_round": 4},
+    )
+    reader = FakeReader(
+        _state(players=("p1", "p2"), starters=("p1",)),
+        {4: (completed,)},
+    )
+    transport = FakeTransport(latest_payload=_found(previous))
+
+    result = _run(reader, transport)
+
+    assert result.mode == SLEEPER_PERSIST_ACCEPTED
+    assert {event.event_type for event in result.events} >= {
+        "PLAYER_ADDED",
+        "TRANSACTION_COMPLETED",
+    }
+    assert transport.sends[-1]["kind"] == SYNC_SUCCESS
 
 
 def test_full_metadata_change_persists_new_snapshot_even_with_zero_change_events():
