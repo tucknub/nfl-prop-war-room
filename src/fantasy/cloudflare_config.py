@@ -13,6 +13,8 @@ EXPECTED_WORKER_NAME = "propwar-fantasy-hq"
 EXPECTED_MAIN = "./index.mjs"
 EXPECTED_COMPATIBILITY_DATE = "2026-08-26"
 EXPECTED_SECRET_NAME = "FANTASY_PERSISTENCE_TOKEN"
+EXPECTED_SCHEDULE_MODE = "SHADOW"
+EXPECTED_CRONS: tuple[str, ...] = ()
 EXPECTED_D1_BINDING = "FANTASY_DB"
 EXPECTED_D1_DATABASE_NAME = "propwar-fantasy-hq"
 EXPECTED_MIGRATIONS_DIR = "../../migrations"
@@ -82,9 +84,19 @@ def validate_fantasy_hq_wrangler(
         raise UnsafeFantasyCloudflareConfig("Wrangler required-secret declaration changed")
 
     vars_block = config.get("vars")
-    if isinstance(vars_block, Mapping) and EXPECTED_SECRET_NAME in vars_block:
+    if vars_block != {"FANTASY_SCHEDULE_MODE": EXPECTED_SCHEDULE_MODE}:
+        raise UnsafeFantasyCloudflareConfig(
+            "Wrangler schedule-mode invariant changed"
+        )
+    if EXPECTED_SECRET_NAME in vars_block:
         raise UnsafeFantasyCloudflareConfig(
             "FANTASY_PERSISTENCE_TOKEN must never be stored in Wrangler vars"
+        )
+
+    triggers = config.get("triggers")
+    if triggers != {"crons": list(EXPECTED_CRONS)}:
+        raise UnsafeFantasyCloudflareConfig(
+            "Wrangler cron triggers must remain disabled in shadow deployment config"
         )
 
     databases = config.get("d1_databases")
