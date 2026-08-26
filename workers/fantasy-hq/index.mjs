@@ -1,8 +1,8 @@
 import {
   FANTASY_PERSISTENCE_PROTOCOL_VERSION,
   UnsafeFantasyPersistenceCommand,
-  executeFantasyPersistenceCommand,
 } from "./persistence-command.mjs";
+import { executeFantasyWorkerCommand } from "./command-router.mjs";
 import {
   D1BatchExecutionError,
   D1WriteInvariantError,
@@ -31,8 +31,8 @@ export default {
  * Narrow authenticated HTTP boundary for Fantasy HQ persistence protocol v1.
  *
  * This route never accepts SQL. The request body must be one of the structured
- * commands validated by persistence-command.mjs, which constructs fixed SQL
- * internally before calling the D1 executor.
+ * commands validated by the command router, which delegates only to fixed-SQL
+ * command handlers before calling the D1 executor.
  */
 export async function handleFantasyPersistenceRequest(request, env = {}, options = {}) {
   const url = new URL(request.url);
@@ -114,7 +114,7 @@ export async function handleFantasyPersistenceRequest(request, env = {}, options
     return errorResponse(400, "INVALID_JSON", "Request body must contain valid JSON");
   }
 
-  const executeCommand = options.executeCommand ?? executeFantasyPersistenceCommand;
+  const executeCommand = options.executeCommand ?? executeFantasyWorkerCommand;
   try {
     const result = await executeCommand(env.FANTASY_DB, command);
     return jsonResponse(200, { ok: true, ...result });
