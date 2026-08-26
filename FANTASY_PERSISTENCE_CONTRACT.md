@@ -72,18 +72,33 @@ The future Worker should persist a successful accepted observation and its deriv
 
 ## Canonical football identity
 
-`football_entities.propwar_entity_id` is the stable PropWar identity. It must not depend on GSIS, Sleeper, Yahoo, Sportradar, FantasyData, or any other external namespace.
+`football_entities.propwar_entity_id` is the stable PropWar identity used by the persistence layer. It is not required to be generated independently of every upstream namespace.
+
+Production already uses nflverse/GSIS `player_id` as the operational canonical player key in the identity crosswalk and roster/role pipeline. The persistence bridge must preserve that compatibility:
+
+- when a player already has a trusted production GSIS-backed `player_id`, seed `propwar_entity_id` with that **same value** rather than inventing a second identifier;
+- also record that value in `football_external_ids` as the accepted `gsis` external ID so provider relationships remain explicit;
+- when a player enters Fantasy HQ before a stable GSIS ID exists, create a durable generated PropWar entity ID and never renumber that entity later;
+- when GSIS becomes available for that pre-GSIS player, attach it as a verified external ID to the existing entity.
+
+This makes the persistence entity layer an extension of PropWar's existing identity system, not a replacement identity universe.
 
 Accepted external links live in `football_external_ids`.
 
 ```text
-propwar_entity_id
-     |
-     +-- sleeper / scope / external_id
-     +-- yahoo / scope / external_id
-     +-- gsis / scope / external_id
-     +-- sportradar / scope / external_id
-     +-- fantasydata / scope / external_id
+existing GSIS-backed player
+player_id == propwar_entity_id
+                    |
+                    +-- gsis / scope / same player_id
+                    +-- sleeper / scope / external_id
+                    +-- yahoo / scope / external_id
+
+pre-GSIS player
+stable generated propwar_entity_id
+                    |
+                    +-- sleeper / scope / external_id
+                    +-- yahoo / scope / external_id
+                    +-- gsis / scope / verified later
 ```
 
 `provider_scope` is a non-null string because some providers can issue identifiers that are season/game scoped. A blank scope represents a provider ID treated as globally stable.
@@ -93,7 +108,7 @@ Within one provider scope:
 - one external ID can map to only one PropWar entity;
 - one PropWar entity can have only one accepted external ID.
 
-This allows a rookie to exist with a stable `propwar_entity_id` and a Sleeper ID before GSIS exists, then gain a verified GSIS link later without changing the PropWar entity.
+The bridge must prefer exact trusted IDs. Existing production identity behavior already blocks ambiguous/conflicting rows and warns on duplicate normalized names; the persistence bridge must not weaken those rules.
 
 ## Identity review audit
 
@@ -101,7 +116,7 @@ Ambiguous or rejected identity work belongs in `football_identity_review_events`
 
 A review event can exist before an accepted external link. It records the provider ID, candidate/previous PropWar entity when known, decision, reason codes, evidence, timestamps, and reviewer marker.
 
-No name-based fuzzy match is automatically accepted by this schema.
+No name-based fuzzy match is automatically accepted by this schema. Name/team information may produce a review candidate, but an accepted external mapping must meet the later bridge's explicit verification rules.
 
 ## Intended future write order
 
