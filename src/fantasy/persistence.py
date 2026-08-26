@@ -267,6 +267,7 @@ def build_successful_sync_write_plan(
     completed_at_ms: int,
     derived_at_ms: int,
     provider_status: str,
+    expected_previous_snapshot_id: str | None = None,
     source_metadata: Mapping[str, Any] | None = None,
 ) -> SuccessfulSyncWritePlan:
     """Build statements intended for one D1/SQLite transactional batch.
@@ -280,6 +281,11 @@ def build_successful_sync_write_plan(
 
     sync_run_id = _required_text(sync_run_id, "sync_run_id")
     provider_status = _required_text(provider_status, "provider_status")
+    if expected_previous_snapshot_id is not None:
+        expected_previous_snapshot_id = _required_text(
+            expected_previous_snapshot_id,
+            "expected_previous_snapshot_id",
+        )
     observed_at_ms = _nonnegative_int(observed_at_ms, "observed_at_ms")
     accepted_at_ms = _nonnegative_int(accepted_at_ms, "accepted_at_ms")
     completed_at_ms = _nonnegative_int(completed_at_ms, "completed_at_ms")
@@ -295,10 +301,49 @@ def build_successful_sync_write_plan(
         raise UnsafePersistencePlan("completed_at_ms cannot precede derived_at_ms")
 
     _validate_identity_matches_state(identity, snapshot.league)
-    _validate_events(identity, snapshot, events)
+    _validate_events(
+        identity,
+        snapshot,
+        events,
+        expected_previous_snapshot_id=expected_previous_snapshot_id,
+    )
 
     normalized_state_json = canonical_json(serialize_fantasy_snapshot(snapshot))
     content_fingerprint = persistence_content_fingerprint(snapshot)
+
+    if expected_previous_snapshot_id is None:
+        previous_guard_sql = (
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM fantasy_state_snapshots AS prior_snapshot "
+            "WHERE prior_snapshot.league_season_id = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM fantasy_sync_runs AS prior_sync "
+            "WHERE prior_sync.league_season_id = prior_snapshot.league_season_id "
+            "AND prior_sync.accepted_snapshot_id = prior_snapshot.snapshot_id "
+            "AND prior_sync.status = 'COMPLETED'"
+            ")"
+            ")"
+        )
+        previous_guard_parameters = (identity.league_season_id,)
+    else:
+        previous_guard_sql = (
+            "AND ? = ("
+            "SELECT prior_snapshot.snapshot_id FROM fantasy_state_snapshots AS prior_snapshot "
+            "WHERE prior_snapshot.league_season_id = ? "
+            "AND EXISTS ("
+            "SELECT 1 FROM fantasy_sync_runs AS prior_sync "
+            "WHERE prior_sync.league_season_id = prior_snapshot.league_season_id "
+            "AND prior_sync.accepted_snapshot_id = prior_snapshot.snapshot_id "
+            "AND prior_sync.status = 'COMPLETED'"
+            ") "
+            "ORDER BY prior_snapshot.accepted_at_ms DESC, prior_snapshot.snapshot_id DESC "
+            "LIMIT 1"
+            ")"
+        )
+        previous_guard_parameters = (
+            expected_previous_snapshot_id,
+            identity.league_season_id,
+        )
 
     snapshot_statement = PersistenceStatement(
         sql=(
@@ -308,8 +353,9 @@ def build_successful_sync_write_plan(
             "source_metadata_json"
             ") VALUES (?, (SELECT league_season_id FROM fantasy_sync_runs "
             "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? "
-            "AND platform_league_id = ? AND season = ? AND status = 'STARTED'), "
-            "?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "AND platform_league_id = ? AND season = ? AND status = 'STARTED' "
+            + previous_guard_sql +
+            "), ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ),
         parameters=(
             snapshot.snapshot_id,
@@ -318,6 +364,7 @@ def build_successful_sync_write_plan(
             identity.platform,
             identity.platform_league_id,
             identity.season,
+            *previous_guard_parameters,
             content_fingerprint,
             observed_at_ms,
             accepted_at_ms,
@@ -415,7 +462,14 @@ def _validate_events(
     identity: LeagueSeasonIdentity,
     snapshot: FantasySnapshot,
     events: Sequence[FantasyChangeEvent],
+    *,
+    expected_previous_snapshot_id: str | None,
 ) -> None:
+    if expected_previous_snapshot_id is None and events:
+        raise UnsafePersistencePlan(
+            "initial accepted snapshot cannot contain change events without a previous snapshot"
+        )
+
     seen: set[str] = set()
     expected = (identity.platform, identity.platform_league_id, identity.season)
     for event in events:
@@ -427,6 +481,13 @@ def _validate_events(
         if event.after_snapshot_id != snapshot.snapshot_id:
             raise UnsafePersistencePlan(
                 "change event after_snapshot_id must equal the accepted snapshot_id"
+            )
+        if (
+            expected_previous_snapshot_id is not None
+            and event.before_snapshot_id != expected_previous_snapshot_id
+        ):
+            raise UnsafePersistencePlan(
+                "change event before_snapshot_id must equal expected_previous_snapshot_id"
             )
         if event.before_snapshot_id == event.after_snapshot_id:
             raise UnsafePersistencePlan(
