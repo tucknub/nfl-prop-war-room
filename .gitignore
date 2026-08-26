@@ -15,3 +15,11 @@ outputs/receptions_simulation_distribution.csv
 data/cache/role_research/
 outputs/role_research/.staging/
 outputs/run_reports/role_research/
+
+# Fantasy HQ Cloudflare local/generated deployment state
+workers/fantasy-hq/wrangler.generated.jsonc
+workers/fantasy-hq/.wrangler/
+workers/fantasy-hq/.dev.vars*
+workers/fantasy-hq/.env*
+workers/fantasy-hq/.deploy-secrets.env
+workers/fantasy-hq/*secrets*.env
