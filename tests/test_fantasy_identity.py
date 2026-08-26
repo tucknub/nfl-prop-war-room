@@ -16,7 +16,7 @@ from src.fantasy.identity import (
 )
 
 
-def _ffverse(*rows: dict) -> pd.DataFrame:
+def _ffverse(*rows: dict, **single_row: object) -> pd.DataFrame:
     defaults = {
         "sleeper_id": None,
         "gsis_id": None,
@@ -25,7 +25,12 @@ def _ffverse(*rows: dict) -> pd.DataFrame:
         "position": None,
         "team": None,
     }
-    return pd.DataFrame([{**defaults, **row} for row in rows])
+    all_rows = list(rows)
+    if single_row:
+        all_rows.append(dict(single_row))
+    if not all_rows:
+        return pd.DataFrame(columns=list(defaults))
+    return pd.DataFrame([{**defaults, **row} for row in all_rows])
 
 
 def test_exact_sleeper_to_existing_gsis_reuses_production_player_id():
