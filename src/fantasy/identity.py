@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral, Real
 from typing import Any, Collection, Iterable, Mapping, Sequence
 
 import pandas as pd
@@ -50,6 +51,12 @@ def _clean_id(value: Any) -> str | None:
             return None
     except (TypeError, ValueError):
         pass
+    if isinstance(value, Integral) and not isinstance(value, bool):
+        return str(int(value))
+    if isinstance(value, Real) and not isinstance(value, bool):
+        numeric = float(value)
+        if numeric.is_integer():
+            return str(int(numeric))
     text = str(value).strip()
     if not text or text.casefold() in {"nan", "none", "null", "na", "n/a"}:
         return None
