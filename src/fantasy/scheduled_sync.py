@@ -184,10 +184,15 @@ def build_sleeper_scheduled_sync_plan(
     )
     schedule_name = _required_text(schedule_name, "schedule_name")
 
-    batch_id = _scheduled_identifier(
-        "batch",
+    for row in rows:
+        if row.registration_created_at_ms > scheduled_at_ms:
+            raise ValueError(
+                "registration_created_at_ms cannot follow scheduled_at_ms"
+            )
+
+    batch_id = _scheduled_batch_identifier(
+        rows,
         scheduled_at_ms=scheduled_at_ms,
-        identity=None,
     )
 
     specs = tuple(
@@ -281,6 +286,23 @@ def _validated_scheduled_leagues(
         "platform_league_id",
     )
     return rows
+
+
+def _scheduled_batch_identifier(
+    leagues: tuple[SleeperScheduledLeague, ...],
+    *,
+    scheduled_at_ms: int,
+) -> str:
+    payload = {
+        "version": SLEEPER_SCHEDULE_VERSION,
+        "kind": "batch",
+        "scheduled_at_ms": scheduled_at_ms,
+        "league_season_ids": [
+            row.identity.league_season_id for row in leagues
+        ],
+    }
+    digest = sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+    return f"fhq-sleeper-batch-v1-{digest}"
 
 
 def _scheduled_identifier(
