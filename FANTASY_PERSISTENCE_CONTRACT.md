@@ -30,7 +30,11 @@ The schema uses composite foreign keys so both snapshots must belong to the same
 
 Historical relationships use `ON UPDATE RESTRICT ON DELETE RESTRICT`. The first schema intentionally avoids cascading deletion of accepted snapshots, events, identities, or league-season history.
 
-A later retention policy must be explicit and separately reviewed rather than becoming an accidental side effect of deleting a parent row.
+Accepted `fantasy_state_snapshots`, `fantasy_change_events`, and `football_identity_review_events` are also guarded by database triggers that abort direct `UPDATE` or `DELETE` statements. These rows are append-only at the database boundary, not merely by application convention.
+
+`fantasy_sync_runs` is intentionally mutable because a started sync must be completed or failed. `football_entities`, accepted external-ID mappings, and league metadata are not given blanket append-only triggers because later verified corrections or lifecycle updates may be legitimate and must be accompanied by explicit audit behavior in the writer layer.
+
+A later retention or repair policy for append-only rows must be explicit and separately reviewed, including an intentional migration that drops or replaces the relevant guards.
 
 ### JSON is stored as text and validated
 
@@ -115,6 +119,8 @@ The bridge must prefer exact trusted IDs. Existing production identity behavior 
 Ambiguous or rejected identity work belongs in `football_identity_review_events`, not in `football_external_ids`.
 
 A review event can exist before an accepted external link. It records the provider ID, candidate/previous PropWar entity when known, decision, reason codes, evidence, timestamps, and reviewer marker.
+
+Each review row is a completed audit event and is append-only. A later decision is represented by another review event rather than mutating the prior event.
 
 No name-based fuzzy match is automatically accepted by this schema. Name/team information may produce a review candidate, but an accepted external mapping must meet the later bridge's explicit verification rules.
 
