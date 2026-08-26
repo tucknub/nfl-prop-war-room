@@ -78,3 +78,31 @@ def test_json_columns_reject_malformed_payloads() -> None:
             )
             """
         )
+
+
+def test_text_primary_keys_explicitly_reject_null_ids() -> None:
+    connection = _database()
+
+    with pytest.raises(sqlite3.IntegrityError):
+        connection.execute(
+            """
+            INSERT INTO fantasy_league_families (
+                league_family_id,
+                display_name,
+                created_at_ms
+            ) VALUES (NULL, 'League One', 1000)
+            """
+        )
+
+    with pytest.raises(sqlite3.IntegrityError):
+        connection.execute(
+            """
+            INSERT INTO football_entities (
+                propwar_entity_id,
+                entity_type,
+                canonical_name,
+                created_at_ms,
+                updated_at_ms
+            ) VALUES (NULL, 'PLAYER', 'Player One', 1000, 1000)
+            """
+        )
