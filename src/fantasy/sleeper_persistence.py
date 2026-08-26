@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping, Protocol, Sequence
 
 import httpx
@@ -163,6 +163,7 @@ def run_sleeper_persistence_sync(
             error=exc,
         )
 
+    current = _merge_prior_transaction_history(previous, current)
     current_fingerprint = persistence_content_fingerprint(current.snapshot)
     if (
         previous is not None
@@ -264,11 +265,15 @@ def _previous_transaction_round(
     if previous is None:
         return None
     metadata = previous.source_metadata
-    if "transaction_round" not in metadata:
+    if "transaction_round" not in metadata or metadata["transaction_round"] is None:
+        if previous.snapshot.league.ownership_ready and not any(
+            tx.week is not None for tx in previous.snapshot.transactions
+        ):
+            raise FantasyPersistenceStateConflict(
+                "Persisted transaction_round metadata is required for a quiet ownership-ready snapshot"
+            )
         return None
     value = metadata["transaction_round"]
-    if value is None:
-        return None
     if (
         isinstance(value, bool)
         or not isinstance(value, int)
@@ -279,6 +284,50 @@ def _previous_transaction_round(
             "Persisted transaction_round metadata is invalid"
         )
     return value
+
+
+def _merge_prior_transaction_history(
+    previous: PersistedFantasySnapshot | None,
+    current: SleeperCurrentSnapshotResult,
+) -> SleeperCurrentSnapshotResult:
+    """Preserve prior transaction evidence while applying current provider rows."""
+
+    if previous is None:
+        return current
+
+    by_id = {}
+    for transaction in previous.snapshot.transactions:
+        transaction_id = transaction.platform_transaction_id
+        if transaction_id in by_id:
+            raise FantasyPersistenceStateConflict(
+                "Persisted snapshot contains duplicate transaction IDs"
+            )
+        by_id[transaction_id] = transaction
+
+    for transaction in current.snapshot.transactions:
+        by_id[transaction.platform_transaction_id] = transaction
+
+    merged = tuple(
+        sorted(
+            by_id.values(),
+            key=lambda tx: (
+                tx.week if tx.week is not None else MAX_NFL_REGULAR_WEEK + 1,
+                tx.created_at_ms if tx.created_at_ms is not None else -1,
+                tx.platform_transaction_id,
+            ),
+        )
+    )
+    if merged == current.snapshot.transactions:
+        return current
+
+    return replace(
+        current,
+        snapshot=FantasySnapshot(
+            current.snapshot.snapshot_id,
+            current.snapshot.league,
+            merged,
+        ),
+    )
 
 
 def _commit_provider_failure(
