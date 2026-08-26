@@ -156,6 +156,17 @@ def test_draft_picks_preserve_player_roster_user_keeper_and_board_position():
                 "draft_slot": 4,
                 "pick_no": 140,
                 "metadata": {"position": "DEF"},
+                "is_keeper": "false",
+                "draft_id": "draft-2026",
+            },
+            {
+                "player_id": "404",
+                "picked_by": "user-4",
+                "roster_id": 4,
+                "round": 15,
+                "draft_slot": 4,
+                "pick_no": 150,
+                "metadata": {},
                 "is_keeper": None,
                 "draft_id": "draft-2026",
             },
@@ -173,7 +184,8 @@ def test_draft_picks_preserve_player_roster_user_keeper_and_board_position():
     assert rows[0].metadata["position"] == "WR"
     assert rows[1].platform_player_id == "IND"
     assert rows[1].picked_by_user_id is None
-    assert rows[1].is_keeper is None
+    assert rows[1].is_keeper is False
+    assert rows[2].is_keeper is None
 
 
 def test_client_uses_exact_weekly_and_draft_pick_resources():
@@ -235,3 +247,14 @@ def test_client_rejects_invalid_week_before_request():
 
     with pytest.raises(ValueError, match="positive integer"):
         client.fetch_weekly_state("league-test", 0)
+
+
+def test_client_rejects_empty_object_where_list_resource_is_required():
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json={})),
+    )
+    client = SleeperClient(client=http)
+
+    with pytest.raises(ValueError, match="malformed draft picks"):
+        client.fetch_draft_picks("draft-test")
