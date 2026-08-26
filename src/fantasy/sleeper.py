@@ -5,7 +5,19 @@ from typing import Any, Mapping, Sequence
 
 import httpx
 
-from .models import DraftState, FantasyLeagueState, LeagueRules, Manager, Roster
+from .models import (
+    DraftPick,
+    DraftState,
+    FaabTransfer,
+    FantasyLeagueState,
+    LeagueRules,
+    LeagueTransaction,
+    Manager,
+    MatchupTeam,
+    Roster,
+    TradedPick,
+    WeeklyLeagueState,
+)
 
 API_BASE = "https://api.sleeper.app/v1/"
 
@@ -103,18 +115,22 @@ class SleeperClient:
         response.raise_for_status()
         return response.json()
 
+    def _get_list(self, path: str, *, label: str) -> list[Any]:
+        payload = self._get_json(path)
+        if payload is None:
+            return []
+        if not isinstance(payload, list):
+            raise ValueError(f"Sleeper returned malformed {label}")
+        return payload
+
     def fetch_league_bundle(self, league_id: str) -> SleeperLeagueBundle:
-        league_id = str(league_id).strip()
-        if not league_id:
-            raise ValueError("league_id is required")
+        league_id = _required_id(league_id, "league_id")
         league = self._get_json(f"league/{league_id}")
         if not isinstance(league, dict) or str(league.get("league_id") or "") != league_id:
             raise ValueError("Sleeper returned an unexpected league object")
-        users = self._get_json(f"league/{league_id}/users") or []
-        rosters = self._get_json(f"league/{league_id}/rosters") or []
-        drafts = self._get_json(f"league/{league_id}/drafts") or []
-        if not isinstance(users, list) or not isinstance(rosters, list) or not isinstance(drafts, list):
-            raise ValueError("Sleeper returned malformed league resources")
+        users = self._get_list(f"league/{league_id}/users", label="league users")
+        rosters = self._get_list(f"league/{league_id}/rosters", label="league rosters")
+        drafts = self._get_list(f"league/{league_id}/drafts", label="league drafts")
         return SleeperLeagueBundle(league=league, users=users, rosters=rosters, drafts=drafts)
 
     def fetch_normalized_league(
@@ -128,6 +144,53 @@ class SleeperClient:
             current_user_id=current_user_id,
         )
 
+    def fetch_matchups(self, league_id: str, week: int) -> tuple[MatchupTeam, ...]:
+        league_id = _required_id(league_id, "league_id")
+        week = _valid_week(week)
+        payload = self._get_list(f"league/{league_id}/matchups/{week}", label="matchups")
+        return normalize_sleeper_matchups(payload, week=week)
+
+    def fetch_transactions(self, league_id: str, week: int) -> tuple[LeagueTransaction, ...]:
+        league_id = _required_id(league_id, "league_id")
+        week = _valid_week(week)
+        payload = self._get_list(f"league/{league_id}/transactions/{week}", label="transactions")
+        return normalize_sleeper_transactions(payload)
+
+    def fetch_weekly_state(self, league_id: str, week: int) -> WeeklyLeagueState:
+        league_id = _required_id(league_id, "league_id")
+        week = _valid_week(week)
+        return WeeklyLeagueState(
+            platform="SLEEPER",
+            platform_league_id=league_id,
+            week=week,
+            matchups=self.fetch_matchups(league_id, week),
+            transactions=self.fetch_transactions(league_id, week),
+        )
+
+    def fetch_draft_picks(self, draft_id: str) -> tuple[DraftPick, ...]:
+        draft_id = _required_id(draft_id, "draft_id")
+        payload = self._get_list(f"draft/{draft_id}/picks", label="draft picks")
+        return normalize_sleeper_draft_picks(payload)
+
+
+def _required_id(value: Any, label: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise ValueError(f"{label} is required")
+    return normalized
+
+
+def _valid_week(value: Any) -> int:
+    if isinstance(value, bool):
+        raise ValueError("week must be a positive integer")
+    try:
+        week = int(value)
+    except (TypeError, ValueError):
+        raise ValueError("week must be a positive integer") from None
+    if week < 1:
+        raise ValueError("week must be a positive integer")
+    return week
+
 
 def _as_int(value: Any) -> int | None:
     try:
@@ -136,6 +199,54 @@ def _as_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _as_number(value: Any) -> int | float | None:
+    if value is None or value == "" or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        text = str(value).strip()
+        if not text:
+            return None
+        return float(text) if "." in text else int(text)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_optional_bool(value: Any) -> bool | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value)
+    text = str(value).strip().casefold()
+    if text in {"true", "1"}:
+        return True
+    if text in {"false", "0"}:
+        return False
+    return None
+
+
+def _id_or_none(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_roster_mapping(value: Any) -> dict[str, str]:
+    if not isinstance(value, Mapping):
+        return {}
+    normalized: dict[str, str] = {}
+    for player_id, roster_id in value.items():
+        player = _id_or_none(player_id)
+        roster = _id_or_none(roster_id)
+        if player and roster:
+            normalized[player] = roster
+    return normalized
 
 
 def _normalize_rules(league: Mapping[str, Any]) -> LeagueRules:
@@ -238,6 +349,136 @@ def _normalize_rosters(rosters: Sequence[Mapping[str, Any]]) -> tuple[Roster, ..
                 reserve=tuple(str(value) for value in (roster.get("reserve") or []) if value not in (None, "")),
                 taxi=tuple(str(value) for value in (roster.get("taxi") or []) if value not in (None, "")),
                 settings=dict(roster.get("settings") or {}),
+            )
+        )
+    return tuple(rows)
+
+
+def normalize_sleeper_matchups(
+    matchups: Sequence[Mapping[str, Any]],
+    *,
+    week: int,
+) -> tuple[MatchupTeam, ...]:
+    week = _valid_week(week)
+    rows: list[MatchupTeam] = []
+    for matchup in matchups:
+        roster_id = _id_or_none(matchup.get("roster_id"))
+        if not roster_id:
+            continue
+        players_points = matchup.get("players_points")
+        starters_points = matchup.get("starters_points")
+        rows.append(
+            MatchupTeam(
+                week=week,
+                platform_roster_id=roster_id,
+                matchup_id=_id_or_none(matchup.get("matchup_id")),
+                players=tuple(str(value) for value in (matchup.get("players") or []) if value not in (None, "")),
+                starters=tuple(str(value) for value in (matchup.get("starters") or []) if value not in (None, "")),
+                points=_as_number(matchup.get("points")),
+                custom_points=_as_number(matchup.get("custom_points")),
+                players_points=dict(players_points) if isinstance(players_points, Mapping) else {},
+                starters_points=(
+                    tuple(starters_points)
+                    if isinstance(starters_points, Sequence) and not isinstance(starters_points, (str, bytes))
+                    else ()
+                ),
+                raw=dict(matchup),
+            )
+        )
+    return tuple(rows)
+
+
+def _normalize_traded_pick(value: Mapping[str, Any]) -> TradedPick:
+    return TradedPick(
+        season=str(value.get("season") or ""),
+        round=_as_int(value.get("round")),
+        original_roster_id=_id_or_none(value.get("roster_id")),
+        previous_owner_roster_id=_id_or_none(value.get("previous_owner_id")),
+        owner_roster_id=_id_or_none(value.get("owner_id")),
+    )
+
+
+def _normalize_faab_transfer(value: Mapping[str, Any]) -> FaabTransfer:
+    return FaabTransfer(
+        sender_roster_id=_id_or_none(value.get("sender")),
+        receiver_roster_id=_id_or_none(value.get("receiver")),
+        amount=_as_number(value.get("amount")),
+    )
+
+
+def normalize_sleeper_transactions(
+    transactions: Sequence[Mapping[str, Any]],
+) -> tuple[LeagueTransaction, ...]:
+    rows: list[LeagueTransaction] = []
+    for transaction in transactions:
+        transaction_id = _id_or_none(transaction.get("transaction_id"))
+        if not transaction_id:
+            continue
+        raw_picks = transaction.get("draft_picks") or []
+        raw_faab = transaction.get("waiver_budget") or []
+        settings = transaction.get("settings")
+        metadata = transaction.get("metadata")
+        rows.append(
+            LeagueTransaction(
+                platform_transaction_id=transaction_id,
+                transaction_type=str(transaction.get("type") or "unknown"),
+                status=str(transaction.get("status") or "unknown"),
+                week=_as_int(transaction.get("leg")),
+                roster_ids=tuple(
+                    str(value) for value in (transaction.get("roster_ids") or []) if value not in (None, "")
+                ),
+                creator_user_id=_id_or_none(transaction.get("creator")),
+                created_at_ms=_as_int(transaction.get("created")),
+                status_updated_at_ms=_as_int(transaction.get("status_updated")),
+                consenter_roster_ids=tuple(
+                    str(value) for value in (transaction.get("consenter_ids") or []) if value not in (None, "")
+                ),
+                adds=_normalize_roster_mapping(transaction.get("adds")),
+                drops=_normalize_roster_mapping(transaction.get("drops")),
+                traded_picks=tuple(
+                    _normalize_traded_pick(value)
+                    for value in raw_picks
+                    if isinstance(value, Mapping)
+                ),
+                faab_transfers=tuple(
+                    _normalize_faab_transfer(value)
+                    for value in raw_faab
+                    if isinstance(value, Mapping)
+                ),
+                waiver_bid=(
+                    _as_number(settings.get("waiver_bid"))
+                    if isinstance(settings, Mapping)
+                    else None
+                ),
+                metadata=dict(metadata) if isinstance(metadata, Mapping) else {},
+                raw=dict(transaction),
+            )
+        )
+    return tuple(rows)
+
+
+def normalize_sleeper_draft_picks(
+    picks: Sequence[Mapping[str, Any]],
+) -> tuple[DraftPick, ...]:
+    rows: list[DraftPick] = []
+    for pick in picks:
+        draft_id = _id_or_none(pick.get("draft_id"))
+        player_id = _id_or_none(pick.get("player_id"))
+        if not draft_id or not player_id:
+            continue
+        metadata = pick.get("metadata")
+        rows.append(
+            DraftPick(
+                platform_draft_id=draft_id,
+                platform_player_id=player_id,
+                picked_by_user_id=_id_or_none(pick.get("picked_by")),
+                platform_roster_id=_id_or_none(pick.get("roster_id")),
+                round=_as_int(pick.get("round")),
+                draft_slot=_as_int(pick.get("draft_slot")),
+                pick_no=_as_int(pick.get("pick_no")),
+                is_keeper=_as_optional_bool(pick.get("is_keeper")),
+                metadata=dict(metadata) if isinstance(metadata, Mapping) else {},
+                raw=dict(pick),
             )
         )
     return tuple(rows)
