@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -23,6 +25,7 @@ from src.fantasy.cloudflare_config import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_PATH = REPO_ROOT / "workers" / "fantasy-hq" / "wrangler.template.jsonc"
+RENDER_SCRIPT = REPO_ROOT / "scripts" / "render_fantasy_hq_wrangler.py"
 TEST_DATABASE_ID = "11111111-2222-4333-8444-555555555555"
 
 
@@ -123,3 +126,27 @@ def test_gitignore_keeps_generated_and_local_secret_state_out_of_source() -> Non
         "workers/fantasy-hq/*secrets*.env",
     }
     assert required.issubset(ignored)
+
+
+def test_runbook_cli_invocation_works_from_repository_root(tmp_path: Path) -> None:
+    output = tmp_path / "wrangler.generated.jsonc"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(RENDER_SCRIPT),
+            "--database-id",
+            TEST_DATABASE_ID,
+            "--output",
+            str(output),
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert str(output) in completed.stdout
+    config = json.loads(output.read_text(encoding="utf-8"))
+    assert config["d1_databases"][0]["database_id"] == TEST_DATABASE_ID
