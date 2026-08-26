@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Mapping, Protocol
 
 import httpx
 
 from .changes import (
     FantasyChangeEvent,
+    FantasySnapshot,
     UnsafeSnapshotTransition,
     derive_fantasy_change_events,
 )
 from .persistence import LeagueSeasonIdentity, persistence_content_fingerprint
 from .persistence_lifecycle import (
-    PERSISTENCE_FAILED,
     FantasyPersistenceCoordinator,
     FantasyPersistenceLifecycleOutcome,
     FantasyPersistenceStateConflict,
