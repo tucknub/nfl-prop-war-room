@@ -209,6 +209,7 @@ def test_success_plan_executes_against_actual_migration_and_completes_sync():
         completed_at_ms=35,
         derived_at_ms=32,
         provider_status="HEALTHY",
+        expected_previous_snapshot_id="snap-before",
         source_metadata={"catalog_status": "HIT"},
     )
     for statement in plan.statements:
@@ -302,6 +303,7 @@ def test_success_plan_rejects_wrong_league_identity_before_generating_sql():
             completed_at_ms=1,
             derived_at_ms=1,
             provider_status="HEALTHY",
+            expected_previous_snapshot_id="snap-before",
         )
 
 
