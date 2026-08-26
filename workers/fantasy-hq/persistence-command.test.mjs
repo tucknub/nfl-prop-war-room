@@ -89,6 +89,7 @@ function successCommand(overrides = {}) {
     kind: SYNC_SUCCESS,
     identity: { ...IDENTITY },
     sync_run_id: "sync-1",
+    expected_previous_snapshot_id: "snap-before",
     snapshot: {
       snapshot_id: "snap-after",
       content_fingerprint: sha256(normalized),

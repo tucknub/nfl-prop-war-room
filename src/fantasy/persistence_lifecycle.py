@@ -254,9 +254,15 @@ class FantasyPersistenceCoordinator:
         completed_at_ms: int,
         derived_at_ms: int,
         provider_status: str,
+        previous: PersistedFantasySnapshot | None = None,
         source_metadata: Mapping[str, Any] | None = None,
     ) -> FantasyPersistenceLifecycleOutcome:
         """Commit a validated snapshot/events only while the sync is STARTED."""
+
+        expected_previous_snapshot_id = _validate_success_previous(
+            session,
+            previous,
+        )
 
         live = self.transport.read_sync_run(session.sync_run_id)
         if not _found(live):
@@ -297,6 +303,7 @@ class FantasyPersistenceCoordinator:
             completed_at_ms=completed_at_ms,
             derived_at_ms=derived_at_ms,
             provider_status=provider_status,
+            expected_previous_snapshot_id=expected_previous_snapshot_id,
             source_metadata=source_metadata,
         )
 
@@ -734,6 +741,43 @@ class FantasyPersistenceCoordinator:
             write_error=write_error,
             observed_state=state,
         ) from write_error
+
+
+
+def _validate_success_previous(
+    session: FantasySyncSession,
+    previous: PersistedFantasySnapshot | None,
+) -> str | None:
+    if previous is None:
+        return None
+
+    if previous.league_season_id != session.identity.league_season_id:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot belongs to a different league season"
+        )
+
+    expected = (
+        session.identity.platform,
+        session.identity.platform_league_id,
+        session.identity.season,
+    )
+    actual = (
+        previous.snapshot.league.platform,
+        previous.snapshot.league.platform_league_id,
+        previous.snapshot.league.season,
+    )
+    if actual != expected:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot league identity does not match sync session"
+        )
+
+    previous_actual = persistence_content_fingerprint(previous.snapshot)
+    if previous_actual != previous.content_fingerprint:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot content fingerprint is internally inconsistent"
+        )
+
+    return previous.snapshot.snapshot_id
 
 
 def _validate_no_change_inputs(

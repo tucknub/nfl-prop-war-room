@@ -131,6 +131,7 @@ def build_successful_sync_command(
     completed_at_ms: int,
     derived_at_ms: int,
     provider_status: str,
+    expected_previous_snapshot_id: str | None = None,
     source_metadata: Mapping[str, Any] | None = None,
 ) -> Mapping[str, Any]:
     """Build protocol-v1 SYNC_SUCCESS from already validated Fantasy HQ domain state.
@@ -146,6 +147,11 @@ def build_successful_sync_command(
     completed_at_ms = _javascript_safe_nonnegative_int(completed_at_ms, "completed_at_ms")
     derived_at_ms = _javascript_safe_nonnegative_int(derived_at_ms, "derived_at_ms")
 
+    expected_previous_snapshot_id = _optional_text(
+        expected_previous_snapshot_id,
+        "expected_previous_snapshot_id",
+    )
+
     plan = build_successful_sync_write_plan(
         identity,
         sync_run_id=sync_run_id,
@@ -156,6 +162,7 @@ def build_successful_sync_command(
         completed_at_ms=completed_at_ms,
         derived_at_ms=derived_at_ms,
         provider_status=provider_status,
+        expected_previous_snapshot_id=expected_previous_snapshot_id,
         source_metadata=source_metadata,
     )
 
@@ -170,6 +177,7 @@ def build_successful_sync_command(
         "kind": SYNC_SUCCESS,
         "identity": _identity_payload(identity),
         "sync_run_id": plan.sync_run_id,
+        "expected_previous_snapshot_id": expected_previous_snapshot_id,
         "snapshot": {
             "snapshot_id": plan.snapshot_id,
             "content_fingerprint": persistence_content_fingerprint(snapshot),

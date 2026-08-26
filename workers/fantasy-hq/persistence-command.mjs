@@ -211,6 +211,7 @@ async function _buildSyncSuccess(command) {
     "kind",
     "identity",
     "sync_run_id",
+    "expected_previous_snapshot_id",
     "snapshot",
     "events",
     "completed_at_ms",
@@ -218,11 +219,20 @@ async function _buildSyncSuccess(command) {
 
   const identity = _identity(command.identity);
   const syncRunId = _requiredText(command.sync_run_id, "command.sync_run_id");
+  const expectedPreviousSnapshotId = _optionalText(
+    command.expected_previous_snapshot_id,
+    "command.expected_previous_snapshot_id",
+  );
   const completedAt = _nonnegativeSafeInteger(command.completed_at_ms, "command.completed_at_ms");
   const snapshot = await _snapshot(command.snapshot, identity, completedAt);
 
   if (!Array.isArray(command.events)) {
     throw new UnsafeFantasyPersistenceCommand("command.events must be an array");
+  }
+  if (expectedPreviousSnapshotId === null && command.events.length > 0) {
+    throw new UnsafeFantasyPersistenceCommand(
+      "initial accepted snapshot cannot contain change events without a previous snapshot",
+    );
   }
 
   const seenFingerprints = new Set();
@@ -235,6 +245,14 @@ async function _buildSyncSuccess(command) {
       snapshot.observed_at_ms,
       completedAt,
     );
+    if (
+      expectedPreviousSnapshotId !== null &&
+      normalized.before_snapshot_id !== expectedPreviousSnapshotId
+    ) {
+      throw new UnsafeFantasyPersistenceCommand(
+        `command.events[${index}].before_snapshot_id must equal command.expected_previous_snapshot_id`,
+      );
+    }
     if (seenFingerprints.has(normalized.event_fingerprint)) {
       throw new UnsafeFantasyPersistenceCommand(
         `command.events contains duplicate event_fingerprint ${normalized.event_fingerprint}`,
@@ -272,6 +290,43 @@ async function _buildSyncSuccess(command) {
     };
   });
 
+  let previousGuardSql;
+  let previousGuardParameters;
+  if (expectedPreviousSnapshotId === null) {
+    previousGuardSql = (
+      "AND NOT EXISTS (" +
+      "SELECT 1 FROM fantasy_state_snapshots AS prior_snapshot " +
+      "WHERE prior_snapshot.league_season_id = ? " +
+      "AND EXISTS (" +
+      "SELECT 1 FROM fantasy_sync_runs AS prior_sync " +
+      "WHERE prior_sync.league_season_id = prior_snapshot.league_season_id " +
+      "AND prior_sync.accepted_snapshot_id = prior_snapshot.snapshot_id " +
+      "AND prior_sync.status = 'COMPLETED'" +
+      ")" +
+      ")"
+    );
+    previousGuardParameters = [identity.league_season_id];
+  } else {
+    previousGuardSql = (
+      "AND ? = (" +
+      "SELECT prior_snapshot.snapshot_id FROM fantasy_state_snapshots AS prior_snapshot " +
+      "WHERE prior_snapshot.league_season_id = ? " +
+      "AND EXISTS (" +
+      "SELECT 1 FROM fantasy_sync_runs AS prior_sync " +
+      "WHERE prior_sync.league_season_id = prior_snapshot.league_season_id " +
+      "AND prior_sync.accepted_snapshot_id = prior_snapshot.snapshot_id " +
+      "AND prior_sync.status = 'COMPLETED'" +
+      ") " +
+      "ORDER BY prior_snapshot.accepted_at_ms DESC, prior_snapshot.snapshot_id DESC " +
+      "LIMIT 1" +
+      ")"
+    );
+    previousGuardParameters = [
+      expectedPreviousSnapshotId,
+      identity.league_season_id,
+    ];
+  }
+
   const snapshotStatement = {
     sql: (
       "INSERT INTO fantasy_state_snapshots (" +
@@ -280,8 +335,9 @@ async function _buildSyncSuccess(command) {
       "source_metadata_json" +
       ") VALUES (?, (SELECT league_season_id FROM fantasy_sync_runs " +
       "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? " +
-      "AND platform_league_id = ? AND season = ? AND status = 'STARTED'), " +
-      "?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "AND platform_league_id = ? AND season = ? AND status = 'STARTED' " +
+      previousGuardSql +
+      "), ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ),
     parameters: [
       snapshot.snapshot_id,
@@ -290,6 +346,7 @@ async function _buildSyncSuccess(command) {
       identity.platform,
       identity.platform_league_id,
       identity.season,
+      ...previousGuardParameters,
       snapshot.content_fingerprint,
       snapshot.observed_at_ms,
       snapshot.accepted_at_ms,
