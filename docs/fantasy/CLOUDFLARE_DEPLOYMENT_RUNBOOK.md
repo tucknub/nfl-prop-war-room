@@ -84,7 +84,7 @@ Confirm the rendered config still contains both of these exact shadow safeguards
 
 An empty `crons` list is intentional. Do not replace it with a schedule during the first Worker/D1 shadow deployment.
 
-The repository Worker tests exercise the `scheduled()` boundary directly. If a local Wrangler scheduled-event test is desired, use Wrangler's `--test-scheduled` mode only after applying the migration to the local D1 state. Do not add a real remote Cron Trigger merely to test the handler.
+The repository Worker tests exercise the `scheduled()` boundary directly. If a local Wrangler scheduled-event test is desired, use Wrangler's `--test-scheduled` mode only after applying the migration to the local D1 state. Current Wrangler exposes the local scheduled-handler test route at `/cdn-cgi/handler/scheduled`, with optional `cron` and `time` query parameters. Do not add a real remote Cron Trigger merely to test the handler.
 
 ## 6. Prepare the first-deploy secret outside the repository
 
