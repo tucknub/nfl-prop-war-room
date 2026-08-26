@@ -18,6 +18,7 @@ from glitch_radar_props_feed import (  # noqa: E402
     analyze_props,
     fetch_full_props,
 )
+from glitch_radar_stale import coverage_quality, enrich_stale_alerts  # noqa: E402
 
 DEEP_CACHE_SECONDS = 10_800  # 3 hours; protects the permanent 1,000-credit free allowance.
 
@@ -135,19 +136,66 @@ def _render_ladder(row: dict) -> None:
         st.caption("Structural ladder anomaly — exactly the kind of ordering violation Glitch Radar is designed to catch.")
 
 
+def _comparison_text(label: str, comparison: dict | None) -> tuple[str, str] | None:
+    if not comparison:
+        return None
+    stale = format_american(comparison.get("stale_price"))
+    peer = format_american(comparison.get("peer_price"))
+    peer_book = comparison.get("peer_book") or "fresh peer"
+    gap = float(comparison.get("implied_probability_gap_points") or 0)
+    status = comparison.get("status")
+    if status == "stale_better":
+        return (
+            "success",
+            f"{label}: **stale book is better** — {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points cheaper).",
+        )
+    if status == "peer_better":
+        return (
+            "caption",
+            f"{label}: fresh market is better — stale {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points).",
+        )
+    return ("caption", f"{label}: stale and best fresh comparable price are both {stale}.")
+
+
 def _render_stale(row: dict) -> None:
     age_minutes = float(row.get("age_seconds") or 0) / 60
     peer_age = float(row.get("freshest_peer_age_seconds") or 0) / 60
+    freshest_book = row.get("freshest_peer_book") or "Fresh peer"
     with st.container(border=True):
         st.markdown(f"#### STALE WATCH · {row.get('player', 'Player')} · {_market(row)} {row.get('line')} · {row.get('book')}")
         st.caption(_context(row))
-        st.write(
-            f"This price is about **{age_minutes:.1f} minutes old**, while a same-market peer is about **{peer_age:.1f} minutes old**."
-        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"**{row.get('book')} · {age_minutes:.1f}m old**")
+            st.write(f"Over {format_american(row.get('over_price'))} · Under {format_american(row.get('under_price'))}")
+        with c2:
+            st.markdown(f"**{freshest_book} · {peer_age:.1f}m old**")
+            st.write(
+                f"Over {format_american(row.get('freshest_peer_over_price'))} · "
+                f"Under {format_american(row.get('freshest_peer_under_price'))}"
+            )
+
+        for label, comparison in (("OVER", row.get("over_comparison")), ("UNDER", row.get("under_comparison"))):
+            rendered = _comparison_text(label, comparison)
+            if not rendered:
+                continue
+            kind, text = rendered
+            if kind == "success":
+                st.success(text)
+            else:
+                st.caption(text)
+
         peers = ", ".join(row.get("fresh_peer_books", []) or [])
         if peers:
-            st.caption(f"Fresh peers: {peers}")
-        st.caption("Stale does not automatically mean mispriced; it means this book deserves immediate manual verification.")
+            st.caption(f"Fresh comparable sportsbook/exchange peers: {peers}")
+        dfs_peers = ", ".join(row.get("dfs_fresh_peer_books", []) or [])
+        if dfs_peers:
+            st.caption(f"Fresh DFS movement context only: {dfs_peers}")
+        st.caption(
+            "Stale means verify immediately, not bet automatically. The comparison is exact event/player/market/line; "
+            "DFS midpoint pricing is excluded from the actionable price comparison."
+        )
 
 
 _require_owner()
@@ -178,19 +226,21 @@ except Exception as exc:
     st.stop()
 
 coverage = deep.get("coverage", {}) or {}
+rows = deep.get("rows", []) or []
+quality = coverage_quality(rows)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
 line_gaps = deep.get("line_gaps", []) or []
 ladder_violations = deep.get("ladder_violations", []) or []
-stale_props = deep.get("stale_props", []) or []
+stale_props = enrich_stale_alerts(deep.get("stale_props", []) or [], rows)
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Prop glitches", len(price_outliers))
 m2.metric("Line gaps", len(line_gaps))
 m3.metric("Ladder errors", len(ladder_violations))
-m4.metric("Stale watches", len(stale_props))
+m4.metric("Stale price watches", len(stale_props))
 
 st.caption(
-    f"{coverage.get('rows', 0):,} prop rows · {coverage.get('players', 0):,} players · "
+    f"{coverage.get('rows', 0):,} prop rows · {quality.get('cross_book_players', 0):,} cross-book player identities · "
     f"{len(coverage.get('markets', []) or []):,} market families · refreshed {local_start_label(deep.get('fetched_at'))} · "
     f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
@@ -249,10 +299,13 @@ with ladder_tab:
         _render_ladder(row)
 
 with stale_tab:
-    st.markdown("### Stale-line watches")
-    st.caption("One of my books is at least 10 minutes old while a same-line peer is 3 minutes old or fresher.")
+    st.markdown("### Stale-line price watches")
+    st.caption(
+        "One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. "
+        "DFS-only freshness is context, not an actionable price comparison."
+    )
     if not stale_props:
-        st.info("No user-book prop currently meets the stale-vs-fresh-peer trigger.")
+        st.info("No user-book prop currently has both a stale price and a fresh comparable sportsbook/exchange price peer.")
     for row in stale_props:
         _render_stale(row)
 
@@ -263,11 +316,23 @@ with coverage_tab:
         count = int(counts.get(book, 0) or 0)
         status = f"{count:,} rows" if count else "not visible in this scan"
         st.write(f"**{book}** — {status}")
+
+    st.divider()
+    st.markdown("#### Player identity audit")
+    q1, q2, q3 = st.columns(3)
+    q1.metric("Cross-book players", f"{quality.get('cross_book_players', 0):,}")
+    q2.metric("Cross-book player-games", f"{quality.get('cross_book_player_events', 0):,}")
+    q3.metric("Raw player labels", f"{quality.get('raw_player_labels', 0):,}")
+    st.caption(
+        "Cross-book player identities are the useful headline for comparison work: the same normalized player label appeared at two or more sources. "
+        "Raw player labels are kept as a feed-quality diagnostic and may be inflated by one-source naming/selection artifacts."
+    )
+
     st.divider()
     st.markdown("#### Market families detected")
     markets = coverage.get("markets", []) or []
     st.write(", ".join(str(market).replace("_", " ") for market in markets) if markets else "None returned.")
     st.caption(
         "The full feed can include reference books for anomaly context. They are never treated as sportsbooks I can bet at. "
-        "The free tier does not include Pinnacle prop lines; cross-book consensus still works from the other sources."
+        "Cross-book consensus still works from the available sportsbook/exchange sources."
     )
