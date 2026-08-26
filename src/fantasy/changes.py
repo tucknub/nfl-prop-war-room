@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from hashlib import sha256
 import json
 from typing import Any, Iterable, Mapping
 
 from .models import DraftState, FantasyLeagueState, LeagueTransaction, Roster
-
-_PLAYER_EVENT_TYPES = {
-    "PLAYER_ADDED",
-    "PLAYER_DROPPED",
-    "PLAYER_BECAME_AVAILABLE",
-    "STARTER_CHANGED",
-    "IR_CHANGED",
-}
 
 
 @dataclass(frozen=True)
@@ -59,7 +51,7 @@ class FantasyChangeEvent:
 
 
 class UnsafeSnapshotTransition(ValueError):
-    """Raised when a diff would require interpreting degraded provider state as real change."""
+    """Raised when degraded or incompatible state could be mistaken for real change."""
 
 
 def derive_fantasy_change_events(
@@ -288,10 +280,14 @@ def _derive_new_transaction_events(
     previous: FantasySnapshot,
     current: FantasySnapshot,
 ) -> list[FantasyChangeEvent]:
-    before_ids = {tx.platform_transaction_id for tx in previous.transactions}
+    before_completed_ids = {
+        tx.platform_transaction_id
+        for tx in previous.transactions
+        if tx.status.lower() == "complete"
+    }
     events: list[FantasyChangeEvent] = []
     for tx in current.transactions:
-        if tx.platform_transaction_id in before_ids or tx.status.lower() != "complete":
+        if tx.status.lower() != "complete" or tx.platform_transaction_id in before_completed_ids:
             continue
         events.append(
             _event(
@@ -402,7 +398,9 @@ def _snapshot_payload(snapshot: FantasySnapshot) -> dict[str, Any]:
             for roster in sorted(state.rosters, key=lambda value: value.platform_roster_id)
         ],
         "transactions": sorted(
-            tx.platform_transaction_id for tx in snapshot.transactions if tx.status.lower() == "complete"
+            tx.platform_transaction_id
+            for tx in snapshot.transactions
+            if tx.status.lower() == "complete"
         ),
     }
 
