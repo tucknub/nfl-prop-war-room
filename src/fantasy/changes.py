@@ -5,7 +5,7 @@ from hashlib import sha256
 import json
 from typing import Any, Iterable, Mapping
 
-from .models import DraftState, FantasyLeagueState, LeagueTransaction, Roster
+from .models import DraftState, FantasyLeagueState, LeagueRules, LeagueTransaction, Roster
 
 
 @dataclass(frozen=True)
@@ -73,8 +73,8 @@ def derive_fantasy_change_events(
             _event(
                 after,
                 "LEAGUE_RULE_CHANGED",
-                before_value={"rules_fingerprint": before.rules_fingerprint},
-                after_value={"rules_fingerprint": after.rules_fingerprint},
+                before_value=_rules_payload(before.rules),
+                after_value=_rules_payload(after.rules),
                 reason_codes=("RULES_FINGERPRINT_CHANGED",),
             )
         )
@@ -219,6 +219,7 @@ def _derive_roster_events(
         new = after_rosters[roster_id]
         events.extend(_derive_membership_flag_events(after, old, new, "starters", "STARTER_CHANGED"))
         events.extend(_derive_membership_flag_events(after, old, new, "reserve", "IR_CHANGED"))
+        roster_tx_ids = _transaction_ids_for_roster(current_transactions, roster_id)
 
         old_faab = _setting_number(old.settings, "waiver_budget_used")
         new_faab = _setting_number(new.settings, "waiver_budget_used")
@@ -230,6 +231,7 @@ def _derive_roster_events(
                     roster_id=roster_id,
                     before_value={"waiver_budget_used": old_faab},
                     after_value={"waiver_budget_used": new_faab},
+                    source_transaction_ids=roster_tx_ids,
                     reason_codes=("PROVIDER_FAAB_USED_CHANGED",),
                 )
             )
@@ -244,6 +246,7 @@ def _derive_roster_events(
                     roster_id=roster_id,
                     before_value={"waiver_position": old_priority},
                     after_value={"waiver_position": new_priority},
+                    source_transaction_ids=roster_tx_ids,
                     reason_codes=("PROVIDER_WAIVER_POSITION_CHANGED",),
                 )
             )
@@ -299,9 +302,29 @@ def _derive_new_transaction_events(
                     "transaction_type": tx.transaction_type,
                     "week": tx.week,
                     "roster_ids": list(tx.roster_ids),
+                    "creator_user_id": tx.creator_user_id,
+                    "status_updated_at_ms": tx.status_updated_at_ms,
                     "adds": dict(sorted(tx.adds.items())),
                     "drops": dict(sorted(tx.drops.items())),
                     "waiver_bid": tx.waiver_bid,
+                    "traded_picks": [
+                        {
+                            "season": pick.season,
+                            "round": pick.round,
+                            "original_roster_id": pick.original_roster_id,
+                            "previous_owner_roster_id": pick.previous_owner_roster_id,
+                            "owner_roster_id": pick.owner_roster_id,
+                        }
+                        for pick in tx.traded_picks
+                    ],
+                    "faab_transfers": [
+                        {
+                            "sender_roster_id": transfer.sender_roster_id,
+                            "receiver_roster_id": transfer.receiver_roster_id,
+                            "amount": transfer.amount,
+                        }
+                        for transfer in tx.faab_transfers
+                    ],
                 },
                 source_transaction_ids=(tx.platform_transaction_id,),
                 reason_codes=("NEW_COMPLETED_PROVIDER_TRANSACTION",),
@@ -327,6 +350,25 @@ def _transaction_ids_for_player(
         for tx in transactions
         if tx.status.lower() == "complete" and (player_id in tx.adds or player_id in tx.drops)
     }
+    return tuple(sorted(ids))
+
+
+def _transaction_ids_for_roster(
+    transactions: Iterable[LeagueTransaction],
+    roster_id: str,
+) -> tuple[str, ...]:
+    ids: set[str] = set()
+    for tx in transactions:
+        if tx.status.lower() != "complete":
+            continue
+        touches_roster = roster_id in tx.roster_ids
+        touches_roster = touches_roster or roster_id in tx.adds.values() or roster_id in tx.drops.values()
+        touches_roster = touches_roster or any(
+            roster_id in {transfer.sender_roster_id, transfer.receiver_roster_id}
+            for transfer in tx.faab_transfers
+        )
+        if touches_roster:
+            ids.add(tx.platform_transaction_id)
     return tuple(sorted(ids))
 
 
@@ -379,7 +421,7 @@ def _snapshot_payload(snapshot: FantasySnapshot) -> dict[str, Any]:
         "platform_league_id": state.platform_league_id,
         "season": state.season,
         "status": state.status,
-        "rules_fingerprint": state.rules_fingerprint,
+        "rules": _rules_payload(state.rules),
         "draft": _draft_payload(state.draft),
         "rules_ready": state.rules_ready,
         "draft_ready": state.draft_ready,
@@ -402,6 +444,23 @@ def _snapshot_payload(snapshot: FantasySnapshot) -> dict[str, Any]:
             for tx in snapshot.transactions
             if tx.status.lower() == "complete"
         ),
+    }
+
+
+def _rules_payload(rules: LeagueRules) -> dict[str, Any]:
+    return {
+        "rules_fingerprint": rules.rules_fingerprint,
+        "roster_positions": list(rules.roster_positions),
+        "scoring_settings": dict(sorted(rules.scoring_settings.items())),
+        "waiver_budget": rules.waiver_budget,
+        "max_keepers": rules.max_keepers,
+        "playoff_teams": rules.playoff_teams,
+        "playoff_week_start": rules.playoff_week_start,
+        "trade_deadline": rules.trade_deadline,
+        "reserve_slots": rules.reserve_slots,
+        "taxi_slots": rules.taxi_slots,
+        "position_limits": dict(sorted(rules.position_limits.items())),
+        "rule_settings": dict(sorted(rules.rule_settings.items())),
     }
 
 
