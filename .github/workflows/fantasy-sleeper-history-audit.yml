@@ -1,0 +1,28 @@
+name: Fantasy Sleeper History Audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fantasy-sleeper-history-audit.yml"
+      - "scripts/audit_sleeper_history.py"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Backfill and summarize Sleeper history
+        run: python scripts/audit_sleeper_history.py /tmp/sleeper-history-audit
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sleeper-history-audit
+          path: /tmp/sleeper-history-audit
+          retention-days: 7
