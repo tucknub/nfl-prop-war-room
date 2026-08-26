@@ -576,3 +576,30 @@ def test_recovery_read_failure_preserves_only_error_type_names():
     assert error.recovery_error_name == "FantasyPersistenceProtocolError"
     assert secret not in str(error)
     assert recovery_secret not in str(error)
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        _sync_record(PERSISTENCE_STARTED, completed_at_ms=120),
+        _sync_record(PERSISTENCE_COMPLETED, completed_at_ms=120, accepted_snapshot_id=None),
+        _sync_record(PERSISTENCE_FAILED, completed_at_ms=120, error_code=None),
+    ],
+)
+def test_impossible_persisted_sync_state_shapes_fail_closed(record):
+    transport = FakeTransport(
+        league_reads=[_read(_league_record())],
+        sync_reads=[_read(record)],
+    )
+
+    with pytest.raises(FantasyPersistenceStateConflict):
+        _begin(FantasyPersistenceCoordinator(transport))
+
+
+def test_public_package_exports_lifecycle_contract():
+    import src.fantasy as fantasy
+
+    assert fantasy.FantasyPersistenceCoordinator is FantasyPersistenceCoordinator
+    assert fantasy.FantasySyncSession is FantasySyncSession
+    assert fantasy.PERSISTENCE_STARTED == PERSISTENCE_STARTED
+    assert fantasy.PERSISTENCE_COMPLETED == PERSISTENCE_COMPLETED
