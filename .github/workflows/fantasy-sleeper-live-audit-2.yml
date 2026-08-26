@@ -1,0 +1,29 @@
+name: Fantasy Sleeper Live Audit 2
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fantasy-sleeper-live-audit-2.yml"
+      - "scripts/audit_sleeper_league_2.py"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch second Sleeper league
+        run: python scripts/audit_sleeper_league_2.py 1356381517693079553 /tmp/sleeper-audit-2
+      - name: Show summary
+        run: cat /tmp/sleeper-audit-2/summary.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sleeper-league-1356381517693079553-live-audit
+          path: /tmp/sleeper-audit-2
+          retention-days: 7
