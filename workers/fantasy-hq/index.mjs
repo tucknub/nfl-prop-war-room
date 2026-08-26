@@ -4,6 +4,12 @@ import {
 } from "./persistence-command.mjs";
 import { executeFantasyWorkerCommand } from "./command-router.mjs";
 import {
+  FantasyReadExecutionError,
+  UnsafeFantasyReadRequest,
+  executeFantasyRead,
+  parseFantasyReadPath,
+} from "./read-query.mjs";
+import {
   D1BatchExecutionError,
   D1WriteInvariantError,
   UnsafeD1WritePlan,
@@ -11,6 +17,7 @@ import {
 
 export const HEALTH_PATH = "/health";
 export const PERSISTENCE_PATH = "/v1/fantasy/persistence";
+export const READ_PATH_PREFIX = "/v1/fantasy/read/";
 export const MAX_COMMAND_BODY_BYTES = 512 * 1024;
 
 const JSON_HEADERS = Object.freeze({
@@ -28,11 +35,11 @@ export default {
 };
 
 /**
- * Narrow authenticated HTTP boundary for Fantasy HQ persistence protocol v1.
+ * Authenticated HTTP boundary for Fantasy HQ persistence protocol v1.
  *
- * This route never accepts SQL. The request body must be one of the structured
- * commands validated by the command router, which delegates only to fixed-SQL
- * command handlers before calling the D1 executor.
+ * Writes never accept SQL: structured commands are validated by the command
+ * router, which delegates only to fixed-SQL command handlers. Recovery reads
+ * are GET-only and map only to fixed SELECT templates in read-query.mjs.
  */
 export async function handleFantasyPersistenceRequest(request, env = {}, options = {}) {
   const url = new URL(request.url);
@@ -48,11 +55,35 @@ export async function handleFantasyPersistenceRequest(request, env = {}, options
     });
   }
 
-  if (url.pathname !== PERSISTENCE_PATH) {
+  let readRequest = null;
+  if (url.pathname.startsWith(READ_PATH_PREFIX)) {
+    try {
+      readRequest = parseFantasyReadPath(url.pathname);
+    } catch (error) {
+      if (error instanceof UnsafeFantasyReadRequest) {
+        return errorResponse(400, "INVALID_READ_REQUEST", error.message);
+      }
+      return errorResponse(400, "INVALID_READ_REQUEST", "Invalid read request");
+    }
+    if (readRequest === null) {
+      return errorResponse(404, "NOT_FOUND", "Not found");
+    }
+    if (url.search) {
+      return errorResponse(
+        400,
+        "INVALID_READ_REQUEST",
+        "Read request must not include query parameters",
+      );
+    }
+  } else if (url.pathname !== PERSISTENCE_PATH) {
     return errorResponse(404, "NOT_FOUND", "Not found");
   }
 
-  if (request.method !== "POST") {
+  if (readRequest !== null) {
+    if (request.method !== "GET") {
+      return methodNotAllowed("GET");
+    }
+  } else if (request.method !== "POST") {
     return methodNotAllowed("POST");
   }
 
@@ -79,6 +110,24 @@ export async function handleFantasyPersistenceRequest(request, env = {}, options
 
   if (!_isD1Binding(env.FANTASY_DB)) {
     return errorResponse(503, "SERVICE_UNAVAILABLE", "Service unavailable");
+  }
+
+  if (readRequest !== null) {
+    const executeRead = options.executeRead ?? executeFantasyRead;
+    try {
+      const result = await executeRead(env.FANTASY_DB, readRequest);
+      return jsonResponse(200, { ok: true, ...result });
+    } catch (error) {
+      if (error instanceof UnsafeFantasyReadRequest) {
+        return errorResponse(400, "INVALID_READ_REQUEST", error.message);
+      }
+      if (error instanceof FantasyReadExecutionError) {
+        _logPersistenceFailure(options.logger ?? console, error);
+        return errorResponse(500, "READ_FAILED", "Fantasy read failed");
+      }
+      _logPersistenceFailure(options.logger ?? console, error);
+      return errorResponse(500, "INTERNAL_ERROR", "Internal server error");
+    }
   }
 
   if (!_isJsonContentType(request.headers.get("content-type"))) {
@@ -257,8 +306,10 @@ function _configuredToken(value) {
   if (typeof value !== "string") {
     return null;
   }
-  const token = value.trim();
-  return token.length >= 32 ? token : null;
+  if (value.length < 32 || /\s/u.test(value)) {
+    return null;
+  }
+  return value;
 }
 
 function _bearerToken(value) {
