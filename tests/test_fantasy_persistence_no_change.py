@@ -389,7 +389,7 @@ def test_http_transport_accepts_no_change_command_and_validates_sync_response():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "POST"
         assert request.headers["authorization"] == f"Bearer {TOKEN}"
-        assert request.json if False else True
+        assert b'"kind":"SYNC_NO_CHANGE"' in request.content
         return httpx.Response(
             200,
             json={
