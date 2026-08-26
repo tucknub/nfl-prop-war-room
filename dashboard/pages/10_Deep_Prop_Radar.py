@@ -12,6 +12,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from glitch_radar_books import USER_BOOKS  # noqa: E402
+from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
 from glitch_radar_props_feed import (  # noqa: E402
@@ -21,7 +22,7 @@ from glitch_radar_props_feed import (  # noqa: E402
 )
 from glitch_radar_stale import coverage_quality, enrich_stale_alerts  # noqa: E402
 
-DEEP_CACHE_SECONDS = 10_800  # 3 hours; protects the permanent 1,000-credit free allowance.
+DEEP_CACHE_SECONDS = 10_800
 
 
 def _mapping(value) -> dict:
@@ -126,9 +127,36 @@ def _render_near_miss(row: dict) -> None:
         peers = ", ".join(row.get("peer_books", []) or [])
         if peers:
             st.caption(f"Comparable price peers: {peers}")
-        st.caption(
-            "Near-miss diagnostic only. It is below the strict sportsbook-error threshold and is not classified as a glitch or a recommendation."
+        st.caption("Near-miss diagnostic only. It is below the strict sportsbook-error threshold and is not classified as a glitch or a recommendation.")
+
+
+def _render_line_shop(row: dict) -> None:
+    side = str(row.get("side") or "over").upper()
+    book_line = float(row.get("book_line") or 0)
+    peer_line = float(row.get("peer_line") or 0)
+    gap = float(row.get("line_advantage") or 0)
+    price_cost = float(row.get("price_cost_points") or 0)
+    with st.container(border=True):
+        st.markdown(
+            f"#### LINE SHOP · {row.get('player', 'Player')} · {_market(row)} · "
+            f"{row.get('book')} {side} {book_line:g} {format_american(row.get('book_price'))}"
         )
+        st.caption(_context(row))
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"**EASIER {side} · {row.get('book')}**")
+            st.write(f"{book_line:g} · {format_american(row.get('book_price'))}")
+        with c2:
+            st.markdown(f"**COMPARE · {row.get('peer_book')}**")
+            st.write(f"{peer_line:g} · {format_american(row.get('peer_price'))}")
+        p1, p2 = st.columns(2)
+        p1.metric("Threshold advantage", f"{gap:g}")
+        p2.metric("Price cost", f"{price_cost:+.2f} prob pts")
+        if price_cost <= 0:
+            st.success("Easier threshold is also no more expensive by implied probability than this peer price.")
+        else:
+            st.info(f"Easier threshold costs only {price_cost:.2f} implied-probability points versus this comparison price.")
+        st.caption("Line-shopping signal, not an EV estimate. Verify the exact market, period and settlement rules in both books before betting.")
 
 
 def _render_line_gap(row: dict) -> None:
@@ -156,9 +184,7 @@ def _render_ladder(row: dict) -> None:
         with c2:
             st.markdown(f"**Harder OVER {float(row.get('harder_line')):g}**")
             st.write(format_american(row.get("harder_over_price")))
-        st.error(
-            f"Harder threshold is priced {float(row.get('probability_inversion_points') or 0):.2f} probability points MORE likely than the easier threshold."
-        )
+        st.error(f"Harder threshold is priced {float(row.get('probability_inversion_points') or 0):.2f} probability points MORE likely than the easier threshold.")
         st.caption("Structural ladder anomaly — exactly the kind of ordering violation Glitch Radar is designed to catch.")
 
 
@@ -171,16 +197,10 @@ def _comparison_text(label: str, comparison: dict | None) -> tuple[str, str] | N
     gap = float(comparison.get("implied_probability_gap_points") or 0)
     status = comparison.get("status")
     if status == "stale_better":
-        return (
-            "success",
-            f"{label}: **stale book is better** — {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points cheaper).",
-        )
+        return "success", f"{label}: **stale book is better** — {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points cheaper)."
     if status == "peer_better":
-        return (
-            "caption",
-            f"{label}: fresh market is better — stale {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points).",
-        )
-    return ("caption", f"{label}: stale and best fresh comparable price are both {stale}.")
+        return "caption", f"{label}: fresh market is better — stale {stale} vs {peer_book} {peer} ({gap:.2f} implied-probability points)."
+    return "caption", f"{label}: stale and best fresh comparable price are both {stale}."
 
 
 def _render_stale(row: dict) -> None:
@@ -190,38 +210,26 @@ def _render_stale(row: dict) -> None:
     with st.container(border=True):
         st.markdown(f"#### STALE WATCH · {row.get('player', 'Player')} · {_market(row)} {row.get('line')} · {row.get('book')}")
         st.caption(_context(row))
-
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f"**{row.get('book')} · {age_minutes:.1f}m old**")
             st.write(f"Over {format_american(row.get('over_price'))} · Under {format_american(row.get('under_price'))}")
         with c2:
             st.markdown(f"**{freshest_book} · {peer_age:.1f}m old**")
-            st.write(
-                f"Over {format_american(row.get('freshest_peer_over_price'))} · "
-                f"Under {format_american(row.get('freshest_peer_under_price'))}"
-            )
-
+            st.write(f"Over {format_american(row.get('freshest_peer_over_price'))} · Under {format_american(row.get('freshest_peer_under_price'))}")
         for label, comparison in (("OVER", row.get("over_comparison")), ("UNDER", row.get("under_comparison"))):
             rendered = _comparison_text(label, comparison)
             if not rendered:
                 continue
             kind, text = rendered
-            if kind == "success":
-                st.success(text)
-            else:
-                st.caption(text)
-
+            st.success(text) if kind == "success" else st.caption(text)
         peers = ", ".join(row.get("fresh_peer_books", []) or [])
         if peers:
             st.caption(f"Fresh comparable sportsbook/exchange peers: {peers}")
         dfs_peers = ", ".join(row.get("dfs_fresh_peer_books", []) or [])
         if dfs_peers:
             st.caption(f"Fresh DFS movement context only: {dfs_peers}")
-        st.caption(
-            "Stale means verify immediately, not bet automatically. The comparison is exact event/player/market/line; "
-            "DFS midpoint pricing is excluded from the actionable price comparison."
-        )
+        st.caption("Stale means verify immediately, not bet automatically. DFS midpoint pricing is excluded from the actionable price comparison.")
 
 
 _require_owner()
@@ -232,10 +240,7 @@ st.caption("NFL player-prop glitch scanner · TDs, yardage, receptions and alter
 key = _api_key()
 if not key:
     st.info("The deep-prop engine is built and ready, but the full player-prop feed needs a free ParlayAPI key.")
-    st.markdown(
-        "ParlayAPI's permanent free plan provides **1,000 credits/month with no credit card**. "
-        "One full NFL props scan costs **3 credits** and returns all books/markets in one call."
-    )
+    st.markdown("ParlayAPI's permanent free plan provides **1,000 credits/month with no credit card**. One full NFL props scan costs **3 credits** and returns all books/markets in one call.")
     st.link_button("Get free ParlayAPI key", "https://parlay-api.com/signup")
     st.markdown("#### One-time Streamlit setup")
     st.write("In the PropWar app settings, open **Secrets** and add:")
@@ -256,20 +261,23 @@ rows = deep.get("rows", []) or []
 quality = coverage_quality(rows)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
 near_misses = build_near_miss_anomalies(rows)
+line_shop = build_line_shop_watches(rows)
 line_gaps = deep.get("line_gaps", []) or []
 ladder_violations = deep.get("ladder_violations", []) or []
 stale_props = enrich_stale_alerts(deep.get("stale_props", []) or [], rows)
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Prop glitches", len(price_outliers))
-m2.metric("Line gaps", len(line_gaps))
-m3.metric("Ladder errors", len(ladder_violations))
-m4.metric("Stale price watches", len(stale_props))
+m2.metric("Line-shop watches", len(line_shop))
+m3.metric("Line gaps", len(line_gaps))
+m4.metric("Ladder errors", len(ladder_violations))
+m5.metric("Stale price watches", len(stale_props))
 
 st.caption(
     f"{coverage.get('rows', 0):,} prop rows · {quality.get('cross_book_players', 0):,} cross-book player identities · "
-    f"{len(coverage.get('markets', []) or []):,} market families · {len(near_misses):,} near-miss diagnostics · "
-    f"refreshed {local_start_label(deep.get('fetched_at'))} · {PROP_CREDITS_PER_SCAN} free credits per deep scan"
+    f"{len(coverage.get('markets', []) or []):,} market families · {len(near_misses):,} same-line diagnostics · "
+    f"{len(line_shop):,} line-shop watches · refreshed {local_start_label(deep.get('fetched_at'))} · "
+    f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
 
 if st.button("Force new deep scan (uses 3 credits)", type="primary"):
@@ -296,18 +304,19 @@ for row in line_gaps:
 if shown == 0:
     st.success("No major prop-price, ladder, or material line-gap anomaly is visible at one of my books in this deep scan.")
 
-if near_misses:
-    st.markdown("### Closest pricing discrepancies")
-    st.caption(
-        "These are the largest exact same-line differences that remain below the strict glitch threshold. "
-        "They help show what the radar is seeing even when nothing is extreme enough to call an error."
-    )
+if line_shop:
+    st.markdown("### Best line-shopping edges")
+    st.caption("Easier thresholds at roughly comparable juice. These are line-shopping opportunities, not sportsbook-error alerts.")
+    for row in line_shop[:5]:
+        _render_line_shop(row)
+elif near_misses:
+    st.markdown("### Closest same-line pricing discrepancies")
     for row in near_misses[:5]:
         _render_near_miss(row)
 
 st.divider()
-price_tab, watch_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = st.tabs(
-    ["Prop Glitches", "Near Misses", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"]
+price_tab, shop_tab, watch_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = st.tabs(
+    ["Prop Glitches", "Line Shopping", "Near Misses", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"]
 )
 
 with price_tab:
@@ -318,14 +327,19 @@ with price_tab:
     for row in price_outliers:
         _render_price_glitch(row)
 
+with shop_tab:
+    st.markdown("### Cross-book line shopping")
+    st.caption("Same event/player/market, different thresholds. An easier OVER line or higher UNDER line is shown only when its price is within 3 implied-probability points of the comparison price. DFS pick'em pricing is excluded.")
+    if not line_shop:
+        st.info("No easier-threshold line-shopping opportunity met the comparable-price rule in this scan.")
+    for row in line_shop:
+        _render_line_shop(row)
+
 with watch_tab:
     st.markdown("### Near-miss same-line anomalies")
-    st.caption(
-        "Largest exact event/player/market/line price differences below the true glitch threshold. "
-        "DFS pick'em midpoint pricing is excluded from these comparisons."
-    )
+    st.caption("Largest exact event/player/market/line price differences below the true glitch threshold. DFS pick'em midpoint pricing is excluded from these comparisons.")
     if not near_misses:
-        st.info("No same-line price discrepancy crossed the near-miss diagnostic floor in this scan.")
+        st.info("No non-identical exact same-line sportsbook price comparison is available in this scan.")
     for row in near_misses:
         _render_near_miss(row)
 
@@ -347,10 +361,7 @@ with ladder_tab:
 
 with stale_tab:
     st.markdown("### Stale-line price watches")
-    st.caption(
-        "One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. "
-        "DFS-only freshness is context, not an actionable price comparison."
-    )
+    st.caption("One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. DFS-only freshness is context, not an actionable price comparison.")
     if not stale_props:
         st.info("No user-book prop currently has both a stale price and a fresh comparable sportsbook/exchange price peer.")
     for row in stale_props:
@@ -370,16 +381,10 @@ with coverage_tab:
     q1.metric("Cross-book players", f"{quality.get('cross_book_players', 0):,}")
     q2.metric("Cross-book player-games", f"{quality.get('cross_book_player_events', 0):,}")
     q3.metric("Raw player labels", f"{quality.get('raw_player_labels', 0):,}")
-    st.caption(
-        "Cross-book player identities are the useful headline for comparison work: the same normalized player label appeared at two or more sources. "
-        "Raw player labels are kept as a feed-quality diagnostic and may be inflated by one-source naming/selection artifacts."
-    )
+    st.caption("Cross-book player identities are the useful headline for comparison work. Raw player labels remain a feed-quality diagnostic.")
 
     st.divider()
     st.markdown("#### Market families detected")
     markets = coverage.get("markets", []) or []
     st.write(", ".join(str(market).replace("_", " ") for market in markets) if markets else "None returned.")
-    st.caption(
-        "The full feed can include reference books for anomaly context. They are never treated as sportsbooks I can bet at. "
-        "Cross-book consensus still works from the available sportsbook/exchange sources."
-    )
+    st.caption("Reference books may establish comparison context, but only the configured five sportsbooks are treated as actionable books.")
