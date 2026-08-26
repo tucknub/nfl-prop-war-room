@@ -277,3 +277,11 @@ def test_snapshot_response_limit_configuration_must_be_positive_integer():
                 token=TOKEN,
                 max_snapshot_response_body_bytes=value,
             )
+
+
+def test_public_package_exports_recovery_read_kinds():
+    import src.fantasy as fantasy
+
+    assert fantasy.READ_LEAGUE_SEASON == READ_LEAGUE_SEASON
+    assert fantasy.READ_SYNC_RUN == READ_SYNC_RUN
+    assert fantasy.READ_LATEST_SNAPSHOT == READ_LATEST_SNAPSHOT
