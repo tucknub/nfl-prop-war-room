@@ -7,7 +7,7 @@ import httpx
 
 from .models import DraftState, FantasyLeagueState, LeagueRules, Manager, Roster
 
-API_BASE = "https://api.sleeper.app/v1"
+API_BASE = "https://api.sleeper.app/v1/"
 
 _RULE_SETTING_KEYS = (
     "best_ball",
@@ -18,7 +18,6 @@ _RULE_SETTING_KEYS = (
     "playoff_seed_type",
     "playoff_type",
     "reserve_allow_cov",
-    "reserve_allow_dnr",
     "reserve_allow_doubtful",
     "reserve_allow_na",
     "reserve_allow_out",
@@ -73,8 +72,9 @@ class SleeperClient:
         client: httpx.Client | None = None,
     ) -> None:
         self._owns_client = client is None
+        normalized_base = base_url.rstrip("/") + "/"
         self._client = client or httpx.Client(
-            base_url=base_url.rstrip("/"),
+            base_url=normalized_base,
             timeout=timeout_seconds,
             headers={"Accept": "application/json", "User-Agent": "PropWar-FantasyHQ/1.0"},
         )
@@ -90,7 +90,7 @@ class SleeperClient:
         self.close()
 
     def _get_json(self, path: str) -> Any:
-        response = self._client.get(path)
+        response = self._client.get(path.lstrip("/"))
         response.raise_for_status()
         return response.json()
 
@@ -98,12 +98,12 @@ class SleeperClient:
         league_id = str(league_id).strip()
         if not league_id:
             raise ValueError("league_id is required")
-        league = self._get_json(f"/league/{league_id}")
+        league = self._get_json(f"league/{league_id}")
         if not isinstance(league, dict) or str(league.get("league_id") or "") != league_id:
             raise ValueError("Sleeper returned an unexpected league object")
-        users = self._get_json(f"/league/{league_id}/users") or []
-        rosters = self._get_json(f"/league/{league_id}/rosters") or []
-        drafts = self._get_json(f"/league/{league_id}/drafts") or []
+        users = self._get_json(f"league/{league_id}/users") or []
+        rosters = self._get_json(f"league/{league_id}/rosters") or []
+        drafts = self._get_json(f"league/{league_id}/drafts") or []
         if not isinstance(users, list) or not isinstance(rosters, list) or not isinstance(drafts, list):
             raise ValueError("Sleeper returned malformed league resources")
         return SleeperLeagueBundle(league=league, users=users, rosters=rosters, drafts=drafts)
@@ -166,11 +166,15 @@ def _normalize_draft(drafts: Sequence[Mapping[str, Any]]) -> DraftState | None:
         if _as_int(settings.get(key)) is not None and int(settings[key]) > 0
     }
     raw_order = draft.get("draft_order") or {}
-    draft_order = {
-        str(user_id): int(slot)
-        for user_id, slot in raw_order.items()
-        if _as_int(slot) is not None
-    } if isinstance(raw_order, dict) else {}
+    draft_order = (
+        {
+            str(user_id): int(slot)
+            for user_id, slot in raw_order.items()
+            if _as_int(slot) is not None
+        }
+        if isinstance(raw_order, dict)
+        else {}
+    )
     return DraftState(
         platform_draft_id=str(draft.get("draft_id") or ""),
         status=str(draft.get("status") or "unknown"),
