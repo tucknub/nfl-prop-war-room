@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import replace
-
 import pytest
 
 from src.fantasy.changes import FantasySnapshot
@@ -15,7 +13,10 @@ from src.fantasy.models import (
     Roster,
     TradedPick,
 )
+from hashlib import sha256
+
 from src.fantasy.persistence import (
+    canonical_json,
     persistence_content_fingerprint,
     serialize_fantasy_snapshot,
 )
@@ -193,16 +194,9 @@ def test_rules_fingerprint_tampering_is_rejected_even_if_outer_hash_is_recompute
     row = _record(original)
     row["normalized_state"]["league"]["rules"]["waiver_budget"] = 999
 
-    tampered_state = replace(
-        original.league,
-        rules=replace(original.league.rules, waiver_budget=999),
-    )
-    tampered_snapshot = FantasySnapshot(
-        original.snapshot_id,
-        tampered_state,
-        original.transactions,
-    )
-    row["content_fingerprint"] = persistence_content_fingerprint(tampered_snapshot)
+    row["content_fingerprint"] = sha256(
+        canonical_json(row["normalized_state"]).encode("utf-8")
+    ).hexdigest()
 
     with pytest.raises(
         UnsafePersistedFantasySnapshot,
