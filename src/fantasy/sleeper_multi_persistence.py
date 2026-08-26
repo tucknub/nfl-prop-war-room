@@ -14,6 +14,7 @@ from .persistence_lifecycle import (
     FantasyPersistenceLifecycleError,
     FantasyPersistenceOutcomeUnknown,
 )
+from .persistence_protocol import JAVASCRIPT_MAX_SAFE_INTEGER
 from .persistence_rehydrate import UnsafePersistedFantasySnapshot
 from .sleeper_current import (
     SleeperNflState,
@@ -72,6 +73,8 @@ class SleeperPersistenceLeagueSpec:
     request_metadata: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.identity, LeagueSeasonIdentity):
+            raise TypeError("identity must be a LeagueSeasonIdentity")
         if self.identity.platform != "SLEEPER":
             raise ValueError("Sleeper persistence league spec requires platform=SLEEPER")
 
@@ -102,6 +105,8 @@ class SleeperPersistenceLeagueSpec:
         for field_name, value in timestamps.items():
             object.__setattr__(self, field_name, value)
 
+        if self.observed_at_ms < self.started_at_ms:
+            raise ValueError("observed_at_ms cannot precede started_at_ms")
         if self.accepted_at_ms < self.observed_at_ms:
             raise ValueError("accepted_at_ms cannot precede observed_at_ms")
         if self.derived_at_ms < self.observed_at_ms:
@@ -337,7 +342,7 @@ def _validate_shared_nfl_state(nfl_state: SleeperNflState, season: str) -> None:
         )
 
 
-def _require_unique(values: Sequence[str] | Any, label: str) -> None:
+def _require_unique(values: Any, label: str) -> None:
     materialized = tuple(values)
     if len(materialized) != len(set(materialized)):
         raise ValueError(f"Sleeper persistence {label} values must be unique")
@@ -365,4 +370,6 @@ def _required_text(value: Any, label: str) -> str:
 def _nonnegative_int(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f"{label} must be a non-negative integer")
+    if value > JAVASCRIPT_MAX_SAFE_INTEGER:
+        raise ValueError(f"{label} exceeds JavaScript safe integer range")
     return value
