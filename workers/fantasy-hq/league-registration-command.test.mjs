@@ -165,22 +165,21 @@ test("exact repeat is idempotent and later labels/metadata refresh without chang
         "SELECT display_name, created_at_ms, metadata_json FROM fantasy_league_families WHERE league_family_id = ?",
       )
       .get("ffl");
-    assert.deepEqual(family, {
-      display_name: "FFL",
-      created_at_ms: 1787760000000,
-      metadata_json: '{"source":"owner_config","verified":true}',
-    });
+    assert.equal(family.display_name, "FFL");
+    assert.equal(family.created_at_ms, 1787760000000);
+    assert.equal(
+      family.metadata_json,
+      '{"source":"owner_config","verified":true}',
+    );
 
     const season = db
       .prepare(
         "SELECT display_name, created_at_ms, metadata_json FROM fantasy_league_seasons WHERE league_season_id = ?",
       )
       .get("ffl:2026");
-    assert.deepEqual(season, {
-      display_name: "FFL 2026",
-      created_at_ms: 1787760000000,
-      metadata_json: '{"platform_status":"complete"}',
-    });
+    assert.equal(season.display_name, "FFL 2026");
+    assert.equal(season.created_at_ms, 1787760000000);
+    assert.equal(season.metadata_json, '{"platform_status":"complete"}');
   } finally {
     db.close();
   }
@@ -276,14 +275,18 @@ test("registration validator rejects raw SQL, unknown fields, bad metadata, and 
   }
 });
 
-test("command router preserves existing sync path and selects registration only by kind", async () => {
-  const db = d1Adapter(createDatabase());
-  const result = await executeFantasyWorkerCommand(db, fixture);
+test("command router selects registration by kind", async () => {
+  const sqlite = createDatabase();
+  try {
+    const result = await executeFantasyWorkerCommand(d1Adapter(sqlite), fixture);
 
-  assert.equal(result.protocol_version, 1);
-  assert.equal(result.kind, LEAGUE_SEASON_UPSERT);
-  assert.equal(result.league_season_id, "ffl:2026");
-  assert.equal(result.results.length, 2);
+    assert.equal(result.protocol_version, 1);
+    assert.equal(result.kind, LEAGUE_SEASON_UPSERT);
+    assert.equal(result.league_season_id, "ffl:2026");
+    assert.equal(result.results.length, 2);
+  } finally {
+    sqlite.close();
+  }
 });
 
 test("authenticated HTTP route accepts the Python fixture through the default command router", async () => {
