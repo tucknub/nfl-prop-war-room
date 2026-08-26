@@ -41,11 +41,19 @@ The 2025 cached provider object reported:
 
 These are **historical 2025 facts only**.
 
-### Confirmed 2026 change
+### Confirmed 2026 checkpoints
 
 The league is **no longer Superflex in 2026**.
 
-Do not infer the rest of the 2026 roster/scoring settings from 2025. The current Sleeper league object is authoritative for:
+A retained 2026 draft-board artifact is labeled `1QB • FULL PPR • 10 TEAM`. Its 10 manager display names match the 10-manager set in the confirmed 2025 Franchise Football League cache, so this artifact is accepted as a secondary FFL validation checkpoint for:
+
+- 10 teams.
+- Full PPR.
+- 1QB rather than Superflex.
+
+This artifact is **not** the authority for the complete current ruleset. Do not infer exact bench/IR slots, waiver settings, keeper rules, playoff settings, passing-TD scoring, or other scoring modifiers from the draft board.
+
+The current Sleeper league object remains authoritative for:
 
 - `roster_positions`
 - `scoring_settings`
@@ -55,6 +63,8 @@ Do not infer the rest of the 2026 roster/scoring settings from 2025. The current
 - keeper configuration
 - playoff configuration
 - trade configuration
+
+The first real 2026 adapter acceptance run should assert that the live league object agrees with the verified secondary checkpoints above. A mismatch blocks recommendation readiness and requires review rather than silently choosing either source.
 
 ### Rules fingerprint
 
@@ -84,6 +94,7 @@ A season becomes `RECOMMENDATION_READY` only when:
 4. user/team identity is resolved;
 5. roster ownership is fresh;
 6. rules fingerprint is persisted;
-7. no prior-season settings were used as a fallback.
+7. no prior-season settings were used as a fallback;
+8. current provider facts agree with any accepted secondary checkpoints, or discrepancies have been explicitly reviewed.
 
 Until then the season may be shown as connected/pending, but no league-specific player values, waiver actions, start/sit actions, keeper values, or roster-need scores should be published.
