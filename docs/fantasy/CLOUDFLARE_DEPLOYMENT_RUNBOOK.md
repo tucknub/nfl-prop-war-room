@@ -138,9 +138,35 @@ When explicitly exercised in a controlled test, the handler:
 
 Activating a remote recurring Cron Trigger is a separate reviewed change. Do not add a cron expression to the deployment config as part of this shadow deployment.
 
-## 10. Python/runtime wiring is a separate gate
+## 10. Python/runtime deployment handshake
 
-The deployed Worker URL becomes `FANTASY_PERSISTENCE_URL`; the same secret value becomes `FANTASY_PERSISTENCE_TOKEN` for the trusted Python runtime. Those values must live in runtime secret storage, not GitHub source. The Python client performs a public health check and strict response validation before any higher-level sync workflow is enabled.
+The deployed Worker URL becomes `FANTASY_PERSISTENCE_URL`; the same secret value becomes `FANTASY_PERSISTENCE_TOKEN` for the trusted Python runtime. Those values must live in runtime secret storage, not GitHub source, shell history, command arguments, or checked-in dotenv files.
+
+After both values are present in the trusted runtime environment, run:
+
+```powershell
+python scripts/check_fantasy_hq_runtime_handshake.py
+```
+
+The command is deliberately read-only. It performs exactly this logical sequence:
+
+1. public `GET /health` with no bearer token;
+2. validates `ok=true`, `status="ok"`, and persistence protocol version 1;
+3. authenticated `GET /v1/fantasy/read/sync-runs/propwar-runtime-handshake-v1-read-only-probe`;
+4. validates the read response and requires that reserved probe ID to be absent;
+5. returns a sanitized summary with `write_enabled=false`.
+
+A successful result has this shape:
+
+```json
+{"authenticated_read_ready":true,"handshake_version":1,"health_ready":true,"probe_absent":true,"protocol_version":1,"ready":true,"write_enabled":false}
+```
+
+The command never calls the persistence POST endpoint and never creates a league, sync run, snapshot, event, or identity row. On failure it emits only `ready=false` plus the Python exception class; Worker messages, secrets, endpoint values, and D1 records are not printed.
+
+The reserved probe sync-run ID is a deployment invariant. If it is ever present in D1, stop and investigate instead of deleting or reusing it merely to make the handshake pass.
+
+**Production persistence gate:** do not enable an authenticated fantasy write path, scheduled Python runner, or recurring Cloudflare trigger unless this handshake returns `ready=true` in the same target environment that will perform the writes.
 
 ## 11. Later secret rotation
 
@@ -160,6 +186,9 @@ Stop instead of deploying if any of these occur:
 - `FANTASY_SCHEDULE_MODE` is not exactly `SHADOW`
 - the generated deployment config contains any Cron Trigger
 - the scheduled shadow test performs any D1 write
+- the runtime deployment handshake does not return `ready=true`
+- the reserved runtime handshake probe sync-run ID exists
+- the handshake command output contains an endpoint, token, Worker message, or D1 record
 
 A code rollback does not reverse a D1 migration. Database migrations therefore remain explicit, versioned, and separately audited.
 
