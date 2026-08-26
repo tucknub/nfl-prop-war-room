@@ -224,7 +224,7 @@ class FantasyPersistenceCoordinator:
         )
         return FantasySyncSession(
             identity=identity,
-            sync_run_id=sync_run_id.strip(),
+            sync_run_id=sync.identifier,
             registration=registration,
             sync=sync,
         )
