@@ -194,7 +194,7 @@ def test_completed_season_backfill_collects_weekly_and_draft_evidence():
     assert result.matchup_row_count == 3
     assert result.transaction_count == 1
     assert result.draft_pick_count == 1
-    assert reader.draft_calls == ("draft-2025-id",) if isinstance(reader.draft_calls, tuple) else ["draft-2025-id"]
+    assert reader.draft_calls == ["draft-2025-id"]
 
 
 def test_current_or_pre_draft_season_cannot_be_bulk_backfilled_as_complete():
