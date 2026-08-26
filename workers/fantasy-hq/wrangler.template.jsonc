@@ -7,6 +7,12 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "vars": {
+    "FANTASY_SCHEDULE_MODE": "SHADOW"
+  },
+  "triggers": {
+    "crons": []
+  },
   "secrets": {
     "required": [
       "FANTASY_PERSISTENCE_TOKEN"
