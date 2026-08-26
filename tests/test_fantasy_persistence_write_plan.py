@@ -116,7 +116,7 @@ def _execute(connection: sqlite3.Connection, statement) -> int:
     return connection.execute(statement.sql, statement.parameters).rowcount
 
 
-def _seed_snapshot(
+def _seed_accepted_snapshot(
     connection: sqlite3.Connection,
     snapshot: FantasySnapshot,
     observed_at_ms=10,
@@ -138,6 +138,23 @@ def _seed_snapshot(
             1,
             canonical_json(serialize_fantasy_snapshot(snapshot)),
             "{}",
+        ),
+    )
+    connection.execute(
+        "INSERT INTO fantasy_sync_runs ("
+        "sync_run_id, league_season_id, platform, platform_league_id, season, "
+        "started_at_ms, completed_at_ms, status, accepted_snapshot_id, error_code, "
+        "error_summary, request_metadata_json"
+        ") VALUES (?, ?, ?, ?, ?, ?, ?, 'COMPLETED', ?, NULL, NULL, '{}')",
+        (
+            f"accepted-{snapshot.snapshot_id}",
+            "ffl:2026",
+            "SLEEPER",
+            "league-2026",
+            "2026",
+            max(0, observed_at_ms - 1),
+            observed_at_ms,
+            snapshot.snapshot_id,
         ),
     )
 
@@ -188,7 +205,7 @@ def test_success_plan_executes_against_actual_migration_and_completes_sync():
     events = derive_fantasy_change_events(previous, current)
     assert [event.event_type for event in events] == ["PLAYER_ADDED"]
 
-    _seed_snapshot(connection, previous)
+    _seed_accepted_snapshot(connection, previous)
     assert _execute(
         connection,
         build_sync_start_statement(
