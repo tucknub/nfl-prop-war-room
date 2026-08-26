@@ -8,11 +8,20 @@ Define one shared player-evidence object that can be consumed by Fantasy League 
 
 The contract is evidence-first. Missing or unresolved evidence is explicit; it is never silently treated as neutral.
 
-## Canonical key
+## Canonical entity key
 
-`propwar_player_id`
+`propwar_entity_id`
 
-The canonical PropWar identity should remain anchored to the existing NFL identity authority (currently GSIS-backed where available). External platform/provider identifiers extend that identity rather than replace it.
+Fantasy/platform persistence uses an immutable internal PropWar entity key that is independent of any external provider identifier.
+
+The existing Python NFL pipeline may continue using its GSIS-backed `player_id` where that is already authoritative. Fantasy HQ should bridge that legacy/current NFL identifier to `propwar_entity_id`; it should not force an immediate rewrite of the existing role/model pipeline.
+
+Why this boundary exists:
+
+- real historical Sleeper players already reconcile very well to PropWar's existing GSIS/name/team identity authority;
+- current pre-Week-1 rookies may exist in Sleeper before Sleeper exposes GSIS/Yahoo/ESPN IDs;
+- external IDs can appear or change after a player entity has already been drafted, rostered, or referenced in a recommendation;
+- historical rows must never need to be re-keyed merely because GSIS or another provider ID becomes available later.
 
 ## Contract
 
@@ -34,28 +43,37 @@ PlayerEvidence
 
 Required:
 
-- `propwar_player_id`
-- `player_name`
+- `propwar_entity_id`
+- `entity_type`: `PLAYER | TEAM_DEFENSE`
+- `player_name` / display label
 - `position`
 - `nfl_team`
-- `identity_status`: `RESOLVED | REVIEW_REQUIRED | UNRESOLVED`
+- `identity_status`: `VERIFIED_NFL_ID | VERIFIED_EXTERNAL_BRIDGE | PROVISIONAL_PROVIDER_ENTITY | REVIEW_REQUIRED | UNRESOLVED`
 
 External IDs when known:
 
+- `legacy_propwar_player_id` when the current Python/GSIS player ID exists
 - `gsis_id`
 - `pfr_id`
 - `sleeper_player_id`
 - `yahoo_player_key`
 - `sportradar_id`
 - `fantasydata_id`
+- `espn_id`
 - `provider_ids` object for reviewed market/vendor identifiers
 
 Rules:
 
+- `propwar_entity_id` never changes when a new external ID is attached.
 - Never auto-resolve an ambiguous duplicate name by name alone.
+- Direct current PropWar/nflverse NFL identity should be attempted before treating a Sleeper rookie as lacking an NFL ID.
 - Team-qualified aliases may assist matching but may not override a conflicting authoritative ID.
+- Name + position without team context is lower-confidence review evidence, especially across trades; it should not silently create a permanent bridge.
 - Provider aliases should retain source + first/last verified timestamps.
-- Sleeper's player payload may expose candidate cross-provider fields including `sportradar_id`, `fantasy_data_id`, `espn_id`, and `yahoo_id`. Treat these as high-value crosswalk evidence when populated, but validate them before promotion to `RESOLVED`; never assume every external ID field is complete or current merely because Sleeper returned it.
+- Sleeper's player payload may expose candidate cross-provider fields including `sportradar_id`, `fantasy_data_id`, `espn_id`, `yahoo_id`, and sometimes `gsis_id`. Treat these as crosswalk evidence when populated, but validate them before promotion to a verified state.
+- A real current player with no safe NFL bridge may exist as `PROVISIONAL_PROVIDER_ENTITY` for league/draft display. Do not join that entity to NFL role/market evidence until a safe bridge exists.
+- When an authoritative NFL/GSIS bridge later appears, attach it to the existing entity and promote identity status without rewriting historical league/recommendation rows.
+- Team defenses use `entity_type = TEAM_DEFENSE` and a canonical NFL team identity rather than pseudo-player IDs.
 
 ### historical_role
 
@@ -78,6 +96,8 @@ Primary role families currently supported by the validated role-research foundat
 - `rb_opportunity_share`
 - `wr_target_share`
 - `te_target_share`
+
+A rookie/new player with no prior NFL role history must expose `historical_role` as unavailable/missing. Do not manufacture a player-specific historical role from a positional median and present it as observed player history.
 
 ### current_role
 
@@ -178,7 +198,7 @@ Derived market context may include:
 Rules:
 
 - Market evidence is confirmation/context, not automatically a fantasy projection.
-- A market row may not join to NFL/fantasy evidence until canonical player identity is resolved.
+- A market row may not join to NFL/fantasy evidence until its entity resolves to a safe canonical NFL player bridge.
 - DFS pick'em reference rows must remain distinct from apples-to-apples sportsbook pricing where pricing mechanics differ.
 
 ### quality
@@ -197,7 +217,7 @@ Required quality envelope:
 - `blocked_reason_codes[]`
 - `recommendation_safe`: boolean
 
-If a required join is unresolved or league ownership is stale, downstream recommendation layers must fail closed rather than infer.
+If a required join is unresolved/provisional or league ownership is stale, downstream recommendation layers must fail closed for the affected decision family rather than infer.
 
 ## Downstream use
 
@@ -216,6 +236,8 @@ Pre-draft Fantasy HQ may still use Player Evidence for:
 - player watchlists;
 - league-specific draft values once scoring/roster rules are verified.
 
+A provisional rookie may appear in draft/league state while NFL historical-role or market joins remain explicitly unavailable.
+
 Ownership-dependent actions remain blocked until the platform reports meaningful roster ownership.
 
 ### Role Shock
@@ -224,10 +246,20 @@ Uses the same role-change evidence and market context to identify NFL usage chan
 
 ### Deep Prop
 
-Should eventually resolve feed labels to `propwar_player_id` and attach current role/context rather than maintaining only text-label player identity.
+Should eventually resolve feed labels to `propwar_entity_id`/safe NFL identity and attach current role/context rather than maintaining only text-label player identity.
+
+## Compatibility with the current Python stack
+
+Do not rename or re-key the current role-history/model tables merely to satisfy Fantasy HQ.
+
+The identity registry maps:
+
+`propwar_entity_id <-> existing Python player_id/GSIS <-> Sleeper/Yahoo/provider IDs`
+
+Existing validated role/backtest datasets remain immutable and authoritative at their current grain. The shared entity layer is an integration bridge above them.
 
 ## Versioning
 
 Every material contract change increments `schema_version`.
 
-Persisted recommendations must retain the schema/model/rules version used at generation time so future audits can reproduce the evidence available when the recommendation was made.
+Persisted recommendations must retain the entity ID plus schema/model/rules version used at generation time so future audits can reproduce the evidence available when the recommendation was made.
