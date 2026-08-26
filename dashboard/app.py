@@ -44,38 +44,15 @@ def inject_usability_styles() -> None:
         """
         <style>
         footer, #viewerBadge_link, [data-testid="stAppDeployButton"] { display:none !important; }
-        @media (min-width:521px) {
-          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
-            display:none !important;
-          }
-          [data-testid="stSidebarCollapsedControl"],
-          [data-testid="stSidebarCollapseButton"],
-          button[aria-label="Open sidebar"],
-          button[aria-label="Expand sidebar"],
-          button[aria-label="Collapse sidebar"],
-          button[aria-label="Close sidebar"] {
-            display:flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            pointer-events:auto !important;
-          }
-          [data-testid="stSidebarCollapsedControl"] button {
-            width:auto;
-            min-width:5.4rem;
-            height:2.5rem;
-            padding:0 .72rem;
-            border:1px solid #cbd9ef;
-            border-radius:8px;
-            background:#fff;
-            box-shadow:0 1px 4px rgba(15,35,60,.08);
-          }
-          [data-testid="stSidebarCollapsedControl"] button::after {
-            content:"Menu";
-            margin-left:.35rem;
-            font-size:.78rem;
-            font-weight:800;
-            color:var(--pw-ink);
-          }
+        [data-testid="stHeader"] {
+          display:flex !important;
+          visibility:visible !important;
+          opacity:1 !important;
+          background:rgba(255,255,255,.98) !important;
+        }
+        [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
+          visibility:visible !important;
+          opacity:1 !important;
         }
         .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }
         .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }
@@ -87,29 +64,11 @@ def inject_usability_styles() -> None:
         .pw-primary-link { display:flex; align-items:center; justify-content:center; min-height:2.45rem; padding:.45rem .75rem; border:1px solid var(--pw-blue); border-radius:6px; background:var(--pw-blue); color:#fff!important; font-size:.86rem; font-weight:760; text-decoration:none!important; text-align:center; }
         .pw-primary-link:hover { background:#074edb; border-color:#074edb; }
         .pw-overview strong { line-height:1.25!important; white-space:normal!important; overflow-wrap:anywhere!important; }
-        @media (max-width:900px) { .pw-home-hero h1 { font-size:2.55rem!important; line-height:1.02!important; } .pw-home-hero p { font-size:.92rem; } }
+        @media (max-width:900px) {
+          .pw-home-hero h1 { font-size:2.55rem!important; line-height:1.02!important; }
+          .pw-home-hero p { font-size:.92rem; }
+        }
         @media (max-width:520px) {
-          [data-testid="stHeader"] {
-            display:flex !important;
-            visibility:visible !important;
-            background:transparent !important;
-          }
-          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
-            display:flex !important;
-            visibility:visible !important;
-          }
-          [data-testid="stSidebarCollapsedControl"],
-          [data-testid="stSidebarCollapseButton"],
-          button[aria-label="Open sidebar"],
-          button[aria-label="Expand sidebar"] {
-            display:flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            pointer-events:auto !important;
-            z-index:1000000 !important;
-          }
-          [data-testid="stSidebarCollapsedControl"] button { width:auto; min-width:5.4rem; height:2.5rem; padding:0 .72rem; border:1px solid #cbd9ef; border-radius:8px; background:#fff; box-shadow:0 1px 4px rgba(15,35,60,.08); }
-          [data-testid="stSidebarCollapsedControl"] button::after { content:"Menu"; margin-left:.35rem; font-size:.78rem; font-weight:800; color:var(--pw-ink); }
           .pw-home-hero { margin-top:.05rem; }
           .pw-home-hero>span { font-size:.64rem; margin-bottom:.35rem; }
           .pw-home-hero h1 { font-size:2.08rem!important; line-height:1.02!important; }
@@ -135,7 +94,10 @@ def render_launch_home() -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown(f'<div class="pw-status-line"><strong>Data status</strong><span>{operational_status_text()}</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="pw-status-line"><strong>Data status</strong><span>{operational_status_text()}</span></div>',
+        unsafe_allow_html=True,
+    )
     section("Choose a report", "Each report answers one documented role question without market or outcome claims.")
     report_columns = st.columns(3)
     for column, (title, description) in zip(report_columns, REPORT_CARDS):
@@ -143,29 +105,36 @@ def render_launch_home() -> None:
             with st.container(border=True):
                 st.markdown(f"### {title}")
                 st.write(description)
-                st.markdown(f'<a class="pw-primary-link" href="/reports?report={quote(title)}">View {title}</a>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<a class="pw-primary-link" href="/reports?report={quote(title)}">View {title}</a>',
+                    unsafe_allow_html=True,
+                )
     st.caption("Historical and current-season role research only. Every percentage remains attached to its player count and team total.")
     st.divider()
     render_home()
 
 
 def _render_owner_auth(mode: str, user: dict) -> None:
-    with st.sidebar:
+    _, auth_col = st.columns([8.5, 1.5], vertical_alignment="center")
+    with auth_col:
         if mode == "AUTH_UNAVAILABLE":
-            st.caption("Personal tools are unavailable until owner authentication is configured.")
-        elif mode == "ANONYMOUS":
-            st.caption("Personal tools are hidden.")
-            if st.button("Owner sign in", key="owner_login", width="stretch"):
-                st.login()
-        elif mode == "OWNER":
-            email = str(user.get("email") or "Owner")
-            st.caption(f"Owner mode · {email}")
-            if st.button("Sign out", key="owner_logout", width="stretch"):
-                st.logout()
-        elif mode == "NON_OWNER":
-            st.caption("Signed in · public access only")
-            if st.button("Sign out", key="non_owner_logout", width="stretch"):
-                st.logout()
+            st.caption("Owner tools unavailable")
+            return
+        label = "Owner ✓" if mode == "OWNER" else "Owner"
+        with st.popover(label, width="stretch"):
+            if mode == "ANONYMOUS":
+                st.caption("Personal tools are hidden until owner sign-in.")
+                if st.button("Owner sign in", key="owner_login", width="stretch"):
+                    st.login()
+            elif mode == "OWNER":
+                email = str(user.get("email") or "Owner")
+                st.caption(f"Owner mode · {email}")
+                if st.button("Sign out", key="owner_logout", width="stretch"):
+                    st.logout()
+            elif mode == "NON_OWNER":
+                st.caption("Signed in · public access only")
+                if st.button("Sign out", key="non_owner_logout", width="stretch"):
+                    st.logout()
 
 
 def main() -> None:
@@ -173,7 +142,7 @@ def main() -> None:
         page_title="PropWar: NFL Role Intelligence",
         page_icon="PW",
         layout="wide",
-        initial_sidebar_state="auto",
+        initial_sidebar_state="collapsed",
     )
     inject_styles()
     inject_usability_styles()
@@ -181,10 +150,6 @@ def main() -> None:
     secrets = _secrets_snapshot()
     user = _user_snapshot()
     mode = access_mode(secrets, user)
-
-    with st.sidebar:
-        st.markdown('<div class="pw-brand"><strong>PropWar</strong><span>NFL ROLE INTELLIGENCE</span></div>', unsafe_allow_html=True)
-    _render_owner_auth(mode, user)
 
     role_pages = [
         st.Page(render_launch_home, title="Home", icon=":material/home:", url_path="", default=True),
@@ -208,7 +173,8 @@ def main() -> None:
             **pages,
         }
 
-    st.navigation(pages).run()
+    _render_owner_auth(mode, user)
+    st.navigation(pages, position="top").run()
 
 
 if __name__ == "__main__":
