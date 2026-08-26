@@ -81,6 +81,7 @@ from .persistence import (
     build_successful_sync_write_plan,
     build_sync_start_statement,
     canonical_json,
+    persistence_content_fingerprint,
     serialize_fantasy_league_state,
     serialize_fantasy_snapshot,
 )
@@ -187,6 +188,7 @@ __all__ = [
     "normalize_sleeper_matchups",
     "normalize_sleeper_player_catalog",
     "normalize_sleeper_transactions",
+    "persistence_content_fingerprint",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
     "serialize_fantasy_league_state",
