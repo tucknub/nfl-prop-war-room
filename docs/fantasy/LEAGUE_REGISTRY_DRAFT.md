@@ -22,7 +22,7 @@ Known season chain:
 |---|---|---|---|
 | 2024 | `1112703068749058048` | historical | Referenced by 2025 Sleeper `previous_league_id`. |
 | 2025 | `1242463021108838400` | complete / historical | Confirmed cached league object in prior Commissioner Command Center. |
-| 2026 | `1383849993151987712` | current | Supplied current league URL. Live provider object must be ingested before recommendations are enabled. |
+| 2026 | `1383849993151987712` | current / verified | Live Sleeper audit passed on 2026-08-26. |
 
 ### Confirmed 2025 historical rules
 
@@ -41,38 +41,76 @@ The 2025 cached provider object reported:
 
 These are **historical 2025 facts only**.
 
-### Confirmed 2026 checkpoints
+### Verified 2026 live rules
 
-The league is **no longer Superflex in 2026**.
+A read-only GitHub Actions audit fetched the public Sleeper league/users/rosters/drafts resources for the current league ID and passed all accepted FFL checkpoints.
 
-A retained 2026 draft-board artifact is labeled `1QB • FULL PPR • 10 TEAM`. Its 10 manager display names match the 10-manager set in the confirmed 2025 Franchise Football League cache, so this artifact is accepted as a secondary FFL validation checkpoint for:
+Live league facts as of 2026-08-26:
 
+- League name: Franchise Football League.
+- Season: 2026.
+- Status: `pre_draft`.
+- 10 teams / 10 current managers.
+- Full PPR (`rec = 1`).
+- Passing TD = 6.
+- Starter slots, in provider order: `QB, RB, RB, WR, WR, WR, TE, FLEX, DEF`.
+- **No Superflex / OP slot.**
+- 7 bench slots.
+- 1 reserve/IR slot.
+- No taxi slots.
+- $100 waiver budget.
+- 1 keeper maximum.
+- 6 playoff teams.
+- Playoffs start Week 15.
+- Trade deadline Week 12.
+- Previous Sleeper league ID is the confirmed 2025 FFL ID.
+
+### Verified 2026 draft state
+
+The live Sleeper draft resource reports:
+
+- Status: `pre_draft`.
+- Type: snake.
+- 16 rounds.
 - 10 teams.
-- Full PPR.
-- 1QB rather than Superflex.
+- Draft roster slots: 1 QB, 2 RB, 3 WR, 1 TE, 1 FLEX, 1 DEF, 7 bench.
+- Current scheduled start: 2026-09-05 12:00 PM America/Indiana/Indianapolis (16:00 UTC).
+- Draft order is not yet assigned in the provider response.
 
-This artifact is **not** the authority for the complete current ruleset. Do not infer exact bench/IR slots, waiver settings, keeper rules, playoff settings, passing-TD scoring, or other scoring modifiers from the draft board.
+Draft-specific configuration must come from the draft resource. The league object's `settings.draft_rounds` currently reports `3`, which does **not** represent the actual current 16-round draft.
 
-The current Sleeper league object remains authoritative for:
+### Current ownership state
 
-- `roster_positions`
-- `scoring_settings`
-- `settings`
-- team count
-- waiver configuration
-- keeper configuration
-- playoff configuration
-- trade configuration
+All 10 current Sleeper rosters are presently empty and starter lists contain placeholder IDs because the league is pre-draft. Therefore:
 
-The first real 2026 adapter acceptance run should assert that the live league object agrees with the verified secondary checkpoints above. A mismatch blocks recommendation readiness and requires review rather than silently choosing either source.
+- empty ownership must not be interpreted as every player being a free agent;
+- Waiver Radar / drop / start-sit ownership features remain suppressed until authoritative roster ownership is initialized;
+- draft/keeper preparation can still operate in pre-draft mode;
+- keeper status should be re-read as managers make keeper selections.
+
+### 2026 secondary artifact validation
+
+A retained 2026 draft-board artifact is labeled `1QB • FULL PPR • 10 TEAM`. Its 10 manager display names match the live 2026 Sleeper manager set and the prior 2025 FFL manager set.
+
+This artifact is useful as a cross-check, but the live Sleeper response is the authority. The artifact's displayed draft order must **not** be treated as the provider draft order because Sleeper currently reports `draft_order = null`.
+
+### Cross-season rule comparison
+
+Between the confirmed 2025 and live 2026 league objects:
+
+- scoring settings are unchanged;
+- overall roster size remains 16;
+- `SUPER_FLEX` was removed;
+- a third dedicated `WR` starter slot was added in its place;
+- other apparent end-of-season/current-leg metadata differences are operational state, not necessarily league-rule changes.
+
+The Superflex → WR change is strategically material because it lowers quarterback scarcity/value while increasing required weekly WR depth.
 
 ### Rules fingerprint
 
 Each accepted season state should persist a deterministic `rules_fingerprint` computed from normalized scoring, ordered roster positions, waiver/transaction rules, keeper rules, and playoff settings.
 
 A changed fingerprint across seasons creates `LEAGUE_RULE_CHANGED` evidence but does not itself imply whether the change is strategically large or small. The decision layer evaluates the impact.
-
-For FFL, removing `SUPER_FLEX` is strategically material because it changes quarterback replacement value, roster scarcity, waiver need, keeper value, and any future trade-value analysis.
 
 ## Future registry entries
 
@@ -92,9 +130,9 @@ A season becomes `RECOMMENDATION_READY` only when:
 2. scoring rules are normalized with unmapped rules surfaced;
 3. ordered roster positions are parsed successfully;
 4. user/team identity is resolved;
-5. roster ownership is fresh;
+5. roster ownership is fresh and meaningful for the current league phase;
 6. rules fingerprint is persisted;
 7. no prior-season settings were used as a fallback;
 8. current provider facts agree with any accepted secondary checkpoints, or discrepancies have been explicitly reviewed.
 
-Until then the season may be shown as connected/pending, but no league-specific player values, waiver actions, start/sit actions, keeper values, or roster-need scores should be published.
+A verified `pre_draft` league may be `RULES_READY` but not `OWNERSHIP_READY`. Ownership-dependent recommendations remain suppressed until roster ownership is initialized.
