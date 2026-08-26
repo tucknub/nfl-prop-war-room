@@ -107,6 +107,15 @@ from .persistence_http import (
     FantasyPersistenceTransportError,
     UnsafeFantasyPersistenceTransport,
 )
+from .runtime_handshake import (
+    FANTASY_RUNTIME_HANDSHAKE_PROBE_SYNC_RUN_ID,
+    FANTASY_RUNTIME_HANDSHAKE_VERSION,
+    FantasyRuntimeDeploymentHandshakeError,
+    FantasyRuntimeDeploymentHandshakeResult,
+    FantasyRuntimeHandshakeClient,
+    run_fantasy_runtime_deployment_handshake,
+    run_fantasy_runtime_deployment_handshake_from_env,
+)
 from .persistence_protocol import (
     FANTASY_PERSISTENCE_PROTOCOL_VERSION,
     JAVASCRIPT_MAX_SAFE_INTEGER,
@@ -207,6 +216,8 @@ __all__ = [
     "DraftPick",
     "DraftState",
     "FANTASY_PERSISTENCE_PROTOCOL_VERSION",
+    "FANTASY_RUNTIME_HANDSHAKE_PROBE_SYNC_RUN_ID",
+    "FANTASY_RUNTIME_HANDSHAKE_VERSION",
     "FaabTransfer",
     "FantasyChangeEvent",
     "FantasyIdentityAudit",
@@ -221,6 +232,9 @@ __all__ = [
     "FantasyPersistenceRejected",
     "FantasyPersistenceStateConflict",
     "FantasyPersistenceTransportError",
+    "FantasyRuntimeDeploymentHandshakeError",
+    "FantasyRuntimeDeploymentHandshakeResult",
+    "FantasyRuntimeHandshakeClient",
     "FantasySnapshot",
     "FantasySyncSession",
     "JAVASCRIPT_MAX_SAFE_INTEGER",
@@ -338,6 +352,8 @@ __all__ = [
     "persistence_content_fingerprint",
     "rehydrate_latest_snapshot_read",
     "rehydrate_persisted_snapshot_record",
+    "run_fantasy_runtime_deployment_handshake",
+    "run_fantasy_runtime_deployment_handshake_from_env",
     "run_multi_sleeper_persistence_sync",
     "run_scheduled_sleeper_persistence_sync",
     "run_sleeper_persistence_sync",
