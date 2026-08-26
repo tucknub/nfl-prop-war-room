@@ -45,10 +45,36 @@ def inject_usability_styles() -> None:
         <style>
         footer, #viewerBadge_link, [data-testid="stAppDeployButton"] { display:none !important; }
         @media (min-width:521px) {
-          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"],
-          [data-testid="stSidebarCollapsedControl"], [data-testid="stSidebarCollapseButton"],
-          button[aria-label="Collapse sidebar"], button[aria-label="Close sidebar"] {
+          [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
             display:none !important;
+          }
+          [data-testid="stSidebarCollapsedControl"],
+          [data-testid="stSidebarCollapseButton"],
+          button[aria-label="Open sidebar"],
+          button[aria-label="Expand sidebar"],
+          button[aria-label="Collapse sidebar"],
+          button[aria-label="Close sidebar"] {
+            display:flex !important;
+            visibility:visible !important;
+            opacity:1 !important;
+            pointer-events:auto !important;
+          }
+          [data-testid="stSidebarCollapsedControl"] button {
+            width:auto;
+            min-width:5.4rem;
+            height:2.5rem;
+            padding:0 .72rem;
+            border:1px solid #cbd9ef;
+            border-radius:8px;
+            background:#fff;
+            box-shadow:0 1px 4px rgba(15,35,60,.08);
+          }
+          [data-testid="stSidebarCollapsedControl"] button::after {
+            content:"Menu";
+            margin-left:.35rem;
+            font-size:.78rem;
+            font-weight:800;
+            color:var(--pw-ink);
           }
         }
         .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }

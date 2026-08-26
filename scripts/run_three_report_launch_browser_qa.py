@@ -142,6 +142,26 @@ def record_page_state(page: Page, label: str, failures: list[str], overflow: lis
         overflow.append(label)
 
 
+def desktop_sidebar_recoverable(page: Page) -> bool:
+    """Desktop navigation must never become a one-way collapsed state.
+
+    A visible sidebar is valid and may expose its collapse button. A collapsed sidebar is
+    also valid only when Streamlit exposes a visible control that can reopen it.
+    """
+    sidebar = page.locator('[data-testid="stSidebar"]')
+    if sidebar.count() != 1:
+        return False
+    expanded = sidebar.get_attribute("aria-expanded") == "true"
+    if expanded:
+        return True
+    reopen_controls = (
+        page.locator('[data-testid="stSidebarCollapsedControl"]'),
+        page.get_by_role("button", name="Open sidebar"),
+        page.get_by_role("button", name="Expand sidebar"),
+    )
+    return any(first_visible(control) is not None for control in reopen_controls)
+
+
 def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict[str, object]:
     page = browser.new_page(viewport={"width": width, "height": height})
     console_errors: list[str] = []
@@ -163,12 +183,9 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     if name == "desktop":
         sidebar = page.locator('[data-testid="stSidebar"]')
         check(sidebar.count() == 1, f"{name}: sidebar not rendered", failures)
-        if sidebar.count() == 1:
-            check(sidebar.get_attribute("aria-expanded") == "true", f"{name}: sidebar not locked expanded", failures)
-        collapse_control = page.locator('[data-testid="stSidebarCollapseButton"]')
         check(
-            first_visible(collapse_control) is None,
-            f"{name}: sidebar collapse control is visibly available",
+            desktop_sidebar_recoverable(page),
+            f"{name}: sidebar can be collapsed without a visible recovery control",
             failures,
         )
     home_text = body(page)
