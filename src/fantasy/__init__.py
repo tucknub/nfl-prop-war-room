@@ -152,6 +152,15 @@ from .sleeper_current import (
     build_current_sleeper_snapshot,
     normalize_sleeper_nfl_state,
 )
+from .sleeper_persistence import (
+    SLEEPER_PERSIST_ACCEPTED,
+    SLEEPER_PERSIST_EXISTING_FINAL,
+    SLEEPER_PERSIST_FAILED,
+    SLEEPER_PERSIST_NO_CHANGE,
+    SleeperPersistenceRunResult,
+    SleeperPersistenceTransport,
+    run_sleeper_persistence_sync,
+)
 from .sleeper import (
     SleeperClient,
     SleeperLeagueBundle,
@@ -233,6 +242,10 @@ __all__ = [
     "SYNC_NO_CHANGE",
     "SYNC_START",
     "SYNC_SUCCESS",
+    "SLEEPER_PERSIST_ACCEPTED",
+    "SLEEPER_PERSIST_EXISTING_FINAL",
+    "SLEEPER_PERSIST_FAILED",
+    "SLEEPER_PERSIST_NO_CHANGE",
     "SleeperClient",
     "SleeperCurrentSnapshotReader",
     "SleeperCurrentSnapshotResult",
@@ -248,6 +261,8 @@ __all__ = [
     "SleeperPlayerCatalogReader",
     "SleeperPlayerCatalogSnapshot",
     "SleeperPlayerCatalogStore",
+    "SleeperPersistenceRunResult",
+    "SleeperPersistenceTransport",
     "SleeperSyncResult",
     "SuccessfulSyncWritePlan",
     "UnsafeSleeperCurrentSnapshot",
@@ -295,6 +310,7 @@ __all__ = [
     "persistence_content_fingerprint",
     "rehydrate_latest_snapshot_read",
     "rehydrate_persisted_snapshot_record",
+    "run_sleeper_persistence_sync",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
     "serialize_fantasy_league_state",
