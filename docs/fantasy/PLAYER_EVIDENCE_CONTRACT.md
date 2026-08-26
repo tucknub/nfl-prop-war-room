@@ -14,6 +14,17 @@ The contract is evidence-first. Missing or unresolved evidence is explicit; it i
 
 The canonical PropWar identity should remain anchored to the existing NFL identity authority (currently GSIS-backed where available). External platform/provider identifiers extend that identity rather than replace it.
 
+## Identity bootstrap opportunity
+
+Sleeper's current official NFL player map exposes its own `player_id` together with fields including `sportradar_id`, `fantasy_data_id`, `espn_id`, and `yahoo_id` when populated. Use those provider IDs as candidate deterministic bridges before considering name-based matching.
+
+Rules:
+
+1. An external ID supplied by Sleeper is a candidate mapping, not automatic proof that two internal records are the same person.
+2. Cross-check available team/position/name context before promoting the mapping to `RESOLVED`.
+3. Conflicting authoritative IDs go to review; they are never overwritten by fuzzy matching.
+4. Cache the Sleeper player map locally/persistently and refresh it sparingly rather than fetching it for each league request.
+
 ## Contract
 
 ```text
@@ -46,8 +57,10 @@ External IDs when known:
 - `pfr_id`
 - `sleeper_player_id`
 - `yahoo_player_key`
+- `yahoo_player_id` when exposed by a provider crosswalk
 - `sportradar_id`
 - `fantasydata_id`
+- `espn_id`
 - `provider_ids` object for reviewed market/vendor identifiers
 
 Rules:
