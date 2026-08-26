@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - propwar-three-report-launch-mvp
+      - fantasy-hq-change-events
   pull_request:
     paths:
       - "dashboard/**"
