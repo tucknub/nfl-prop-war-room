@@ -5,7 +5,8 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from .changes import FantasyChangeEvent, FantasySnapshot
 from .league_registration_protocol import build_league_season_upsert_command
-from .persistence import LeagueSeasonIdentity
+from .persistence import LeagueSeasonIdentity, persistence_content_fingerprint
+from .persistence_rehydrate import PersistedFantasySnapshot
 from .persistence_http import (
     FantasyPersistenceProtocolError,
     FantasyPersistenceRejected,
@@ -13,6 +14,7 @@ from .persistence_http import (
 )
 from .persistence_protocol import (
     build_failed_sync_command,
+    build_no_change_sync_command,
     build_successful_sync_command,
     build_sync_start_command,
 )
@@ -30,6 +32,7 @@ PERSISTENCE_SOURCE_EXISTING = "EXISTING"
 _STAGE_REGISTRATION = "REGISTRATION"
 _STAGE_SYNC_START = "SYNC_START"
 _STAGE_SYNC_SUCCESS = "SYNC_SUCCESS"
+_STAGE_SYNC_NO_CHANGE = "SYNC_NO_CHANGE"
 _STAGE_SYNC_FAILED = "SYNC_FAILED"
 _FINAL_SYNC_STATES = frozenset({PERSISTENCE_COMPLETED, PERSISTENCE_FAILED})
 _KNOWN_SYNC_STATES = frozenset(
@@ -316,6 +319,83 @@ class FantasyPersistenceCoordinator:
             accepted_snapshot_id=snapshot.snapshot_id,
         )
 
+    def commit_no_change(
+        self,
+        session: FantasySyncSession,
+        *,
+        previous: PersistedFantasySnapshot,
+        current_snapshot: FantasySnapshot,
+        completed_at_ms: int,
+        provider_status: str,
+    ) -> FantasyPersistenceLifecycleOutcome:
+        """Complete a fresh STARTED sync without duplicating identical snapshot content."""
+
+        _validate_no_change_inputs(
+            session,
+            previous,
+            current_snapshot,
+            provider_status=provider_status,
+        )
+
+        live = self.transport.read_sync_run(session.sync_run_id)
+        if not _found(live):
+            raise FantasyPersistenceStateConflict(
+                "Cannot commit no-change sync because the STARTED sync run is absent"
+            )
+        record = _record(live)
+        _validate_sync_record_identity(record, session.identity, session.sync_run_id)
+        state = _sync_state(record)
+        expected_snapshot_id = previous.snapshot.snapshot_id
+
+        if state == PERSISTENCE_COMPLETED:
+            accepted = _optional_text(record.get("accepted_snapshot_id"))
+            if accepted != expected_snapshot_id:
+                raise FantasyPersistenceStateConflict(
+                    "Sync is already completed with a different accepted snapshot"
+                )
+            return _sync_outcome(
+                stage=_STAGE_SYNC_NO_CHANGE,
+                state=state,
+                source=PERSISTENCE_SOURCE_EXISTING,
+                sync_run_id=session.sync_run_id,
+                record=record,
+            )
+        if state == PERSISTENCE_FAILED:
+            raise FantasyPersistenceStateConflict(
+                "Cannot commit no-change sync because the sync is already FAILED"
+            )
+        if state != PERSISTENCE_STARTED:
+            raise FantasyPersistenceStateConflict(
+                "Sync is not in a no-change-completable STARTED state"
+            )
+
+        command = build_no_change_sync_command(
+            session.identity,
+            sync_run_id=session.sync_run_id,
+            accepted_snapshot_id=expected_snapshot_id,
+            content_fingerprint=previous.content_fingerprint,
+            completed_at_ms=completed_at_ms,
+        )
+
+        try:
+            self.transport.send(command)
+        except Exception as exc:
+            if not _is_ambiguous_write_error(exc):
+                raise
+            return self._recover_no_change(
+                session,
+                expected_snapshot_id=expected_snapshot_id,
+                write_error=exc,
+            )
+
+        return FantasyPersistenceLifecycleOutcome(
+            stage=_STAGE_SYNC_NO_CHANGE,
+            state=PERSISTENCE_COMPLETED,
+            source=PERSISTENCE_SOURCE_WRITE,
+            identifier=session.sync_run_id,
+            accepted_snapshot_id=expected_snapshot_id,
+        )
+
     def commit_failure(
         self,
         session: FantasySyncSession,
@@ -551,6 +631,58 @@ class FantasyPersistenceCoordinator:
             observed_state=state,
         ) from write_error
 
+    def _recover_no_change(
+        self,
+        session: FantasySyncSession,
+        *,
+        expected_snapshot_id: str,
+        write_error: Exception,
+    ) -> FantasyPersistenceLifecycleOutcome:
+        try:
+            observed = self.transport.read_sync_run(session.sync_run_id)
+        except Exception as recovery_error:
+            raise _unknown(
+                stage=_STAGE_SYNC_NO_CHANGE,
+                identifier=session.sync_run_id,
+                write_error=write_error,
+                recovery_error=recovery_error,
+            ) from recovery_error
+
+        if not _found(observed):
+            raise _unknown(
+                stage=_STAGE_SYNC_NO_CHANGE,
+                identifier=session.sync_run_id,
+                write_error=write_error,
+            ) from write_error
+
+        record = _record(observed)
+        _validate_sync_record_identity(record, session.identity, session.sync_run_id)
+        state = _sync_state(record)
+        if state == PERSISTENCE_COMPLETED:
+            accepted = _optional_text(record.get("accepted_snapshot_id"))
+            if accepted != expected_snapshot_id:
+                raise FantasyPersistenceStateConflict(
+                    "Recovered no-change sync references a different snapshot"
+                )
+            return _sync_outcome(
+                stage=_STAGE_SYNC_NO_CHANGE,
+                state=state,
+                source=PERSISTENCE_SOURCE_RECOVERY,
+                sync_run_id=session.sync_run_id,
+                record=record,
+            )
+        if state == PERSISTENCE_FAILED:
+            raise FantasyPersistenceStateConflict(
+                "Recovered sync is FAILED while no-change completion was being committed"
+            )
+
+        raise _unknown(
+            stage=_STAGE_SYNC_NO_CHANGE,
+            identifier=session.sync_run_id,
+            write_error=write_error,
+            observed_state=state,
+        ) from write_error
+
     def _recover_failure(
         self,
         session: FantasySyncSession,
@@ -602,6 +734,61 @@ class FantasyPersistenceCoordinator:
             write_error=write_error,
             observed_state=state,
         ) from write_error
+
+
+def _validate_no_change_inputs(
+    session: FantasySyncSession,
+    previous: PersistedFantasySnapshot,
+    current_snapshot: FantasySnapshot,
+    *,
+    provider_status: str,
+) -> None:
+    if previous.league_season_id != session.identity.league_season_id:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot belongs to a different league season"
+        )
+
+    expected = (
+        session.identity.platform,
+        session.identity.platform_league_id,
+        session.identity.season,
+    )
+    previous_identity = (
+        previous.snapshot.league.platform,
+        previous.snapshot.league.platform_league_id,
+        previous.snapshot.league.season,
+    )
+    current_identity = (
+        current_snapshot.league.platform,
+        current_snapshot.league.platform_league_id,
+        current_snapshot.league.season,
+    )
+    if previous_identity != expected:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot league identity does not match sync session"
+        )
+    if current_identity != expected:
+        raise FantasyPersistenceStateConflict(
+            "Current snapshot league identity does not match sync session"
+        )
+
+    previous_actual = persistence_content_fingerprint(previous.snapshot)
+    if previous_actual != previous.content_fingerprint:
+        raise FantasyPersistenceStateConflict(
+            "Previous snapshot content fingerprint is internally inconsistent"
+        )
+
+    current_fingerprint = persistence_content_fingerprint(current_snapshot)
+    if current_fingerprint != previous.content_fingerprint:
+        raise FantasyPersistenceStateConflict(
+            "Current snapshot content changed and requires a new accepted snapshot"
+        )
+
+    current_provider_status = _required_text(provider_status, "provider_status")
+    if current_provider_status != previous.provider_status:
+        raise FantasyPersistenceStateConflict(
+            "Provider status changed and requires a new accepted snapshot"
+        )
 
 
 def _sync_outcome(

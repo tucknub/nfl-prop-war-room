@@ -6,6 +6,7 @@ from .changes import FantasyChangeEvent, FantasySnapshot
 from .persistence import (
     LeagueSeasonIdentity,
     build_failed_sync_statement,
+    build_no_change_sync_statement,
     build_successful_sync_write_plan,
     build_sync_start_statement,
     canonical_json,
@@ -17,6 +18,7 @@ from .persistence import (
 FANTASY_PERSISTENCE_PROTOCOL_VERSION = 1
 SYNC_START = "SYNC_START"
 SYNC_FAILED = "SYNC_FAILED"
+SYNC_NO_CHANGE = "SYNC_NO_CHANGE"
 SYNC_SUCCESS = "SYNC_SUCCESS"
 JAVASCRIPT_MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
@@ -83,6 +85,38 @@ def build_failed_sync_command(
         "completed_at_ms": normalized_completed_at_ms,
         "error_code": statement.parameters[2],
         "error_summary": statement.parameters[3],
+    }
+
+
+def build_no_change_sync_command(
+    identity: LeagueSeasonIdentity,
+    *,
+    sync_run_id: str,
+    accepted_snapshot_id: str,
+    content_fingerprint: str,
+    completed_at_ms: int,
+) -> Mapping[str, Any]:
+    """Build protocol-v1 SYNC_NO_CHANGE for an already accepted identical snapshot."""
+
+    statement = build_no_change_sync_statement(
+        identity,
+        sync_run_id=sync_run_id,
+        accepted_snapshot_id=accepted_snapshot_id,
+        content_fingerprint=content_fingerprint,
+        completed_at_ms=completed_at_ms,
+    )
+    normalized_completed_at_ms = _javascript_safe_nonnegative_int(
+        statement.parameters[0],
+        "completed_at_ms",
+    )
+    return {
+        "protocol_version": FANTASY_PERSISTENCE_PROTOCOL_VERSION,
+        "kind": SYNC_NO_CHANGE,
+        "identity": _identity_payload(identity),
+        "sync_run_id": statement.parameters[3],
+        "accepted_snapshot_id": statement.parameters[2],
+        "content_fingerprint": statement.parameters[-1],
+        "completed_at_ms": normalized_completed_at_ms,
     }
 
 

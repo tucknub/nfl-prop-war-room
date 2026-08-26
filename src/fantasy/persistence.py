@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from .changes import FantasyChangeEvent, FantasySnapshot
@@ -71,6 +72,9 @@ class SuccessfulSyncWritePlan:
             raise ValueError(
                 "successful sync write plan requires snapshot and completion statements"
             )
+
+
+_SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 
 
 class UnsafePersistencePlan(ValueError):
@@ -182,6 +186,72 @@ def build_failed_sync_statement(
             identity.platform_league_id,
             identity.season,
             "STARTED",
+        ),
+    )
+
+
+def build_no_change_sync_statement(
+    identity: LeagueSeasonIdentity,
+    *,
+    sync_run_id: str,
+    accepted_snapshot_id: str,
+    content_fingerprint: str,
+    completed_at_ms: int,
+) -> PersistenceStatement:
+    """Complete a STARTED sync by reusing the latest accepted identical snapshot.
+
+    The UPDATE succeeds only if the supplied snapshot is still the latest accepted
+    snapshot for this league season and its persisted content fingerprint matches.
+    A stale concurrent process therefore affects zero rows rather than repointing
+    its sync run at older evidence.
+    """
+
+    sync_run_id = _required_text(sync_run_id, "sync_run_id")
+    accepted_snapshot_id = _required_text(
+        accepted_snapshot_id,
+        "accepted_snapshot_id",
+    )
+    content_fingerprint = _sha256_fingerprint(
+        content_fingerprint,
+        "content_fingerprint",
+    )
+    completed_at_ms = _nonnegative_int(completed_at_ms, "completed_at_ms")
+
+    return PersistenceStatement(
+        sql=(
+            "UPDATE fantasy_sync_runs SET completed_at_ms = ?, status = ?, "
+            "accepted_snapshot_id = ?, error_code = NULL, error_summary = NULL "
+            "WHERE sync_run_id = ? AND league_season_id = ? AND platform = ? "
+            "AND platform_league_id = ? AND season = ? AND status = ? "
+            "AND ? = ("
+            "SELECT s.snapshot_id FROM fantasy_state_snapshots AS s "
+            "WHERE s.league_season_id = ? AND EXISTS ("
+            "SELECT 1 FROM fantasy_sync_runs AS prior "
+            "WHERE prior.league_season_id = s.league_season_id "
+            "AND prior.accepted_snapshot_id = s.snapshot_id "
+            "AND prior.status = 'COMPLETED'"
+            ") ORDER BY s.accepted_at_ms DESC, s.snapshot_id DESC LIMIT 1"
+            ") AND EXISTS ("
+            "SELECT 1 FROM fantasy_state_snapshots AS s "
+            "WHERE s.snapshot_id = ? AND s.league_season_id = ? "
+            "AND s.content_fingerprint = ?"
+            ")"
+        ),
+        parameters=(
+            completed_at_ms,
+            "COMPLETED",
+            accepted_snapshot_id,
+            sync_run_id,
+            identity.league_season_id,
+            identity.platform,
+            identity.platform_league_id,
+            identity.season,
+            "STARTED",
+            accepted_snapshot_id,
+            identity.league_season_id,
+            accepted_snapshot_id,
+            identity.league_season_id,
+            content_fingerprint,
         ),
     )
 
@@ -387,6 +457,13 @@ def _required_text(value: Any, label: str) -> str:
     result = str(value or "").strip()
     if not result:
         raise ValueError(f"{label} is required")
+    return result
+
+
+def _sha256_fingerprint(value: Any, label: str) -> str:
+    result = _required_text(value, label)
+    if _SHA256_HEX.fullmatch(result) is None:
+        raise ValueError(f"{label} must be a lowercase SHA-256 hex digest")
     return result
 
 
