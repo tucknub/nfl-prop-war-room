@@ -5,16 +5,18 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from .changes import FantasyChangeEvent, FantasySnapshot
 from .league_registration_protocol import build_league_season_upsert_command
-from .persistence import LeagueSeasonIdentity
+from .persistence import LeagueSeasonIdentity, persistence_content_fingerprint
 from .persistence_http import (
     FantasyPersistenceProtocolError,
     FantasyPersistenceRejected,
     FantasyPersistenceTransportError,
 )
+from .persistence_rehydrate import PersistedFantasySnapshot
 from .persistence_protocol import (
     build_failed_sync_command,
     build_successful_sync_command,
     build_sync_start_command,
+    build_unchanged_sync_command,
 )
 
 
@@ -30,6 +32,7 @@ PERSISTENCE_SOURCE_EXISTING = "EXISTING"
 _STAGE_REGISTRATION = "REGISTRATION"
 _STAGE_SYNC_START = "SYNC_START"
 _STAGE_SYNC_SUCCESS = "SYNC_SUCCESS"
+_STAGE_SYNC_UNCHANGED = "SYNC_UNCHANGED"
 _STAGE_SYNC_FAILED = "SYNC_FAILED"
 _FINAL_SYNC_STATES = frozenset({PERSISTENCE_COMPLETED, PERSISTENCE_FAILED})
 _KNOWN_SYNC_STATES = frozenset(
@@ -316,6 +319,100 @@ class FantasyPersistenceCoordinator:
             accepted_snapshot_id=snapshot.snapshot_id,
         )
 
+
+    def commit_unchanged(
+        self,
+        session: FantasySyncSession,
+        *,
+        previous: PersistedFantasySnapshot,
+        current_snapshot: FantasySnapshot,
+        completed_at_ms: int,
+    ) -> FantasyPersistenceLifecycleOutcome:
+        """Complete a STARTED sync without inserting duplicate snapshot state."""
+
+        if previous.league_season_id != session.identity.league_season_id:
+            raise FantasyPersistenceStateConflict(
+                "Previous snapshot belongs to a different league season"
+            )
+        current_identity = (
+            current_snapshot.league.platform,
+            current_snapshot.league.platform_league_id,
+            current_snapshot.league.season,
+        )
+        expected_identity = (
+            session.identity.platform,
+            session.identity.platform_league_id,
+            session.identity.season,
+        )
+        if current_identity != expected_identity:
+            raise FantasyPersistenceStateConflict(
+                "Current snapshot league identity does not match sync session"
+            )
+
+        current_fingerprint = persistence_content_fingerprint(current_snapshot)
+        if current_fingerprint != previous.content_fingerprint:
+            raise FantasyPersistenceStateConflict(
+                "Current snapshot content differs from the previously accepted snapshot"
+            )
+
+        live = self.transport.read_sync_run(session.sync_run_id)
+        if not _found(live):
+            raise FantasyPersistenceStateConflict(
+                "Cannot commit unchanged sync because the STARTED sync run is absent"
+            )
+        record = _record(live)
+        _validate_sync_record_identity(record, session.identity, session.sync_run_id)
+        state = _sync_state(record)
+
+        expected_snapshot_id = previous.snapshot.snapshot_id
+        if state == PERSISTENCE_COMPLETED:
+            accepted = _optional_text(record.get("accepted_snapshot_id"))
+            if accepted != expected_snapshot_id:
+                raise FantasyPersistenceStateConflict(
+                    "Sync is already completed with a different accepted snapshot"
+                )
+            return _sync_outcome(
+                stage=_STAGE_SYNC_UNCHANGED,
+                state=state,
+                source=PERSISTENCE_SOURCE_EXISTING,
+                sync_run_id=session.sync_run_id,
+                record=record,
+            )
+        if state == PERSISTENCE_FAILED:
+            raise FantasyPersistenceStateConflict(
+                "Cannot commit unchanged sync because the sync is already FAILED"
+            )
+        if state != PERSISTENCE_STARTED:
+            raise FantasyPersistenceStateConflict(
+                "Sync is not in a committable STARTED state"
+            )
+
+        command = build_unchanged_sync_command(
+            session.identity,
+            sync_run_id=session.sync_run_id,
+            completed_at_ms=completed_at_ms,
+            accepted_snapshot_id=expected_snapshot_id,
+            content_fingerprint=previous.content_fingerprint,
+        )
+        try:
+            self.transport.send(command)
+        except Exception as exc:
+            if not _is_ambiguous_write_error(exc):
+                raise
+            return self._recover_unchanged(
+                session,
+                expected_snapshot_id=expected_snapshot_id,
+                write_error=exc,
+            )
+
+        return FantasyPersistenceLifecycleOutcome(
+            stage=_STAGE_SYNC_UNCHANGED,
+            state=PERSISTENCE_COMPLETED,
+            source=PERSISTENCE_SOURCE_WRITE,
+            identifier=session.sync_run_id,
+            accepted_snapshot_id=expected_snapshot_id,
+        )
+
     def commit_failure(
         self,
         session: FantasySyncSession,
@@ -546,6 +643,59 @@ class FantasyPersistenceCoordinator:
 
         raise _unknown(
             stage=_STAGE_SYNC_SUCCESS,
+            identifier=session.sync_run_id,
+            write_error=write_error,
+            observed_state=state,
+        ) from write_error
+
+
+    def _recover_unchanged(
+        self,
+        session: FantasySyncSession,
+        *,
+        expected_snapshot_id: str,
+        write_error: Exception,
+    ) -> FantasyPersistenceLifecycleOutcome:
+        try:
+            observed = self.transport.read_sync_run(session.sync_run_id)
+        except Exception as recovery_error:
+            raise _unknown(
+                stage=_STAGE_SYNC_UNCHANGED,
+                identifier=session.sync_run_id,
+                write_error=write_error,
+                recovery_error=recovery_error,
+            ) from recovery_error
+
+        if not _found(observed):
+            raise _unknown(
+                stage=_STAGE_SYNC_UNCHANGED,
+                identifier=session.sync_run_id,
+                write_error=write_error,
+            ) from write_error
+
+        record = _record(observed)
+        _validate_sync_record_identity(record, session.identity, session.sync_run_id)
+        state = _sync_state(record)
+        if state == PERSISTENCE_COMPLETED:
+            accepted = _optional_text(record.get("accepted_snapshot_id"))
+            if accepted != expected_snapshot_id:
+                raise FantasyPersistenceStateConflict(
+                    "Recovered unchanged sync references a different snapshot"
+                )
+            return _sync_outcome(
+                stage=_STAGE_SYNC_UNCHANGED,
+                state=state,
+                source=PERSISTENCE_SOURCE_RECOVERY,
+                sync_run_id=session.sync_run_id,
+                record=record,
+            )
+        if state == PERSISTENCE_FAILED:
+            raise FantasyPersistenceStateConflict(
+                "Recovered sync is FAILED while unchanged state was being committed"
+            )
+
+        raise _unknown(
+            stage=_STAGE_SYNC_UNCHANGED,
             identifier=session.sync_run_id,
             write_error=write_error,
             observed_state=state,
