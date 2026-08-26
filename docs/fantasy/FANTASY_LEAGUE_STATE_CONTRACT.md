@@ -103,7 +103,7 @@ Verified 2026 Papa Johns example: raw Sleeper scoring retains kicking and D/ST v
 
 ### roster construction
 
-Ordered starter slots plus roster limits:
+Ordered starter slots plus roster limits when the **league resource** authoritatively exposes them:
 
 - QB
 - RB
@@ -116,10 +116,13 @@ Ordered starter slots plus roster limits:
 - IDP positions when present
 - bench
 - IR/reserve
+- season-long position maximums, if independently exposed as league rules
 
 Retain provider slot order when it matters for mapping starters to lineup positions.
 
 A slot that existed in a prior season but is absent from the current-season provider response must be treated as absent. Do not fill missing current-season positions from historical defaults. For example, a 2025 `SUPER_FLEX` slot must not survive into 2026 if the 2026 `roster_positions` array no longer contains it.
+
+Do not promote a position limit found only in a draft resource into a season-long roster maximum. Draft and league constraints are separate source domains.
 
 ### reserve / IR / taxi
 
@@ -147,7 +150,7 @@ Normalize where available:
 - transaction lock settings
 - trade deadline/settings
 - acquisition limits
-- position limits when provider-enforced
+- season-long position limits only when the league resource authoritatively exposes them
 
 ## draft_state
 
@@ -166,13 +169,16 @@ Normalize:
 - pick timer
 - draft order when assigned
 - keeper picks/flags when available
+- `enforce_position_limits`
+- draft-only `position_limits` by position when present
 
-Reason: provider league settings can contain fields that are not the authoritative current draft configuration. Verified 2026 examples:
+Reason: provider league settings can contain fields that are not the authoritative current draft configuration, and draft resources can contain constraints that do **not** appear as season-long league rules. Verified 2026 examples:
 
 - FFL league object reports `draft_rounds = 3`, while the actual Sleeper draft resource reports 16 rounds.
 - Papa Johns league object also reports `draft_rounds = 3`, while its actual Sleeper draft resource reports 15 rounds.
+- Papa Johns draft settings expose `enforce_position_limits = 1` and `position_limit_qb = 3`; the current league settings do not independently expose a verified season-long QB maximum. Therefore QB=3 is normalized as a draft constraint only.
 
-Fantasy HQ must use the provider draft resource for draft-specific decisions.
+Fantasy HQ must use the provider draft resource for draft-specific decisions and must not silently copy draft-only constraints into `rules`.
 
 ## managers
 
@@ -201,7 +207,7 @@ Each roster row contains:
 
 - `platform_team_id`
 - `platform_player_id`
-- `propwar_player_id` when resolved
+- `propwar_entity_id` when resolved
 - `roster_status`: `STARTER | BENCH | IR | TAXI | OTHER`
 - `starter_slot` when known
 - `ownership_status`
@@ -333,6 +339,8 @@ Compare the newly normalized state with the previous accepted state and create e
 - `OWNERSHIP_INITIALIZED`
 
 Do not create duplicate history merely because a scheduled sync returned the same state.
+
+Draft-only changes should create/update `DRAFT_STATE_CHANGED`; they should not create `LEAGUE_RULE_CHANGED` unless the league resource itself also changed.
 
 ## League-specific decision rule
 
