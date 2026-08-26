@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from hashlib import sha256
 import json
 from typing import Any, Iterable, Mapping
 
 from .models import DraftState, FantasyLeagueState, LeagueRules, LeagueTransaction, Roster
+
+
+SnapshotPair = tuple[str, str]
 
 
 @dataclass(frozen=True)
@@ -34,30 +37,36 @@ class FantasyChangeEvent:
     platform: str
     platform_league_id: str
     season: str
+    before_snapshot_id: str
+    after_snapshot_id: str
     platform_roster_id: str | None = None
     platform_player_id: str | None = None
     before_value: Any = None
     after_value: Any = None
     source_transaction_ids: tuple[str, ...] = ()
     reason_codes: tuple[str, ...] = ()
-    before_snapshot_id: str = ""
-    after_snapshot_id: str = ""
     event_fingerprint: str = field(init=False)
 
     def __post_init__(self) -> None:
+        before_id = str(self.before_snapshot_id or "").strip()
+        after_id = str(self.after_snapshot_id or "").strip()
+        if not before_id or not after_id:
+            raise ValueError("change events require before_snapshot_id and after_snapshot_id")
+        object.__setattr__(self, "before_snapshot_id", before_id)
+        object.__setattr__(self, "after_snapshot_id", after_id)
         payload = {
             "event_type": self.event_type,
             "platform": self.platform,
             "platform_league_id": self.platform_league_id,
             "season": self.season,
+            "before_snapshot_id": before_id,
+            "after_snapshot_id": after_id,
             "platform_roster_id": self.platform_roster_id,
             "platform_player_id": self.platform_player_id,
             "before_value": self.before_value,
             "after_value": self.after_value,
             "source_transaction_ids": list(self.source_transaction_ids),
             "reason_codes": list(self.reason_codes),
-            "before_snapshot_id": self.before_snapshot_id,
-            "after_snapshot_id": self.after_snapshot_id,
         }
         object.__setattr__(self, "event_fingerprint", _fingerprint(payload))
 
@@ -78,6 +87,7 @@ def derive_fantasy_change_events(
 
     before = previous.league
     after = current.league
+    pair = (previous.snapshot_id, current.snapshot_id)
     events: list[FantasyChangeEvent] = []
 
     if before.rules_fingerprint != after.rules_fingerprint:
@@ -85,6 +95,7 @@ def derive_fantasy_change_events(
             _event(
                 after,
                 "LEAGUE_RULE_CHANGED",
+                snapshot_pair=pair,
                 before_value=_rules_payload(before.rules),
                 after_value=_rules_payload(after.rules),
                 reason_codes=("RULES_FINGERPRINT_CHANGED",),
@@ -96,6 +107,7 @@ def derive_fantasy_change_events(
             _event(
                 after,
                 "DRAFT_STATE_CHANGED",
+                snapshot_pair=pair,
                 before_value=_draft_payload(before.draft),
                 after_value=_draft_payload(after.draft),
                 reason_codes=("NORMALIZED_DRAFT_STATE_CHANGED",),
@@ -108,6 +120,7 @@ def derive_fantasy_change_events(
             _event(
                 after,
                 "OWNERSHIP_INITIALIZED",
+                snapshot_pair=pair,
                 before_value={"ownership_ready": False},
                 after_value={
                     "ownership_ready": True,
@@ -118,14 +131,10 @@ def derive_fantasy_change_events(
             )
         )
     elif before.ownership_ready and after.ownership_ready:
-        events.extend(_derive_roster_events(before, after, current.transactions))
+        events.extend(_derive_roster_events(before, after, current.transactions, pair))
 
-    events.extend(_derive_new_transaction_events(previous, current))
-    bound = tuple(
-        _bind_snapshot_pair(event, previous.snapshot_id, current.snapshot_id)
-        for event in events
-    )
-    return tuple(sorted(bound, key=_event_sort_key))
+    events.extend(_derive_new_transaction_events(previous, current, pair))
+    return tuple(sorted(events, key=_event_sort_key))
 
 
 def _validate_transition(previous: FantasySnapshot, current: FantasySnapshot) -> None:
@@ -180,6 +189,7 @@ def _derive_roster_events(
     before: FantasyLeagueState,
     after: FantasyLeagueState,
     current_transactions: tuple[LeagueTransaction, ...],
+    snapshot_pair: SnapshotPair,
 ) -> list[FantasyChangeEvent]:
     events: list[FantasyChangeEvent] = []
     old_owners = _ownership_index(before)
@@ -197,6 +207,7 @@ def _derive_roster_events(
                 _event(
                     after,
                     "PLAYER_DROPPED",
+                    snapshot_pair=snapshot_pair,
                     roster_id=old_roster,
                     player_id=player_id,
                     before_value={"owner_roster_id": old_roster},
@@ -210,6 +221,7 @@ def _derive_roster_events(
                 _event(
                     after,
                     "PLAYER_ADDED",
+                    snapshot_pair=snapshot_pair,
                     roster_id=new_roster,
                     player_id=player_id,
                     before_value={"owner_roster_id": old_roster},
@@ -223,6 +235,7 @@ def _derive_roster_events(
                 _event(
                     after,
                     "PLAYER_BECAME_AVAILABLE",
+                    snapshot_pair=snapshot_pair,
                     roster_id=old_roster,
                     player_id=player_id,
                     before_value={"owner_roster_id": old_roster},
@@ -237,8 +250,16 @@ def _derive_roster_events(
     for roster_id in sorted(set(before_rosters) & set(after_rosters)):
         old = before_rosters[roster_id]
         new = after_rosters[roster_id]
-        events.extend(_derive_membership_flag_events(after, old, new, "starters", "STARTER_CHANGED"))
-        events.extend(_derive_membership_flag_events(after, old, new, "reserve", "IR_CHANGED"))
+        events.extend(
+            _derive_membership_flag_events(
+                after, old, new, "starters", "STARTER_CHANGED", snapshot_pair
+            )
+        )
+        events.extend(
+            _derive_membership_flag_events(
+                after, old, new, "reserve", "IR_CHANGED", snapshot_pair
+            )
+        )
         roster_tx_ids = _transaction_ids_for_roster(current_transactions, roster_id)
 
         old_faab = _setting_number(old.settings, "waiver_budget_used")
@@ -248,6 +269,7 @@ def _derive_roster_events(
                 _event(
                     after,
                     "FAAB_CHANGED",
+                    snapshot_pair=snapshot_pair,
                     roster_id=roster_id,
                     before_value={"waiver_budget_used": old_faab},
                     after_value={"waiver_budget_used": new_faab},
@@ -263,6 +285,7 @@ def _derive_roster_events(
                 _event(
                     after,
                     "WAIVER_PRIORITY_CHANGED",
+                    snapshot_pair=snapshot_pair,
                     roster_id=roster_id,
                     before_value={"waiver_position": old_priority},
                     after_value={"waiver_position": new_priority},
@@ -280,6 +303,7 @@ def _derive_membership_flag_events(
     after_roster: Roster,
     attribute: str,
     event_type: str,
+    snapshot_pair: SnapshotPair,
 ) -> list[FantasyChangeEvent]:
     before_ids = _real_player_set(getattr(before_roster, attribute))
     after_ids = _real_player_set(getattr(after_roster, attribute))
@@ -289,6 +313,7 @@ def _derive_membership_flag_events(
             _event(
                 state,
                 event_type,
+                snapshot_pair=snapshot_pair,
                 roster_id=after_roster.platform_roster_id,
                 player_id=player_id,
                 before_value={attribute: player_id in before_ids},
@@ -302,6 +327,7 @@ def _derive_membership_flag_events(
 def _derive_new_transaction_events(
     previous: FantasySnapshot,
     current: FantasySnapshot,
+    snapshot_pair: SnapshotPair,
 ) -> list[FantasyChangeEvent]:
     before_completed_ids = {
         tx.platform_transaction_id
@@ -316,6 +342,7 @@ def _derive_new_transaction_events(
             _event(
                 current.league,
                 "TRANSACTION_COMPLETED",
+                snapshot_pair=snapshot_pair,
                 before_value=None,
                 after_value={
                     "transaction_id": tx.platform_transaction_id,
@@ -413,6 +440,7 @@ def _event(
     state: FantasyLeagueState,
     event_type: str,
     *,
+    snapshot_pair: SnapshotPair,
     roster_id: str | None = None,
     player_id: str | None = None,
     before_value: Any = None,
@@ -420,29 +448,20 @@ def _event(
     source_transaction_ids: tuple[str, ...] = (),
     reason_codes: tuple[str, ...] = (),
 ) -> FantasyChangeEvent:
+    before_snapshot_id, after_snapshot_id = snapshot_pair
     return FantasyChangeEvent(
         event_type=event_type,
         platform=state.platform,
         platform_league_id=state.platform_league_id,
         season=state.season,
+        before_snapshot_id=before_snapshot_id,
+        after_snapshot_id=after_snapshot_id,
         platform_roster_id=roster_id,
         platform_player_id=player_id,
         before_value=before_value,
         after_value=after_value,
         source_transaction_ids=tuple(sorted(source_transaction_ids)),
         reason_codes=reason_codes,
-    )
-
-
-def _bind_snapshot_pair(
-    event: FantasyChangeEvent,
-    before_snapshot_id: str,
-    after_snapshot_id: str,
-) -> FantasyChangeEvent:
-    return replace(
-        event,
-        before_snapshot_id=before_snapshot_id,
-        after_snapshot_id=after_snapshot_id,
     )
 
 
