@@ -12,6 +12,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from glitch_radar_books import USER_BOOKS  # noqa: E402
+from glitch_radar_coverage import actionable_coverage_summary  # noqa: E402
 from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
@@ -259,6 +260,7 @@ except Exception as exc:
 coverage = deep.get("coverage", {}) or {}
 rows = deep.get("rows", []) or []
 quality = coverage_quality(rows)
+coverage_truth = actionable_coverage_summary(rows)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
 near_misses = build_near_miss_anomalies(rows)
 line_shop = build_line_shop_watches(rows)
@@ -279,6 +281,19 @@ st.caption(
     f"{len(line_shop):,} line-shop watches · refreshed {local_start_label(deep.get('fetched_at'))} · "
     f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
+
+if coverage_truth.get("coverage_limited"):
+    visible = ", ".join(coverage_truth.get("visible_user_books", []) or []) or "none"
+    missing = ", ".join(coverage_truth.get("missing_user_books", []) or []) or "none"
+    dominant_book = coverage_truth.get("dominant_user_book") or "No book"
+    dominant_share = float(coverage_truth.get("dominant_user_book_share") or 0) * 100
+    st.warning(
+        f"COVERAGE LIMITED — only {int(coverage_truth.get('visible_user_book_count') or 0)}/5 configured books returned prop rows. "
+        "Zero signal counts below mean no signal was found in the returned data; they are not evidence that all five sportsbooks are aligned."
+    )
+    st.caption(
+        f"Visible: {visible}. Missing: {missing}. {dominant_book} supplies {dominant_share:.1f}% of the returned rows from my configured books."
+    )
 
 if st.button("Force new deep scan (uses 3 credits)", type="primary"):
     _deep_snapshot.clear()
@@ -302,7 +317,10 @@ for row in line_gaps:
     _render_line_gap(row)
     shown += 1
 if shown == 0:
-    st.success("No major prop-price, ladder, or material line-gap anomaly is visible at one of my books in this deep scan.")
+    if coverage_truth.get("coverage_limited"):
+        st.warning("No major signal was classified in the returned rows, but actionable cross-book coverage is too limited to treat this scan as an all-clear across my five sportsbooks.")
+    else:
+        st.success("No major prop-price, ladder, or material line-gap anomaly is visible at one of my books in this deep scan.")
 
 if line_shop:
     st.markdown("### Best line-shopping edges")
@@ -323,7 +341,7 @@ with price_tab:
     st.markdown("### Exact same player / market / line price anomalies")
     st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are actionable here.")
     if not price_outliers:
-        st.info("No actionable exact-line prop price outlier crossed the current threshold.")
+        st.info("No actionable exact-line prop price outlier was found in the returned coverage.")
     for row in price_outliers:
         _render_price_glitch(row)
 
@@ -331,7 +349,7 @@ with shop_tab:
     st.markdown("### Cross-book line shopping")
     st.caption("Same event/player/market, different thresholds. An easier OVER line or higher UNDER line is shown only when its price is within 3 implied-probability points of the comparison price. DFS pick'em pricing is excluded.")
     if not line_shop:
-        st.info("No easier-threshold line-shopping opportunity met the comparable-price rule in this scan.")
+        st.info("No easier-threshold line-shopping opportunity was found in the returned coverage.")
     for row in line_shop:
         _render_line_shop(row)
 
@@ -339,7 +357,7 @@ with watch_tab:
     st.markdown("### Near-miss same-line anomalies")
     st.caption("Largest exact event/player/market/line price differences below the true glitch threshold. DFS pick'em midpoint pricing is excluded from these comparisons.")
     if not near_misses:
-        st.info("No non-identical exact same-line sportsbook price comparison is available in this scan.")
+        st.info("No non-identical exact same-line sportsbook price comparison is available in the returned coverage.")
     for row in near_misses:
         _render_near_miss(row)
 
@@ -347,7 +365,7 @@ with gap_tab:
     st.markdown("### Cross-book prop line discrepancies")
     st.caption("Materially different thresholds between sportsbooks I use. These are middle/line-shopping candidates, not automatic arbs.")
     if not line_gaps:
-        st.info("No material line gap crossed the current market-specific thresholds.")
+        st.info("No material line gap was found in the returned coverage.")
     for row in line_gaps:
         _render_line_gap(row)
 
@@ -355,7 +373,7 @@ with ladder_tab:
     st.markdown("### Impossible / inverted alternate ladders")
     st.caption("A harder OVER threshold should never be priced materially more likely than an easier OVER threshold at the same book.")
     if not ladder_violations:
-        st.info("No ladder monotonicity violation is visible in the current deep scan.")
+        st.info("No ladder monotonicity violation is visible in the returned coverage.")
     for row in ladder_violations:
         _render_ladder(row)
 
@@ -363,17 +381,33 @@ with stale_tab:
     st.markdown("### Stale-line price watches")
     st.caption("One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. DFS-only freshness is context, not an actionable price comparison.")
     if not stale_props:
-        st.info("No user-book prop currently has both a stale price and a fresh comparable sportsbook/exchange price peer.")
+        st.info("No user-book prop in the returned coverage has both a stale price and a fresh comparable sportsbook/exchange price peer.")
     for row in stale_props:
         _render_stale(row)
 
 with coverage_tab:
     st.markdown("### My sportsbook prop coverage")
-    counts = coverage.get("user_book_rows", {}) or {}
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Configured books visible", f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5")
+    c2.metric("My-book rows", f"{int(coverage_truth.get('user_book_total_rows') or 0):,}")
+    c3.metric("Dominant book share", f"{float(coverage_truth.get('dominant_user_book_share') or 0) * 100:.1f}%")
+
+    counts = coverage_truth.get("user_counts", {}) or {}
     for book in USER_BOOKS:
         count = int(counts.get(book, 0) or 0)
         status = f"{count:,} rows" if count else "not visible in this scan"
         st.write(f"**{book}** — {status}")
+
+    st.divider()
+    st.markdown("#### All feed sources in this scan")
+    st.caption("Raw normalized row counts show exactly which sources make up the deep snapshot. A configured book missing here is absent from the returned feed, not hidden by the dashboard.")
+    source_counts = coverage_truth.get("source_counts", {}) or {}
+    if source_counts:
+        for book, count in source_counts.items():
+            tag = " · MY BOOK" if book in USER_BOOKS else ""
+            st.write(f"**{book}** — {int(count):,} rows{tag}")
+    else:
+        st.write("No source rows returned.")
 
     st.divider()
     st.markdown("#### Player identity audit")
