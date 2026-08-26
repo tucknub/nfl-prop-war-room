@@ -504,7 +504,9 @@ def _exact_mapping(
 def _mapping(value: Any, label: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise UnsafePersistedFantasySnapshot(f"{label} must be an object")
-    return {str(key): item for key, item in value.items()}
+    if any(not isinstance(key, str) for key in value):
+        raise UnsafePersistedFantasySnapshot(f"{label} keys must be strings")
+    return dict(value)
 
 
 def _sequence(value: Any, label: str) -> list[Any]:
