@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from dataclasses import dataclass
 from typing import Any, Mapping
@@ -358,6 +359,12 @@ def _validated_endpoint(value: Any) -> str:
         raise UnsafeFantasyPersistenceTransport(
             "persistence endpoint must not contain URL credentials"
         )
+    try:
+        parts.port
+    except ValueError as exc:
+        raise UnsafeFantasyPersistenceTransport(
+            "persistence endpoint contains an invalid port"
+        ) from exc
     if parts.path != PERSISTENCE_PATH:
         raise UnsafeFantasyPersistenceTransport(
             f"persistence endpoint path must be exactly {PERSISTENCE_PATH}"
@@ -370,24 +377,22 @@ def _validated_endpoint(value: Any) -> str:
 
 
 def _validated_token(value: Any) -> str:
-    token = _required_text(value, "token")
-    if len(token) < 32:
-        raise UnsafeFantasyPersistenceTransport(
-            "persistence token must contain at least 32 characters"
-        )
-    if any(char.isspace() for char in token):
+    if not isinstance(value, str) or not value:
+        raise UnsafeFantasyPersistenceTransport("token must be a non-empty string")
+    if value != value.strip() or any(char.isspace() for char in value):
         raise UnsafeFantasyPersistenceTransport(
             "persistence token must not contain whitespace"
         )
-    return token
+    if len(value) < 32:
+        raise UnsafeFantasyPersistenceTransport(
+            "persistence token must contain at least 32 characters"
+        )
+    return value
 
 
 def _health_url(endpoint: str) -> str:
     parts = urlsplit(endpoint)
-    authority = parts.hostname or ""
-    if parts.port is not None:
-        authority = f"{authority}:{parts.port}"
-    return f"https://{authority}{HEALTH_PATH}"
+    return f"https://{parts.netloc}{HEALTH_PATH}"
 
 
 def _required_text(value: Any, label: str) -> str:
@@ -405,5 +410,10 @@ def _protocol_text(value: Any, label: str) -> str:
 
 
 def _positive_number(value: Any, label: str) -> None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
-        raise UnsafeFantasyPersistenceTransport(f"{label} must be a positive number")
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        raise UnsafeFantasyPersistenceTransport(f"{label} must be a positive finite number")
