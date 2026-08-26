@@ -56,6 +56,8 @@ class DraftState:
     start_time_ms: int | None
     draft_order: Mapping[str, int]
     slot_counts: Mapping[str, int]
+    position_limits: Mapping[str, int] = field(default_factory=dict)
+    enforce_position_limits: bool = False
     raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     @property
