@@ -1,4 +1,4 @@
-"""Fantasy League HQ provider-normalization, identity, sync, and change-detection foundation."""
+"""Fantasy League HQ provider-normalization, identity, sync, ownership, and change-detection foundation."""
 
 from .changes import (
     FantasyChangeEvent,
@@ -32,6 +32,21 @@ from .models import (
     TradedPick,
     WeeklyLeagueState,
 )
+from .ownership import (
+    AVAILABLE,
+    BENCH,
+    OTHER,
+    OWNED,
+    RESERVE,
+    STARTER,
+    TAXI,
+    UNKNOWN_IDENTITY_GAPS,
+    UNKNOWN_OWNERSHIP_NOT_READY,
+    LeagueOwnership,
+    MultiLeagueOwnershipIndex,
+    UnsafeOwnershipState,
+    build_multi_league_ownership_index,
+)
 from .service import (
     MultiSleeperSyncResult,
     SleeperLeagueReader,
@@ -55,6 +70,8 @@ from .sync import (
 )
 
 __all__ = [
+    "AVAILABLE",
+    "BENCH",
     "DraftPick",
     "DraftState",
     "FaabTransfer",
@@ -62,25 +79,36 @@ __all__ = [
     "FantasyIdentityAudit",
     "FantasyLeagueState",
     "FantasySnapshot",
+    "LeagueOwnership",
     "LeagueRules",
     "LeagueTransaction",
     "MATCHED",
     "Manager",
     "MatchupTeam",
+    "MultiLeagueOwnershipIndex",
     "MultiSleeperSyncResult",
     "NEEDS_REVIEW",
+    "OTHER",
+    "OWNED",
     "PRE_GSIS",
+    "RESERVE",
     "Roster",
+    "STARTER",
     "SleeperClient",
     "SleeperIdentityResolution",
     "SleeperLeagueBundle",
     "SleeperLeagueReader",
     "SleeperSyncResult",
+    "TAXI",
     "TEAM_DEFENSE",
     "TradedPick",
+    "UNKNOWN_IDENTITY_GAPS",
+    "UNKNOWN_OWNERSHIP_NOT_READY",
     "UNRESOLVED",
+    "UnsafeOwnershipState",
     "UnsafeSnapshotTransition",
     "WeeklyLeagueState",
+    "build_multi_league_ownership_index",
     "build_sleeper_identity_audit",
     "build_sleeper_sync_result",
     "collect_league_player_ids",
