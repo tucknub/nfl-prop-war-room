@@ -58,6 +58,23 @@ def test_near_miss_two_real_books_are_enough_for_diagnostic():
     assert dk_over[0]["peer_books"] == ["FanDuel"]
 
 
+def test_near_miss_surfaces_tiny_real_price_difference():
+    rows = [
+        _row("DraftKings", over=-109, under=-111),
+        _row("FanDuel", over=-110, under=-110),
+    ]
+    watches = build_near_miss_anomalies(rows)
+    assert [row for row in watches if row["book"] == "DraftKings" and row["side"] == "over"]
+
+
+def test_near_miss_does_not_create_watch_when_prices_are_identical():
+    rows = [
+        _row("DraftKings", over=-110, under=-110),
+        _row("FanDuel", over=-110, under=-110),
+    ]
+    assert build_near_miss_anomalies(rows) == []
+
+
 def test_near_miss_ignores_dfs_midpoint_as_comparable_price_peer():
     rows = [
         _row("DraftKings", over=120, under=-150),
