@@ -5,6 +5,8 @@ from typing import Any, Mapping, Sequence
 
 import httpx
 
+from .sleeper_current import SleeperNflState, normalize_sleeper_nfl_state
+
 from .models import (
     DraftPick,
     DraftState,
@@ -143,6 +145,10 @@ class SleeperClient:
             self.fetch_league_bundle(league_id),
             current_user_id=current_user_id,
         )
+
+    def fetch_nfl_state(self) -> SleeperNflState:
+        payload = self._get_json("state/nfl")
+        return normalize_sleeper_nfl_state(payload)
 
     def fetch_matchups(self, league_id: str, week: int) -> tuple[MatchupTeam, ...]:
         league_id = _required_id(league_id, "league_id")
