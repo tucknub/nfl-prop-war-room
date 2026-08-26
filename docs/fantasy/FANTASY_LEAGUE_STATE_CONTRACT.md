@@ -97,6 +97,10 @@ Required rule metadata:
 
 Unknown/custom rules must remain visible in `unmapped_scoring_rules[]`; do not silently drop them.
 
+**Scoring-category presence does not imply roster-position presence.** Providers may retain scoring keys for K, D/ST, IDP, or other categories even when the current league has no corresponding starter/roster slot. Use `roster_positions`/provider roster rules to determine which positions are active in the league. Retain inactive scoring settings for auditability, but do not use them to infer lineup requirements or player value for positions the league does not roster.
+
+Verified 2026 Papa Johns example: raw Sleeper scoring retains kicking and D/ST values, but the league has no K or DEF roster slots.
+
 ### roster construction
 
 Ordered starter slots plus roster limits:
@@ -117,6 +121,21 @@ Retain provider slot order when it matters for mapping starters to lineup positi
 
 A slot that existed in a prior season but is absent from the current-season provider response must be treated as absent. Do not fill missing current-season positions from historical defaults. For example, a 2025 `SUPER_FLEX` slot must not survive into 2026 if the 2026 `roster_positions` array no longer contains it.
 
+### reserve / IR / taxi
+
+Normalize reserve capacity and eligibility explicitly from provider settings when those concepts are not represented directly inside the ordered `roster_positions` array.
+
+Retain separately:
+
+- reserve/IR slot count
+- taxi slot count
+- eligible statuses (OUT, IR, PUP/NA, suspended, doubtful, etc.) where the provider exposes them
+- provider-specific reserve flags
+
+Do not assume `reserve_slots = 1` means generic IR behavior. Eligibility must come from the current provider settings.
+
+Verified Sleeper behavior: current leagues can expose `reserve_slots` in `settings` while the ordered `roster_positions` array contains no explicit `IR` token.
+
 ### waivers / transactions
 
 Normalize where available:
@@ -124,9 +143,11 @@ Normalize where available:
 - waiver type
 - FAAB budget
 - waiver priority
+- waiver clear period
 - transaction lock settings
 - trade deadline/settings
 - acquisition limits
+- position limits when provider-enforced
 
 ## draft_state
 
@@ -146,7 +167,12 @@ Normalize:
 - draft order when assigned
 - keeper picks/flags when available
 
-Reason: provider league settings can contain fields that are not the authoritative current draft configuration. Verified 2026 FFL example: the league object reports `draft_rounds = 3`, while the actual Sleeper draft resource reports a 16-round snake draft matching the 16 roster slots. Fantasy HQ must use the draft resource for draft-specific decisions.
+Reason: provider league settings can contain fields that are not the authoritative current draft configuration. Verified 2026 examples:
+
+- FFL league object reports `draft_rounds = 3`, while the actual Sleeper draft resource reports 16 rounds.
+- Papa Johns league object also reports `draft_rounds = 3`, while its actual Sleeper draft resource reports 15 rounds.
+
+Fantasy HQ must use the provider draft resource for draft-specific decisions.
 
 ## managers
 
@@ -195,7 +221,7 @@ If league/draft status is `pre_draft` (or provider equivalent) and roster player
 - permit draft/keeper preparation features that explicitly operate before roster assignment;
 - re-evaluate recommendation readiness after keeper assignment/draft completion or once authoritative roster ownership exists.
 
-Verified 2026 FFL currently satisfies this guard: the league is `pre_draft` and all 10 Sleeper rosters are currently empty with placeholder starter IDs.
+Both verified 2026 Sleeper leagues currently satisfy this guard: FFL has 10 empty rosters and Papa Johns has 12 empty rosters while each league is `pre_draft`.
 
 ## matchup_state
 
