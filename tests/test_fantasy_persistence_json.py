@@ -153,3 +153,93 @@ def test_existing_gsis_player_id_can_remain_the_propwar_entity_id() -> None:
     ).fetchone()
 
     assert stored == (existing_player_id, "gsis", existing_player_id)
+
+
+def test_accepted_snapshot_change_event_and_identity_review_are_append_only() -> None:
+    connection = _database()
+    connection.execute(
+        """
+        INSERT INTO fantasy_league_families (
+            league_family_id, display_name, created_at_ms
+        ) VALUES ('family-1', 'League One', 1000)
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO fantasy_league_seasons (
+            league_season_id,
+            league_family_id,
+            platform,
+            platform_league_id,
+            season,
+            display_name,
+            created_at_ms
+        ) VALUES ('season-1', 'family-1', 'sleeper', 'league-1', '2026', 'League One', 1000)
+        """
+    )
+    for snapshot_id, fingerprint, observed_at_ms in (
+        ('snapshot-before', 'content-before', 2000),
+        ('snapshot-after', 'content-after', 3000),
+    ):
+        connection.execute(
+            """
+            INSERT INTO fantasy_state_snapshots (
+                snapshot_id,
+                league_season_id,
+                content_fingerprint,
+                observed_at_ms,
+                accepted_at_ms,
+                provider_status,
+                rules_ready,
+                draft_ready,
+                ownership_ready,
+                normalized_state_json
+            ) VALUES (?, 'season-1', ?, ?, ?, 'in_season', 1, 1, 1, '{}')
+            """,
+            (snapshot_id, fingerprint, observed_at_ms, observed_at_ms),
+        )
+
+    connection.execute(
+        """
+        INSERT INTO fantasy_change_events (
+            event_fingerprint,
+            league_season_id,
+            event_type,
+            platform,
+            platform_league_id,
+            season,
+            before_snapshot_id,
+            after_snapshot_id,
+            derived_at_ms
+        ) VALUES (
+            'event-1', 'season-1', 'PLAYER_ADDED', 'sleeper', 'league-1', '2026',
+            'snapshot-before', 'snapshot-after', 3000
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO football_identity_review_events (
+            identity_review_event_id,
+            provider,
+            external_id,
+            decision,
+            created_at_ms
+        ) VALUES ('review-1', 'sleeper', 'player-1', 'REVIEW_REQUIRED', 3000)
+        """
+    )
+
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        connection.execute(
+            "UPDATE fantasy_state_snapshots SET provider_status = 'changed' WHERE snapshot_id = 'snapshot-after'"
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        connection.execute(
+            "DELETE FROM fantasy_change_events WHERE event_fingerprint = 'event-1'"
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        connection.execute(
+            "UPDATE football_identity_review_events SET decision = 'ACCEPTED' WHERE identity_review_event_id = 'review-1'"
+        )
