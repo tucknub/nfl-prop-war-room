@@ -67,7 +67,6 @@ def _papa_bundle():
                 "playoff_week_start": 15,
                 "trade_deadline": 12,
                 "reserve_slots": 1,
-                "max_qb": 3,
                 "draft_rounds": 3,
             },
         },
@@ -79,7 +78,18 @@ def _papa_bundle():
             "type": "snake",
             "start_time": 1788710400000,
             "draft_order": None,
-            "settings": {"rounds": 15, "teams": 12, "slots_qb": 1, "slots_rb": 2, "slots_wr": 3, "slots_te": 1, "slots_flex": 2, "slots_bn": 6},
+            "settings": {
+                "rounds": 15,
+                "teams": 12,
+                "slots_qb": 1,
+                "slots_rb": 2,
+                "slots_wr": 3,
+                "slots_te": 1,
+                "slots_flex": 2,
+                "slots_bn": 6,
+                "enforce_position_limits": 1,
+                "position_limit_qb": 3,
+            },
         },
     )
 
@@ -103,7 +113,7 @@ def test_ffl_uses_current_1qb_rules_and_draft_resource():
     assert state.ownership_ready is False
 
 
-def test_papa_preserves_distinct_rules_and_inactive_scoring_fields_without_inventing_positions():
+def test_papa_preserves_distinct_rules_and_classifies_qb_limit_as_draft_only():
     state = normalize_sleeper_bundle(_papa_bundle(), current_user_id="me")
 
     assert state.team_count == 12
@@ -114,10 +124,12 @@ def test_papa_preserves_distinct_rules_and_inactive_scoring_fields_without_inven
     assert state.rules.scoring_settings["fgm_50p"] == 5
     assert state.rules.scoring_settings["def_st_td"] == 6
     assert state.rules.reserve_slots == 1
-    assert state.rules.position_limits["QB"] == 3
+    assert state.rules.position_limits == {}
     assert state.rules.waiver_budget == 150
     assert state.draft is not None
     assert state.draft.rounds == 15
+    assert state.draft.enforce_position_limits is True
+    assert state.draft.position_limits["QB"] == 3
     assert state.ownership_ready is False
 
 
