@@ -314,7 +314,7 @@ def build_unchanged_sync_statement(
         accepted_snapshot_id,
         "accepted_snapshot_id",
     )
-    content_fingerprint = _required_text(
+    content_fingerprint = _sha256_fingerprint(
         content_fingerprint,
         "content_fingerprint",
     )
@@ -467,6 +467,15 @@ def _required_text(value: Any, label: str) -> str:
         raise ValueError(f"{label} is required")
     return result
 
+
+
+def _sha256_fingerprint(value: Any, label: str) -> str:
+    result = _required_text(value, label)
+    if len(result) != 64 or any(char not in "0123456789abcdef" for char in result):
+        raise ValueError(
+            f"{label} must be a lowercase 64-character SHA-256 hex fingerprint"
+        )
+    return result
 
 def _nonnegative_int(value: Any, label: str) -> int:
     if isinstance(value, bool):
