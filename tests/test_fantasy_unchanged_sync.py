@@ -345,6 +345,7 @@ def test_lifecycle_commits_unchanged_without_new_snapshot():
         previous=previous,
         current_snapshot=current,
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
     assert outcome.state == PERSISTENCE_COMPLETED
     assert outcome.source == PERSISTENCE_SOURCE_WRITE
@@ -369,6 +370,22 @@ def test_lifecycle_refuses_changed_content_before_write():
             previous=previous,
             current_snapshot=current,
             completed_at_ms=250,
+            provider_status="HEALTHY",
+        )
+    assert transport.calls == []
+
+
+def test_lifecycle_refuses_provider_health_change_before_write():
+    previous = _persisted()
+    current = FantasySnapshot("observation-new", _state(), ())
+    transport = FakeTransport(sync_reads=[_sync_record()])
+    with pytest.raises(FantasyPersistenceStateConflict, match="Provider status differs"):
+        FantasyPersistenceCoordinator(transport).commit_unchanged(
+            _session(),
+            previous=previous,
+            current_snapshot=current,
+            completed_at_ms=250,
+            provider_status="STALE",
         )
     assert transport.calls == []
 
@@ -390,6 +407,7 @@ def test_lifecycle_is_idempotent_for_same_existing_accepted_snapshot():
         previous=previous,
         current_snapshot=current,
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
     assert outcome.source == PERSISTENCE_SOURCE_EXISTING
     assert outcome.accepted_snapshot_id == "snapshot-1"
@@ -415,6 +433,7 @@ def test_ambiguous_unchanged_write_recovers_exact_completed_snapshot_without_ret
         previous=previous,
         current_snapshot=current,
         completed_at_ms=250,
+        provider_status="HEALTHY",
     )
     assert outcome.source == PERSISTENCE_SOURCE_RECOVERY
     assert transport.calls.count(("send", SYNC_UNCHANGED)) == 1
@@ -433,6 +452,7 @@ def test_ambiguous_unchanged_write_remaining_started_is_unknown_without_retry():
             previous=previous,
             current_snapshot=current,
             completed_at_ms=250,
+            provider_status="HEALTHY",
         )
     assert captured.value.stage == SYNC_UNCHANGED
     assert captured.value.observed_state == "STARTED"
