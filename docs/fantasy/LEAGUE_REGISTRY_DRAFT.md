@@ -43,7 +43,7 @@ These are **historical 2025 facts only**.
 
 ### Verified 2026 live rules
 
-A read-only GitHub Actions audit fetched the public Sleeper league/users/rosters/drafts resources for the current league ID and passed all accepted FFL checkpoints.
+A temporary read-only GitHub Actions audit fetched the public Sleeper league/users/rosters/drafts resources for the current league ID and passed all accepted FFL checkpoints. The temporary audit workflow/PR is not part of the intended production architecture; its purpose was only to collect live source evidence before the real adapter exists.
 
 Live league facts as of 2026-08-26:
 
