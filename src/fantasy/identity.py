@@ -226,14 +226,17 @@ def resolve_sleeper_player(
     ffverse_position = _representative_value(rows, "position")
     ffverse_team_raw = _representative_value(rows, "team")
     ffverse_team = canonical_team(ffverse_team_raw) if ffverse_team_raw else None
+    sleeper_name = _metadata_name(sleeper_metadata)
+    sleeper_position = _metadata_position(sleeper_metadata)
+    sleeper_team = _metadata_team(sleeper_metadata)
 
     if len(gsis_ids) > 1:
         return SleeperIdentityResolution(
             sleeper_id=resolved_sleeper_id,
             status=NEEDS_REVIEW,
-            name=ffverse_name or _metadata_name(sleeper_metadata),
-            position=ffverse_position or _metadata_position(sleeper_metadata),
-            team=ffverse_team or _metadata_team(sleeper_metadata),
+            name=ffverse_name or sleeper_name,
+            position=ffverse_position or sleeper_position,
+            team=sleeper_team or ffverse_team,
             reason_codes=("FFVERSE_SLEEPER_ID_MAPS_TO_MULTIPLE_GSIS_IDS",),
             ffverse_rows=len(rows),
         )
@@ -243,9 +246,9 @@ def resolve_sleeper_player(
             sleeper_id=resolved_sleeper_id,
             status=PRE_GSIS,
             yahoo_id=yahoo_ids[0] if len(yahoo_ids) == 1 else None,
-            name=ffverse_name or _metadata_name(sleeper_metadata),
-            position=ffverse_position or _metadata_position(sleeper_metadata),
-            team=ffverse_team or _metadata_team(sleeper_metadata),
+            name=ffverse_name or sleeper_name,
+            position=ffverse_position or sleeper_position,
+            team=sleeper_team or ffverse_team,
             reason_codes=("EXACT_SLEEPER_ID_WITHOUT_GSIS_ID",),
             ffverse_rows=len(rows),
         )
@@ -260,17 +263,14 @@ def resolve_sleeper_player(
     if sleeper_yahoo_id and yahoo_ids and sleeper_yahoo_id not in set(yahoo_ids):
         reasons.append("SLEEPER_YAHOO_ID_CONFLICT")
 
-    sleeper_name = _metadata_name(sleeper_metadata)
     if sleeper_name and ffverse_name:
         if normalize_player_name(sleeper_name) != normalize_player_name(ffverse_name):
             reasons.append("SLEEPER_NAME_CONFLICT")
 
-    sleeper_position = _metadata_position(sleeper_metadata)
     if sleeper_position and ffverse_position:
         if sleeper_position.upper() != ffverse_position.upper():
             reasons.append("SLEEPER_POSITION_CONFLICT")
 
-    sleeper_team = _metadata_team(sleeper_metadata)
     if sleeper_team and ffverse_team and sleeper_team != ffverse_team:
         reasons.append("TEAM_METADATA_DIFFERS")
 
@@ -288,7 +288,7 @@ def resolve_sleeper_player(
             yahoo_id=yahoo_ids[0] if len(yahoo_ids) == 1 else None,
             name=ffverse_name or sleeper_name,
             position=ffverse_position or sleeper_position,
-            team=ffverse_team or sleeper_team,
+            team=sleeper_team or ffverse_team,
             reason_codes=tuple(reasons),
             ffverse_rows=len(rows),
         )
@@ -304,7 +304,7 @@ def resolve_sleeper_player(
             yahoo_id=yahoo_ids[0] if len(yahoo_ids) == 1 else None,
             name=ffverse_name or sleeper_name,
             position=ffverse_position or sleeper_position,
-            team=ffverse_team or sleeper_team,
+            team=sleeper_team or ffverse_team,
             reason_codes=tuple(reasons),
             ffverse_rows=len(rows),
         )
@@ -319,7 +319,7 @@ def resolve_sleeper_player(
         yahoo_id=yahoo_ids[0] if len(yahoo_ids) == 1 else None,
         name=ffverse_name or sleeper_name,
         position=ffverse_position or sleeper_position,
-        team=ffverse_team or sleeper_team,
+        team=sleeper_team or ffverse_team,
         reason_codes=tuple(reasons),
         ffverse_rows=len(rows),
     )
