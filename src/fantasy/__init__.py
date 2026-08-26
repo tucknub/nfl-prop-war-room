@@ -90,6 +90,9 @@ from .persistence import (
     serialize_fantasy_snapshot,
 )
 from .persistence_http import (
+    READ_LATEST_SNAPSHOT,
+    READ_LEAGUE_SEASON,
+    READ_SYNC_RUN,
     FantasyPersistenceClientConfig,
     FantasyPersistenceHttpClient,
     FantasyPersistenceProtocolError,
@@ -172,6 +175,9 @@ __all__ = [
     "OWNED",
     "PRE_GSIS",
     "PersistenceStatement",
+    "READ_LATEST_SNAPSHOT",
+    "READ_LEAGUE_SEASON",
+    "READ_SYNC_RUN",
     "RESERVE",
     "Roster",
     "STARTER",
