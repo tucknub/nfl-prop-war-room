@@ -80,6 +80,7 @@ def _successful_command():
         completed_at_ms=130,
         derived_at_ms=125,
         provider_status="HEALTHY",
+        expected_previous_snapshot_id="snap-before",
         source_metadata={"catalog_status": "HIT"},
     )
 
@@ -140,6 +141,7 @@ def test_success_command_uses_exact_persisted_snapshot_content_and_event_contrac
     assert command["protocol_version"] == FANTASY_PERSISTENCE_PROTOCOL_VERSION
     assert command["kind"] == SYNC_SUCCESS
     assert command["sync_run_id"] == "sync-1"
+    assert command["expected_previous_snapshot_id"] == "snap-before"
     assert command["completed_at_ms"] == 130
     assert not _contains_key(command, "sql")
 
@@ -214,6 +216,7 @@ def test_success_export_rejects_unsafe_transport_timestamp_before_building_comma
             completed_at_ms=JAVASCRIPT_MAX_SAFE_INTEGER + 1,
             derived_at_ms=JAVASCRIPT_MAX_SAFE_INTEGER + 1,
             provider_status="HEALTHY",
+            expected_previous_snapshot_id="snap-before",
         )
 
 
@@ -240,4 +243,5 @@ def test_exporter_rejects_non_string_event_reason_codes_before_worker_transport(
             completed_at_ms=130,
             derived_at_ms=125,
             provider_status="HEALTHY",
+            expected_previous_snapshot_id="snap-before",
         )
