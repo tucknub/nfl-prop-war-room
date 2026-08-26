@@ -14,6 +14,7 @@ import {
   D1WriteInvariantError,
   UnsafeD1WritePlan,
 } from "./d1-executor.mjs";
+import { runFantasyShadowScheduled } from "./shadow-scheduled.mjs";
 
 export const HEALTH_PATH = "/health";
 export const PERSISTENCE_PATH = "/v1/fantasy/persistence";
@@ -31,6 +32,10 @@ const encoder = new TextEncoder();
 export default {
   async fetch(request, env) {
     return handleFantasyPersistenceRequest(request, env);
+  },
+
+  async scheduled(controller, env) {
+    await runFantasyShadowScheduled(controller, env);
   },
 };
 
