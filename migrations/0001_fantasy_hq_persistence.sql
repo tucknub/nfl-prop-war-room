@@ -8,7 +8,8 @@ CREATE TABLE fantasy_league_families (
     created_at_ms INTEGER NOT NULL CHECK (created_at_ms >= 0),
     metadata_json TEXT NOT NULL DEFAULT '{}',
     CHECK (length(trim(league_family_id)) > 0),
-    CHECK (length(trim(display_name)) > 0)
+    CHECK (length(trim(display_name)) > 0),
+    CHECK (json_valid(metadata_json))
 );
 
 CREATE TABLE fantasy_league_seasons (
@@ -25,6 +26,7 @@ CREATE TABLE fantasy_league_seasons (
     CHECK (length(trim(platform_league_id)) > 0),
     CHECK (length(trim(season)) > 0),
     CHECK (length(trim(display_name)) > 0),
+    CHECK (json_valid(metadata_json)),
     UNIQUE (platform, platform_league_id, season),
     UNIQUE (league_family_id, season),
     UNIQUE (league_season_id, platform, platform_league_id, season),
@@ -49,6 +51,8 @@ CREATE TABLE fantasy_state_snapshots (
     CHECK (length(trim(content_fingerprint)) > 0),
     CHECK (length(trim(provider_status)) > 0),
     CHECK (accepted_at_ms >= observed_at_ms),
+    CHECK (json_valid(normalized_state_json)),
+    CHECK (json_valid(source_metadata_json)),
     UNIQUE (snapshot_id, league_season_id),
     FOREIGN KEY (league_season_id)
         REFERENCES fantasy_league_seasons(league_season_id)
@@ -74,6 +78,10 @@ CREATE TABLE fantasy_change_events (
     CHECK (length(trim(event_fingerprint)) > 0),
     CHECK (length(trim(event_type)) > 0),
     CHECK (before_snapshot_id <> after_snapshot_id),
+    CHECK (before_value_json IS NULL OR json_valid(before_value_json)),
+    CHECK (after_value_json IS NULL OR json_valid(after_value_json)),
+    CHECK (json_valid(source_transaction_ids_json)),
+    CHECK (json_valid(reason_codes_json)),
     FOREIGN KEY (league_season_id, platform, platform_league_id, season)
         REFERENCES fantasy_league_seasons(
             league_season_id, platform, platform_league_id, season
@@ -104,6 +112,7 @@ CREATE TABLE fantasy_sync_runs (
     request_metadata_json TEXT NOT NULL DEFAULT '{}',
     CHECK (length(trim(sync_run_id)) > 0),
     CHECK (length(trim(status)) > 0),
+    CHECK (json_valid(request_metadata_json)),
     FOREIGN KEY (league_season_id, platform, platform_league_id, season)
         REFERENCES fantasy_league_seasons(
             league_season_id, platform, platform_league_id, season
@@ -125,7 +134,8 @@ CREATE TABLE football_entities (
     metadata_json TEXT NOT NULL DEFAULT '{}',
     CHECK (length(trim(propwar_entity_id)) > 0),
     CHECK (length(trim(entity_type)) > 0),
-    CHECK (length(trim(canonical_name)) > 0)
+    CHECK (length(trim(canonical_name)) > 0),
+    CHECK (json_valid(metadata_json))
 );
 
 CREATE TABLE football_external_ids (
@@ -141,6 +151,7 @@ CREATE TABLE football_external_ids (
     CHECK (length(trim(provider)) > 0),
     CHECK (length(trim(external_id)) > 0),
     CHECK (length(trim(verification_method)) > 0),
+    CHECK (json_valid(evidence_json)),
     UNIQUE (provider, provider_scope, external_id),
     UNIQUE (propwar_entity_id, provider, provider_scope),
     FOREIGN KEY (propwar_entity_id)
@@ -167,6 +178,8 @@ CREATE TABLE football_identity_review_events (
     CHECK (length(trim(provider)) > 0),
     CHECK (length(trim(external_id)) > 0),
     CHECK (length(trim(decision)) > 0),
+    CHECK (json_valid(reason_codes_json)),
+    CHECK (json_valid(evidence_json)),
     FOREIGN KEY (candidate_propwar_entity_id)
         REFERENCES football_entities(propwar_entity_id)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
