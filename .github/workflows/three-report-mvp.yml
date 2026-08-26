@@ -50,7 +50,7 @@ jobs:
         run: pytest -q > pytest.log 2>&1
 
       - name: Upload test log
-        if: always()
+        if: always() && steps.repository_tests.outcome != 'skipped'
         uses: actions/upload-artifact@v4
         with:
           name: three-report-pytest-log
