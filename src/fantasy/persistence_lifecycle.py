@@ -326,10 +326,16 @@ class FantasyPersistenceCoordinator:
         previous: PersistedFantasySnapshot,
         current_snapshot: FantasySnapshot,
         completed_at_ms: int,
+        provider_status: str,
     ) -> FantasyPersistenceLifecycleOutcome:
         """Complete a fresh STARTED sync without duplicating identical snapshot content."""
 
-        _validate_no_change_inputs(session, previous, current_snapshot)
+        _validate_no_change_inputs(
+            session,
+            previous,
+            current_snapshot,
+            provider_status=provider_status,
+        )
 
         live = self.transport.read_sync_run(session.sync_run_id)
         if not _found(live):
@@ -734,6 +740,8 @@ def _validate_no_change_inputs(
     session: FantasySyncSession,
     previous: PersistedFantasySnapshot,
     current_snapshot: FantasySnapshot,
+    *,
+    provider_status: str,
 ) -> None:
     if previous.league_season_id != session.identity.league_season_id:
         raise FantasyPersistenceStateConflict(
@@ -774,6 +782,12 @@ def _validate_no_change_inputs(
     if current_fingerprint != previous.content_fingerprint:
         raise FantasyPersistenceStateConflict(
             "Current snapshot content changed and requires a new accepted snapshot"
+        )
+
+    current_provider_status = _required_text(provider_status, "provider_status")
+    if current_provider_status != previous.provider_status:
+        raise FantasyPersistenceStateConflict(
+            "Provider status changed and requires a new accepted snapshot"
         )
 
 
