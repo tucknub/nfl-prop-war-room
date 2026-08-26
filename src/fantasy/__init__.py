@@ -89,6 +89,14 @@ from .persistence import (
     serialize_fantasy_league_state,
     serialize_fantasy_snapshot,
 )
+from .persistence_http import (
+    FantasyPersistenceClientConfig,
+    FantasyPersistenceHttpClient,
+    FantasyPersistenceProtocolError,
+    FantasyPersistenceRejected,
+    FantasyPersistenceTransportError,
+    UnsafeFantasyPersistenceTransport,
+)
 from .persistence_protocol import (
     FANTASY_PERSISTENCE_PROTOCOL_VERSION,
     JAVASCRIPT_MAX_SAFE_INTEGER,
@@ -141,6 +149,11 @@ __all__ = [
     "FantasyChangeEvent",
     "FantasyIdentityAudit",
     "FantasyLeagueState",
+    "FantasyPersistenceClientConfig",
+    "FantasyPersistenceHttpClient",
+    "FantasyPersistenceProtocolError",
+    "FantasyPersistenceRejected",
+    "FantasyPersistenceTransportError",
     "FantasySnapshot",
     "JAVASCRIPT_MAX_SAFE_INTEGER",
     "LEAGUE_SEASON_UPSERT",
@@ -185,6 +198,7 @@ __all__ = [
     "UNKNOWN_IDENTITY_GAPS",
     "UNKNOWN_OWNERSHIP_NOT_READY",
     "UNRESOLVED",
+    "UnsafeFantasyPersistenceTransport",
     "UnsafeLeagueHistory",
     "UnsafeOwnershipState",
     "UnsafePersistenceCommand",
