@@ -23,6 +23,7 @@ from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
     find_live_free_agents,
 )
+from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -518,6 +519,7 @@ def _render_sleeper() -> None:
         health_tab,
         waiver_tab,
         matchup_tab,
+        opponent_tab,
         standings_tab,
         rules_tab,
         cross_tab,
@@ -527,6 +529,7 @@ def _render_sleeper() -> None:
             "Roster Health",
             "Waiver Watch",
             "Current matchup",
+            "Opponent Scout",
             "Standings",
             "League settings",
             "Cross-league",
@@ -940,6 +943,154 @@ def _render_sleeper() -> None:
             except Exception as exc:
                 st.warning("Current matchup could not be loaded.")
                 st.caption(str(exc))
+
+    with opponent_tab:
+        st.markdown("#### Opponent Scout")
+        st.caption(
+            "Factual live Sleeper scouting for your current weekly opponent. "
+            "No projected winner or player ranking is inferred."
+        )
+
+        scout_week = int(nfl_state.week or nfl_state.display_week or 0)
+        if scout_week < 1 or not my_roster:
+            st.info("No regular-season opponent is available yet.")
+        else:
+            try:
+                scout_matchups = _load_matchups(league_id, scout_week)
+                scout_catalog = all_catalog or _load_player_catalog()
+                scout = build_opponent_scout(
+                    league,
+                    scout_matchups,
+                    week=scout_week,
+                    player_catalog=scout_catalog,
+                )
+            except Exception as exc:
+                st.warning("Opponent Scout could not be loaded.")
+                st.caption(str(exc))
+                scout = None
+
+            if scout is None:
+                st.info(
+                    f"Week {scout_week} opponent pairing is not available yet."
+                )
+            else:
+                scout_a, scout_b, scout_c, scout_d = st.columns(4)
+                scout_a.metric("Opponent", scout.opponent_name)
+                scout_b.metric("Record", scout.opponent_record)
+                scout_c.metric("Season PF", f"{scout.opponent_points_for:.2f}")
+                scout_d.metric("Starter alerts", scout.starter_alert_count)
+
+                score_left, score_right = st.columns(2)
+                score_left.metric(
+                    "My live matchup points",
+                    (
+                        f"{float(scout.my_matchup_points):.2f}"
+                        if scout.my_matchup_points is not None
+                        else "—"
+                    ),
+                )
+                score_right.metric(
+                    "Opponent live matchup points",
+                    (
+                        f"{float(scout.opponent_matchup_points):.2f}"
+                        if scout.opponent_matchup_points is not None
+                        else "—"
+                    ),
+                )
+
+                if scout.open_starter_slots:
+                    st.warning(
+                        f"Opponent currently has {scout.open_starter_slots} "
+                        "unfilled starter slot"
+                        f"{'s' if scout.open_starter_slots != 1 else ''}."
+                    )
+
+                st.markdown("##### Starter availability")
+                if not scout.starters:
+                    st.info("Opponent starters have not been populated yet.")
+                else:
+                    starter_rows = [
+                        {
+                            "Player": row.name,
+                            "Pos": row.position,
+                            "NFL": row.nfl_team,
+                            "Status": row.status,
+                            "Week points": (
+                                row.points if row.points is not None else "—"
+                            ),
+                        }
+                        for row in scout.starters
+                    ]
+                    st.dataframe(
+                        pd.DataFrame(starter_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+                    if scout.serious_starter_count:
+                        st.error(
+                            f"{scout.serious_starter_count} opponent starter"
+                            f"{'s have' if scout.serious_starter_count != 1 else ' has'} "
+                            "an Out/IR/PUP/Suspended/Doubtful status."
+                        )
+                    if scout.questionable_starter_count:
+                        st.warning(
+                            f"{scout.questionable_starter_count} opponent starter"
+                            f"{'s are' if scout.questionable_starter_count != 1 else ' is'} "
+                            "currently Questionable."
+                        )
+                    if not scout.starter_alert_count:
+                        st.success(
+                            "No opponent starter currently carries a serious "
+                            "or Questionable Sleeper status."
+                        )
+
+                st.markdown("##### Opponent position depth")
+                if scout.position_counts:
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {"Position": position, "Rostered": count}
+                                for position, count in scout.position_counts.items()
+                            ]
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+                with st.expander(
+                    f"Opponent bench / reserve ({len(scout.bench)})",
+                    expanded=False,
+                ):
+                    if not scout.bench:
+                        st.caption("No non-starter players are populated.")
+                    else:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Player": row.name,
+                                        "Pos": row.position,
+                                        "NFL": row.nfl_team,
+                                        "Slot": row.fantasy_slot,
+                                        "Status": row.status,
+                                        "Week points": (
+                                            row.points
+                                            if row.points is not None
+                                            else "—"
+                                        ),
+                                    }
+                                    for row in scout.bench
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                st.caption(
+                    "Opponent Scout reflects Sleeper roster, matchup, and "
+                    "player-status facts only. It does not project the matchup."
+                )
 
     with standings_tab:
         manager_by_user = {
