@@ -39,3 +39,5 @@ jobs:
               raise SystemExit(1)
           print("Fantasy HQ AppTest startup ok")
           PY
+
+# trigger
