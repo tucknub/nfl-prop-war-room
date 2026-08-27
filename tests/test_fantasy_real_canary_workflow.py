@@ -286,4 +286,7 @@ def test_real_canary_failure_path_preserves_no_retry_warning():
 
     assert "continue-on-error: true" in text
     assert "fantasy-hq-single-league-canary-failure" in text
+    assert "FantasyCanaryInvariantError" in text
+    assert '"write_may_have_committed": True' in text
+    assert '"stage": "POST_RESULT"' in text
     assert "Do not retry automatically" in text
