@@ -294,8 +294,8 @@ def test_shadow_deploy_workflow_is_manual_only_and_fail_closed():
     assert "DEPLOY_FANTASY_HQ_SHADOW" in text
     assert "create_database_if_missing:" in text
     assert "default: false" in text
-    assert 'WRANGLER_VERSION: "4.125.0"' in text
-    assert WRANGLER_PINNED_VERSION == "4.125.0"
+    assert 'WRANGLER_VERSION: "4.126.0"' in text
+    assert WRANGLER_PINNED_VERSION == "4.126.0"
 
     for secret_name in (
         "CLOUDFLARE_API_TOKEN",
