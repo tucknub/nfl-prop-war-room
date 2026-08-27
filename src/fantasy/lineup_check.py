@@ -113,6 +113,8 @@ def build_lineup_check(
     roster = _my_roster(league)
     if roster is None:
         return None
+    if league.status == "pre_draft" or not tuple(_clean_ids(roster.players)):
+        return None
 
     starter_slots = tuple(str(slot).strip().upper() for slot in league.rules.starter_positions)
     if not starter_slots:

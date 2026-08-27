@@ -96,13 +96,14 @@ def _league(
     starters=("qb1", "rb1", "wr1", "rb2"),
     reserve=(),
     taxi=(),
+    status="in_season",
 ) -> FantasyLeagueState:
     return FantasyLeagueState(
         platform="SLEEPER",
         platform_league_id="league-1",
         name="Test League",
         season="2026",
-        status="in_season",
+        status=status,
         team_count=12,
         previous_platform_league_id=None,
         current_platform_user_id="me",
@@ -343,3 +344,34 @@ def test_fantasy_hq_exposes_lineup_check():
     assert "build_lineup_check" in page
     assert "Eligible bench options" in page
     assert "eligibility/status only" in page
+
+
+def test_predraft_empty_roster_is_not_a_nine_slot_lineup_emergency():
+    league = _league(
+        players=(),
+        starters=(),
+        status="pre_draft",
+    )
+
+    result = build_lineup_check(league, CATALOG)
+
+    assert result is None
+
+
+def test_fantasy_hq_predraft_mode_suppresses_live_tool_noise():
+    from pathlib import Path
+
+    page = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "11_Fantasy_HQ.py"
+    ).read_text(encoding="utf-8")
+
+    assert "pre_draft_mode" in page
+    assert "Configured starter slots are " in page
+    assert "not treated as lineup mistakes before the draft." in page
+    assert "No ownership or availability warnings are shown before" in page
+    assert "The NFL preseason week is not treated as your fantasy" in page
+    assert "Opponent Scout will activate once Sleeper" in page
+    assert "League settings are available now" in page
