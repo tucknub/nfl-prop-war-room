@@ -8,11 +8,20 @@ try:
     from glitch_radar_line_shop import build_line_shop_watches
     from glitch_radar_props import implied_probability
     from glitch_radar_stale import canonical_player_label
+    from src.load.build_identity_crosswalk import TEAM_VARIANTS, canonical_team, normalize_player_name
 except ImportError:
     from dashboard.glitch_radar_books import USER_BOOKS, canonical_book, is_user_book
     from dashboard.glitch_radar_line_shop import build_line_shop_watches
     from dashboard.glitch_radar_props import implied_probability
     from dashboard.glitch_radar_stale import canonical_player_label
+    from src.load.build_identity_crosswalk import TEAM_VARIANTS, canonical_team, normalize_player_name
+
+
+_FULL_TEAM_TO_CANONICAL = {
+    str(full_name).strip().upper(): canonical
+    for canonical, (_, full_name) in TEAM_VARIANTS.items()
+    if str(full_name or "").strip()
+}
 
 
 CHECK = "CHECK"
@@ -61,11 +70,16 @@ class PlayerPropContext:
 
 
 def _clean_team(value: object) -> str:
-    return str(value or "").strip().upper()
+    raw = str(value or "").strip().upper()
+    if not raw:
+        return ""
+    if raw in _FULL_TEAM_TO_CANONICAL:
+        return _FULL_TEAM_TO_CANONICAL[raw]
+    return canonical_team(raw)
 
 
 def _player_key(value: object) -> str:
-    return canonical_player_label(value).casefold()
+    return normalize_player_name(canonical_player_label(value))
 
 
 def _game(row: Mapping[str, Any]) -> str:
@@ -83,15 +97,7 @@ def _event_has_team(row: Mapping[str, Any], nfl_team: str) -> bool:
     away = _clean_team(row.get("away_team"))
     home = _clean_team(row.get("home_team"))
 
-    # Feeds often return full franchise names while Sleeper returns abbreviations.
-    # Exact abbreviation checks are only possible when the feed also uses abbreviations.
-    if team in {away, home}:
-        return True
-
-    # If both feed teams are full names, do not reject an otherwise exact player-name
-    # match solely because no maintained team-name crosswalk is available here.
-    looks_like_full_names = any(" " in value for value in (away, home) if value)
-    return looks_like_full_names
+    return team in {away, home}
 
 
 def player_prop_rows(
