@@ -156,10 +156,11 @@ def _classify(
         and rank_last2 > rank_last8
     )
 
-    # Strong labels require both magnitude and directional agreement across windows.
-    if shift >= 0.08 and recent >= 0.03 and mid >= 0:
+    # Strong labels require both magnitude, directional agreement, and a mature sample.
+    mature_sample = last8_games >= 6 and last4_games >= 4 and last2_games >= 2
+    if mature_sample and shift >= 0.08 and recent >= 0.03 and mid >= 0:
         return SURGE, STRONGLY_RISING
-    if shift <= -0.08 and recent <= -0.03 and mid <= 0:
+    if mature_sample and shift <= -0.08 and recent <= -0.03 and mid <= 0:
         return DROP, STRONGLY_FALLING
 
     if (shift >= 0.04 and recent >= -0.005) or (rank_gain and shift >= 0.025):
