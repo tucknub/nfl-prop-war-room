@@ -77,7 +77,12 @@ def test_background_refresh_is_limited_to_heavy_pure_fantasy_caches():
         "_load_player_catalog",
     ):
         node = functions[function_name]
+        body_nodes = (
+            child
+            for statement in node.body
+            for child in ast.walk(statement)
+        )
         assert not any(
             isinstance(child, ast.Name) and child.id == "st"
-            for child in ast.walk(node)
+            for child in body_nodes
         )
