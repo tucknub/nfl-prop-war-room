@@ -7,6 +7,7 @@ from .canary import (
     FantasySingleLeagueCanaryConfig,
     FantasySingleLeagueCanaryError,
     FantasySingleLeagueCanaryResult,
+    preview_single_league_persistence_canary_from_env,
     run_single_league_persistence_canary,
     run_single_league_persistence_canary_from_env,
 )
@@ -378,6 +379,7 @@ __all__ = [
     "normalize_sleeper_player_catalog",
     "normalize_sleeper_transactions",
     "persistence_content_fingerprint",
+    "preview_single_league_persistence_canary_from_env",
     "rehydrate_latest_snapshot_read",
     "rehydrate_persisted_snapshot_record",
     "run_fantasy_runtime_deployment_handshake",
