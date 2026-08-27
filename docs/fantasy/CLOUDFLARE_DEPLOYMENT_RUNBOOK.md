@@ -91,10 +91,12 @@ The workflow is intentionally **two-pass**.
 3. Run **Fantasy HQ Single-League Canary** with mode `PREVIEW_ONLY`, the shadow run ID, and an explicit `canary_at_ms`.
 4. The workflow downloads the exact immutable shadow evidence artifact using `actions:read`.
 5. It requires the artifact's source run ID and source commit SHA to match the requested shadow run and the current canary workflow commit.
-6. It re-verifies remote D1 is still pristine, remote Cron Triggers are still empty, and the authenticated runtime handshake is still READY/read-only.
-7. It validates the private league configuration and builds the deterministic canary plan with no provider or persistence write.
-8. Public preview evidence contains only the season, a one-way league-identity fingerprint, canary timestamp, batch ID, sync-run ID, and snapshot ID. It does not contain the real league/user identifiers.
-9. No fantasy write occurs.
+6. It re-verifies remote D1 is still pristine.
+7. It queries the live Cloudflare Worker deployment and requires exactly the shadow artifact's version ID serving 100% of traffic.
+8. It requires remote Cron Triggers to remain empty and the authenticated runtime handshake to remain READY/read-only.
+9. It validates the private league configuration and builds the deterministic canary plan with no provider or persistence write.
+10. Public preview evidence contains only the season, a one-way league-identity fingerprint, canary timestamp, batch ID, sync-run ID, and snapshot ID. It does not contain the real league/user identifiers.
+11. No fantasy write occurs.
 
 Review the preview's `sync_run_id` before moving on.
 
@@ -108,7 +110,7 @@ Run the workflow again with:
 - `expected_sync_run_id` copied exactly from Pass 1;
 - confirmation exactly `RUN_ONE_REAL_FANTASY_WRITE`.
 
-Before the write, the workflow repeats the shadow evidence validation, D1 pristine-state probe, Cron check, runtime handshake, and deterministic preview. Execution is blocked unless the newly generated sync-run ID exactly matches the operator-reviewed value.
+Before the write, the workflow repeats the shadow evidence validation, D1 pristine-state probe, active Worker-version parity check, Cron check, runtime handshake, and deterministic preview. Execution is blocked unless the newly generated sync-run ID exactly matches the operator-reviewed value.
 
 The write then invokes only `scripts/run_fantasy_hq_single_league_canary.py`, which performs the #80 one-league canary and immediate authenticated read-back verification. For the first pristine database, the result must be `ACCEPTED`; `NO_CHANGE` or an existing-final slot is not accepted as proof of a new real canary.
 
