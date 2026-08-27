@@ -200,3 +200,52 @@ def test_private_history_store_creates_file_once_and_skips_duplicate_scan(
     assert len(put_calls) == 1
     assert "Authorization" in put_calls[0][1]["headers"]
     assert "secret" not in str(first)
+
+
+def test_history_config_reuses_private_state_repo_with_separate_path():
+    from dashboard.glitch_radar_history_private import (
+        DEFAULT_HISTORY_PATH,
+        history_config_from_secrets,
+    )
+
+    secrets = {
+        "MARGIN_GITHUB_TOKEN": "token",
+        "MARGIN_GITHUB_REPO": "owner/private-state",
+        "MARGIN_GITHUB_BRANCH": "main",
+        "MARGIN_STATE_PATH": "margin/live_state_2026.json",
+        "PROPWAR_OWNER_EMAIL": "owner@example.com",
+        "auth": {
+            "redirect_uri": "https://example.com/oauth2callback",
+            "cookie_secret": "cookie",
+            "client_id": "client",
+            "client_secret": "secret",
+            "server_metadata_url": "https://example.com/.well-known/openid-configuration",
+        },
+    }
+
+    config = history_config_from_secrets(secrets)
+
+    assert config is not None
+    assert config["repo"] == "owner/private-state"
+    assert config["path"] == DEFAULT_HISTORY_PATH
+    assert config["path"] != secrets["MARGIN_STATE_PATH"]
+
+
+def test_glitch_radar_page_exposes_durable_history_and_fallback_contract():
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "09_Glitch_Radar.py"
+    ).read_text(encoding="utf-8")
+
+    assert "Private durable history" in source
+    assert "In-memory fallback" in source
+    assert "Recent movement history" in source
+    assert "What moved now" in source
+    assert "Opening" in source
+    assert "Previous" in source
+    assert "Freshness" in source
+    assert "resets this in-memory history" not in source
