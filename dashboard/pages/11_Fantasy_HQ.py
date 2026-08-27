@@ -1608,9 +1608,9 @@ def _render_sleeper() -> None:
                         if not market_waivers.candidates:
                             if market_waivers.market_covered_count:
                                 st.info(
-                                    "Current FULL/PARTIAL market-covered free "
-                                    "agents do not clear a roster-need or +1.00 "
-                                    "point healthy-lineup upgrade threshold."
+                                    "Current market-covered free agents do not "
+                                    "clear a roster need or a decision-grade "
+                                    "+1.00 point healthy-lineup upgrade."
                                 )
                             else:
                                 st.info(
@@ -1680,9 +1680,11 @@ def _render_sleeper() -> None:
                                 "HIGH = an open/ineligible/serious starter slot. "
                                 "MEDIUM = a current WATCH slot. LOW is shown only "
                                 "when a healthy starter can be improved by at "
-                                "least 1.00 market-implied fantasy point. "
-                                "Candidates require FULL/PARTIAL coverage; THIN "
-                                "or missing markets never create a ranking."
+                                "least 1.00 market-implied fantasy point and "
+                                "both players have decision-grade core prop "
+                                "coverage for their positions. HIGH/MEDIUM "
+                                "needs may still use FULL/PARTIAL coverage; "
+                                "THIN or missing markets never create a ranking."
                             )
 
             st.markdown("##### FAAB Advisor")

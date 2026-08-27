@@ -30,6 +30,13 @@ _NEED_ORDER = {HIGH: 0, MEDIUM: 1, LOW: 2}
 
 MIN_UPGRADE_EDGE = 1.0
 _SUPPORTED_POSITIONS = frozenset({"QB", "RB", "WR", "TE", "FB"})
+_DECISION_GRADE_COMPONENTS = {
+    "QB": frozenset({"passing_yards", "passing_tds", "interceptions", "rushing_yards"}),
+    "RB": frozenset({"rushing_yards", "receiving_yards", "receptions", "anytime_td"}),
+    "FB": frozenset({"rushing_yards", "receiving_yards", "receptions", "anytime_td"}),
+    "WR": frozenset({"receiving_yards", "receptions", "anytime_td"}),
+    "TE": frozenset({"receiving_yards", "receptions", "anytime_td"}),
+}
 
 
 @dataclass(frozen=True)
@@ -90,6 +97,8 @@ class _TargetSlot:
     replacement_player: str
     replacement_fantasy_points: float | None
     expected_lineup_improvement: float | None
+    candidate_decision_grade: bool
+    replacement_decision_grade: bool
 
 
 def build_market_ranked_waivers(
@@ -181,6 +190,8 @@ def build_market_ranked_waivers(
                 slot,
                 label,
                 candidate_points=float(baseline.fantasy_points),
+                candidate_baseline=baseline,
+                candidate_position=position,
                 scoring_settings=league.rules.scoring_settings,
                 player_catalog=player_catalog,
                 prop_rows=rows,
@@ -238,6 +249,8 @@ def _target_for_slot(
     label: str,
     *,
     candidate_points: float,
+    candidate_baseline: MarketFantasyBaseline,
+    candidate_position: str,
     scoring_settings: Mapping[str, Any],
     player_catalog: Mapping[str, Mapping[str, Any]],
     prop_rows: tuple[Mapping[str, Any], ...],
@@ -261,6 +274,11 @@ def _target_for_slot(
             ),
             replacement_fantasy_points=0.0,
             expected_lineup_improvement=candidate_points,
+            candidate_decision_grade=_decision_grade_baseline(
+                candidate_baseline,
+                candidate_position,
+            ),
+            replacement_decision_grade=False,
         )
 
     starter = slot.starter
@@ -272,6 +290,11 @@ def _target_for_slot(
             replacement_player="Open slot",
             replacement_fantasy_points=0.0,
             expected_lineup_improvement=candidate_points,
+            candidate_decision_grade=_decision_grade_baseline(
+                candidate_baseline,
+                candidate_position,
+            ),
+            replacement_decision_grade=False,
         )
 
     starter_baseline = _starter_baseline(
@@ -294,6 +317,11 @@ def _target_for_slot(
         if starter_points is not None
         else None
     )
+    starter_position = (
+        str((player_catalog.get(starter.player_id) or {}).get("position") or starter.position or "")
+        .strip()
+        .upper()
+    )
     return _TargetSlot(
         slot_index=slot.slot_index,
         label=label,
@@ -301,6 +329,14 @@ def _target_for_slot(
         replacement_player=starter.name,
         replacement_fantasy_points=starter_points,
         expected_lineup_improvement=improvement,
+        candidate_decision_grade=_decision_grade_baseline(
+            candidate_baseline,
+            candidate_position,
+        ),
+        replacement_decision_grade=(
+            starter_baseline is not None
+            and _decision_grade_baseline(starter_baseline, starter_position)
+        ),
     )
 
 
@@ -340,7 +376,22 @@ def _keep_target(target: _TargetSlot) -> bool:
     return (
         target.expected_lineup_improvement is not None
         and target.expected_lineup_improvement >= MIN_UPGRADE_EDGE
+        and target.candidate_decision_grade
+        and target.replacement_decision_grade
     )
+
+
+def _decision_grade_baseline(
+    baseline: MarketFantasyBaseline,
+    position: str,
+) -> bool:
+    required = _DECISION_GRADE_COMPONENTS.get(
+        str(position or "").strip().upper()
+    )
+    if not required:
+        return False
+    observed = {component.market for component in baseline.components}
+    return required.issubset(observed)
 
 
 def _target_sort_key(target: _TargetSlot) -> tuple[int, int, float, int]:
@@ -381,6 +432,11 @@ def _reason(target: _TargetSlot) -> str:
         return (
             f"Fits the {target.label} watch need, but the current starter lacks "
             "FULL/PARTIAL market coverage for a numeric comparison."
+        )
+    if target.need == LOW:
+        return (
+            f"Decision-grade market baseline is {improvement:+.2f} points versus "
+            f"{target.replacement_player} in {target.label}."
         )
     return (
         f"Market baseline is {improvement:+.2f} points versus "
@@ -458,4 +514,5 @@ __all__ = [
     "MarketWaiverBoard",
     "MarketWaiverCandidate",
     "build_market_ranked_waivers",
+    "_decision_grade_baseline",
 ]

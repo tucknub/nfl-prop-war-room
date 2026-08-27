@@ -21,6 +21,14 @@ CATALOG = {
         "status": "Active",
         "active": True,
     },
+    "qb2": {
+        "full_name": "Market Quarterback",
+        "position": "QB",
+        "fantasy_positions": ["QB"],
+        "team": "PIT",
+        "status": "Active",
+        "active": True,
+    },
     "rb1": {
         "full_name": "Roster Running Back",
         "position": "RB",
@@ -159,6 +167,37 @@ def _row(player, market, line, *, book="DK", event_id="e1"):
     }
 
 
+def _qb_rows(
+    player,
+    *,
+    pass_yd=245.5,
+    pass_td=1.5,
+    interceptions=None,
+    rush_yd=None,
+):
+    rows = [
+        _row(player, "passing_yards", pass_yd, book="DK"),
+        _row(player, "passing_yards", pass_yd, book="FD"),
+        _row(player, "passing_tds", pass_td, book="DK"),
+        _row(player, "passing_tds", pass_td, book="FD"),
+    ]
+    if interceptions is not None:
+        rows.extend(
+            [
+                _row(player, "interceptions", interceptions, book="DK"),
+                _row(player, "interceptions", interceptions, book="FD"),
+            ]
+        )
+    if rush_yd is not None:
+        rows.extend(
+            [
+                _row(player, "rushing_yards", rush_yd, book="DK"),
+                _row(player, "rushing_yards", rush_yd, book="FD"),
+            ]
+        )
+    return rows
+
+
 def _wr_rows(player, *, rec=5.5, rec_yd=65.5, td=True):
     rows = [
         _row(player, "receptions", rec, book="DK"),
@@ -244,6 +283,70 @@ def test_market_ranked_waivers_find_real_upgrade_on_healthy_lineup():
     assert candidate.expected_lineup_improvement >= 1.0
     assert candidate.replacement_fantasy_points is not None
     assert candidate.target_slot in {"WR", "FLEX"}
+
+
+def test_market_ranked_waivers_reject_partial_qb_upgrade_over_healthy_starter():
+    league = _league(
+        starters=("qb1", "rb1", "wr1", "te1"),
+        my_players=("qb1", "rb1", "wr1", "te1"),
+    )
+    lineup = build_lineup_check(league, CATALOG)
+    assert lineup is not None
+
+    board = build_market_ranked_waivers(
+        league,
+        lineup,
+        CATALOG,
+        [
+            *_qb_rows("Quarter Back", pass_yd=220.5, pass_td=1.0),
+            *_qb_rows("Market Quarterback", pass_yd=285.5, pass_td=2.0),
+        ],
+    )
+
+    assert all(
+        row.sleeper_player_id != "qb2"
+        for row in board.candidates
+    )
+
+
+def test_market_ranked_waivers_allow_decision_grade_qb_upgrade():
+    league = _league(
+        starters=("qb1", "rb1", "wr1", "te1"),
+        my_players=("qb1", "rb1", "wr1", "te1"),
+    )
+    lineup = build_lineup_check(league, CATALOG)
+    assert lineup is not None
+
+    board = build_market_ranked_waivers(
+        league,
+        lineup,
+        CATALOG,
+        [
+            *_qb_rows(
+                "Quarter Back",
+                pass_yd=220.5,
+                pass_td=1.0,
+                interceptions=1.0,
+                rush_yd=8.5,
+            ),
+            *_qb_rows(
+                "Market Quarterback",
+                pass_yd=285.5,
+                pass_td=2.0,
+                interceptions=0.5,
+                rush_yd=22.5,
+            ),
+        ],
+    )
+
+    candidate = next(
+        row for row in board.candidates
+        if row.sleeper_player_id == "qb2"
+    )
+    assert candidate.need == LOW
+    assert candidate.expected_lineup_improvement is not None
+    assert candidate.expected_lineup_improvement >= 1.0
+    assert "Decision-grade" in candidate.reason
 
 
 def test_market_ranked_waivers_use_league_ppr_scoring_for_ordering():
