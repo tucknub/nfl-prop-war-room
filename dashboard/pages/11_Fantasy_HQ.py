@@ -18,6 +18,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import page_intro, section  # noqa: E402
+from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -293,6 +294,135 @@ def _render_sleeper() -> None:
         f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
         f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
     )
+
+    all_league_ids = tuple(
+        str(row["league_id"])
+        for row in leagues
+        if str(row.get("league_id") or "").strip()
+    )
+    all_states = ()
+    all_catalog: dict[str, dict[str, Any]] = {}
+    action_center = None
+    all_scan_error: str | None = None
+
+    try:
+        with st.spinner("Building your all-leagues snapshot..."):
+            all_states = _load_all_sleeper_states(
+                str(sleeper_user["user_id"]),
+                all_league_ids,
+            )
+            all_catalog = _load_player_catalog()
+            action_center = build_fantasy_action_center(
+                all_states,
+                all_catalog,
+            )
+    except Exception as exc:
+        all_scan_error = str(exc)
+
+    st.markdown("### All-Leagues Action Center")
+    if action_center is None:
+        st.warning(
+            "The all-leagues snapshot could not be completed. "
+            "Individual Sleeper leagues are still available below."
+        )
+        if all_scan_error:
+            st.caption(all_scan_error)
+    else:
+        action_a, action_b, action_c, action_d = st.columns(4)
+        action_a.metric("Sleeper leagues", action_center.league_count)
+        action_b.metric(
+            "Drafted",
+            f"{action_center.drafted_count}/{action_center.league_count}",
+        )
+        action_c.metric(
+            "Leagues needing attention",
+            action_center.needs_attention_count,
+        )
+        action_d.metric(
+            "Cross-league opportunities",
+            action_center.opportunity_count,
+        )
+
+        status_labels = {
+            READY: "Ready",
+            WATCH: "Watch",
+            NEEDS_ATTENTION: "Needs attention",
+            PRE_DRAFT: "Pre-draft",
+        }
+        league_rows = [
+            {
+                "League": row.league_name,
+                "Status": status_labels.get(
+                    row.status,
+                    row.status.replace("_", " ").title(),
+                ),
+                "Rostered": row.health.roster_size,
+                "Starters": (
+                    f"{row.health.filled_starter_slots}/"
+                    f"{row.health.starter_slots}"
+                ),
+                "Open starters": row.health.open_starter_slots,
+                "Critical": row.health.critical_count,
+                "Warnings": row.health.warning_count,
+            }
+            for row in action_center.leagues
+        ]
+        st.dataframe(
+            pd.DataFrame(league_rows),
+            hide_index=True,
+            width="stretch",
+        )
+
+        if action_center.action_leagues:
+            st.markdown("#### What needs your attention")
+            alert_rows = []
+            for row in action_center.action_leagues:
+                issues = row.top_issues
+                if not issues:
+                    alert_rows.append(
+                        {
+                            "League": row.league_name,
+                            "Level": "WATCH",
+                            "Alert": "Review this roster.",
+                        }
+                    )
+                    continue
+                for issue in issues:
+                    alert_rows.append(
+                        {
+                            "League": row.league_name,
+                            "Level": issue.severity,
+                            "Alert": issue.message,
+                        }
+                    )
+            st.dataframe(
+                pd.DataFrame(alert_rows),
+                hide_index=True,
+                width="stretch",
+            )
+        elif action_center.drafted_count:
+            st.success(
+                "No drafted Sleeper league currently has a factual "
+                "roster-health alert."
+            )
+
+        if action_center.pre_draft_count:
+            st.caption(
+                f"{action_center.pre_draft_count} Sleeper league"
+                f"{'s are' if action_center.pre_draft_count != 1 else ' is'} "
+                "still pre-draft; roster health will populate automatically "
+                "after Sleeper updates the roster."
+            )
+
+        if action_center.opportunity_count:
+            st.info(
+                f"{action_center.opportunity_count} player"
+                f"{'s' if action_center.opportunity_count != 1 else ''} "
+                "on one of your Sleeper rosters "
+                f"{'are' if action_center.opportunity_count != 1 else 'is'} "
+                "currently available in another Sleeper league. "
+                "Open Cross-league below for the exact players and leagues."
+            )
 
     league_options = {
         f"{row.get('name') or 'Unnamed league'} · "
@@ -678,23 +808,11 @@ def _render_sleeper() -> None:
             "this account. Draft results will appear here as Sleeper rosters update."
         )
 
-        all_league_ids = tuple(
-            str(row["league_id"])
-            for row in leagues
-            if str(row.get("league_id") or "").strip()
-        )
-        try:
-            with st.spinner("Scanning all Sleeper leagues..."):
-                all_states = _load_all_sleeper_states(
-                    str(sleeper_user["user_id"]),
-                    all_league_ids,
-                )
-                catalog = _load_player_catalog()
-        except Exception as exc:
+        catalog = all_catalog
+        if not all_states:
             st.warning("Cross-league ownership could not be loaded.")
-            st.caption(str(exc))
-            all_states = ()
-            catalog = {}
+            if all_scan_error:
+                st.caption(all_scan_error)
 
         if all_states:
             scan_a, scan_b = st.columns(2)
