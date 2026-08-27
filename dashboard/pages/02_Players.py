@@ -4,6 +4,11 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from player_command_owner import (
+    owner_player_command_available,
+    render_owner_player_command_center,
+)
+
 from research_data import (
     ROLE_LABELS, available_seasons, load_production_data, load_situational_data,
     opponent_from_game_id, player_profile, player_selector_rows, player_window_table,
@@ -142,6 +147,18 @@ with st.container(border=True):
     st.caption(
         "Role shift is measured in percentage points of matching normal-game team opportunity. "
         "It is a workload signal, not a projection."
+    )
+
+if owner_player_command_available():
+    render_owner_player_command_center(
+        propwar_player_id=player_id,
+        historical_player_name=str(player["player_name"]),
+        historical_team=str(player["team"]),
+        position=str(player["position"]),
+        season=season,
+        end_week=end_week,
+        role_family=role_family,
+        role_change=role_change,
     )
 
 st.info(player_role_sentence(

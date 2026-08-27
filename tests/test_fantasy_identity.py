@@ -10,6 +10,7 @@ from src.fantasy.identity import (
     TEAM_DEFENSE,
     UNRESOLVED,
     extract_propwar_player_ids,
+    resolve_propwar_player_to_sleeper,
     resolve_sleeper_player,
     resolve_sleeper_players,
     validate_ffverse_player_ids,
@@ -261,3 +262,59 @@ def test_extract_propwar_player_ids_uses_only_nonblank_existing_ids():
 def test_ffverse_schema_validation_fails_closed_when_required_columns_missing():
     with pytest.raises(ValueError, match="gsis_id"):
         validate_ffverse_player_ids(pd.DataFrame({"sleeper_id": ["1"]}))
+
+
+def test_exact_propwar_gsis_reverse_lookup_returns_one_sleeper_id():
+    frame = _ffverse(
+        sleeper_id="4984",
+        gsis_id="00-0034796",
+        name="Josh Allen",
+        position="QB",
+        team="BUF",
+    )
+
+    result = resolve_propwar_player_to_sleeper(
+        "00-0034796",
+        ffverse_player_ids=frame,
+    )
+
+    assert result.status == MATCHED
+    assert result.sleeper_id == "4984"
+    assert result.reason_codes == ("EXACT_GSIS_TO_SLEEPER_MATCH",)
+
+
+def test_reverse_lookup_never_guesses_from_name_when_gsis_is_missing():
+    frame = _ffverse(
+        sleeper_id="4984",
+        gsis_id="00-0034796",
+        name="Josh Allen",
+        position="QB",
+        team="BUF",
+    )
+
+    result = resolve_propwar_player_to_sleeper(
+        "00-0099999",
+        ffverse_player_ids=frame,
+    )
+
+    assert result.status == UNRESOLVED
+    assert result.sleeper_id is None
+    assert result.reason_codes == ("NO_EXACT_FFVERSE_GSIS_ID",)
+
+
+def test_reverse_lookup_fails_closed_on_ambiguous_sleeper_ids():
+    frame = _ffverse(
+        {"sleeper_id": "1", "gsis_id": "00-0000001", "name": "Player A"},
+        {"sleeper_id": "2", "gsis_id": "00-0000001", "name": "Player A"},
+    )
+
+    result = resolve_propwar_player_to_sleeper(
+        "00-0000001",
+        ffverse_player_ids=frame,
+    )
+
+    assert result.status == NEEDS_REVIEW
+    assert result.sleeper_id is None
+    assert result.reason_codes == (
+        "FFVERSE_GSIS_ID_MAPS_TO_MULTIPLE_SLEEPER_IDS",
+    )
