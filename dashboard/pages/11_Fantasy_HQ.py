@@ -47,6 +47,9 @@ from src.fantasy.market_start_sit import (  # noqa: E402
 from src.fantasy.market_waivers import (  # noqa: E402
     build_market_ranked_waivers,
 )
+from src.fantasy.market_trade import (  # noqa: E402
+    analyze_market_trade,
+)
 from src.fantasy.faab_advisor import (  # noqa: E402
     build_faab_advice_board,
 )
@@ -2277,6 +2280,470 @@ def _render_sleeper() -> None:
                                     "shown before starters when status is otherwise "
                                     "comparable."
                                 )
+
+                st.markdown("##### Market-Assisted Trade Analyzer")
+                st.caption(
+                    "Build a real proposed trade and compare both teams' "
+                    "optimized legal starting lineups before and after it using "
+                    "this league's scoring and PropWar's shared sportsbook "
+                    "fantasy baselines."
+                )
+
+                trade_parlay_key = _secret_default("PARLAY_API_KEY")
+                my_trade_roster = next(
+                    (
+                        roster
+                        for roster in league.rosters
+                        if roster.platform_roster_id
+                        == league.my_platform_roster_id
+                    ),
+                    None,
+                )
+
+                if not league.ownership_ready or my_trade_roster is None:
+                    st.info(
+                        "Market-Assisted Trade Analyzer will activate when "
+                        "Sleeper ownership and your drafted roster are available."
+                    )
+                elif not trade_parlay_key:
+                    st.info(
+                        "Market-Assisted Trade Analyzer is unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    trade_manager_by_user = {
+                        manager.platform_user_id: manager
+                        for manager in league.managers
+                    }
+                    trade_partner_options = {}
+                    for roster in league.rosters:
+                        if (
+                            roster.platform_roster_id
+                            == my_trade_roster.platform_roster_id
+                        ):
+                            continue
+                        manager = trade_manager_by_user.get(
+                            roster.platform_user_id or ""
+                        )
+                        label = (
+                            manager.team_name
+                            if manager and manager.team_name
+                            else manager.display_name
+                            if manager
+                            else f"Roster {roster.platform_roster_id}"
+                        )
+                        trade_partner_options[
+                            f"{label} · Roster {roster.platform_roster_id}"
+                        ] = roster.platform_roster_id
+
+                    if not trade_partner_options:
+                        st.info("No other drafted roster is available to trade with.")
+                    else:
+                        selected_trade_partner_label = st.selectbox(
+                            "Trade partner",
+                            tuple(trade_partner_options),
+                            key="fantasy_hq_trade_partner",
+                        )
+                        selected_trade_partner_id = trade_partner_options[
+                            selected_trade_partner_label
+                        ]
+                        selected_trade_partner = next(
+                            (
+                                roster
+                                for roster in league.rosters
+                                if roster.platform_roster_id
+                                == selected_trade_partner_id
+                            ),
+                            None,
+                        )
+
+                        def _trade_player_ids(roster):
+                            return tuple(
+                                dict.fromkeys(
+                                    str(value).strip()
+                                    for value in (
+                                        *roster.players,
+                                        *roster.starters,
+                                        *roster.reserve,
+                                        *roster.taxi,
+                                    )
+                                    if str(value or "").strip()
+                                    not in {"", "0"}
+                                )
+                            )
+
+                        def _trade_player_label(player_id):
+                            player = team_catalog.get(player_id) or {}
+                            name = (
+                                str(player.get("full_name") or "").strip()
+                                or (
+                                    str(player.get("first_name") or "").strip()
+                                    + " "
+                                    + str(player.get("last_name") or "").strip()
+                                ).strip()
+                                or player_id
+                            )
+                            position = (
+                                str(player.get("position") or "—")
+                                .strip()
+                                .upper()
+                                or "—"
+                            )
+                            nfl_team = (
+                                str(player.get("team") or "FA")
+                                .strip()
+                                .upper()
+                                or "FA"
+                            )
+                            return (
+                                f"{name} · {position} · {nfl_team} · "
+                                f"{player_id}"
+                            )
+
+                        my_trade_options = {
+                            _trade_player_label(player_id): player_id
+                            for player_id
+                            in _trade_player_ids(my_trade_roster)
+                        }
+                        partner_trade_options = (
+                            {
+                                _trade_player_label(player_id): player_id
+                                for player_id
+                                in _trade_player_ids(selected_trade_partner)
+                            }
+                            if selected_trade_partner is not None
+                            else {}
+                        )
+
+                        trade_left, trade_right = st.columns(2)
+                        with trade_left:
+                            give_labels = st.multiselect(
+                                "I give",
+                                tuple(my_trade_options),
+                                key="fantasy_hq_trade_give",
+                                help="Select one to four players.",
+                            )
+                        with trade_right:
+                            receive_labels = st.multiselect(
+                                "I receive",
+                                tuple(partner_trade_options),
+                                key="fantasy_hq_trade_receive",
+                                help="Select one to four players.",
+                            )
+
+                        if len(give_labels) > 4 or len(receive_labels) > 4:
+                            st.warning(
+                                "The analyzer supports up to four players per side."
+                            )
+
+                        if st.button(
+                            "Analyze trade",
+                            key="fantasy_hq_analyze_trade",
+                            type="primary",
+                        ):
+                            give_ids = tuple(
+                                my_trade_options[label]
+                                for label in give_labels
+                            )
+                            receive_ids = tuple(
+                                partner_trade_options[label]
+                                for label in receive_labels
+                            )
+
+                            if not give_ids or not receive_ids:
+                                st.info(
+                                    "Select at least one player on each side "
+                                    "before analyzing the trade."
+                                )
+                            elif len(give_ids) > 4 or len(receive_ids) > 4:
+                                st.warning(
+                                    "Reduce the trade to four players or fewer "
+                                    "on each side."
+                                )
+                            else:
+                                try:
+                                    trade_market_snapshot = shared_prop_snapshot(
+                                        trade_parlay_key
+                                    )
+                                    trade_analysis = analyze_market_trade(
+                                        league,
+                                        team_catalog,
+                                        trade_market_snapshot.get("rows", ()),
+                                        partner_roster_id=(
+                                            selected_trade_partner_id
+                                        ),
+                                        give_player_ids=give_ids,
+                                        receive_player_ids=receive_ids,
+                                    )
+                                except Exception as exc:
+                                    st.warning(
+                                        "Market-Assisted Trade Analyzer could "
+                                        "not evaluate this proposal."
+                                    )
+                                    st.caption(str(exc))
+                                    trade_analysis = None
+
+                                if trade_analysis is not None:
+                                    verdict_labels = {
+                                        "ACCEPT": "ACCEPT",
+                                        "BALANCED": "BALANCED",
+                                        "DECLINE": "DECLINE",
+                                        "INCOMPLETE": "INCOMPLETE",
+                                    }
+                                    partner_fit_labels = {
+                                        "GOOD_FOR_BOTH": "GOOD FOR BOTH",
+                                        "PLAUSIBLE": "PLAUSIBLE",
+                                        "HARD_SELL": "HARD SELL",
+                                    }
+
+                                    ta, tb, tc, td = st.columns(4)
+                                    ta.metric(
+                                        "Verdict",
+                                        verdict_labels.get(
+                                            trade_analysis.verdict,
+                                            trade_analysis.verdict,
+                                        ),
+                                    )
+                                    tb.metric(
+                                        "My lineup impact",
+                                        (
+                                            f"{trade_analysis.my_team.lineup_delta:+.2f}"
+                                            " pts"
+                                        ),
+                                    )
+                                    tc.metric(
+                                        "Partner lineup impact",
+                                        (
+                                            f"{trade_analysis.partner_team.lineup_delta:+.2f}"
+                                            " pts"
+                                        ),
+                                    )
+                                    td.metric(
+                                        "Partner fit",
+                                        partner_fit_labels.get(
+                                            trade_analysis.partner_fit,
+                                            trade_analysis.partner_fit,
+                                        ),
+                                    )
+
+                                    te, tf, tg, th = st.columns(4)
+                                    te.metric(
+                                        "Raw asset delta",
+                                        (
+                                            f"{trade_analysis.raw_asset_delta:+.2f}"
+                                            " pts"
+                                            if trade_analysis.raw_asset_delta
+                                            is not None
+                                            else "—"
+                                        ),
+                                    )
+                                    tf.metric(
+                                        "Confidence",
+                                        trade_analysis.confidence,
+                                    )
+                                    tg.metric(
+                                        "Minimum lineup coverage",
+                                        (
+                                            f"{trade_analysis.minimum_lineup_coverage:.0%}"
+                                        ),
+                                    )
+                                    th.metric(
+                                        "Decision edge",
+                                        (
+                                            f"{trade_analysis.decision_edge:+.2f}"
+                                            if trade_analysis.decision_edge
+                                            is not None
+                                            else "—"
+                                        ),
+                                    )
+
+                                    if trade_analysis.verdict == "ACCEPT":
+                                        st.success(trade_analysis.reason)
+                                    elif trade_analysis.verdict == "DECLINE":
+                                        st.error(trade_analysis.reason)
+                                    elif trade_analysis.verdict == "INCOMPLETE":
+                                        st.warning(trade_analysis.reason)
+                                    else:
+                                        st.info(trade_analysis.reason)
+
+                                    trade_asset_rows = []
+                                    for side, players in (
+                                        (
+                                            "I give",
+                                            trade_analysis.give_players,
+                                        ),
+                                        (
+                                            "I receive",
+                                            trade_analysis.receive_players,
+                                        ),
+                                    ):
+                                        for row in players:
+                                            trade_asset_rows.append(
+                                                {
+                                                    "Side": side,
+                                                    "Player": row.name,
+                                                    "Pos": row.position,
+                                                    "NFL": row.nfl_team,
+                                                    "Market baseline": (
+                                                        round(
+                                                            row.market_fantasy_points,
+                                                            2,
+                                                        )
+                                                        if row.market_fantasy_points
+                                                        is not None
+                                                        else "—"
+                                                    ),
+                                                    "Coverage": row.coverage,
+                                                    "Components": (
+                                                        row.component_count
+                                                    ),
+                                                }
+                                            )
+                                    st.dataframe(
+                                        pd.DataFrame(trade_asset_rows),
+                                        hide_index=True,
+                                        width="stretch",
+                                    )
+
+                                    impact_rows = [
+                                        {
+                                            "Team": (
+                                                trade_analysis.my_team.team_name
+                                            ),
+                                            "Before": round(
+                                                trade_analysis.my_team.current.covered_points,
+                                                2,
+                                            ),
+                                            "After": round(
+                                                trade_analysis.my_team.post_trade.covered_points,
+                                                2,
+                                            ),
+                                            "Lineup delta": round(
+                                                trade_analysis.my_team.lineup_delta,
+                                                2,
+                                            ),
+                                            "Covered starters before": (
+                                                f"{trade_analysis.my_team.current.covered_starters}/"
+                                                f"{trade_analysis.my_team.current.starter_slots}"
+                                            ),
+                                            "Covered starters after": (
+                                                f"{trade_analysis.my_team.post_trade.covered_starters}/"
+                                                f"{trade_analysis.my_team.post_trade.starter_slots}"
+                                            ),
+                                            "Roster size": (
+                                                f"{trade_analysis.my_team.roster_size_before}"
+                                                f" → {trade_analysis.my_team.roster_size_after}"
+                                            ),
+                                            "Post-trade depth warnings": (
+                                                " · ".join(
+                                                    trade_analysis.my_team.depth_warnings_after
+                                                )
+                                                or "—"
+                                            ),
+                                        },
+                                        {
+                                            "Team": (
+                                                trade_analysis.partner_team.team_name
+                                            ),
+                                            "Before": round(
+                                                trade_analysis.partner_team.current.covered_points,
+                                                2,
+                                            ),
+                                            "After": round(
+                                                trade_analysis.partner_team.post_trade.covered_points,
+                                                2,
+                                            ),
+                                            "Lineup delta": round(
+                                                trade_analysis.partner_team.lineup_delta,
+                                                2,
+                                            ),
+                                            "Covered starters before": (
+                                                f"{trade_analysis.partner_team.current.covered_starters}/"
+                                                f"{trade_analysis.partner_team.current.starter_slots}"
+                                            ),
+                                            "Covered starters after": (
+                                                f"{trade_analysis.partner_team.post_trade.covered_starters}/"
+                                                f"{trade_analysis.partner_team.post_trade.starter_slots}"
+                                            ),
+                                            "Roster size": (
+                                                f"{trade_analysis.partner_team.roster_size_before}"
+                                                f" → {trade_analysis.partner_team.roster_size_after}"
+                                            ),
+                                            "Post-trade depth warnings": (
+                                                " · ".join(
+                                                    trade_analysis.partner_team.depth_warnings_after
+                                                )
+                                                or "—"
+                                            ),
+                                        },
+                                    ]
+                                    st.dataframe(
+                                        pd.DataFrame(impact_rows),
+                                        hide_index=True,
+                                        width="stretch",
+                                    )
+
+                                    with st.expander(
+                                        "Optimized post-trade starters",
+                                        expanded=False,
+                                    ):
+                                        starter_left, starter_right = st.columns(2)
+                                        with starter_left:
+                                            st.markdown(
+                                                f"**{trade_analysis.my_team.team_name}**"
+                                            )
+                                            st.dataframe(
+                                                pd.DataFrame(
+                                                    [
+                                                        {
+                                                            "Slot": slot,
+                                                            "Player": player,
+                                                            "Market FP": round(
+                                                                points,
+                                                                2,
+                                                            ),
+                                                        }
+                                                        for slot, player, points
+                                                        in trade_analysis.my_team.post_trade.assignments
+                                                    ]
+                                                ),
+                                                hide_index=True,
+                                                width="stretch",
+                                            )
+                                        with starter_right:
+                                            st.markdown(
+                                                f"**{trade_analysis.partner_team.team_name}**"
+                                            )
+                                            st.dataframe(
+                                                pd.DataFrame(
+                                                    [
+                                                        {
+                                                            "Slot": slot,
+                                                            "Player": player,
+                                                            "Market FP": round(
+                                                                points,
+                                                                2,
+                                                            ),
+                                                        }
+                                                        for slot, player, points
+                                                        in trade_analysis.partner_team.post_trade.assignments
+                                                    ]
+                                                ),
+                                                hide_index=True,
+                                                width="stretch",
+                                            )
+
+                                    st.caption(
+                                        "The verdict weights optimized starting-"
+                                        "lineup impact more heavily than raw "
+                                        "asset totals. Traded players require "
+                                        "FULL/PARTIAL sportsbook coverage, and "
+                                        "the analyzer refuses a verdict when "
+                                        "overall lineup coverage is too thin. "
+                                        "Keeper value, draft picks, long-term "
+                                        "dynasty value, and subjective manager "
+                                        "preferences are not included."
+                                    )
 
             st.divider()
 
