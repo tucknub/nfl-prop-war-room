@@ -15,6 +15,7 @@ CATALOG = {
     "wr3": {"full_name": "Free WR", "position": "WR", "team": "BUF", "status": "Active", "active": True},
     "te1": {"full_name": "TE One", "position": "TE", "team": "KC", "status": "Active", "active": True},
     "te2": {"full_name": "Free TE", "position": "TE", "team": "BAL", "status": "Active", "active": True},
+    "def1": {"full_name": "Defense One", "position": "DEF", "team": "JAX", "status": "Active", "active": True},
     "out_rb": {"full_name": "Out RB", "position": "RB", "team": "MIA", "injury_status": "Out", "active": True},
 }
 
@@ -25,6 +26,7 @@ def _league(
     target_starters=("qb1", "rb1", "wr1", "te1"),
     other_players=("rb2", "wr2"),
     ownership_ready=True,
+    roster_positions=("QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "BN"),
 ) -> FantasyLeagueState:
     return FantasyLeagueState(
         platform="SLEEPER",
@@ -37,7 +39,7 @@ def _league(
         current_platform_user_id="me",
         my_platform_roster_id="1",
         rules=LeagueRules(
-            roster_positions=("QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "BN"),
+            roster_positions=tuple(roster_positions),
             scoring_settings={"rec": 1},
             waiver_budget=100,
         ),
@@ -112,6 +114,18 @@ def test_team_explorer_uses_serious_status_as_need_pressure():
     rb_needs = [row for row in profile.needs if row.position == "RB"]
     assert rb_needs
     assert rb_needs[0].level == HIGH
+
+
+def test_team_explorer_does_not_require_backup_defense():
+    league = _league(
+        target_players=("qb1", "rb1", "rb2", "wr1", "wr2", "te1", "def1"),
+        target_starters=("qb1", "rb1", "rb2", "wr1", "wr2", "te1", "def1"),
+        roster_positions=("QB", "RB", "RB", "WR", "WR", "TE", "DEF", "BN"),
+    )
+
+    profile = build_league_team_profile(league, "2", CATALOG)
+
+    assert all(need.position != "DEF" for need in profile.needs)
 
 
 def test_team_explorer_targets_only_available_players_matching_needs():
