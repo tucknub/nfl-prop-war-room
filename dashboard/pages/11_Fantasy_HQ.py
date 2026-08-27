@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -18,6 +19,19 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
+from src.fantasy.yahoo import (  # noqa: E402
+    DEFAULT_YAHOO_REDIRECT_URI,
+    YahooFantasyClient,
+    YahooOAuthClient,
+    YahooOAuthConfig,
+    YahooOAuthToken,
+    build_yahoo_oauth_state,
+    validate_yahoo_oauth_state,
+)
+
+
+YAHOO_SESSION_KEY = "fantasy_hq_yahoo_tokens"
+YAHOO_CALLBACK_KEY = "fantasy_hq_yahoo_processed_code"
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -29,13 +43,19 @@ def _resolve_sleeper_user(username_or_id: str) -> dict[str, Any]:
 @st.cache_data(ttl=120, show_spinner=False)
 def _load_sleeper_leagues(user_id: str, season: str) -> tuple[dict[str, Any], ...]:
     with SleeperClient() as client:
-        return tuple(dict(row) for row in client.fetch_user_leagues(user_id, season=season))
+        return tuple(
+            dict(row)
+            for row in client.fetch_user_leagues(user_id, season=season)
+        )
 
 
 @st.cache_data(ttl=120, show_spinner=False)
-def _load_league(league_id: str, user_id: str):
+def _load_sleeper_league(league_id: str, user_id: str):
     with SleeperClient() as client:
-        return client.fetch_normalized_league(league_id, current_user_id=user_id)
+        return client.fetch_normalized_league(
+            league_id,
+            current_user_id=user_id,
+        )
 
 
 @st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
@@ -69,7 +89,97 @@ def _secret_default(name: str) -> str:
     return str(value or "").strip()
 
 
-def _player_row(
+def _yahoo_config() -> YahooOAuthConfig | None:
+    client_id = _secret_default("YAHOO_CLIENT_ID")
+    client_secret = _secret_default("YAHOO_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        return None
+    redirect_uri = (
+        _secret_default("YAHOO_REDIRECT_URI")
+        or DEFAULT_YAHOO_REDIRECT_URI
+    )
+    return YahooOAuthConfig(
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+    )
+
+
+def _store_yahoo_token(token: YahooOAuthToken) -> None:
+    existing = st.session_state.get(YAHOO_SESSION_KEY) or {}
+    refresh_token = token.refresh_token or existing.get("refresh_token")
+    st.session_state[YAHOO_SESSION_KEY] = {
+        "access_token": token.access_token,
+        "refresh_token": refresh_token,
+        "expires_at": int(time.time()) + token.expires_in - 60,
+    }
+
+
+def _refresh_yahoo_if_needed(
+    config: YahooOAuthConfig | None,
+) -> str | None:
+    if config is None:
+        return None
+
+    session = st.session_state.get(YAHOO_SESSION_KEY) or {}
+    access_token = str(session.get("access_token") or "").strip()
+    expires_at = int(session.get("expires_at") or 0)
+    if access_token and expires_at > int(time.time()):
+        return access_token
+
+    refresh_token = (
+        str(session.get("refresh_token") or "").strip()
+        or _secret_default("YAHOO_REFRESH_TOKEN")
+    )
+    if not refresh_token:
+        return None
+
+    with YahooOAuthClient(config) as client:
+        token = client.refresh(refresh_token)
+    _store_yahoo_token(token)
+    return token.access_token
+
+
+def _handle_yahoo_callback(config: YahooOAuthConfig | None) -> None:
+    error = str(st.query_params.get("error") or "").strip()
+    if error:
+        st.error("Yahoo authorization was not completed.")
+        st.query_params.clear()
+        return
+
+    code = str(st.query_params.get("code") or "").strip()
+    state = str(st.query_params.get("state") or "").strip()
+    if not code and not state:
+        return
+    if config is None:
+        st.error(
+            "Yahoo returned an authorization code, but Yahoo app credentials "
+            "are not configured."
+        )
+        return
+    if not code or not state:
+        st.error("Yahoo returned an incomplete authorization response.")
+        return
+
+    if st.session_state.get(YAHOO_CALLBACK_KEY) == code:
+        st.query_params.clear()
+        return
+
+    try:
+        validate_yahoo_oauth_state(state, config.client_secret)
+        with YahooOAuthClient(config) as client:
+            token = client.exchange_code(code)
+        _store_yahoo_token(token)
+        st.session_state[YAHOO_CALLBACK_KEY] = code
+        st.query_params.clear()
+        st.success("Yahoo connected.")
+        st.rerun()
+    except Exception as exc:
+        st.error("Yahoo authorization could not be completed.")
+        st.caption(str(exc))
+
+
+def _sleeper_player_row(
     player_id: str,
     *,
     starter: bool,
@@ -96,7 +206,9 @@ def _player_row(
         "Pos": str(player.get("position") or "—"),
         "NFL": str(player.get("team") or "FA"),
         "Fantasy role": role,
-        "Status": str(player.get("status") or "Active").replace("_", " ").title(),
+        "Status": str(player.get("status") or "Active")
+        .replace("_", " ")
+        .title(),
     }
 
 
@@ -115,205 +227,548 @@ def _points(roster) -> float:
     return whole + decimal
 
 
+def _render_sleeper() -> None:
+    default_username = _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
+    username = st.text_input(
+        "Sleeper username",
+        value=default_username,
+        placeholder="Your Sleeper username",
+        help="Read-only. Your Sleeper password is never needed.",
+    )
+
+    if not username.strip():
+        st.info(
+            "Enter your Sleeper username to discover your current NFL leagues."
+        )
+        return
+
+    try:
+        with st.spinner("Finding your Sleeper leagues..."):
+            sleeper_user = _resolve_sleeper_user(username.strip())
+            nfl_state = _load_nfl_state()
+            season = str(nfl_state.league_season or nfl_state.season)
+            leagues = _load_sleeper_leagues(
+                str(sleeper_user["user_id"]),
+                season,
+            )
+    except Exception as exc:
+        st.error("Fantasy HQ could not load your Sleeper account.")
+        st.caption(str(exc))
+        return
+
+    if not leagues:
+        st.warning(f"No Sleeper NFL leagues were found for {season}.")
+        return
+
+    st.caption(
+        f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
+        f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
+    )
+
+    league_options = {
+        f"{row.get('name') or 'Unnamed league'} · "
+        f"{row.get('total_rosters') or '?'} teams": str(row["league_id"])
+        for row in leagues
+    }
+    selected_label = st.selectbox(
+        "Sleeper league",
+        tuple(league_options),
+        key="fantasy_hq_sleeper_league",
+    )
+    league_id = league_options[selected_label]
+
+    try:
+        with st.spinner("Loading league and roster..."):
+            league = _load_sleeper_league(
+                league_id,
+                str(sleeper_user["user_id"]),
+            )
+    except Exception as exc:
+        st.error("Fantasy HQ could not load this Sleeper league.")
+        st.caption(str(exc))
+        return
+
+    my_roster = next(
+        (
+            roster
+            for roster in league.rosters
+            if roster.platform_roster_id == league.my_platform_roster_id
+        ),
+        None,
+    )
+    my_manager = next(
+        (
+            manager
+            for manager in league.managers
+            if manager.platform_user_id == league.current_platform_user_id
+        ),
+        None,
+    )
+
+    section(
+        league.name or "Sleeper league",
+        f"{league.team_count} teams · {league.season} · "
+        f"{league.status.replace('_', ' ').title()}",
+    )
+
+    metrics = st.columns(4)
+    metrics[0].metric(
+        "My team",
+        (
+            my_manager.team_name
+            if my_manager and my_manager.team_name
+            else my_manager.display_name
+            if my_manager
+            else "Found"
+        ),
+    )
+    metrics[1].metric("Record", _record(my_roster) if my_roster else "—")
+    metrics[2].metric(
+        "Points",
+        f"{_points(my_roster):.2f}" if my_roster else "—",
+    )
+    metrics[3].metric(
+        "FAAB",
+        (
+            "$" + str(league.rules.waiver_budget)
+            if league.rules.waiver_budget is not None
+            else "—"
+        ),
+    )
+
+    roster_tab, matchup_tab, standings_tab, rules_tab = st.tabs(
+        ["My roster", "Current matchup", "Standings", "League settings"]
+    )
+
+    with roster_tab:
+        if not my_roster or not my_roster.players:
+            st.info(
+                "Your roster is not populated yet. "
+                "This is normal before the draft."
+            )
+        else:
+            with st.spinner("Loading player names..."):
+                catalog = _load_player_catalog()
+            starter_set = set(my_roster.starters)
+            reserve_set = set(my_roster.reserve)
+            taxi_set = set(my_roster.taxi)
+            rows = [
+                _sleeper_player_row(
+                    player_id,
+                    starter=player_id in starter_set,
+                    reserve=reserve_set,
+                    taxi=taxi_set,
+                    catalog=catalog,
+                )
+                for player_id in my_roster.players
+            ]
+            role_order = {"Starter": 0, "Bench": 1, "IR": 2, "Taxi": 3}
+            rows.sort(
+                key=lambda row: (
+                    role_order.get(row["Fantasy role"], 9),
+                    row["Pos"],
+                    row["Player"],
+                )
+            )
+            st.dataframe(
+                pd.DataFrame(rows),
+                hide_index=True,
+                width="stretch",
+            )
+            st.caption(
+                f"{len(starter_set)} starters · "
+                f"{max(0, len(my_roster.players) - len(starter_set))} non-starters"
+            )
+
+    with matchup_tab:
+        week = int(nfl_state.week or nfl_state.display_week or 0)
+        if week < 1 or not my_roster:
+            st.info("No regular-season matchup is available yet.")
+        else:
+            try:
+                matchups = _load_matchups(league_id, week)
+                mine = next(
+                    (
+                        row
+                        for row in matchups
+                        if row.platform_roster_id
+                        == my_roster.platform_roster_id
+                    ),
+                    None,
+                )
+                opponent = next(
+                    (
+                        row
+                        for row in matchups
+                        if mine
+                        and row.matchup_id == mine.matchup_id
+                        and row.platform_roster_id
+                        != mine.platform_roster_id
+                    ),
+                    None,
+                )
+                opponent_roster = next(
+                    (
+                        roster
+                        for roster in league.rosters
+                        if opponent
+                        and roster.platform_roster_id
+                        == opponent.platform_roster_id
+                    ),
+                    None,
+                )
+                opponent_manager = next(
+                    (
+                        manager
+                        for manager in league.managers
+                        if opponent_roster
+                        and manager.platform_user_id
+                        == opponent_roster.platform_user_id
+                    ),
+                    None,
+                )
+                if mine and opponent:
+                    left, right = st.columns(2)
+                    left.metric(
+                        (
+                            my_manager.team_name
+                            if my_manager and my_manager.team_name
+                            else "My team"
+                        ),
+                        f"{float(mine.points or 0):.2f}",
+                    )
+                    right.metric(
+                        (
+                            opponent_manager.team_name
+                            if opponent_manager
+                            and opponent_manager.team_name
+                            else opponent_manager.display_name
+                            if opponent_manager
+                            else "Opponent"
+                        ),
+                        f"{float(opponent.points or 0):.2f}",
+                    )
+                    st.caption(f"Week {week} · live Sleeper matchup")
+                else:
+                    st.info(f"Week {week} matchup is not available yet.")
+            except Exception as exc:
+                st.warning("Current matchup could not be loaded.")
+                st.caption(str(exc))
+
+    with standings_tab:
+        manager_by_user = {
+            manager.platform_user_id: manager
+            for manager in league.managers
+        }
+        standings = []
+        for roster in league.rosters:
+            manager = manager_by_user.get(roster.platform_user_id or "")
+            standings.append(
+                {
+                    "Team": (
+                        manager.team_name
+                        if manager and manager.team_name
+                        else manager.display_name
+                        if manager
+                        else f"Roster {roster.platform_roster_id}"
+                    ),
+                    "Record": _record(roster),
+                    "PF": round(_points(roster), 2),
+                    "Mine": (
+                        "Yes"
+                        if roster.platform_roster_id
+                        == league.my_platform_roster_id
+                        else ""
+                    ),
+                }
+            )
+        standings.sort(key=lambda row: row["PF"], reverse=True)
+        st.dataframe(
+            pd.DataFrame(standings),
+            hide_index=True,
+            width="stretch",
+        )
+
+    with rules_tab:
+        settings = [
+            ("Teams", league.team_count),
+            ("Roster", " · ".join(league.rules.roster_positions)),
+            (
+                "Scoring",
+                (
+                    "Full PPR"
+                    if league.rules.scoring_settings.get("rec") == 1
+                    else f"Reception: "
+                    f"{league.rules.scoring_settings.get('rec', 0)}"
+                ),
+            ),
+            (
+                "FAAB budget",
+                (
+                    league.rules.waiver_budget
+                    if league.rules.waiver_budget is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Playoff teams",
+                (
+                    league.rules.playoff_teams
+                    if league.rules.playoff_teams is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Trade deadline",
+                (
+                    league.rules.trade_deadline
+                    if league.rules.trade_deadline is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Keepers",
+                (
+                    league.rules.max_keepers
+                    if league.rules.max_keepers is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Draft",
+                (
+                    league.draft.status.replace("_", " ").title()
+                    if league.draft
+                    else "Unavailable"
+                ),
+            ),
+        ]
+        st.dataframe(
+            pd.DataFrame(settings, columns=["Setting", "Value"]),
+            hide_index=True,
+            width="stretch",
+        )
+
+
+def _render_yahoo(
+    config: YahooOAuthConfig | None,
+    access_token: str | None,
+) -> None:
+    if config is None:
+        st.warning(
+            "Yahoo Fantasy API access has not been configured for PropWar yet."
+        )
+        st.markdown("**One-time Yahoo access setup**")
+        st.markdown(
+            "1. Apply for Yahoo Fantasy Sports API access. Yahoo currently "
+            "reviews applications before granting access.\n"
+            "2. Use PropWar / Fantasy HQ as the product and request read-only "
+            "Fantasy Football data for personal fantasy-league management.\n"
+            f"3. After approval, set the OAuth callback URL to "
+            f"{DEFAULT_YAHOO_REDIRECT_URI}.\n"
+            "4. Add YAHOO_CLIENT_ID and YAHOO_CLIENT_SECRET to the "
+            "PropWar Streamlit secrets."
+        )
+        st.link_button(
+            "Apply for Yahoo Fantasy API",
+            "https://sports.yahoo.com/developer/access/",
+        )
+        return
+
+    if access_token is None:
+        state = build_yahoo_oauth_state(config.client_secret)
+        auth_url = config.authorization_url(state=state)
+        st.info(
+            "Yahoo is ready to connect. Authorization happens on Yahoo; "
+            "PropWar never receives your Yahoo password."
+        )
+        st.link_button(
+            "Connect Yahoo",
+            auth_url,
+            type="primary",
+        )
+        st.caption(f"OAuth callback: {config.redirect_uri}")
+        return
+
+    top_left, top_right = st.columns([4, 1])
+    with top_left:
+        st.success("Yahoo connected")
+        st.caption(
+            "Private Yahoo fantasy data is being read with your authorized "
+            "OAuth token."
+        )
+    with top_right:
+        if st.button("Disconnect Yahoo", width="stretch"):
+            st.session_state.pop(YAHOO_SESSION_KEY, None)
+            st.session_state.pop(YAHOO_CALLBACK_KEY, None)
+            st.rerun()
+
+    try:
+        with YahooFantasyClient(access_token) as client:
+            with st.spinner("Loading your Yahoo fantasy football teams..."):
+                teams = client.fetch_user_nfl_teams()
+    except Exception as exc:
+        st.error("Fantasy HQ could not load your Yahoo fantasy teams.")
+        st.caption(str(exc))
+        return
+
+    if not teams:
+        st.warning(
+            "No Yahoo fantasy football teams were returned for the current "
+            "NFL game."
+        )
+        return
+
+    options = {
+        f"{team.name} · {team.league_key}": team
+        for team in teams
+    }
+    selected = st.selectbox(
+        "Yahoo team",
+        tuple(options),
+        key="fantasy_hq_yahoo_team",
+    )
+    team = options[selected]
+
+    try:
+        with YahooFantasyClient(access_token) as client:
+            with st.spinner("Loading Yahoo league and roster..."):
+                league = client.fetch_league(team.league_key)
+                roster = client.fetch_team_roster(team.team_key)
+    except Exception as exc:
+        st.error("Fantasy HQ could not load this Yahoo league.")
+        st.caption(str(exc))
+        return
+
+    section(
+        league.name,
+        f"Yahoo · {league.season or 'NFL'} · "
+        f"{league.num_teams or '?'} teams",
+    )
+
+    metrics = st.columns(4)
+    metrics[0].metric("My team", team.name)
+    metrics[1].metric("Teams", league.num_teams or "—")
+    metrics[2].metric("Current week", league.current_week or "—")
+    metrics[3].metric(
+        "Draft",
+        (
+            league.draft_status.replace("_", " ").title()
+            if league.draft_status
+            else "—"
+        ),
+    )
+
+    roster_tab, settings_tab = st.tabs(["My roster", "League"])
+    with roster_tab:
+        if not roster:
+            st.info("Yahoo returned an empty roster.")
+        else:
+            rows = [
+                {
+                    "Player": player.name,
+                    "Pos": player.display_position or "—",
+                    "NFL": player.nfl_team or "FA",
+                    "Fantasy role": player.selected_position or "—",
+                    "Status": player.status or "Active",
+                }
+                for player in roster
+            ]
+            starter_rows = [
+                row
+                for row in rows
+                if row["Fantasy role"] not in {"BN", "IR", "IL", "NA"}
+            ]
+            bench_rows = [
+                row
+                for row in rows
+                if row["Fantasy role"] in {"BN", "IR", "IL", "NA"}
+            ]
+            st.dataframe(
+                pd.DataFrame(starter_rows + bench_rows),
+                hide_index=True,
+                width="stretch",
+            )
+            st.caption(
+                f"{len(starter_rows)} starters · "
+                f"{len(bench_rows)} bench/reserve"
+            )
+
+    st.markdown(
+        "[Fantasy data provided by Yahoo Fantasy]"
+        "(https://football.fantasysports.yahoo.com/)"
+    )
+
+    with settings_tab:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    ("Platform", "Yahoo"),
+                    ("League", league.name),
+                    ("Season", league.season or "—"),
+                    ("Teams", league.num_teams or "—"),
+                    ("Current week", league.current_week or "—"),
+                    ("Scoring type", league.scoring_type or "—"),
+                    ("Draft status", league.draft_status or "—"),
+                ],
+                columns=["Setting", "Value"],
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+
+
 page_intro(
     "Fantasy HQ",
-    "Your fantasy leagues in one place. Sleeper is live now; Yahoo is the next connection.",
+    "Your real fantasy leagues in one place. Sleeper is live; Yahoo connects here too.",
 )
 
-st.caption("Owner tool · live read-only fantasy data · no Cloudflare persistence required")
+st.caption(
+    "Owner tool · live read-only fantasy data · "
+    "provider connections are independent of Cloudflare persistence"
+)
+
+yahoo_config = _yahoo_config()
+_handle_yahoo_callback(yahoo_config)
+
+try:
+    yahoo_access_token = _refresh_yahoo_if_needed(yahoo_config)
+except Exception as exc:
+    yahoo_access_token = None
+    st.warning("Yahoo authorization needs to be refreshed.")
+    st.caption(str(exc))
 
 source_a, source_b = st.columns(2)
 with source_a:
     with st.container(border=True):
         st.markdown("### Sleeper")
-        st.success("Live connection available")
-        st.caption("Enter your Sleeper username once to discover your current NFL leagues.")
+        st.success("Live")
+        st.caption("Public read-only API · username discovery")
 with source_b:
     with st.container(border=True):
         st.markdown("### Yahoo")
-        st.warning("Connection not added yet")
-        st.caption("Yahoo OAuth is next so your Yahoo league appears beside Sleeper here.")
-
-default_username = _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
-username = st.text_input(
-    "Sleeper username",
-    value=default_username,
-    placeholder="Your Sleeper username",
-    help="Read-only. Your Sleeper password is never needed.",
-)
-
-if not username.strip():
-    st.info("Enter your Sleeper username above to load your leagues.")
-    st.stop()
-
-try:
-    with st.spinner("Finding your Sleeper leagues..."):
-        sleeper_user = _resolve_sleeper_user(username.strip())
-        nfl_state = _load_nfl_state()
-        season = str(nfl_state.league_season or nfl_state.season)
-        leagues = _load_sleeper_leagues(str(sleeper_user["user_id"]), season)
-except Exception as exc:
-    st.error("Fantasy HQ could not load your Sleeper account.")
-    st.caption(str(exc))
-    st.stop()
-
-if not leagues:
-    st.warning(f"No Sleeper NFL leagues were found for {season}.")
-    st.stop()
-
-st.caption(
-    f"Sleeper · {sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
-    f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} found · {season}"
-)
-
-league_options = {
-    f"{row.get('name') or 'Unnamed league'} · {row.get('total_rosters') or '?'} teams": str(row["league_id"])
-    for row in leagues
-}
-selected_label = st.selectbox("League", tuple(league_options))
-league_id = league_options[selected_label]
-
-try:
-    with st.spinner("Loading league and roster..."):
-        league = _load_league(league_id, str(sleeper_user["user_id"]))
-except Exception as exc:
-    st.error("Fantasy HQ could not load this league.")
-    st.caption(str(exc))
-    st.stop()
-
-my_roster = next(
-    (roster for roster in league.rosters if roster.platform_roster_id == league.my_platform_roster_id),
-    None,
-)
-my_manager = next(
-    (manager for manager in league.managers if manager.platform_user_id == league.current_platform_user_id),
-    None,
-)
-
-section(league.name or "Sleeper league", f"{league.team_count} teams · {league.season} · {league.status.replace('_', ' ').title()}")
-
-metrics = st.columns(4)
-metrics[0].metric("My team", (my_manager.team_name if my_manager and my_manager.team_name else my_manager.display_name if my_manager else "Found"))
-metrics[1].metric("Record", _record(my_roster) if my_roster else "—")
-metrics[2].metric("Points", f"{_points(my_roster):.2f}" if my_roster else "—")
-metrics[3].metric("FAAB", f"${league.rules.waiver_budget}" if league.rules.waiver_budget is not None else "—")
-
-roster_tab, matchup_tab, standings_tab, rules_tab = st.tabs(
-    ["My roster", "Current matchup", "Standings", "League settings"]
-)
-
-with roster_tab:
-    if not my_roster or not my_roster.players:
-        st.info("Your roster is not populated yet. This is normal before the draft.")
-    else:
-        with st.spinner("Loading player names..."):
-            catalog = _load_player_catalog()
-        starter_set = set(my_roster.starters)
-        reserve_set = set(my_roster.reserve)
-        taxi_set = set(my_roster.taxi)
-        rows = [
-            _player_row(
-                player_id,
-                starter=player_id in starter_set,
-                reserve=reserve_set,
-                taxi=taxi_set,
-                catalog=catalog,
+        if yahoo_access_token:
+            st.success("Connected")
+            st.caption("OAuth authorized · private fantasy data")
+        elif yahoo_config:
+            st.info("Ready to connect")
+            st.caption("Yahoo OAuth authorization required")
+        else:
+            st.warning("One-time setup needed")
+            st.caption(
+                "Yahoo Developer app credentials not configured"
             )
-            for player_id in my_roster.players
-        ]
-        role_order = {"Starter": 0, "Bench": 1, "IR": 2, "Taxi": 3}
-        rows.sort(key=lambda row: (role_order.get(row["Fantasy role"], 9), row["Pos"], row["Player"]))
-        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
-        st.caption(
-            f"{len(starter_set)} starters · {max(0, len(my_roster.players) - len(starter_set))} non-starters"
-        )
 
-with matchup_tab:
-    week = int(nfl_state.week or nfl_state.display_week or 0)
-    if week < 1 or not my_roster:
-        st.info("No regular-season matchup is available yet.")
-    else:
-        try:
-            matchups = _load_matchups(league_id, week)
-            mine = next(
-                (row for row in matchups if row.platform_roster_id == my_roster.platform_roster_id),
-                None,
-            )
-            opponent = next(
-                (
-                    row
-                    for row in matchups
-                    if mine
-                    and row.matchup_id == mine.matchup_id
-                    and row.platform_roster_id != mine.platform_roster_id
-                ),
-                None,
-            )
-            opponent_roster = next(
-                (
-                    roster
-                    for roster in league.rosters
-                    if opponent and roster.platform_roster_id == opponent.platform_roster_id
-                ),
-                None,
-            )
-            opponent_manager = next(
-                (
-                    manager
-                    for manager in league.managers
-                    if opponent_roster and manager.platform_user_id == opponent_roster.platform_user_id
-                ),
-                None,
-            )
-            if mine and opponent:
-                left, right = st.columns(2)
-                left.metric(
-                    my_manager.team_name if my_manager and my_manager.team_name else "My team",
-                    f"{float(mine.points or 0):.2f}",
-                )
-                right.metric(
-                    opponent_manager.team_name if opponent_manager and opponent_manager.team_name else opponent_manager.display_name if opponent_manager else "Opponent",
-                    f"{float(opponent.points or 0):.2f}",
-                )
-                st.caption(f"Week {week} · live Sleeper matchup")
-            else:
-                st.info(f"Week {week} matchup is not available yet.")
-        except Exception as exc:
-            st.warning("Current matchup could not be loaded.")
-            st.caption(str(exc))
-
-with standings_tab:
-    manager_by_user = {manager.platform_user_id: manager for manager in league.managers}
-    standings = []
-    for roster in league.rosters:
-        manager = manager_by_user.get(roster.platform_user_id or "")
-        standings.append(
-            {
-                "Team": manager.team_name if manager and manager.team_name else manager.display_name if manager else f"Roster {roster.platform_roster_id}",
-                "Record": _record(roster),
-                "PF": round(_points(roster), 2),
-                "Mine": "Yes" if roster.platform_roster_id == league.my_platform_roster_id else "",
-            }
-        )
-    standings.sort(key=lambda row: row["PF"], reverse=True)
-    st.dataframe(pd.DataFrame(standings), hide_index=True, width="stretch")
-
-with rules_tab:
-    settings = [
-        ("Teams", league.team_count),
-        ("Roster", " · ".join(league.rules.roster_positions)),
-        ("Scoring", "Full PPR" if league.rules.scoring_settings.get("rec") == 1 else f"Reception: {league.rules.scoring_settings.get('rec', 0)}"),
-        ("FAAB budget", league.rules.waiver_budget if league.rules.waiver_budget is not None else "—"),
-        ("Playoff teams", league.rules.playoff_teams if league.rules.playoff_teams is not None else "—"),
-        ("Trade deadline", league.rules.trade_deadline if league.rules.trade_deadline is not None else "—"),
-        ("Keepers", league.rules.max_keepers if league.rules.max_keepers is not None else "—"),
-        ("Draft", league.draft.status.replace("_", " ").title() if league.draft else "Unavailable"),
-    ]
-    st.dataframe(pd.DataFrame(settings, columns=["Setting", "Value"]), hide_index=True, width="stretch")
+sleeper_tab, yahoo_tab = st.tabs(["Sleeper leagues", "Yahoo leagues"])
+with sleeper_tab:
+    _render_sleeper()
+with yahoo_tab:
+    _render_yahoo(yahoo_config, yahoo_access_token)
 
 st.divider()
-st.markdown("### What comes next")
+st.markdown("### Next inside Fantasy HQ")
 st.write(
-    "Yahoo connects into this same page next. After both providers are visible here, "
-    "Fantasy HQ can add cross-league availability, waiver opportunities, start/sit, trades, FAAB, and opponent scouting."
+    "Once both providers are connected, the next useful layer is cross-league "
+    "player ownership and waiver availability, followed by start/sit, trade, "
+    "FAAB, and opponent scouting."
 )
