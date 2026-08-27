@@ -34,6 +34,9 @@ from src.fantasy.free_agents import (  # noqa: E402
 )
 from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
 from src.fantasy.player_market import build_player_market_map  # noqa: E402
+from src.fantasy.player_intelligence import (  # noqa: E402
+    build_player_intelligence_card,
+)
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -158,6 +161,19 @@ def _load_sleeper_trending_adds(
     with SleeperClient() as client:
         return client.fetch_trending_players(
             "add",
+            lookback_hours=lookback_hours,
+            limit=limit,
+        )
+
+
+@st.cache_data(ttl=5 * 60, show_spinner=False)
+def _load_sleeper_trending_drops(
+    lookback_hours: int,
+    limit: int = 100,
+):
+    with SleeperClient() as client:
+        return client.fetch_trending_players(
+            "drop",
             lookback_hours=lookback_hours,
             limit=limit,
         )
@@ -2088,6 +2104,110 @@ def _render_sleeper() -> None:
                             "for the player. HIGH means that team's current "
                             "structure shows the clearest positional pressure."
                         )
+
+                        st.markdown("##### Player Intelligence Card")
+                        st.caption(
+                            "Factual context for the same player. This is not "
+                            "a fantasy ranking or projected-points model."
+                        )
+                        try:
+                            intelligence = build_player_intelligence_card(
+                                league,
+                                all_states or (league,),
+                                market_player_id,
+                                market_catalog,
+                                add_trends=_load_sleeper_trending_adds(48, 200),
+                                drop_trends=_load_sleeper_trending_drops(48, 200),
+                            )
+                        except Exception as exc:
+                            st.warning("Player Intelligence Card could not be built.")
+                            st.caption(str(exc))
+                            intelligence = None
+
+                        if intelligence is not None:
+                            intel_a, intel_b, intel_c, intel_d = st.columns(4)
+                            intel_a.metric(
+                                "Depth chart",
+                                (
+                                    "#"
+                                    + str(intelligence.depth_chart_order)
+                                    if intelligence.depth_chart_order is not None
+                                    else "—"
+                                ),
+                            )
+                            intel_b.metric(
+                                "Sleeper adds · 48h",
+                                intelligence.add_trend_count,
+                            )
+                            intel_c.metric(
+                                "Sleeper drops · 48h",
+                                intelligence.drop_trend_count,
+                            )
+                            intel_d.metric(
+                                "Trend delta",
+                                (
+                                    f"+{intelligence.trend_delta}"
+                                    if intelligence.trend_delta > 0
+                                    else str(intelligence.trend_delta)
+                                ),
+                            )
+
+                            meta_a, meta_b, meta_c, meta_d = st.columns(4)
+                            meta_a.metric(
+                                "Age",
+                                intelligence.age
+                                if intelligence.age is not None
+                                else "—",
+                            )
+                            meta_b.metric(
+                                "Years exp",
+                                intelligence.years_exp
+                                if intelligence.years_exp is not None
+                                else "—",
+                            )
+                            meta_c.metric(
+                                "My Sleeper leagues",
+                                intelligence.my_league_count,
+                            )
+                            meta_d.metric(
+                                "HIGH-fit teams",
+                                intelligence.high_fit_team_count,
+                            )
+
+                            intelligence_rows = [
+                                {
+                                    "League": row.league_name,
+                                    "Ownership": row.status,
+                                    "Owner": row.owner_name or "—",
+                                    "Slot": row.roster_slot or "—",
+                                }
+                                for row in intelligence.ownership
+                            ]
+                            st.dataframe(
+                                pd.DataFrame(intelligence_rows),
+                                hide_index=True,
+                                width="stretch",
+                            )
+
+                            context_parts = [
+                                f"Status: {intelligence.status}",
+                                "Positions: "
+                                + " / ".join(intelligence.positions),
+                                "NFL: " + intelligence.nfl_team,
+                            ]
+                            if intelligence.depth_chart_position:
+                                context_parts.append(
+                                    "Depth chart position: "
+                                    + intelligence.depth_chart_position
+                                )
+                            st.caption(" · ".join(context_parts))
+                            st.caption(
+                                "Sleeper trend counts reflect the current top "
+                                "add/drop lists for the 48-hour window; a zero "
+                                "does not prove nobody added or dropped the player. "
+                                "Depth-chart metadata comes from Sleeper and is "
+                                "context, not a PropWar player-value grade."
+                            )
 
     with standings_tab:
         if pre_draft_mode:
