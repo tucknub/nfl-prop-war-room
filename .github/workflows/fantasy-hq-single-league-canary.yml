@@ -192,6 +192,42 @@ jobs:
           python scripts/verify_fantasy_hq_remote_d1.py --probe "$PROBE" \
             > "$RUNNER_TEMP/pre-canary-d1-readiness.json"
 
+      - name: Re-verify active Worker version matches shadow deployment
+        env:
+          EXPECTED_VERSION_ID: ${{ steps.shadow.outputs.version_id }}
+        run: |
+          DEPLOYMENTS="$RUNNER_TEMP/current-worker-deployments.json"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/propwar-fantasy-hq/deployments" \
+            > "$DEPLOYMENTS"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "current-worker-deployments.json").read_text()
+          )
+          if payload.get("success") is not True:
+              raise SystemExit("Cloudflare deployment read was not successful")
+          result = payload.get("result")
+          deployments = result.get("deployments") if isinstance(result, dict) else None
+          if not isinstance(deployments, list) or not deployments:
+              raise SystemExit("Fantasy HQ active deployment is unavailable")
+
+          active = deployments[0]
+          versions = active.get("versions") if isinstance(active, dict) else None
+          if not isinstance(versions, list) or len(versions) != 1:
+              raise SystemExit("Fantasy HQ must have exactly one active Worker version")
+          version = versions[0]
+          if version.get("percentage") != 100:
+              raise SystemExit("Fantasy HQ Worker version must serve 100 percent of traffic")
+          if version.get("version_id") != os.environ["EXPECTED_VERSION_ID"]:
+              raise SystemExit("Fantasy HQ active Worker version differs from shadow evidence")
+          PY
+
       - name: Re-verify remote Cron Triggers are empty
         run: |
           SCHEDULES="$RUNNER_TEMP/canary-cron-schedules.json"
