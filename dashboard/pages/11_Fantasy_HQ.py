@@ -18,6 +18,13 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import page_intro, section  # noqa: E402
+from src.fantasy.live_ownership import (  # noqa: E402
+    AVAILABLE,
+    MINE,
+    OTHER,
+    lookup_live_sleeper_player,
+    my_players_available_elsewhere,
+)
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
     DEFAULT_YAHOO_REDIRECT_URI,
@@ -55,6 +62,21 @@ def _load_sleeper_league(league_id: str, user_id: str):
         return client.fetch_normalized_league(
             league_id,
             current_user_id=user_id,
+        )
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _load_all_sleeper_states(
+    user_id: str,
+    league_ids: tuple[str, ...],
+):
+    with SleeperClient() as client:
+        return tuple(
+            client.fetch_normalized_league(
+                league_id,
+                current_user_id=user_id,
+            )
+            for league_id in league_ids
         )
 
 
@@ -336,8 +358,14 @@ def _render_sleeper() -> None:
         ),
     )
 
-    roster_tab, matchup_tab, standings_tab, rules_tab = st.tabs(
-        ["My roster", "Current matchup", "Standings", "League settings"]
+    roster_tab, matchup_tab, standings_tab, rules_tab, cross_tab = st.tabs(
+        [
+            "My roster",
+            "Current matchup",
+            "Standings",
+            "League settings",
+            "Cross-league",
+        ]
     )
 
     with roster_tab:
@@ -548,6 +576,180 @@ def _render_sleeper() -> None:
             hide_index=True,
             width="stretch",
         )
+
+
+    with cross_tab:
+        st.markdown("#### Sleeper cross-league ownership")
+        st.caption(
+            "Live roster ownership across every Sleeper NFL league found for "
+            "this account. Draft results will appear here as Sleeper rosters update."
+        )
+
+        all_league_ids = tuple(
+            str(row["league_id"])
+            for row in leagues
+            if str(row.get("league_id") or "").strip()
+        )
+        try:
+            with st.spinner("Scanning all Sleeper leagues..."):
+                all_states = _load_all_sleeper_states(
+                    str(sleeper_user["user_id"]),
+                    all_league_ids,
+                )
+                catalog = _load_player_catalog()
+        except Exception as exc:
+            st.warning("Cross-league ownership could not be loaded.")
+            st.caption(str(exc))
+            all_states = ()
+            catalog = {}
+
+        if all_states:
+            scan_a, scan_b = st.columns(2)
+            scan_a.metric("Sleeper leagues scanned", len(all_states))
+
+            actionable = my_players_available_elsewhere(all_states)
+            scan_b.metric(
+                "My players free elsewhere",
+                len(actionable),
+            )
+
+            st.markdown("##### My players available in another league")
+            if not actionable:
+                st.info(
+                    "No current player on one of your Sleeper rosters is "
+                    "available in another scanned Sleeper league yet."
+                )
+            else:
+                action_rows = []
+                for item in actionable:
+                    player = catalog.get(item.sleeper_player_id) or {}
+                    name = str(player.get("full_name") or "").strip()
+                    if not name:
+                        first = str(player.get("first_name") or "").strip()
+                        last = str(player.get("last_name") or "").strip()
+                        name = (
+                            f"{first} {last}".strip()
+                            or item.sleeper_player_id
+                        )
+                    action_rows.append(
+                        {
+                            "Player": name,
+                            "Pos": str(player.get("position") or "—"),
+                            "NFL": str(player.get("team") or "FA"),
+                            "I roster him in": " · ".join(item.mine_in),
+                            "Available in": " · ".join(item.available_in),
+                            "Opponent-owned in": (
+                                " · ".join(item.owned_elsewhere_in) or "—"
+                            ),
+                        }
+                    )
+                action_rows.sort(
+                    key=lambda row: (
+                        row["Pos"],
+                        row["Player"],
+                    )
+                )
+                st.dataframe(
+                    pd.DataFrame(action_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+
+            st.markdown("##### Look up any player")
+            search = st.text_input(
+                "Player search",
+                placeholder="e.g. Jonathan Taylor",
+                key="fantasy_hq_cross_league_player_search",
+            ).strip()
+
+            if search:
+                normalized_search = search.casefold()
+                candidates = []
+                for player_id, player in catalog.items():
+                    name = str(player.get("full_name") or "").strip()
+                    if not name:
+                        first = str(player.get("first_name") or "").strip()
+                        last = str(player.get("last_name") or "").strip()
+                        name = f"{first} {last}".strip()
+                    if not name or normalized_search not in name.casefold():
+                        continue
+                    candidates.append(
+                        (
+                            0 if name.casefold().startswith(normalized_search) else 1,
+                            name.casefold(),
+                            str(player_id),
+                            name,
+                            str(player.get("position") or "—"),
+                            str(player.get("team") or "FA"),
+                        )
+                    )
+
+                candidates.sort()
+                candidates = candidates[:40]
+                if not candidates:
+                    st.info("No Sleeper NFL player matched that search.")
+                else:
+                    option_map = {
+                        f"{name} · {position} · {team}": player_id
+                        for _, _, player_id, name, position, team in candidates
+                    }
+                    selected_player = st.selectbox(
+                        "Player",
+                        tuple(option_map),
+                        key="fantasy_hq_cross_league_player",
+                    )
+                    selected_id = option_map[selected_player]
+                    ownership = lookup_live_sleeper_player(
+                        all_states,
+                        selected_id,
+                    )
+                    status_rows = []
+                    for row in ownership.statuses:
+                        if row.status == MINE:
+                            status = "MY ROSTER"
+                        elif row.status == OTHER:
+                            status = (
+                                "OWNED"
+                                + (
+                                    f" · {row.owner_name}"
+                                    if row.owner_name
+                                    else ""
+                                )
+                            )
+                        elif row.status == AVAILABLE:
+                            status = "AVAILABLE"
+                        else:
+                            status = "UNKNOWN"
+                        status_rows.append(
+                            {
+                                "League": row.league_name,
+                                "Status": status,
+                                "Slot": row.roster_slot or "—",
+                            }
+                        )
+
+                    st.dataframe(
+                        pd.DataFrame(status_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    available_count = len(ownership.available_in)
+                    if available_count:
+                        st.success(
+                            f"Available in {available_count} Sleeper league"
+                            f"{'s' if available_count != 1 else ''}: "
+                            + ", ".join(ownership.available_in)
+                        )
+                    elif ownership.mine_in:
+                        st.info(
+                            "You already roster this player in every scanned "
+                            "league where he is not opponent-owned."
+                        )
+                    else:
+                        st.caption(
+                            "This player is not currently available in the "
+                            "scanned Sleeper leagues."
+                        )
 
 
 def _render_yahoo(
