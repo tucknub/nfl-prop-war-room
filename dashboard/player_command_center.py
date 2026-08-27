@@ -90,6 +90,31 @@ def _game(row: Mapping[str, Any]) -> str:
     return away or home or "NFL game"
 
 
+def _event_key(row: Mapping[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(row.get("event_id") or "").strip(),
+        _clean_team(row.get("away_team")),
+        _clean_team(row.get("home_team")),
+    )
+
+
+def _signal_matches_events(
+    row: Mapping[str, Any],
+    event_keys: set[tuple[str, str, str]],
+) -> bool:
+    signal = _event_key(row)
+    if signal in event_keys:
+        return True
+    # Some analyzed signal rows do not preserve event_id. Team pairing still has
+    # to agree exactly after maintained alias normalization.
+    _, away, home = signal
+    return any(
+        away == event_away and home == event_home
+        for _, event_away, event_home in event_keys
+        if away and home and event_away and event_home
+    )
+
+
 def _event_has_team(row: Mapping[str, Any], nfl_team: str) -> bool:
     team = _clean_team(nfl_team)
     if not team or team == "FA":
@@ -201,10 +226,13 @@ def build_player_prop_action(
         )
 
     player_key = _player_key(rows[0].get("player"))
+    event_keys = {_event_key(row) for row in rows}
 
     actionable_outliers = []
     for raw in price_outliers:
         if not isinstance(raw, Mapping) or _player_key(raw.get("player")) != player_key:
+            continue
+        if not _signal_matches_events(raw, event_keys):
             continue
         if not raw.get("actionable"):
             continue
@@ -263,7 +291,11 @@ def build_player_prop_action(
     player_ladders = [
         dict(row)
         for row in ladder_violations
-        if isinstance(row, Mapping) and _player_key(row.get("player")) == player_key
+        if (
+            isinstance(row, Mapping)
+            and _player_key(row.get("player")) == player_key
+            and _signal_matches_events(row, event_keys)
+        )
     ]
     if player_ladders:
         row = player_ladders[0]
@@ -281,7 +313,11 @@ def build_player_prop_action(
     player_gaps = [
         dict(row)
         for row in line_gaps
-        if isinstance(row, Mapping) and _player_key(row.get("player")) == player_key
+        if (
+            isinstance(row, Mapping)
+            and _player_key(row.get("player")) == player_key
+            and _signal_matches_events(row, event_keys)
+        )
     ]
     if player_gaps:
         row = player_gaps[0]
