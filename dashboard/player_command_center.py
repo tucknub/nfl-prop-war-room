@@ -19,7 +19,7 @@ except ImportError:
 
 _FULL_TEAM_TO_CANONICAL = {
     str(full_name).strip().upper(): canonical
-    for canonical, (_, full_name) in TEAM_VARIANTS.items()
+    for _, (canonical, full_name) in TEAM_VARIANTS.items()
     if str(full_name or "").strip()
 }
 
