@@ -1,5 +1,5 @@
 name: Role Change Detector validation
-# rerun after numeric-tolerance fix
+# rerun with production-equivalent dashboard import path
 
 on:
   push:
@@ -34,7 +34,14 @@ jobs:
       - name: Streamlit startup smoke tests
         run: |
           python - <<'PY'
+          import sys
+          from pathlib import Path
           from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          sys.path.insert(0, str(root / "dashboard"))
+          sys.path.insert(0, str(root))
+
           for path in (
               "dashboard/pages/01_Teams.py",
               "dashboard/pages/02_Players.py",
