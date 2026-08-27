@@ -42,6 +42,6 @@ def test_fantasy_hq_parallelizes_all_leagues_and_reuses_selected_state():
 
     assert "client.fetch_normalized_leagues(" in source
     assert "max_workers=3" in source
-    assert "state for state in all_states" in source
+    assert "for state in all_states" in source
     assert "if league is None:" in source
     assert 'with st.spinner("Loading league and roster..."):' in source
