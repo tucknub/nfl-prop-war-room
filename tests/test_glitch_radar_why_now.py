@@ -19,6 +19,7 @@ from dashboard.glitch_radar_history import (
     build_market_observations,
     ev_opportunity_key,
     glitch_opportunity_key,
+    MarketHistoryStore,
     history_summary,
     update_market_history,
 )
@@ -163,7 +164,8 @@ def test_glitch_radar_page_surfaces_temporal_state_and_keeps_pass_off_top_board(
         / "09_Glitch_Radar.py"
     ).read_text(encoding="utf-8")
 
-    assert 'history_state_key = "glitch_radar_market_history_v1"' in source
+    assert "def _market_history_store() -> MarketHistoryStore:" in source
+    assert "market_history = _market_history_store().update(" in source
     assert 'st.markdown("### Since last scan")' in source
     assert '**WHY NOW:**' in source
     assert 'First detected:' in source
@@ -171,3 +173,17 @@ def test_glitch_radar_page_surfaces_temporal_state_and_keeps_pass_off_top_board(
     assert 'ACTION: {action.action}' in source
     assert 'if glitch_action(alert).action == PASS:' in source
     assert 'if ev_action(row).action == PASS:' in source
+
+
+def test_process_store_preserves_history_across_calls():
+    store = MarketHistoryStore()
+    first = build_market_observations([_glitch(130)], [])
+    second = build_market_observations([_glitch(144)], [])
+
+    state1 = store.update(first, fetched_at="2026-08-27T19:42:00+00:00")
+    state2 = store.update(second, fetched_at="2026-08-27T19:47:00+00:00")
+
+    key = glitch_opportunity_key(_glitch(144))
+    assert state1["active"][key]["status"] == BASELINE
+    assert state2["active"][key]["status"] == IMPROVED
+    assert state2["active"][key]["first_seen"] == "2026-08-27T19:42:00+00:00"
