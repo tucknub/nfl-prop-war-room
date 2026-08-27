@@ -26,39 +26,20 @@ class LiveFreeAgent:
         return bool(self.mine_elsewhere)
 
 
-def find_live_free_agents(
+def build_live_free_agent_pool(
     league: FantasyLeagueState,
     player_catalog: Mapping[str, Mapping[str, Any]],
     *,
     all_leagues: Iterable[FantasyLeagueState] = (),
-    query: str = "",
-    position: str | None = None,
-    mine_elsewhere_only: bool = False,
-    limit: int = 100,
 ) -> tuple[LiveFreeAgent, ...]:
-    """Return factual live free agents from a normalized Sleeper league.
-
-    Absence from rosters becomes available only when Sleeper ownership is
-    initialized for the selected league. This intentionally provides no player
-    ranking or waiver recommendation score.
-    """
+    """Build the complete factual free-agent pool for one Sleeper league."""
 
     if not league.ownership_ready:
         raise ValueError(
             "Sleeper ownership is not ready; free-agent availability is unsafe"
         )
-    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1 or limit > 500:
-        raise ValueError("limit must be an integer from 1 to 500")
 
-    selected_position = str(position or "").strip().upper()
-    if selected_position in {"", "ALL"}:
-        selected_position = ""
-    elif selected_position not in FANTASY_POSITIONS:
-        raise ValueError("position must be a supported fantasy position")
-
-    normalized_query = str(query or "").strip().casefold()
     league_rows = tuple(all_leagues)
-
     rostered = {
         str(player_id)
         for roster in league.rosters
@@ -72,6 +53,7 @@ def find_live_free_agents(
     }
 
     rows: list[LiveFreeAgent] = []
+    selected_name = league.name or league.platform_league_id
     for raw_player_id, raw_player in player_catalog.items():
         player_id = str(raw_player_id or "").strip()
         if not player_id or player_id in rostered:
@@ -82,11 +64,9 @@ def find_live_free_agents(
         player_position = str(raw_player.get("position") or "").strip().upper()
         if player_position not in FANTASY_POSITIONS:
             continue
-        if selected_position and player_position != selected_position:
-            continue
-
         if raw_player.get("active") is False:
             continue
+
         raw_status = (
             str(raw_player.get("injury_status") or "").strip()
             or str(raw_player.get("status") or "").strip()
@@ -95,26 +75,19 @@ def find_live_free_agents(
         if raw_status.casefold() in _EXCLUDED_STATUSES:
             continue
 
-        name = _player_name(raw_player, player_id)
-        if normalized_query and normalized_query not in name.casefold():
-            continue
-
         mine_elsewhere: tuple[str, ...] = ()
         if league_rows:
             cross = lookup_live_sleeper_player(league_rows, player_id)
             mine_elsewhere = tuple(
                 league_name
                 for league_name in cross.mine_in
-                if league_name != (league.name or league.platform_league_id)
+                if league_name != selected_name
             )
-
-        if mine_elsewhere_only and not mine_elsewhere:
-            continue
 
         rows.append(
             LiveFreeAgent(
                 sleeper_player_id=player_id,
-                name=name,
+                name=_player_name(raw_player, player_id),
                 position=player_position,
                 nfl_team=str(raw_player.get("team") or "FA").strip().upper() or "FA",
                 status=raw_status.replace("_", " ").title(),
@@ -130,7 +103,67 @@ def find_live_free_agents(
             row.sleeper_player_id,
         )
     )
-    return tuple(rows[:limit])
+    return tuple(rows)
+
+
+def filter_live_free_agents(
+    pool: Iterable[LiveFreeAgent],
+    *,
+    query: str = "",
+    position: str | None = None,
+    mine_elsewhere_only: bool = False,
+    limit: int = 100,
+) -> tuple[LiveFreeAgent, ...]:
+    """Filter a prebuilt free-agent pool without re-reading Sleeper ownership."""
+
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1 or limit > 500:
+        raise ValueError("limit must be an integer from 1 to 500")
+
+    selected_position = str(position or "").strip().upper()
+    if selected_position in {"", "ALL"}:
+        selected_position = ""
+    elif selected_position not in FANTASY_POSITIONS:
+        raise ValueError("position must be a supported fantasy position")
+
+    normalized_query = str(query or "").strip().casefold()
+    rows: list[LiveFreeAgent] = []
+    for row in pool:
+        if selected_position and row.position != selected_position:
+            continue
+        if normalized_query and normalized_query not in row.name.casefold():
+            continue
+        if mine_elsewhere_only and not row.mine_elsewhere:
+            continue
+        rows.append(row)
+        if len(rows) >= limit:
+            break
+    return tuple(rows)
+
+
+def find_live_free_agents(
+    league: FantasyLeagueState,
+    player_catalog: Mapping[str, Mapping[str, Any]],
+    *,
+    all_leagues: Iterable[FantasyLeagueState] = (),
+    query: str = "",
+    position: str | None = None,
+    mine_elsewhere_only: bool = False,
+    limit: int = 100,
+) -> tuple[LiveFreeAgent, ...]:
+    """Return factual live free agents from a normalized Sleeper league."""
+
+    pool = build_live_free_agent_pool(
+        league,
+        player_catalog,
+        all_leagues=all_leagues,
+    )
+    return filter_live_free_agents(
+        pool,
+        query=query,
+        position=position,
+        mine_elsewhere_only=mine_elsewhere_only,
+        limit=limit,
+    )
 
 
 def _player_name(player: Mapping[str, Any], player_id: str) -> str:
