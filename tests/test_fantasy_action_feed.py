@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from types import SimpleNamespace
 
 from src.fantasy.action_feed import (
     HEALTH,
@@ -12,6 +13,7 @@ from src.fantasy.action_feed import (
     WAIVER,
     WeeklyActionItem,
     build_weekly_action_feed,
+    waiver_candidate_visible_in_feed,
 )
 from src.fantasy.models import (
     FantasyLeagueState,
@@ -77,6 +79,33 @@ def _action(
         confidence="HIGH",
         score=score,
     )
+
+
+def test_low_waiver_feed_requires_two_point_edge():
+    assert waiver_candidate_visible_in_feed(
+        SimpleNamespace(
+            need="LOW",
+            expected_lineup_improvement=1.99,
+        )
+    ) is False
+    assert waiver_candidate_visible_in_feed(
+        SimpleNamespace(
+            need="LOW",
+            expected_lineup_improvement=2.0,
+        )
+    ) is True
+    assert waiver_candidate_visible_in_feed(
+        SimpleNamespace(
+            need="LOW",
+            expected_lineup_improvement=None,
+        )
+    ) is False
+    assert waiver_candidate_visible_in_feed(
+        SimpleNamespace(
+            need="HIGH",
+            expected_lineup_improvement=0.0,
+        )
+    ) is True
 
 
 def test_action_feed_globally_ranks_actions_across_leagues(monkeypatch):

@@ -48,6 +48,13 @@ CATALOG = {
         "team": "FA",
         "status": "Retired",
     },
+    "p7": {
+        "full_name": "Stale Inactive Runner",
+        "position": "RB",
+        "team": "FA",
+        "status": "Inactive",
+        "active": True,
+    },
     "coach": {
         "full_name": "Not A Fantasy Player",
         "position": "HC",
@@ -129,7 +136,7 @@ def test_free_agents_exclude_any_rostered_player():
 
     assert [row.sleeper_player_id for row in rows] == ["p3", "p4"]
     assert all(row.sleeper_player_id not in {"p1", "p2"} for row in rows)
-    assert all(row.sleeper_player_id not in {"p5", "p6", "coach"} for row in rows)
+    assert all(row.sleeper_player_id not in {"p5", "p6", "p7", "coach"} for row in rows)
 
 
 def test_free_agents_flag_players_rostered_by_me_elsewhere_first():

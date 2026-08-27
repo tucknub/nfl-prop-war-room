@@ -70,6 +70,7 @@ from src.fantasy.roster_health import (  # noqa: E402
     analyze_roster_health,
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
+from src.fantasy.sleeper_current import fantasy_regular_week  # noqa: E402
 from src.fantasy.team_explorer import build_league_team_profile  # noqa: E402
 from src.fantasy.trade_candidates import build_trade_candidate_board  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
@@ -589,7 +590,7 @@ def _render_sleeper() -> None:
     weekly_feed_error = None
     weekly_feed_data_errors = ()
     feed_parlay_key = _secret_default("PARLAY_API_KEY")
-    feed_week = int(nfl_state.week or nfl_state.display_week or 0)
+    feed_week = fantasy_regular_week(nfl_state)
 
     if not all_states or not all_catalog:
         st.info(
@@ -725,8 +726,8 @@ def _render_sleeper() -> None:
             f"{action_center.drafted_count}/{action_center.league_count}",
         )
         action_c.metric(
-            "Leagues needing attention",
-            action_center.needs_attention_count,
+            "Watch / action leagues",
+            len(action_center.action_leagues),
         )
         action_d.metric(
             "Cross-league opportunities",
@@ -1054,7 +1055,7 @@ def _render_sleeper() -> None:
                 "configured starter slots."
             )
         else:
-            current_week = int(nfl_state.week or nfl_state.display_week or 0)
+            current_week = fantasy_regular_week(nfl_state)
             lineup_matchup = None
             lineup_matchup_error: str | None = None
             if current_week >= 1 and my_roster is not None:
@@ -1210,27 +1211,45 @@ def _render_sleeper() -> None:
                         ms_b.metric("Suggested swaps", market_start_sit.swap_count)
 
                         market_lineup_rows = []
+                        lineup_slot_by_index = {
+                            row.slot_index: row
+                            for row in lineup.slots
+                        }
                         for advice in market_start_sit.slots:
                             starter_market = advice.starter
                             bench_market = advice.best_bench
+                            lineup_slot = lineup_slot_by_index.get(
+                                advice.slot_index
+                            )
+                            starter_fact = (
+                                lineup_slot.starter
+                                if lineup_slot is not None
+                                else None
+                            )
+                            if starter_market is not None:
+                                starter_name = starter_market.name
+                                starter_coverage = starter_market.coverage
+                            elif starter_fact is not None:
+                                starter_name = starter_fact.name
+                                starter_coverage = (
+                                    "UNSUPPORTED"
+                                    if starter_fact.position in {"K", "DEF"}
+                                    else "MISSING"
+                                )
+                            else:
+                                starter_name = "OPEN"
+                                starter_coverage = "—"
+
                             market_lineup_rows.append(
                                 {
                                     "Slot": advice.slot,
-                                    "Starter": (
-                                        starter_market.name
-                                        if starter_market
-                                        else "OPEN / UNCOVERED"
-                                    ),
+                                    "Starter": starter_name,
                                     "Starter baseline": (
                                         round(starter_market.fantasy_points, 2)
                                         if starter_market
                                         else "—"
                                     ),
-                                    "Starter coverage": (
-                                        starter_market.coverage
-                                        if starter_market
-                                        else "—"
-                                    ),
+                                    "Starter coverage": starter_coverage,
                                     "Best bench": (
                                         bench_market.name
                                         if bench_market
@@ -1667,7 +1686,7 @@ def _render_sleeper() -> None:
                     "is available."
                 )
             else:
-                faab_week = int(nfl_state.week or nfl_state.display_week or 0)
+                faab_week = fantasy_regular_week(nfl_state)
                 faab_transactions = []
                 faab_history_errors = []
                 if faab_week >= 1 and market_waivers.candidates:
@@ -1918,6 +1937,7 @@ def _render_sleeper() -> None:
 
             st.caption(
                 "Availability is factual live Sleeper roster absence. "
+                "Inactive/retired catalog entries are excluded. "
                 "This search does not assign a player-quality score."
             )
 
@@ -1939,9 +1959,7 @@ def _render_sleeper() -> None:
                 "league's active transaction week here."
             )
         else:
-            current_activity_week = int(
-                nfl_state.week or nfl_state.display_week or 0
-            )
+            current_activity_week = fantasy_regular_week(nfl_state)
             if current_activity_week < 1:
                 st.info(
                     "No regular-season transaction week is available yet."
@@ -2062,7 +2080,7 @@ def _render_sleeper() -> None:
                 "draft and Sleeper publishes roster/matchup data."
             )
         else:
-            week = int(nfl_state.week or nfl_state.display_week or 0)
+            week = fantasy_regular_week(nfl_state)
             if week < 1 or not my_roster:
                 st.info("No regular-season matchup is available yet.")
             else:
@@ -2149,7 +2167,7 @@ def _render_sleeper() -> None:
                 "has drafted rosters and a real fantasy matchup pairing."
             )
         else:
-            scout_week = int(nfl_state.week or nfl_state.display_week or 0)
+            scout_week = fantasy_regular_week(nfl_state)
             if scout_week < 1 or not my_roster:
                 st.info("No regular-season opponent is available yet.")
             else:

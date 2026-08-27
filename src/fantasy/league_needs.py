@@ -164,6 +164,12 @@ def _need_labels(profile: LeagueTeamProfile, level: str) -> tuple[str, ...]:
 def _need_position_set(profile: LeagueTeamProfile) -> set[str]:
     positions: set[str] = set()
     for need in profile.needs:
+        # A healthy roster carrying exactly one QB/TE/etc. for one direct
+        # starter slot is a depth watch, not enough by itself to create a
+        # trade-target signal. Keep it visible on the Needs Board without
+        # polluting trade-fit matching.
+        if need.level == MEDIUM and "no bench cushion" in need.reason:
+            continue
         if need.position == "RB/WR/TE":
             positions.update(FLEX_ELIGIBLE)
         elif need.position == "ANY":

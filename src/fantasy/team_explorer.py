@@ -194,7 +194,7 @@ def _build_needs(
                     reason=f"Serious player status leaves fewer than {required} usable {position} for direct starter demand.",
                 )
             )
-        elif actual == required:
+        elif actual == required and position not in {"K", "DEF"}:
             rows.append(
                 TeamNeed(
                     position=position,

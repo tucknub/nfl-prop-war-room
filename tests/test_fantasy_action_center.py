@@ -175,5 +175,6 @@ def test_fantasy_hq_exposes_all_leagues_action_center():
 
     assert "All-Leagues Action Center" in page
     assert "build_fantasy_action_center" in page
-    assert "Leagues needing attention" in page
+    assert "Watch / action leagues" in page
+    assert "len(action_center.action_leagues)" in page
     assert "Cross-league opportunities" in page
