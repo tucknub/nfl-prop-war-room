@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from typing import Any, Mapping
 
 import pandas as pd
@@ -19,6 +21,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
+from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
     find_live_free_agents,
@@ -115,6 +118,24 @@ def _load_matchups(league_id: str, week: int):
         return ()
     with SleeperClient() as client:
         return client.fetch_matchups(league_id, week)
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _load_transactions(league_id: str, week: int):
+    if week < 1:
+        return ()
+    with SleeperClient() as client:
+        return client.fetch_transactions(league_id, week)
+
+
+def _format_activity_time(timestamp_ms: int | None) -> str:
+    if not timestamp_ms:
+        return "—"
+    value = datetime.fromtimestamp(
+        timestamp_ms / 1000,
+        tz=ZoneInfo("America/New_York"),
+    )
+    return value.strftime("%b %d · %I:%M %p ET").replace(" 0", " ")
 
 
 @st.cache_data(ttl=5 * 60, show_spinner=False)
@@ -518,6 +539,7 @@ def _render_sleeper() -> None:
         roster_tab,
         health_tab,
         waiver_tab,
+        activity_tab,
         matchup_tab,
         opponent_tab,
         standings_tab,
@@ -528,6 +550,7 @@ def _render_sleeper() -> None:
             "My roster",
             "Roster Health",
             "Waiver Watch",
+            "League Activity",
             "Current matchup",
             "Opponent Scout",
             "Standings",
@@ -868,6 +891,129 @@ def _render_sleeper() -> None:
         st.markdown(
             "[Trending data provided by Sleeper](https://sleeper.com/)"
         )
+
+    with activity_tab:
+        st.markdown("#### League Activity")
+        st.caption(
+            "Recent adds, drops, waivers and trades from Sleeper for the "
+            "selected league."
+        )
+
+        current_activity_week = int(
+            nfl_state.week or nfl_state.display_week or 0
+        )
+        if current_activity_week < 1:
+            st.info(
+                "No regular-season transaction week is available yet."
+            )
+        else:
+            activity_weeks = tuple(
+                range(
+                    max(1, current_activity_week - 3),
+                    current_activity_week + 1,
+                )
+            )
+            activity_week = st.selectbox(
+                "Activity week",
+                tuple(reversed(activity_weeks)),
+                format_func=lambda value: f"Week {value}",
+                key="fantasy_hq_activity_week",
+            )
+
+            try:
+                activity_transactions = _load_transactions(
+                    league_id,
+                    int(activity_week),
+                )
+                activity_catalog = all_catalog or _load_player_catalog()
+                activity = build_league_activity(
+                    league,
+                    activity_transactions,
+                    activity_catalog,
+                )
+            except Exception as exc:
+                st.warning("League Activity could not be loaded.")
+                st.caption(str(exc))
+                activity = None
+
+            if activity is not None:
+                activity_a, activity_b, activity_c, activity_d = st.columns(4)
+                activity_a.metric(
+                    "Transactions",
+                    activity.transaction_count,
+                )
+                activity_b.metric("Adds", activity.add_count)
+                activity_c.metric("Drops", activity.drop_count)
+                activity_d.metric("Trades", activity.trade_count)
+
+                if not activity.transactions:
+                    st.info(
+                        f"No Sleeper transactions were returned for "
+                        f"Week {activity_week}."
+                    )
+                else:
+                    activity_rows = []
+                    for transaction in activity.transactions:
+                        add_text = " · ".join(
+                            f"{row.name} ({row.team_name})"
+                            for row in transaction.adds
+                        ) or "—"
+                        drop_text = " · ".join(
+                            f"{row.name} ({row.team_name})"
+                            for row in transaction.drops
+                        ) or "—"
+
+                        faab_parts = []
+                        if transaction.waiver_bid is not None:
+                            faab_parts.append(
+                                "Bid $" + str(transaction.waiver_bid)
+                            )
+                        for transfer in transaction.faab_transfers:
+                            if transfer.amount is None:
+                                continue
+                            sender = transfer.sender_team or "Unknown"
+                            receiver = transfer.receiver_team or "Unknown"
+                            faab_parts.append(
+                                "$"
+                                + str(transfer.amount)
+                                + f" {sender} → {receiver}"
+                            )
+
+                        activity_rows.append(
+                            {
+                                "When": _format_activity_time(
+                                    transaction.sort_timestamp_ms
+                                ),
+                                "Type": transaction.type_label,
+                                "Status": transaction.status.replace(
+                                    "_", " "
+                                ).title(),
+                                "Teams": (
+                                    " · ".join(transaction.teams) or "—"
+                                ),
+                                "Adds": add_text,
+                                "Drops": drop_text,
+                                "FAAB / bid": (
+                                    " · ".join(faab_parts) or "—"
+                                ),
+                                "Picks": (
+                                    transaction.traded_pick_count
+                                    if transaction.traded_pick_count
+                                    else "—"
+                                ),
+                            }
+                        )
+
+                    st.dataframe(
+                        pd.DataFrame(activity_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    st.caption(
+                        "Activity is direct Sleeper transaction data. "
+                        "Pending transactions remain labeled Pending rather "
+                        "than being treated as completed moves."
+                    )
 
     with matchup_tab:
         week = int(nfl_state.week or nfl_state.display_week or 0)
