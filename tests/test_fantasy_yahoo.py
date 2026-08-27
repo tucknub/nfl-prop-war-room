@@ -332,4 +332,6 @@ def test_fantasy_hq_page_contains_current_yahoo_access_and_attribution():
     assert "Connect Yahoo" in page
     assert "Fantasy data provided by Yahoo Fantasy" in page
     assert "Yahoo password" in page
-    assert "YAHOO_CLIENT_SECRET" not in page.split("st.caption(str(exc))", 1)[0].split("st.write", 1)[0]
+    assert "st.write(config.client_secret)" not in page
+    assert "st.caption(config.client_secret)" not in page
+    assert "st.code(config.client_secret)" not in page
