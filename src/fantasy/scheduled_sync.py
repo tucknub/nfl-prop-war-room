@@ -243,6 +243,26 @@ def build_sleeper_scheduled_sync_plan(
     )
 
 
+def run_sleeper_scheduled_sync_plan(
+    reader: SleeperMultiPersistenceReader,
+    transport: SleeperPersistenceTransport,
+    plan: SleeperScheduledSyncPlan,
+    *,
+    current_user_id: str | None,
+) -> SleeperScheduledSyncRunResult:
+    """Execute one already-validated deterministic scheduler plan."""
+
+    if not isinstance(plan, SleeperScheduledSyncPlan):
+        raise TypeError("plan must be a SleeperScheduledSyncPlan")
+    result = run_multi_sleeper_persistence_sync(
+        reader,
+        transport,
+        plan.specs,
+        current_user_id=current_user_id,
+    )
+    return SleeperScheduledSyncRunResult(plan=plan, result=result)
+
+
 def run_scheduled_sleeper_persistence_sync(
     reader: SleeperMultiPersistenceReader,
     transport: SleeperPersistenceTransport,
@@ -252,20 +272,19 @@ def run_scheduled_sleeper_persistence_sync(
     current_user_id: str | None,
     schedule_name: str = "fantasy-hq-sleeper",
 ) -> SleeperScheduledSyncRunResult:
-    """Execute one scheduler slot through the existing multi-league runner."""
+    """Build and execute one deterministic scheduler slot."""
 
     plan = build_sleeper_scheduled_sync_plan(
         leagues,
         scheduled_at_ms=scheduled_at_ms,
         schedule_name=schedule_name,
     )
-    result = run_multi_sleeper_persistence_sync(
+    return run_sleeper_scheduled_sync_plan(
         reader,
         transport,
-        plan.specs,
+        plan,
         current_user_id=current_user_id,
     )
-    return SleeperScheduledSyncRunResult(plan=plan, result=result)
 
 
 def _validated_scheduled_leagues(

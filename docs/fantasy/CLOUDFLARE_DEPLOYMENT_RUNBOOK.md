@@ -168,6 +168,22 @@ The reserved probe sync-run ID is a deployment invariant. If it is ever present 
 
 **Production persistence gate:** do not enable an authenticated fantasy write path, scheduled Python runner, or recurring Cloudflare trigger unless this handshake returns `ready=true` in the same target environment that will perform the writes.
 
+### Handshake-gated scheduled runtime
+
+The library entrypoint `run_handshake_gated_scheduled_sleeper_sync(...)` is the only approved composition path for scheduled Sleeper persistence after the deployment handshake exists.
+
+Its order is fixed:
+
+1. validate and freeze the deterministic #76 scheduled plan before network I/O;
+2. execute the #78 read-only Worker/D1 handshake;
+3. require `ready=true`;
+4. execute the frozen scheduled plan;
+5. allow the existing multi-league and single-league persistence lifecycle to proceed.
+
+If plan validation or the handshake fails, Sleeper must not be fetched and the persistence lifecycle must not begin. Tests enforce zero provider reads, zero registration/snapshot reads, and zero writes on those failure paths.
+
+This entrypoint is a runtime library boundary only. It does **not** create a daemon, host a scheduler, configure a Cloudflare Cron Trigger, discover league configuration from secrets, or deploy anything remotely.
+
 ## 11. Later secret rotation
 
 `wrangler secret put FANTASY_PERSISTENCE_TOKEN` is appropriate only when an immediate secret-version deployment is intended and understood. It must not be treated as a passive settings update. Coordinate the Worker secret and the trusted Python runtime secret so one side is not left using a stale token.
