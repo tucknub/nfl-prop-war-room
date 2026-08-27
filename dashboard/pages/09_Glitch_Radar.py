@@ -21,6 +21,30 @@ from glitch_radar_books import (  # noqa: E402
     user_books_seen,
 )
 from glitch_radar_grouping import market_label  # noqa: E402
+from glitch_radar_action import (  # noqa: E402
+    BET,
+    PASS,
+    WATCH,
+    ev_action,
+    glitch_action,
+    peer_price_gap_range,
+    peer_prices_for_alert,
+)
+from glitch_radar_history import (  # noqa: E402
+    BASELINE,
+    DISAPPEARED,
+    IMPROVED,
+    NEW,
+    REAPPEARED,
+    UNCHANGED,
+    WORSENED,
+    build_market_observations,
+    ev_opportunity_key,
+    glitch_opportunity_key,
+    history_for_key,
+    history_summary,
+    update_market_history,
+)
 from glitch_radar_present import (  # noqa: E402
     event_phase_label,
     expected_ev_pct,
@@ -136,6 +160,50 @@ def _ev_sort_key(row: dict) -> tuple[int, float]:
     return phase_rank, -(ev if ev is not None else -999.0)
 
 
+def _history_price_line(record: dict | None) -> str:
+    if not record:
+        return ""
+    status = str(record.get("status") or "").upper()
+    previous = record.get("previous_price")
+    current = record.get("current_price")
+    book = str(record.get("book") or "Book").strip()
+    if status in {IMPROVED, WORSENED} and previous is not None and current is not None:
+        return (
+            f"{book} moved {format_american(previous)} → {format_american(current)} "
+            f"· {status}"
+        )
+    if status == NEW:
+        return "NEW since the previous scan"
+    if status == REAPPEARED:
+        return "REAPPEARED after disappearing from the prior scan"
+    if status == BASELINE:
+        return "Baseline observation for this owner session"
+    if status == UNCHANGED:
+        return "Still available at the same price as the prior scan"
+    return status
+
+
+def _history_time_line(record: dict | None) -> str:
+    if not record:
+        return ""
+    first_seen = record.get("first_seen")
+    last_seen = record.get("last_seen")
+    return (
+        f"First detected: {local_start_label(first_seen)} · "
+        f"Last confirmed: {local_start_label(last_seen)}"
+    )
+
+
+def _render_action(action) -> None:
+    message = f"ACTION: {action.action} — {action.reason}"
+    if action.action == BET:
+        st.success(message)
+    elif action.action == PASS:
+        st.info(message)
+    else:
+        st.warning(message)
+
+
 def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
     selection = str(row.get("selection") or row.get("side") or "Bet").strip()
     display_market = str(row.get("display_market") or market_label(row)).strip()
@@ -152,6 +220,8 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
     implied = row.get("book_implied_pct")
     phase = event_phase_label(row.get("commence_time"))
     alternate_text = _alternate_text(row)
+    history_record = row.get("_history") if isinstance(row.get("_history"), dict) else None
+    action = ev_action(row)
 
     with st.container(border=True):
         title_col, tier_col = st.columns([4, 1])
@@ -167,6 +237,14 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
         c1.metric("Current price", price)
         c2.metric("Fair line", fair_price)
         c3.metric("Estimated EV", f"{ev:+.1f}%" if ev is not None else "—")
+
+        movement_line = _history_price_line(history_record)
+        if movement_line:
+            st.markdown(f"**WHY NOW:** {movement_line}")
+        time_line = _history_time_line(history_record)
+        if time_line:
+            st.caption(time_line)
+        _render_action(action)
 
         if implied is not None and fair_probability is not None and edge is not None:
             st.markdown(
@@ -204,6 +282,10 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
                         ("Probability gap", f"+{edge:.3f} pts" if edge is not None else "—"),
                         ("Estimated EV", f"{ev:+.2f}%" if ev is not None else "—"),
                         ("Sharp/fair anchor", anchor),
+                        ("Action", action.action),
+                        ("Movement", _history_price_line(history_record) or "No prior scan comparison"),
+                        ("First detected", local_start_label(history_record.get("first_seen")) if history_record else "—"),
+                        ("Last confirmed", local_start_label(history_record.get("last_seen")) if history_record else "—"),
                     ]
                 )
 
@@ -226,6 +308,15 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
     payout_multiple = alert.get("profit_multiple_vs_peers")
     relative = alert.get("relative_prob_deviation")
     sign_mismatch = bool(alert.get("sign_mismatch"))
+    history_record = alert.get("_history") if isinstance(alert.get("_history"), dict) else None
+    peer_prices = alert.get("_peer_prices") if isinstance(alert.get("_peer_prices"), (list, tuple)) else ()
+    peer_text = ", ".join(
+        f"{row.get('book')} {format_american(row.get('price'))}"
+        for row in peer_prices
+        if isinstance(row, dict)
+    )
+    peer_gap = peer_price_gap_range(quote.get("odds_american"), peer_prices)
+    action = glitch_action(alert)
 
     with st.container(border=True):
         st.markdown(f"#### {severity} GLITCH WATCH · {book} {price}")
@@ -235,6 +326,24 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
         c1.metric("Flagged price", price)
         c2.metric("Peer fair line", format_american(fair_odds))
         c3.metric("Peer payout multiple", f"{_number(payout_multiple)}×")
+
+        movement_line = _history_price_line(history_record)
+        if movement_line:
+            st.markdown(f"**WHY NOW:** {movement_line}")
+        if peer_text:
+            st.caption(f"My other visible books: {peer_text}")
+        if peer_gap is not None:
+            low, high = peer_gap
+            gap_text = f"{low}" if low == high else f"{low}–{high}"
+            st.markdown(
+                f"**Market gap:** {book} is currently **{gap_text} American-odds points better** "
+                "than my other visible books on this exact wager."
+            )
+        time_line = _history_time_line(history_record)
+        if time_line:
+            st.caption(time_line)
+        _render_action(action)
+
         if sign_mismatch:
             st.error("Sign inversion detected: this book is on the opposite side of zero from multiple peers.")
         else:
@@ -256,6 +365,11 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
                         ),
                         ("Profit multiple vs peers", f"{_number(payout_multiple)}×"),
                         ("Sign mismatch", "Yes" if sign_mismatch else "No"),
+                        ("Action", action.action),
+                        ("Movement", _history_price_line(history_record) or "No prior scan comparison"),
+                        ("First detected", local_start_label(history_record.get("first_seen")) if history_record else "—"),
+                        ("Last confirmed", local_start_label(history_record.get("last_seen")) if history_record else "—"),
+                        ("My peer-book prices", peer_text or "No exact matching peer quote at another configured book"),
                     ]
                 )
 
@@ -374,6 +488,31 @@ my_books_seen = user_books_seen(books)
 comparison_books = comparison_books_seen(books)
 missing_books = [book for book in USER_BOOKS if book not in my_books_seen]
 
+history_state_key = "glitch_radar_market_history_v1"
+observations = build_market_observations(alerts, evs)
+market_history = update_market_history(
+    st.session_state.get(history_state_key),
+    observations,
+    fetched_at=str(snapshot.get("fetched_at") or ""),
+)
+st.session_state[history_state_key] = market_history
+
+for alert in alerts:
+    alert["_history"] = history_for_key(
+        market_history,
+        glitch_opportunity_key(alert),
+    )
+    alert["_peer_prices"] = list(
+        peer_prices_for_alert(alert, quotes, user_books_only=True)
+    )
+for row in evs:
+    row["_history"] = history_for_key(
+        market_history,
+        ev_opportunity_key(row),
+    )
+
+movement_summary = history_summary(market_history)
+
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Glitch watches", len(alerts))
 m2.metric("Arbs", len(arbs))
@@ -401,6 +540,32 @@ if errors:
     with st.expander("Feed warnings"):
         for error in errors:
             st.warning(error)
+
+st.markdown("### Since last scan")
+scan_a, scan_b, scan_c, scan_d = st.columns(4)
+scan_a.metric("New / returned", movement_summary["new"])
+scan_b.metric("Improved", movement_summary["improved"])
+scan_c.metric("Worsened", movement_summary["worsened"])
+scan_d.metric("Disappeared", movement_summary["disappeared"])
+st.caption(
+    "Movement memory compares unique 10-minute/fresh scans in this owner session. "
+    "A Streamlit app reboot resets this in-memory history; durable cross-reboot market history is a later persistence step."
+)
+
+disappeared_rows = market_history.get("disappeared", []) or []
+if disappeared_rows:
+    with st.expander("What disappeared since the prior scan"):
+        for row in disappeared_rows[:12]:
+            kind = str(row.get("kind") or "Signal")
+            book = str(row.get("book") or "Book")
+            event = str(row.get("event") or "").strip() or (
+                f"{row.get('away_team', '')} @ {row.get('home_team', '')}".strip(" @")
+            )
+            side = str(row.get("side") or "").strip()
+            st.write(
+                f"**{kind} · {book} {format_american(row.get('current_price'))}** — "
+                f"{event} · {side or row.get('market', 'market')}"
+            )
 
 _render_top_board(alerts, arbs, middles, evs)
 
