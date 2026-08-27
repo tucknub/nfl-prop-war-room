@@ -314,7 +314,27 @@ def _render_sleeper() -> None:
 
     if not username.strip():
         st.info(
-            "Enter your Sleeper username to discover your current NFL leagues."
+            "Enter your Sleeper username above once to load your current NFL leagues."
+        )
+        st.markdown("### What unlocks immediately")
+        preview_rows = [
+            ("All-Leagues Action Center", "See every Sleeper league and which ones need attention."),
+            ("Roster Health", "Open starters, depth gaps, and injury/status problems."),
+            ("Lineup Check", "Slot-aware checks for FLEX, Superflex, WR/RB, WR/TE, IDP, and more."),
+            ("Waiver Watch", "Trending available players plus search across the full live free-agent pool."),
+            ("Roster Need Matches", "Match lineup needs to players who can legally fill those slots."),
+            ("Opponent Scout", "Inspect the actual weekly opponent, roster, injuries, and matchup state."),
+            ("League Activity", "Recent adds, drops, waivers, FAAB, trades, and pick movement."),
+            ("Cross-League + Exposure", "See MY ROSTER / OWNED / AVAILABLE across leagues and repeated player exposure."),
+        ]
+        st.dataframe(
+            pd.DataFrame(preview_rows, columns=["Fantasy HQ tool", "What it does"]),
+            hide_index=True,
+            width="stretch",
+        )
+        st.caption(
+            "Nothing above requires Yahoo or the Cloudflare persistence work. "
+            "Sleeper loads live after you enter your username."
         )
         return
 
@@ -2017,12 +2037,12 @@ def _render_yahoo(
 
 page_intro(
     "Fantasy HQ",
-    "Your real fantasy leagues in one place. Sleeper is live; Yahoo connects here too.",
+    "Your live Sleeper fantasy command center. Yahoo is optional and can wait.",
 )
 
 st.caption(
-    "Owner tool · live read-only fantasy data · "
-    "provider connections are independent of Cloudflare persistence"
+    "Owner tool · live read-only Sleeper data · "
+    "the site-wide historical research badge above is separate from Fantasy HQ freshness"
 )
 
 yahoo_config = _yahoo_config()
@@ -2046,15 +2066,10 @@ with source_b:
         st.markdown("### Yahoo")
         if yahoo_access_token:
             st.success("Connected")
-            st.caption("OAuth authorized · private fantasy data")
-        elif yahoo_config:
-            st.info("Ready to connect")
-            st.caption("Yahoo OAuth authorization required")
+            st.caption("Optional provider · already authorized")
         else:
-            st.warning("One-time setup needed")
-            st.caption(
-                "Yahoo Developer app credentials not configured"
-            )
+            st.info("Optional · parked")
+            st.caption("Not required to use Fantasy HQ or your Sleeper tools")
 
 sleeper_tab, yahoo_tab = st.tabs(["Sleeper leagues", "Yahoo leagues"])
 with sleeper_tab:
@@ -2063,9 +2078,8 @@ with yahoo_tab:
     _render_yahoo(yahoo_config, yahoo_access_token)
 
 st.divider()
-st.markdown("### Next inside Fantasy HQ")
-st.write(
-    "Once both providers are connected, the next useful layer is cross-league "
-    "player ownership and waiver availability, followed by start/sit, trade, "
-    "FAAB, and opponent scouting."
+st.caption(
+    "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
+    "roster health, lineup checks, waiver tools, opponent scouting, league activity, "
+    "standings/settings, cross-league ownership, and player exposure."
 )
