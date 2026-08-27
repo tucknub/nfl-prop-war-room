@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from src.fantasy.cloudflare_config import EXPECTED_D1_DATABASE_NAME, EXPECTED_WORKER_NAME
 from src.fantasy.cloudflare_remote import (
@@ -273,6 +274,12 @@ def test_remote_resolver_uses_distinct_not_found_exit_code(tmp_path: Path):
         "ready": False,
         "error_type": "FantasyRemoteD1NotFound",
     }
+
+
+def test_shadow_deploy_workflow_is_valid_yaml():
+    text = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert yaml.compose(text) is not None
 
 
 def test_shadow_deploy_workflow_is_manual_only_and_fail_closed():
