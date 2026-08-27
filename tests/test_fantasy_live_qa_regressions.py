@@ -16,7 +16,8 @@ def _page_source() -> str:
 def test_fantasy_hq_gates_preseason_out_of_regular_week_features():
     source = _page_source()
 
-    assert "fantasy_regular_week(nfl_state)" in source
+    assert "_fantasy_regular_week(nfl_state)" in source
+    assert "from src.fantasy.sleeper_current import fantasy_regular_week" not in source
     assert "nfl_state.week or nfl_state.display_week or 0" not in source
 
 
