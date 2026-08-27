@@ -1,5 +1,5 @@
 name: Player Command Center validation
-# final rerun after event-scoped signal hardening
+# final rerun after owner-module isolation
 
 on:
   push:
@@ -27,6 +27,7 @@ jobs:
         run: |
           python -m py_compile src/fantasy/identity.py
           python -m py_compile dashboard/player_command_center.py
+          python -m py_compile dashboard/player_command_owner.py
           python -m py_compile dashboard/pages/02_Players.py
       - name: Run command-center and regression tests
         run: |
