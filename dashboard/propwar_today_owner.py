@@ -338,6 +338,12 @@ def _today_role_actions(live_season: int) -> tuple[TodayAction, ...]:
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+def _today_margin_state(_config: dict) -> dict:
+    state, _ = state_store.fetch_remote_state(_config)
+    return state
+
+
+@st.cache_data(ttl=300, show_spinner=False)
 def _today_margin_audit(state_text: str) -> dict:
     return margin_live.run(
         json.loads(state_text),
@@ -459,9 +465,15 @@ def _fantasy_actions(
         str(user["user_id"]),
         live_season,
     )
+    active_leagues = tuple(
+        row
+        for row in leagues
+        if str(row.get("status") or "").strip().casefold()
+        not in {"pre_draft", "drafting"}
+    )
     league_ids = tuple(
         str(row["league_id"])
-        for row in leagues
+        for row in active_leagues
         if str(row.get("league_id") or "").strip()
     )
     if not league_ids:
@@ -517,7 +529,7 @@ def _margin_action() -> TodayAction | None:
     if config is None or not state_store.owner_write_authorized(config):
         return None
 
-    state, _ = state_store.fetch_remote_state(config)
+    state = _today_margin_state(config)
     if bool(state.get("season_complete")):
         return None
 
@@ -702,7 +714,7 @@ def render_propwar_today_if_owner() -> None:
     else:
         left, right = st.columns(2)
         for index, row in enumerate(ranked, start=1):
-            with left if index % 2 else right:
+            with (left if index % 2 else right):
                 _render_action_card(index, row)
 
     if (
