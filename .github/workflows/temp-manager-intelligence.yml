@@ -1,4 +1,5 @@
 name: Manager Intelligence validation
+# rerun after consolidated-copy fix
 
 on:
   push:
