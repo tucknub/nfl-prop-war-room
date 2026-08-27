@@ -1,5 +1,5 @@
 name: Fantasy HQ background refresh
-# rerun after AST purity assertion
+# final rerun after function-body purity assertion
 
 on:
   push:
