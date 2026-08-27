@@ -342,4 +342,4 @@ def test_fantasy_hq_exposes_lineup_check():
     assert '"Lineup Check"' in page
     assert "build_lineup_check" in page
     assert "Eligible bench options" in page
-    assert "Eligibility/status only" in page
+    assert "eligibility/status only" in page
