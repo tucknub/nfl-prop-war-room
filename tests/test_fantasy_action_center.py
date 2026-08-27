@@ -83,7 +83,7 @@ def test_action_center_summarizes_all_leagues_by_priority():
     ready = _league(
         "ready",
         "Ready League",
-        my_players=("qb1", "rb1", "rb2", "wr1"),
+        my_players=("qb1", "rb1", "rb2", "wr1", "wr2"),
         starters=("qb1", "rb1", "wr1", "rb2"),
     )
     watch = _league(
