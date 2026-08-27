@@ -1,4 +1,5 @@
 name: PropWar Today validation
+# rerun after package-import hardening
 
 on:
   push:
