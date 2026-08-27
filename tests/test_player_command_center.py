@@ -98,6 +98,8 @@ def test_command_prefers_better_side_price_outlier():
         "actionable": True,
         "book": "DraftKings",
         "player": "Josh Allen",
+        "away_team": "BUF",
+        "home_team": "BAL",
         "market": "passing_yards",
         "market_label": "Passing Yards",
         "line": 267.5,
@@ -126,6 +128,8 @@ def test_command_does_not_promote_bad_side_price_outlier():
         "actionable": True,
         "book": "DraftKings",
         "player": "Josh Allen",
+        "away_team": "BUF",
+        "home_team": "BAL",
         "market": "passing_yards",
         "market_label": "Passing Yards",
         "line": 267.5,
@@ -238,3 +242,31 @@ def test_players_page_exposes_owner_command_center_without_replacing_public_role
     assert "ROLE/LINE MISMATCH: NOT SCORED" in source
     assert "build_player_intelligence_card" in source
     assert "shared_prop_snapshot" in source
+
+
+def test_command_ignores_same_name_signal_from_different_event():
+    rows = (
+        _row(book="DraftKings", team="BUF", opponent="BAL", over=110),
+        _row(book="FanDuel", team="BUF", opponent="BAL", over=105),
+        _row(book="Caesars", team="BUF", opponent="BAL", over=100),
+    )
+    wrong_event = {
+        "actionable": True,
+        "book": "DraftKings",
+        "player": "Josh Allen",
+        "away_team": "KC",
+        "home_team": "LV",
+        "market": "passing_yards",
+        "market_label": "Passing Yards",
+        "line": 267.5,
+        "side": "over",
+        "price": 250,
+        "peer_median_implied_prob": 0.50,
+    }
+
+    action = build_player_prop_action(
+        rows,
+        price_outliers=(wrong_event,),
+    )
+
+    assert action.action == NO_EDGE
