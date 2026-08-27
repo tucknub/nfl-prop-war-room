@@ -22,6 +22,7 @@ from src.fantasy.canary import (
     FantasySingleLeagueCanaryConfig,
     FantasySingleLeagueCanaryError,
     FantasySingleLeagueCanaryResult,
+    preview_single_league_persistence_canary_from_env,
     run_single_league_persistence_canary,
     run_single_league_persistence_canary_from_env,
 )
@@ -483,6 +484,40 @@ def _canary_env() -> dict[str, str]:
         "FANTASY_PERSISTENCE_URL": "https://fantasy.example/v1/fantasy/persistence",
         "FANTASY_PERSISTENCE_TOKEN": "x" * 40,
     }
+
+
+def test_canary_preview_is_non_authorizing_and_sanitized():
+    env = _canary_env()
+    env.pop("FANTASY_CANARY_CONFIRM")
+
+    preview = preview_single_league_persistence_canary_from_env(environ=env)
+
+    assert preview["ready"] is True
+    assert preview["platform"] == "SLEEPER"
+    assert preview["season"] == "2026"
+    assert len(preview["league_identity_fingerprint"]) == 64
+    assert preview["canary_at_ms"] == 2_000
+    assert preview["sync_run_id"].startswith("fhq-sleeper-sync-v1-")
+    assert preview["snapshot_id"].startswith("fhq-sleeper-snapshot-v1-")
+    assert preview["batch_id"].startswith("fhq-sleeper-batch-v1-")
+    assert preview["execution_mode"] == "CANARY"
+
+    serialized = json.dumps(preview, sort_keys=True)
+    assert "canary:2026" not in serialized
+    assert "sleeper-canary" not in serialized
+    assert "canary-family" not in serialized
+    assert "Canary League" not in serialized
+    assert "me" not in serialized
+
+
+def test_canary_preview_is_deterministic_for_same_private_config():
+    env = _canary_env()
+    env.pop("FANTASY_CANARY_CONFIRM")
+
+    first = preview_single_league_persistence_canary_from_env(environ=env)
+    second = preview_single_league_persistence_canary_from_env(environ=env)
+
+    assert first == second
 
 
 def test_canary_env_config_requires_explicit_real_write_confirmation():
