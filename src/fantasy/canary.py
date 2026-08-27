@@ -17,7 +17,10 @@ from .runtime_entrypoint import (
     FantasyScheduledRuntimeResult,
     run_handshake_gated_scheduled_sleeper_sync,
 )
-from .scheduled_sync import SleeperScheduledLeague
+from .scheduled_sync import (
+    SleeperScheduledLeague,
+    build_sleeper_scheduled_sync_plan,
+)
 from .sleeper import SleeperClient
 from .sleeper_multi_persistence import SleeperMultiPersistenceReader
 from .sleeper_persistence import (
@@ -306,6 +309,38 @@ def run_single_league_persistence_canary(
         content_fingerprint=expected_fingerprint,
         mode=run_result.mode,
     )
+
+
+def preview_single_league_persistence_canary_from_env(
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Validate and summarize the exact deterministic canary plan without I/O."""
+
+    config = FantasySingleLeagueCanaryConfig.from_env(environ)
+    tagged_league = _canary_league(config.league)
+    plan = build_sleeper_scheduled_sync_plan(
+        (tagged_league,),
+        scheduled_at_ms=config.canary_at_ms,
+        schedule_name=FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME,
+    )
+    spec = plan.specs[0]
+    return {
+        "ready": True,
+        "canary_version": FANTASY_SINGLE_LEAGUE_CANARY_VERSION,
+        "platform": spec.identity.platform,
+        "league_season_id": spec.identity.league_season_id,
+        "platform_league_id": spec.identity.platform_league_id,
+        "season": spec.identity.season,
+        "league_family_id": spec.league_family_id,
+        "family_display_name": spec.family_display_name,
+        "season_display_name": spec.season_display_name,
+        "canary_at_ms": config.canary_at_ms,
+        "batch_id": plan.batch_id,
+        "sync_run_id": spec.sync_run_id,
+        "snapshot_id": spec.snapshot_id,
+        "execution_mode": "CANARY",
+    }
 
 
 def run_single_league_persistence_canary_from_env(
