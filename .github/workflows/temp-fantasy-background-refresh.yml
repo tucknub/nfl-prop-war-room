@@ -1,4 +1,5 @@
 name: Fantasy HQ background refresh
+# rerun after AST purity assertion
 
 on:
   push:
