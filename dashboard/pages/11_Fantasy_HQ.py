@@ -556,20 +556,22 @@ def _render_yahoo(
 ) -> None:
     if config is None:
         st.warning(
-            "Yahoo needs a one-time app connection before PropWar can read "
-            "your private fantasy leagues."
+            "Yahoo Fantasy API access has not been configured for PropWar yet."
         )
-        st.markdown("**One-time Yahoo setup**")
+        st.markdown("**One-time Yahoo access setup**")
         st.markdown(
-            "1. Create a Yahoo Developer app.\n"
-            "2. Enable **Fantasy Sports · Read** access.\n"
-            f"3. Set the callback URL to {DEFAULT_YAHOO_REDIRECT_URI}.\n"
+            "1. Apply for Yahoo Fantasy Sports API access. Yahoo currently "
+            "reviews applications before granting access.\n"
+            "2. Use PropWar / Fantasy HQ as the product and request read-only "
+            "Fantasy Football data for personal fantasy-league management.\n"
+            f"3. After approval, set the OAuth callback URL to "
+            f"{DEFAULT_YAHOO_REDIRECT_URI}.\n"
             "4. Add YAHOO_CLIENT_ID and YAHOO_CLIENT_SECRET to the "
             "PropWar Streamlit secrets."
         )
         st.link_button(
-            "Open Yahoo Developer Apps",
-            "https://developer.yahoo.com/apps/",
+            "Apply for Yahoo Fantasy API",
+            "https://sports.yahoo.com/developer/access/",
         )
         return
 
@@ -691,6 +693,11 @@ def _render_yahoo(
                 f"{len(starter_rows)} starters · "
                 f"{len(bench_rows)} bench/reserve"
             )
+
+    st.markdown(
+        "[Fantasy data provided by Yahoo Fantasy]"
+        "(https://football.fantasysports.yahoo.com/)"
+    )
 
     with settings_tab:
         st.dataframe(
