@@ -33,7 +33,8 @@ from src.fantasy.lineup_check import (  # noqa: E402
 )
 from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
-    find_live_free_agents,
+    build_live_free_agent_pool,
+    filter_live_free_agents,
 )
 from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
 from src.fantasy.player_market import build_player_market_map  # noqa: E402
@@ -128,6 +129,31 @@ def _load_all_sleeper_states(
             )
             for league_id in league_ids
         )
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _load_free_agent_pool(
+    user_id: str,
+    selected_league_id: str,
+    league_ids: tuple[str, ...],
+):
+    states = _load_all_sleeper_states(user_id, league_ids)
+    league = next(
+        (
+            row
+            for row in states
+            if row.platform_league_id == selected_league_id
+        ),
+        None,
+    )
+    if league is None:
+        league = _load_sleeper_league(selected_league_id, user_id)
+    catalog = _load_player_catalog()
+    return build_live_free_agent_pool(
+        league,
+        catalog,
+        all_leagues=states or (league,),
+    )
 
 
 @st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
@@ -490,6 +516,577 @@ def _store_sleeper_username(username: str) -> None:
     st.session_state[SLEEPER_USERNAME_SESSION_KEY] = normalized
     if str(st.query_params.get(SLEEPER_USERNAME_QUERY_KEY) or "").strip() != normalized:
         st.query_params[SLEEPER_USERNAME_QUERY_KEY] = normalized
+
+
+@st.fragment
+def _render_available_player_search(
+    user_id: str,
+    league_id: str,
+    all_league_ids: tuple[str, ...],
+) -> None:
+    """Render free-agent search without rerunning the full Fantasy HQ page."""
+
+    st.markdown("##### Search all available players")
+    st.caption(
+        "Not limited to trending adds. Search the complete live Sleeper "
+        "player pool against this league's current roster ownership."
+    )
+
+    search_a, search_b, search_c = st.columns([1, 2, 1])
+    with search_a:
+        available_position = st.selectbox(
+            "Free-agent position",
+            ("ALL", *FANTASY_POSITIONS),
+            key="fantasy_hq_available_position",
+        )
+    with search_b:
+        available_search = st.text_input(
+            "Free-agent search",
+            placeholder="Player name",
+            key="fantasy_hq_available_search",
+        ).strip()
+    with search_c:
+        available_familiar_only = st.checkbox(
+            "Only players I roster elsewhere",
+            value=False,
+            key="fantasy_hq_available_familiar_only",
+        )
+
+    try:
+        free_agent_pool = _load_free_agent_pool(
+            user_id,
+            league_id,
+            all_league_ids,
+        )
+        available_rows = filter_live_free_agents(
+            free_agent_pool,
+            query=available_search,
+            position=available_position,
+            mine_elsewhere_only=available_familiar_only,
+            limit=100,
+        )
+    except Exception as exc:
+        st.warning("All-player free-agent search could not be loaded.")
+        st.caption(str(exc))
+        available_rows = ()
+
+    familiar_available = sum(1 for row in available_rows if row.familiar)
+    available_a, available_b = st.columns(2)
+    available_a.metric("Available matches", len(available_rows))
+    available_b.metric("I roster elsewhere", familiar_available)
+
+    if not available_rows:
+        if available_familiar_only:
+            st.info(
+                "No player you roster in another scanned Sleeper league "
+                "matches these filters and is available here."
+            )
+        elif available_search:
+            st.info("No available player matched this search.")
+        else:
+            st.info("No available player matched the selected filters.")
+    else:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Player": row.name,
+                        "Pos": row.position,
+                        "NFL": row.nfl_team,
+                        "Status": row.status,
+                        "I roster elsewhere": (
+                            " · ".join(row.mine_elsewhere) or "—"
+                        ),
+                    }
+                    for row in available_rows
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        if familiar_available:
+            st.success(
+                f"{familiar_available} available player"
+                f"{'s' if familiar_available != 1 else ''} shown "
+                f"{'are' if familiar_available != 1 else 'is'} already "
+                "on one of your other Sleeper rosters."
+            )
+
+    st.caption(
+        "Availability is factual live Sleeper roster absence. "
+        "Inactive/retired catalog entries are excluded. "
+        "The free-agent index is cached briefly so repeated searches stay fast. "
+        "This search does not assign a player-quality score."
+    )
+
+    st.markdown(
+        "[Trending data provided by Sleeper](https://sleeper.com/)"
+    )
+
+
+@st.fragment
+def _render_player_market_map(league: FantasyLeagueState, all_states: tuple[FantasyLeagueState, ...], all_catalog: Mapping[str, Mapping[str, Any]]) -> None:
+    """Render Player Market Map interactions in an isolated Streamlit fragment."""
+    st.divider()
+    st.markdown("#### Player Market Map")
+    st.caption(
+        "Search any fantasy player and see who owns him, whether he "
+        "is available, and which league teams show the strongest "
+        "structural roster-fit interest in his position."
+    )
+
+    with st.form(
+        "fantasy_hq_player_market_search_form",
+        clear_on_submit=False,
+    ):
+        market_query_input = st.text_input(
+            "Player market search",
+            placeholder="Type at least 2 letters of a player name",
+            key="fantasy_hq_player_market_search",
+        ).strip()
+        market_search_submitted = st.form_submit_button(
+            "Search player market",
+            type="primary",
+        )
+
+    submitted_query_key = "fantasy_hq_player_market_submitted_query"
+    if market_search_submitted:
+        st.session_state[submitted_query_key] = market_query_input
+    market_query = str(
+        st.session_state.get(submitted_query_key) or ""
+    ).strip()
+
+    market_catalog = all_catalog or _load_player_catalog()
+    market_matches = _player_search_matches(
+        market_catalog,
+        market_query,
+    )
+
+    if market_query and len(market_query) < 2:
+        st.info("Type at least 2 letters to search the player market.")
+    elif market_query and not market_matches:
+        st.info("No active Sleeper fantasy player matched that search.")
+    elif market_matches:
+        market_options = {
+            label: player_id
+            for label, player_id in market_matches
+        }
+        market_label = st.selectbox(
+            "Player",
+            tuple(market_options),
+            key="fantasy_hq_player_market_player",
+        )
+        market_player_id = market_options[market_label]
+
+        try:
+            market = build_player_market_map(
+                league,
+                market_player_id,
+                market_catalog,
+            )
+        except Exception as exc:
+            st.warning("Player Market Map could not be built.")
+            st.caption(str(exc))
+            market = None
+
+        if market is not None:
+            market_a, market_b, market_c, market_d = st.columns(4)
+            market_a.metric("Player", market.player_name)
+            market_b.metric(
+                "League status",
+                (
+                    "AVAILABLE"
+                    if market.available
+                    else "ROSTERED"
+                ),
+            )
+            market_c.metric("High-fit teams", market.high_fit_count)
+            market_d.metric(
+                "Medium-fit teams",
+                market.medium_fit_count,
+            )
+
+            if market.available:
+                st.success(
+                    f"{market.player_name} is currently available "
+                    "in this Sleeper league."
+                )
+            else:
+                st.info(
+                    "Current owner: "
+                    + str(market.owner_team or "Unknown")
+                )
+
+            st.markdown("##### Roster-fit interest")
+            interest_labels = {
+                "HIGH": "HIGH · strongest structural fit",
+                "MEDIUM": "MEDIUM · plausible structural fit",
+                "LOW": "LOW · no obvious structural need",
+            }
+            recommendation_labels = {
+                "HIGH": "Likely interest · monitor closely",
+                "MEDIUM": "Possible interest",
+                "LOW": "Lower structural interest",
+            }
+            market_rows = []
+            for row in market.team_fits:
+                market_rows.append(
+                    {
+                        "Team": row.team_name,
+                        "Likely interest": (
+                            "Current owner"
+                            if row.owns_player
+                            else recommendation_labels.get(
+                                row.fit_level,
+                                row.fit_level,
+                            )
+                        ),
+                        "Fit": (
+                            "OWNER"
+                            if row.owns_player
+                            else interest_labels.get(
+                                row.fit_level,
+                                row.fit_level,
+                            )
+                        ),
+                        "Why": row.reason,
+                    }
+                )
+            st.dataframe(
+                pd.DataFrame(market_rows),
+                hide_index=True,
+                width="stretch",
+            )
+
+            st.caption(
+                "This is a roster-fit recommendation, not a claim "
+                "that another manager will definitely add or trade "
+                "for the player. HIGH means that team's current "
+                "structure shows the clearest positional pressure."
+            )
+
+            st.markdown("##### Player Intelligence Card")
+            st.caption(
+                "Factual context for the same player. This is not "
+                "a fantasy ranking or projected-points model."
+            )
+            try:
+                intelligence = build_player_intelligence_card(
+                    league,
+                    all_states or (league,),
+                    market_player_id,
+                    market_catalog,
+                    add_trends=_load_sleeper_trending_adds(48, 200),
+                    drop_trends=_load_sleeper_trending_drops(48, 200),
+                )
+            except Exception as exc:
+                st.warning("Player Intelligence Card could not be built.")
+                st.caption(str(exc))
+                intelligence = None
+
+            if intelligence is not None:
+                intel_a, intel_b, intel_c, intel_d = st.columns(4)
+                intel_a.metric(
+                    "Depth chart",
+                    (
+                        "#"
+                        + str(intelligence.depth_chart_order)
+                        if intelligence.depth_chart_order is not None
+                        else "—"
+                    ),
+                )
+                intel_b.metric(
+                    "Sleeper adds · 48h",
+                    intelligence.add_trend_count,
+                )
+                intel_c.metric(
+                    "Sleeper drops · 48h",
+                    intelligence.drop_trend_count,
+                )
+                intel_d.metric(
+                    "Trend delta",
+                    (
+                        f"+{intelligence.trend_delta}"
+                        if intelligence.trend_delta > 0
+                        else str(intelligence.trend_delta)
+                    ),
+                )
+
+                meta_a, meta_b, meta_c, meta_d = st.columns(4)
+                meta_a.metric(
+                    "Age",
+                    intelligence.age
+                    if intelligence.age is not None
+                    else "—",
+                )
+                meta_b.metric(
+                    "Years exp",
+                    intelligence.years_exp
+                    if intelligence.years_exp is not None
+                    else "—",
+                )
+                meta_c.metric(
+                    "My Sleeper leagues",
+                    intelligence.my_league_count,
+                )
+                meta_d.metric(
+                    "HIGH-fit teams",
+                    intelligence.high_fit_team_count,
+                )
+
+                intelligence_rows = [
+                    {
+                        "League": row.league_name,
+                        "Ownership": row.status,
+                        "Owner": row.owner_name or "—",
+                        "Slot": row.roster_slot or "—",
+                    }
+                    for row in intelligence.ownership
+                ]
+                st.dataframe(
+                    pd.DataFrame(intelligence_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+
+                context_parts = [
+                    f"Status: {intelligence.status}",
+                    "Positions: "
+                    + " / ".join(intelligence.positions),
+                    "NFL: " + intelligence.nfl_team,
+                ]
+                if intelligence.depth_chart_position:
+                    context_parts.append(
+                        "Depth chart position: "
+                        + intelligence.depth_chart_position
+                    )
+                st.caption(" · ".join(context_parts))
+                st.caption(
+                    "Sleeper trend counts reflect the current top "
+                    "add/drop lists for the 48-hour window; a zero "
+                    "does not prove nobody added or dropped the player. "
+                    "Depth-chart metadata comes from Sleeper and is "
+                    "context, not a PropWar player-value grade."
+                )
+
+                st.markdown("##### Market-Implied Fantasy Baseline")
+                st.caption(
+                    "Consensus base prop lines translated through "
+                    "this Sleeper league's scoring settings. This "
+                    "is a sportsbook-market baseline, not a precise "
+                    "fantasy projection or rest-of-season value."
+                )
+
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Market baseline is unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        prop_snapshot = shared_prop_snapshot(
+                            parlay_key
+                        )
+                        selected_player = (
+                            market_catalog.get(market_player_id)
+                            or {}
+                        )
+                        baseline = build_market_fantasy_baseline(
+                            intelligence.player_name,
+                            str(
+                                selected_player.get("position")
+                                or ""
+                            ),
+                            league.rules.scoring_settings,
+                            prop_snapshot.get("rows", ()),
+                        )
+                    except Exception as exc:
+                        st.warning(
+                            "Market-implied fantasy baseline could "
+                            "not be built."
+                        )
+                        st.caption(str(exc))
+                        baseline = None
+
+                    if baseline is None:
+                        st.info(
+                            "No usable current base prop market "
+                            "bundle was found for this player."
+                        )
+                    else:
+                        baseline_a, baseline_b, baseline_c = (
+                            st.columns(3)
+                        )
+                        baseline_a.metric(
+                            "Market fantasy baseline",
+                            f"{baseline.fantasy_points:.2f}",
+                        )
+                        baseline_b.metric(
+                            "Coverage",
+                            baseline.coverage_status,
+                        )
+                        baseline_c.metric(
+                            "Components",
+                            baseline.component_count,
+                        )
+
+                        st.caption(
+                            baseline.event_label
+                            + (
+                                " · " + baseline.commence_time
+                                if baseline.commence_time
+                                else ""
+                            )
+                        )
+
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Market": row.label,
+                                        "Consensus": (
+                                            f"{row.market_value:.1%}"
+                                            if row.value_type
+                                            == "DEVIGGED_PROBABILITY"
+                                            else f"{row.market_value:.2f}"
+                                        ),
+                                        "Type": row.value_type,
+                                        "Books": row.book_count,
+                                        "Fantasy pts": round(
+                                            row.fantasy_points,
+                                            2,
+                                        ),
+                                    }
+                                    for row in baseline.components
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                        if baseline.fallback_scoring_keys:
+                            st.warning(
+                                "Sleeper did not return usable "
+                                "values for these scoring keys, so "
+                                "standard fallback values were "
+                                "used: "
+                                + ", ".join(
+                                    baseline.fallback_scoring_keys
+                                )
+                            )
+
+                        st.caption(
+                            "Consensus uses non-alternate base "
+                            "thresholds only. Yardage/reception/TD "
+                            "lines are market medians/probabilities, "
+                            "not statistical means. The same shared "
+                            "3-hour prop snapshot powers Deep Prop "
+                            "Radar and Fantasy HQ to avoid duplicate "
+                            "ParlayAPI scans."
+                        )
+
+
+
+@st.fragment
+def _render_cross_league_player_lookup(catalog: Mapping[str, Mapping[str, Any]], all_states: tuple[FantasyLeagueState, ...]) -> None:
+    """Render cross-league player lookup without rerunning Fantasy HQ."""
+    st.markdown("##### Look up any player")
+    search = st.text_input(
+        "Player search",
+        placeholder="e.g. Jonathan Taylor",
+        key="fantasy_hq_cross_league_player_search",
+    ).strip()
+
+    if search:
+        normalized_search = search.casefold()
+        candidates = []
+        for player_id, player in catalog.items():
+            name = str(player.get("full_name") or "").strip()
+            if not name:
+                first = str(player.get("first_name") or "").strip()
+                last = str(player.get("last_name") or "").strip()
+                name = f"{first} {last}".strip()
+            if not name or normalized_search not in name.casefold():
+                continue
+            candidates.append(
+                (
+                    0 if name.casefold().startswith(normalized_search) else 1,
+                    name.casefold(),
+                    str(player_id),
+                    name,
+                    str(player.get("position") or "—"),
+                    str(player.get("team") or "FA"),
+                )
+            )
+
+        candidates.sort()
+        candidates = candidates[:40]
+        if not candidates:
+            st.info("No Sleeper NFL player matched that search.")
+        else:
+            option_map = {
+                f"{name} · {position} · {team}": player_id
+                for _, _, player_id, name, position, team in candidates
+            }
+            selected_player = st.selectbox(
+                "Player",
+                tuple(option_map),
+                key="fantasy_hq_cross_league_player",
+            )
+            selected_id = option_map[selected_player]
+            ownership = lookup_live_sleeper_player(
+                all_states,
+                selected_id,
+            )
+            status_rows = []
+            for row in ownership.statuses:
+                if row.status == MINE:
+                    status = "MY ROSTER"
+                elif row.status == OTHER:
+                    status = (
+                        "OWNED"
+                        + (
+                            f" · {row.owner_name}"
+                            if row.owner_name
+                            else ""
+                        )
+                    )
+                elif row.status == AVAILABLE:
+                    status = "AVAILABLE"
+                else:
+                    status = "UNKNOWN"
+                status_rows.append(
+                    {
+                        "League": row.league_name,
+                        "Status": status,
+                        "Slot": row.roster_slot or "—",
+                    }
+                )
+
+            st.dataframe(
+                pd.DataFrame(status_rows),
+                hide_index=True,
+                width="stretch",
+            )
+            available_count = len(ownership.available_in)
+            if available_count:
+                st.success(
+                    f"Available in {available_count} Sleeper league"
+                    f"{'s' if available_count != 1 else ''}: "
+                    + ", ".join(ownership.available_in)
+                )
+            elif ownership.mine_in:
+                st.info(
+                    "You already roster this player in every scanned "
+                    "league where he is not opponent-owned."
+                )
+            else:
+                st.caption(
+                    "This player is not currently available in the "
+                    "scanned Sleeper leagues."
+                )
+
 
 
 def _render_sleeper() -> None:
@@ -1862,102 +2459,10 @@ def _render_sleeper() -> None:
                                 + " | ".join(faab_history_errors)
                             )
 
-            st.markdown("##### Search all available players")
-            st.caption(
-                "Not limited to trending adds. Search the complete live Sleeper "
-                "player pool against this league's current roster ownership."
-            )
-
-            search_a, search_b, search_c = st.columns([1, 2, 1])
-            with search_a:
-                available_position = st.selectbox(
-                    "Free-agent position",
-                    ("ALL", *FANTASY_POSITIONS),
-                    key="fantasy_hq_available_position",
-                )
-            with search_b:
-                available_search = st.text_input(
-                    "Free-agent search",
-                    placeholder="Player name",
-                    key="fantasy_hq_available_search",
-                ).strip()
-            with search_c:
-                available_familiar_only = st.checkbox(
-                    "Only players I roster elsewhere",
-                    value=False,
-                    key="fantasy_hq_available_familiar_only",
-                )
-
-            try:
-                available_catalog = all_catalog or _load_player_catalog()
-                available_rows = find_live_free_agents(
-                    league,
-                    available_catalog,
-                    all_leagues=(all_states or (league,)),
-                    query=available_search,
-                    position=available_position,
-                    mine_elsewhere_only=available_familiar_only,
-                    limit=100,
-                )
-            except Exception as exc:
-                st.warning("All-player free-agent search could not be loaded.")
-                st.caption(str(exc))
-                available_rows = ()
-
-            familiar_available = sum(1 for row in available_rows if row.familiar)
-            available_a, available_b = st.columns(2)
-            available_a.metric("Available matches", len(available_rows))
-            available_b.metric("I roster elsewhere", familiar_available)
-
-            if not available_rows:
-                if not league.ownership_ready:
-                    st.info(
-                        "Sleeper ownership is not initialized for this league yet."
-                    )
-                elif available_familiar_only:
-                    st.info(
-                        "No player you roster in another scanned Sleeper league "
-                        "matches these filters and is available here."
-                    )
-                elif available_search:
-                    st.info("No available player matched this search.")
-                else:
-                    st.info("No available player matched the selected filters.")
-            else:
-                st.dataframe(
-                    pd.DataFrame(
-                        [
-                            {
-                                "Player": row.name,
-                                "Pos": row.position,
-                                "NFL": row.nfl_team,
-                                "Status": row.status,
-                                "I roster elsewhere": (
-                                    " · ".join(row.mine_elsewhere) or "—"
-                                ),
-                            }
-                            for row in available_rows
-                        ]
-                    ),
-                    hide_index=True,
-                    width="stretch",
-                )
-                if familiar_available:
-                    st.success(
-                        f"{familiar_available} available player"
-                        f"{'s' if familiar_available != 1 else ''} shown "
-                        f"{'are' if familiar_available != 1 else 'is'} already "
-                        "on one of your other Sleeper rosters."
-                    )
-
-            st.caption(
-                "Availability is factual live Sleeper roster absence. "
-                "Inactive/retired catalog entries are excluded. "
-                "This search does not assign a player-quality score."
-            )
-
-            st.markdown(
-                "[Trending data provided by Sleeper](https://sleeper.com/)"
+            _render_available_player_search(
+                str(sleeper_user["user_id"]),
+                league_id,
+                all_league_ids,
             )
 
     with activity_tab:
@@ -3128,349 +3633,7 @@ def _render_sleeper() -> None:
                         "available-player fits most worth monitoring."
                     )
 
-                st.divider()
-                st.markdown("#### Player Market Map")
-                st.caption(
-                    "Search any fantasy player and see who owns him, whether he "
-                    "is available, and which league teams show the strongest "
-                    "structural roster-fit interest in his position."
-                )
-
-                market_query = st.text_input(
-                    "Player market search",
-                    placeholder="Type at least 2 letters of a player name",
-                    key="fantasy_hq_player_market_search",
-                ).strip()
-
-                market_catalog = all_catalog or _load_player_catalog()
-                market_matches = _player_search_matches(
-                    market_catalog,
-                    market_query,
-                )
-
-                if market_query and len(market_query) < 2:
-                    st.info("Type at least 2 letters to search the player market.")
-                elif market_query and not market_matches:
-                    st.info("No active Sleeper fantasy player matched that search.")
-                elif market_matches:
-                    market_options = {
-                        label: player_id
-                        for label, player_id in market_matches
-                    }
-                    market_label = st.selectbox(
-                        "Player",
-                        tuple(market_options),
-                        key="fantasy_hq_player_market_player",
-                    )
-                    market_player_id = market_options[market_label]
-
-                    try:
-                        market = build_player_market_map(
-                            league,
-                            market_player_id,
-                            market_catalog,
-                        )
-                    except Exception as exc:
-                        st.warning("Player Market Map could not be built.")
-                        st.caption(str(exc))
-                        market = None
-
-                    if market is not None:
-                        market_a, market_b, market_c, market_d = st.columns(4)
-                        market_a.metric("Player", market.player_name)
-                        market_b.metric(
-                            "League status",
-                            (
-                                "AVAILABLE"
-                                if market.available
-                                else "ROSTERED"
-                            ),
-                        )
-                        market_c.metric("High-fit teams", market.high_fit_count)
-                        market_d.metric(
-                            "Medium-fit teams",
-                            market.medium_fit_count,
-                        )
-
-                        if market.available:
-                            st.success(
-                                f"{market.player_name} is currently available "
-                                "in this Sleeper league."
-                            )
-                        else:
-                            st.info(
-                                "Current owner: "
-                                + str(market.owner_team or "Unknown")
-                            )
-
-                        st.markdown("##### Roster-fit interest")
-                        interest_labels = {
-                            "HIGH": "HIGH · strongest structural fit",
-                            "MEDIUM": "MEDIUM · plausible structural fit",
-                            "LOW": "LOW · no obvious structural need",
-                        }
-                        recommendation_labels = {
-                            "HIGH": "Likely interest · monitor closely",
-                            "MEDIUM": "Possible interest",
-                            "LOW": "Lower structural interest",
-                        }
-                        market_rows = []
-                        for row in market.team_fits:
-                            market_rows.append(
-                                {
-                                    "Team": row.team_name,
-                                    "Likely interest": (
-                                        "Current owner"
-                                        if row.owns_player
-                                        else recommendation_labels.get(
-                                            row.fit_level,
-                                            row.fit_level,
-                                        )
-                                    ),
-                                    "Fit": (
-                                        "OWNER"
-                                        if row.owns_player
-                                        else interest_labels.get(
-                                            row.fit_level,
-                                            row.fit_level,
-                                        )
-                                    ),
-                                    "Why": row.reason,
-                                }
-                            )
-                        st.dataframe(
-                            pd.DataFrame(market_rows),
-                            hide_index=True,
-                            width="stretch",
-                        )
-
-                        st.caption(
-                            "This is a roster-fit recommendation, not a claim "
-                            "that another manager will definitely add or trade "
-                            "for the player. HIGH means that team's current "
-                            "structure shows the clearest positional pressure."
-                        )
-
-                        st.markdown("##### Player Intelligence Card")
-                        st.caption(
-                            "Factual context for the same player. This is not "
-                            "a fantasy ranking or projected-points model."
-                        )
-                        try:
-                            intelligence = build_player_intelligence_card(
-                                league,
-                                all_states or (league,),
-                                market_player_id,
-                                market_catalog,
-                                add_trends=_load_sleeper_trending_adds(48, 200),
-                                drop_trends=_load_sleeper_trending_drops(48, 200),
-                            )
-                        except Exception as exc:
-                            st.warning("Player Intelligence Card could not be built.")
-                            st.caption(str(exc))
-                            intelligence = None
-
-                        if intelligence is not None:
-                            intel_a, intel_b, intel_c, intel_d = st.columns(4)
-                            intel_a.metric(
-                                "Depth chart",
-                                (
-                                    "#"
-                                    + str(intelligence.depth_chart_order)
-                                    if intelligence.depth_chart_order is not None
-                                    else "—"
-                                ),
-                            )
-                            intel_b.metric(
-                                "Sleeper adds · 48h",
-                                intelligence.add_trend_count,
-                            )
-                            intel_c.metric(
-                                "Sleeper drops · 48h",
-                                intelligence.drop_trend_count,
-                            )
-                            intel_d.metric(
-                                "Trend delta",
-                                (
-                                    f"+{intelligence.trend_delta}"
-                                    if intelligence.trend_delta > 0
-                                    else str(intelligence.trend_delta)
-                                ),
-                            )
-
-                            meta_a, meta_b, meta_c, meta_d = st.columns(4)
-                            meta_a.metric(
-                                "Age",
-                                intelligence.age
-                                if intelligence.age is not None
-                                else "—",
-                            )
-                            meta_b.metric(
-                                "Years exp",
-                                intelligence.years_exp
-                                if intelligence.years_exp is not None
-                                else "—",
-                            )
-                            meta_c.metric(
-                                "My Sleeper leagues",
-                                intelligence.my_league_count,
-                            )
-                            meta_d.metric(
-                                "HIGH-fit teams",
-                                intelligence.high_fit_team_count,
-                            )
-
-                            intelligence_rows = [
-                                {
-                                    "League": row.league_name,
-                                    "Ownership": row.status,
-                                    "Owner": row.owner_name or "—",
-                                    "Slot": row.roster_slot or "—",
-                                }
-                                for row in intelligence.ownership
-                            ]
-                            st.dataframe(
-                                pd.DataFrame(intelligence_rows),
-                                hide_index=True,
-                                width="stretch",
-                            )
-
-                            context_parts = [
-                                f"Status: {intelligence.status}",
-                                "Positions: "
-                                + " / ".join(intelligence.positions),
-                                "NFL: " + intelligence.nfl_team,
-                            ]
-                            if intelligence.depth_chart_position:
-                                context_parts.append(
-                                    "Depth chart position: "
-                                    + intelligence.depth_chart_position
-                                )
-                            st.caption(" · ".join(context_parts))
-                            st.caption(
-                                "Sleeper trend counts reflect the current top "
-                                "add/drop lists for the 48-hour window; a zero "
-                                "does not prove nobody added or dropped the player. "
-                                "Depth-chart metadata comes from Sleeper and is "
-                                "context, not a PropWar player-value grade."
-                            )
-
-                            st.markdown("##### Market-Implied Fantasy Baseline")
-                            st.caption(
-                                "Consensus base prop lines translated through "
-                                "this Sleeper league's scoring settings. This "
-                                "is a sportsbook-market baseline, not a precise "
-                                "fantasy projection or rest-of-season value."
-                            )
-
-                            parlay_key = _secret_default("PARLAY_API_KEY")
-                            if not parlay_key:
-                                st.info(
-                                    "Market baseline is unavailable because "
-                                    "PARLAY_API_KEY is not configured."
-                                )
-                            else:
-                                try:
-                                    prop_snapshot = shared_prop_snapshot(
-                                        parlay_key
-                                    )
-                                    selected_player = (
-                                        market_catalog.get(market_player_id)
-                                        or {}
-                                    )
-                                    baseline = build_market_fantasy_baseline(
-                                        intelligence.player_name,
-                                        str(
-                                            selected_player.get("position")
-                                            or ""
-                                        ),
-                                        league.rules.scoring_settings,
-                                        prop_snapshot.get("rows", ()),
-                                    )
-                                except Exception as exc:
-                                    st.warning(
-                                        "Market-implied fantasy baseline could "
-                                        "not be built."
-                                    )
-                                    st.caption(str(exc))
-                                    baseline = None
-
-                                if baseline is None:
-                                    st.info(
-                                        "No usable current base prop market "
-                                        "bundle was found for this player."
-                                    )
-                                else:
-                                    baseline_a, baseline_b, baseline_c = (
-                                        st.columns(3)
-                                    )
-                                    baseline_a.metric(
-                                        "Market fantasy baseline",
-                                        f"{baseline.fantasy_points:.2f}",
-                                    )
-                                    baseline_b.metric(
-                                        "Coverage",
-                                        baseline.coverage_status,
-                                    )
-                                    baseline_c.metric(
-                                        "Components",
-                                        baseline.component_count,
-                                    )
-
-                                    st.caption(
-                                        baseline.event_label
-                                        + (
-                                            " · " + baseline.commence_time
-                                            if baseline.commence_time
-                                            else ""
-                                        )
-                                    )
-
-                                    st.dataframe(
-                                        pd.DataFrame(
-                                            [
-                                                {
-                                                    "Market": row.label,
-                                                    "Consensus": (
-                                                        f"{row.market_value:.1%}"
-                                                        if row.value_type
-                                                        == "DEVIGGED_PROBABILITY"
-                                                        else f"{row.market_value:.2f}"
-                                                    ),
-                                                    "Type": row.value_type,
-                                                    "Books": row.book_count,
-                                                    "Fantasy pts": round(
-                                                        row.fantasy_points,
-                                                        2,
-                                                    ),
-                                                }
-                                                for row in baseline.components
-                                            ]
-                                        ),
-                                        hide_index=True,
-                                        width="stretch",
-                                    )
-
-                                    if baseline.fallback_scoring_keys:
-                                        st.warning(
-                                            "Sleeper did not return usable "
-                                            "values for these scoring keys, so "
-                                            "standard fallback values were "
-                                            "used: "
-                                            + ", ".join(
-                                                baseline.fallback_scoring_keys
-                                            )
-                                        )
-
-                                    st.caption(
-                                        "Consensus uses non-alternate base "
-                                        "thresholds only. Yardage/reception/TD "
-                                        "lines are market medians/probabilities, "
-                                        "not statistical means. The same shared "
-                                        "3-hour prop snapshot powers Deep Prop "
-                                        "Radar and Fantasy HQ to avoid duplicate "
-                                        "ParlayAPI scans."
-                                    )
+                _render_player_market_map(league, all_states, all_catalog)
 
     with standings_tab:
         if pre_draft_mode:
@@ -3761,101 +3924,7 @@ def _render_sleeper() -> None:
                     width="stretch",
                 )
 
-            st.markdown("##### Look up any player")
-            search = st.text_input(
-                "Player search",
-                placeholder="e.g. Jonathan Taylor",
-                key="fantasy_hq_cross_league_player_search",
-            ).strip()
-
-            if search:
-                normalized_search = search.casefold()
-                candidates = []
-                for player_id, player in catalog.items():
-                    name = str(player.get("full_name") or "").strip()
-                    if not name:
-                        first = str(player.get("first_name") or "").strip()
-                        last = str(player.get("last_name") or "").strip()
-                        name = f"{first} {last}".strip()
-                    if not name or normalized_search not in name.casefold():
-                        continue
-                    candidates.append(
-                        (
-                            0 if name.casefold().startswith(normalized_search) else 1,
-                            name.casefold(),
-                            str(player_id),
-                            name,
-                            str(player.get("position") or "—"),
-                            str(player.get("team") or "FA"),
-                        )
-                    )
-
-                candidates.sort()
-                candidates = candidates[:40]
-                if not candidates:
-                    st.info("No Sleeper NFL player matched that search.")
-                else:
-                    option_map = {
-                        f"{name} · {position} · {team}": player_id
-                        for _, _, player_id, name, position, team in candidates
-                    }
-                    selected_player = st.selectbox(
-                        "Player",
-                        tuple(option_map),
-                        key="fantasy_hq_cross_league_player",
-                    )
-                    selected_id = option_map[selected_player]
-                    ownership = lookup_live_sleeper_player(
-                        all_states,
-                        selected_id,
-                    )
-                    status_rows = []
-                    for row in ownership.statuses:
-                        if row.status == MINE:
-                            status = "MY ROSTER"
-                        elif row.status == OTHER:
-                            status = (
-                                "OWNED"
-                                + (
-                                    f" · {row.owner_name}"
-                                    if row.owner_name
-                                    else ""
-                                )
-                            )
-                        elif row.status == AVAILABLE:
-                            status = "AVAILABLE"
-                        else:
-                            status = "UNKNOWN"
-                        status_rows.append(
-                            {
-                                "League": row.league_name,
-                                "Status": status,
-                                "Slot": row.roster_slot or "—",
-                            }
-                        )
-
-                    st.dataframe(
-                        pd.DataFrame(status_rows),
-                        hide_index=True,
-                        width="stretch",
-                    )
-                    available_count = len(ownership.available_in)
-                    if available_count:
-                        st.success(
-                            f"Available in {available_count} Sleeper league"
-                            f"{'s' if available_count != 1 else ''}: "
-                            + ", ".join(ownership.available_in)
-                        )
-                    elif ownership.mine_in:
-                        st.info(
-                            "You already roster this player in every scanned "
-                            "league where he is not opponent-owned."
-                        )
-                    else:
-                        st.caption(
-                            "This player is not currently available in the "
-                            "scanned Sleeper leagues."
-                        )
+            _render_cross_league_player_lookup(catalog, all_states)
 
 
 def _render_yahoo(

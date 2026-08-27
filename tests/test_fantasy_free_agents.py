@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from src.fantasy.free_agents import find_live_free_agents
+from src.fantasy.free_agents import (
+    build_live_free_agent_pool,
+    filter_live_free_agents,
+    find_live_free_agents,
+)
 from src.fantasy.models import FantasyLeagueState, LeagueRules, Manager, Roster
 
 
@@ -193,6 +197,27 @@ def test_free_agent_position_query_and_familiar_only_filters():
     assert [row.sleeper_player_id for row in familiar] == ["p3"]
 
 
+def test_prebuilt_free_agent_pool_can_be_filtered_repeatedly():
+    selected = _league("selected", "Selected")
+    other = _league("other", "Other", my_players=("p3",))
+
+    pool = build_live_free_agent_pool(
+        selected,
+        CATALOG,
+        all_leagues=(selected, other),
+    )
+
+    assert [row.sleeper_player_id for row in filter_live_free_agents(
+        pool,
+        query="available",
+    )] == ["p3", "p4"]
+    assert [row.sleeper_player_id for row in filter_live_free_agents(
+        pool,
+        position="RB",
+        mine_elsewhere_only=True,
+    )] == ["p3"]
+
+
 def test_free_agent_availability_fails_closed_when_ownership_not_ready():
     league = _league(
         "predraft",
@@ -234,4 +259,6 @@ def test_fantasy_hq_exposes_free_agent_explorer():
     assert '"Waiver Watch"' in page
     assert "Search all available players" in page
     assert "Only players I roster elsewhere" in page
-    assert "find_live_free_agents" in page
+    assert "build_live_free_agent_pool" in page
+    assert "filter_live_free_agents" in page
+    assert "_load_free_agent_pool" in page
