@@ -193,7 +193,7 @@ def test_real_canary_workflow_defaults_to_preview_and_requires_reviewed_identity
     assert 'test "$EXPECTED_SYNC_RUN_ID" = "$ACTUAL_SYNC_RUN_ID"' in text
     assert "preview_fantasy_hq_single_league_canary.py" in text
     assert "run_fantasy_hq_single_league_canary.py" in text
-    assert "First pristine canary must produce ACCEPTED" in text
+    assert 'violation = "NOT_ACCEPTED"' in text
 
 
 def test_real_canary_workflow_requires_exact_shadow_artifact_and_commit():
