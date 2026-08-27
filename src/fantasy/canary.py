@@ -315,7 +315,7 @@ def run_single_league_persistence_canary_from_env(
     """Execute the one-write canary from explicit runtime environment settings."""
 
     canary_config = FantasySingleLeagueCanaryConfig.from_env(environ)
-    persistence_config = FantasyPersistenceClientConfig.from_env(environ)
+    persistence_config = _persistence_config_from_env(environ)
 
     with SleeperClient() as reader:
         with FantasyPersistenceHttpClient(persistence_config) as client:
@@ -398,3 +398,14 @@ def _required_env_int(env: Mapping[str, str], name: str) -> int:
     if value > JAVASCRIPT_MAX_SAFE_INTEGER:
         raise ValueError(f"{name} exceeds JavaScript safe integer range")
     return value
+
+
+def _persistence_config_from_env(
+    environ: Mapping[str, str] | None,
+) -> FantasyPersistenceClientConfig:
+    if environ is None:
+        return FantasyPersistenceClientConfig.from_env()
+    return FantasyPersistenceClientConfig(
+        endpoint=_required_env_text(environ, "FANTASY_PERSISTENCE_URL"),
+        token=_required_env_text(environ, "FANTASY_PERSISTENCE_TOKEN"),
+    )
