@@ -1530,6 +1530,33 @@ def _render_sleeper() -> None:
         on_change="rerun",
     )
 
+    lineup = None
+    if waiver_tab.open and not pre_draft_mode:
+        waiver_lineup_matchup = None
+        waiver_week = _fantasy_regular_week(nfl_state)
+        if waiver_week >= 1 and my_roster is not None:
+            try:
+                waiver_matchups = _load_matchups(league_id, waiver_week)
+                waiver_lineup_matchup = next(
+                    (
+                        row
+                        for row in waiver_matchups
+                        if row.platform_roster_id
+                        == my_roster.platform_roster_id
+                    ),
+                    None,
+                )
+            except Exception:
+                waiver_lineup_matchup = None
+        try:
+            lineup = build_lineup_check(
+                league,
+                all_catalog or _load_player_catalog(),
+                matchup=waiver_lineup_matchup,
+            )
+        except Exception:
+            lineup = None
+
     if roster_tab.open:
         with roster_tab:
             if not my_roster or not my_roster.players:
@@ -4049,11 +4076,7 @@ def _render_yahoo(
         ),
     )
 
-    roster_tab, settings_tab = st.tabs(
-        ["My roster", "League"],
-        key="fantasy_hq_yahoo_tabs",
-        on_change="rerun",
-    )
+    roster_tab, settings_tab = st.tabs(["My roster", "League"])
     with roster_tab:
         if not roster:
             st.info("Yahoo returned an empty roster.")
@@ -4160,10 +4183,9 @@ if yahoo_tab.open:
     with yahoo_tab:
         _render_yahoo(yahoo_config, yahoo_access_token)
     
-    st.divider()
-    st.caption(
-        "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
-        "roster health, lineup checks, waiver tools, opponent scouting, league activity, "
-        "standings/settings, cross-league ownership, and player exposure."
-    )
-    
+st.divider()
+st.caption(
+    "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
+    "roster health, lineup checks, waiver tools, opponent scouting, league activity, "
+    "standings/settings, cross-league ownership, and player exposure."
+)
