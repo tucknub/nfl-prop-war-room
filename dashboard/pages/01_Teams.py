@@ -14,6 +14,7 @@ from research_ui import (
     source_footer, update_query_from_widget,
 )
 from supporting_evidence import home_evidence_message, role_leader, situational_leader
+from role_change import build_team_role_change_table
 
 
 def _combined_family_summary(season: int, team: str, family: str, end_week: int, window: int | str, context: str) -> pd.DataFrame:
@@ -115,6 +116,74 @@ if leader_rows:
     responsive_table(pd.DataFrame(leader_rows), leader_cards, key="teams_leaders", height=410, percent_columns=["Share"], label="View complete leader table")
 else:
     st.info("No valid team denominators are available for this selection.")
+
+role_change_table = build_team_role_change_table(
+    role_family=role_family,
+    last8=team_window_summary(season, team, role_family, end_week, 8, "Normal game"),
+    last4=team_window_summary(season, team, role_family, end_week, 4, "Normal game"),
+    last2=team_window_summary(season, team, role_family, end_week, 2, "Normal game"),
+)
+section(
+    "Role Change Radar",
+    "What changed in this role family? Normal-game Last 8 → Last 4 → Last 2, ranked by signal strength and shift size.",
+)
+if role_change_table.empty:
+    st.info("No comparable role-change sample is available for this team and role family.")
+else:
+    radar_rows, radar_cards = [], []
+    for _, row in role_change_table.head(8).iterrows():
+        shift = row["shift_pp"]
+        shift_text = "—" if pd.isna(shift) else f"{float(shift):+.1f} pp"
+        rank8 = row["rank_last8"]
+        rank2 = row["rank_last2"]
+        rank_text = "—"
+        if pd.notna(rank2):
+            prefix = str(row["position"])
+            rank_text = f"{prefix}{int(rank2)}"
+            if pd.notna(rank8) and int(rank8) != int(rank2):
+                rank_text = f"{prefix}{int(rank8)} → {prefix}{int(rank2)}"
+        radar_rows.append(
+            {
+                "Player": row["player_name"],
+                "Position": row["position"],
+                "Signal": row["classification"],
+                "Trend": row["trend"],
+                "Confidence": row["confidence"],
+                "Last 8": None if pd.isna(row["last8_share"]) else float(row["last8_share"]) * 100,
+                "Last 4": None if pd.isna(row["last4_share"]) else float(row["last4_share"]) * 100,
+                "Last 2": None if pd.isna(row["last2_share"]) else float(row["last2_share"]) * 100,
+                "Shift (pp)": shift,
+                "Team rank": rank_text,
+            }
+        )
+        radar_cards.append(
+            {
+                "title": f"{row['player_name']} — {row['classification']}",
+                "subtitle": f"{row['position']} · {row['trend']} · {row['confidence']} confidence",
+                "metrics": [
+                    ("Role shift", shift_text, "Last 2 vs Last 8 normal-game share"),
+                    ("Team rank", rank_text, "Last 8 → Last 2"),
+                    (
+                        "Recent ownership",
+                        "—" if pd.isna(row["last2_share"]) else f"{float(row['last2_share']):.1%}",
+                        "Last 2 normal game",
+                    ),
+                ],
+                "href": f"/players?player={row['player_id']}&season={season}&family={role_family}&week={end_week}",
+            }
+        )
+    responsive_table(
+        pd.DataFrame(radar_rows),
+        radar_cards,
+        key="teams_role_change_radar",
+        height=430,
+        percent_columns=["Last 8", "Last 4", "Last 2"],
+        label="View complete role-change table",
+    )
+    st.caption(
+        "SURGE/DROP require large, directionally consistent movement across multiple windows. "
+        "Thin samples are labeled LOW confidence or INSUFFICIENT SAMPLE."
+    )
 
 movement = summary.dropna(subset=["change"]).copy() if not summary.empty else pd.DataFrame()
 if not movement.empty:

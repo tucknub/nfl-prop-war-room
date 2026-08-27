@@ -16,6 +16,7 @@ from research_ui import (
     source_footer, update_query_from_widget,
 )
 from supporting_evidence import home_evidence_message, player_role_sentence, role_fingerprint_contexts
+from role_change import build_role_change_signal
 
 
 def _whole(value: object) -> int:
@@ -83,6 +84,66 @@ window_index = windows.set_index("Window")
 team_rank_rows = team_window_summary(season, str(player["team"]), role_family, end_week, "Season", "Normal game")
 rank_positions = team_rank_rows.reset_index().loc[team_rank_rows.reset_index()["player_id"].astype(str).eq(player_id), "index"]
 role_rank = int(rank_positions.iloc[0]) + 1 if not rank_positions.empty else 0
+
+team_last8 = team_window_summary(season, str(player["team"]), role_family, end_week, 8, "Normal game")
+team_last2 = team_window_summary(season, str(player["team"]), role_family, end_week, 2, "Normal game")
+role_change = build_role_change_signal(
+    player_id=player_id,
+    position=str(player["position"]),
+    windows=windows,
+    team_last8=team_last8,
+    team_last2=team_last2,
+    profile=profile,
+)
+
+section(
+    "What changed?",
+    "Role Change Detector compares normal-game ownership across Last 8, Last 4, and Last 2 without changing the canonical role math.",
+)
+with st.container(border=True):
+    st.markdown(f"### {player['player_name']} — {role_change.classification}")
+    change_cols = st.columns(4)
+    change_cols[0].metric(
+        "Last 8",
+        "—" if role_change.last8_share is None else f"{role_change.last8_share:.1%}",
+        help=f"{role_change.last8_games} qualifying games",
+    )
+    change_cols[1].metric(
+        "Last 4",
+        "—" if role_change.last4_share is None else f"{role_change.last4_share:.1%}",
+        help=f"{role_change.last4_games} qualifying games",
+    )
+    change_cols[2].metric(
+        "Last 2",
+        "—" if role_change.last2_share is None else f"{role_change.last2_share:.1%}",
+        (
+            None
+            if role_change.shift_pp is None
+            else f"{role_change.shift_pp:+.1f} pp vs Last 8"
+        ),
+        help=f"{role_change.last2_games} qualifying games",
+    )
+    rank_text = "—"
+    if role_change.rank_comparable and role_change.rank_label_last2:
+        rank_text = role_change.rank_label_last2
+        if (
+            role_change.rank_label_last8
+            and role_change.rank_label_last8 != role_change.rank_label_last2
+        ):
+            rank_text = f"{role_change.rank_label_last8} → {role_change.rank_label_last2}"
+    change_cols[3].metric("Team role rank", rank_text)
+
+    st.markdown(
+        f"**Usage trend:** {role_change.trend}  ·  "
+        f"**Confidence:** {role_change.confidence}"
+    )
+    if role_change.evidence:
+        st.caption(" · ".join(role_change.evidence))
+    st.caption(
+        "Role shift is measured in percentage points of matching normal-game team opportunity. "
+        "It is a workload signal, not a projection."
+    )
+
 st.info(player_role_sentence(
     str(player["player_name"]), str(player["team"]), str(player["position"]), ROLE_LABELS[role_family],
     role_rank, len(team_rank_rows), float(window_index.loc["Season", "Normal share"]),
