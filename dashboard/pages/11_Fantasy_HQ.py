@@ -1959,9 +1959,7 @@ def _render_sleeper() -> None:
                 "league's active transaction week here."
             )
         else:
-            current_activity_week = int(
-                nfl_state.week or nfl_state.display_week or 0
-            )
+            current_activity_week = fantasy_regular_week(nfl_state)
             if current_activity_week < 1:
                 st.info(
                     "No regular-season transaction week is available yet."
