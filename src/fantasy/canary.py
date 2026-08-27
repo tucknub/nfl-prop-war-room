@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+import os
 from typing import Any, Mapping
+
+from .persistence import LeagueSeasonIdentity
+from .persistence_http import (
+    FantasyPersistenceClientConfig,
+    FantasyPersistenceHttpClient,
+)
+from .persistence_protocol import JAVASCRIPT_MAX_SAFE_INTEGER
 
 from .persistence_rehydrate import rehydrate_latest_snapshot_read
 from .runtime_entrypoint import (
@@ -10,6 +18,7 @@ from .runtime_entrypoint import (
     run_handshake_gated_scheduled_sleeper_sync,
 )
 from .scheduled_sync import SleeperScheduledLeague
+from .sleeper import SleeperClient
 from .sleeper_multi_persistence import SleeperMultiPersistenceReader
 from .sleeper_persistence import (
     SLEEPER_PERSIST_ACCEPTED,
@@ -21,6 +30,71 @@ from .sleeper_persistence import (
 
 FANTASY_SINGLE_LEAGUE_CANARY_VERSION = 1
 FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME = "fantasy-hq-single-league-canary"
+FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION = "RUN_ONE_REAL_FANTASY_WRITE"
+
+
+
+
+@dataclass(frozen=True)
+class FantasySingleLeagueCanaryConfig:
+    """Explicit environment-backed configuration for one real canary write."""
+
+    league: SleeperScheduledLeague
+    canary_at_ms: int
+    current_user_id: str
+
+    @classmethod
+    def from_env(
+        cls,
+        environ: Mapping[str, str] | None = None,
+    ) -> "FantasySingleLeagueCanaryConfig":
+        env = os.environ if environ is None else environ
+
+        confirmation = _required_env_text(env, "FANTASY_CANARY_CONFIRM")
+        if confirmation != FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION:
+            raise ValueError(
+                "FANTASY_CANARY_CONFIRM must explicitly authorize one real fantasy write"
+            )
+
+        season = _required_env_text(env, "FANTASY_CANARY_SEASON")
+        identity = LeagueSeasonIdentity(
+            league_season_id=_required_env_text(
+                env, "FANTASY_CANARY_LEAGUE_SEASON_ID"
+            ),
+            platform="SLEEPER",
+            platform_league_id=_required_env_text(
+                env, "FANTASY_CANARY_PLATFORM_LEAGUE_ID"
+            ),
+            season=season,
+        )
+        league = SleeperScheduledLeague(
+            identity=identity,
+            league_family_id=_required_env_text(
+                env, "FANTASY_CANARY_LEAGUE_FAMILY_ID"
+            ),
+            family_display_name=_required_env_text(
+                env, "FANTASY_CANARY_FAMILY_DISPLAY_NAME"
+            ),
+            season_display_name=_required_env_text(
+                env, "FANTASY_CANARY_SEASON_DISPLAY_NAME"
+            ),
+            registration_created_at_ms=_required_env_int(
+                env, "FANTASY_CANARY_REGISTRATION_CREATED_AT_MS"
+            ),
+            request_metadata={"operator_entrypoint": "ENV_CANARY"},
+        )
+        canary_at_ms = _required_env_int(env, "FANTASY_CANARY_AT_MS")
+        if league.registration_created_at_ms > canary_at_ms:
+            raise ValueError(
+                "FANTASY_CANARY_REGISTRATION_CREATED_AT_MS cannot follow FANTASY_CANARY_AT_MS"
+            )
+        return cls(
+            league=league,
+            canary_at_ms=canary_at_ms,
+            current_user_id=_required_env_text(
+                env, "FANTASY_CANARY_CURRENT_USER_ID"
+            ),
+        )
 
 
 class FantasySingleLeagueCanaryError(RuntimeError):
@@ -234,6 +308,26 @@ def run_single_league_persistence_canary(
     )
 
 
+def run_single_league_persistence_canary_from_env(
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> FantasySingleLeagueCanaryResult:
+    """Execute the one-write canary from explicit runtime environment settings."""
+
+    canary_config = FantasySingleLeagueCanaryConfig.from_env(environ)
+    persistence_config = FantasyPersistenceClientConfig.from_env(environ)
+
+    with SleeperClient() as reader:
+        with FantasyPersistenceHttpClient(persistence_config) as client:
+            return run_single_league_persistence_canary(
+                reader,
+                client,
+                canary_config.league,
+                canary_at_ms=canary_config.canary_at_ms,
+                current_user_id=canary_config.current_user_id,
+            )
+
+
 def _canary_league(league: SleeperScheduledLeague) -> SleeperScheduledLeague:
     metadata = dict(league.request_metadata or {})
     if "execution_mode" in metadata or "canary_version" in metadata:
@@ -287,3 +381,20 @@ def _verify_sync_readback(
 
 def _canonical_text(value: Any) -> bool:
     return isinstance(value, str) and bool(value) and value == value.strip()
+
+
+def _required_env_text(env: Mapping[str, str], name: str) -> str:
+    value = env.get(name)
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ValueError(f"{name} must be a nonblank canonical string")
+    return value
+
+
+def _required_env_int(env: Mapping[str, str], name: str) -> int:
+    text = _required_env_text(env, name)
+    if not text.isdigit():
+        raise ValueError(f"{name} must be a non-negative integer")
+    value = int(text)
+    if value > JAVASCRIPT_MAX_SAFE_INTEGER:
+        raise ValueError(f"{name} exceeds JavaScript safe integer range")
+    return value
