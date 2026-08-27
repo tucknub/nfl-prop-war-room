@@ -129,6 +129,19 @@ def normalize_sleeper_nfl_state(payload: Any) -> SleeperNflState:
     )
 
 
+def fantasy_regular_week(nfl_state: SleeperNflState) -> int:
+    """Return the active regular-season fantasy week, or 0 outside regular season."""
+
+    season_type = str(nfl_state.season_type or "").strip().casefold()
+    if season_type not in {"regular", "reg"}:
+        return 0
+
+    leg = int(nfl_state.leg or 0)
+    if 1 <= leg <= MAX_NFL_REGULAR_WEEK:
+        return leg
+    return 0
+
+
 def build_current_sleeper_snapshot(
     reader: SleeperCurrentSnapshotReader,
     league_id: str,
