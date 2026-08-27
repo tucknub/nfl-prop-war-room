@@ -43,6 +43,28 @@ class SleeperIdentityResolution:
         return self.status == NEEDS_REVIEW
 
 
+@dataclass(frozen=True)
+class PropWarSleeperResolution:
+    """Exact reverse lookup from a PropWar/GSIS player ID to Sleeper."""
+
+    propwar_player_id: str
+    status: str
+    sleeper_id: str | None = None
+    name: str | None = None
+    position: str | None = None
+    team: str | None = None
+    reason_codes: tuple[str, ...] = ()
+    ffverse_rows: int = 0
+
+    @property
+    def matched(self) -> bool:
+        return self.status == MATCHED
+
+    @property
+    def requires_review(self) -> bool:
+        return self.status == NEEDS_REVIEW
+
+
 def _clean_id(value: Any) -> str | None:
     if value is None:
         return None
@@ -321,6 +343,72 @@ def resolve_sleeper_player(
         position=ffverse_position or sleeper_position,
         team=sleeper_team or ffverse_team,
         reason_codes=tuple(reasons),
+        ffverse_rows=len(rows),
+    )
+
+
+def resolve_propwar_player_to_sleeper(
+    propwar_player_id: Any,
+    *,
+    ffverse_player_ids: pd.DataFrame,
+) -> PropWarSleeperResolution:
+    """Resolve a trusted PropWar/GSIS ID to one exact Sleeper ID.
+
+    This is intentionally ID-only. Names, teams, and positions are descriptive
+    metadata and are never used as fallback join keys.
+    """
+
+    resolved_player_id = _clean_id(propwar_player_id)
+    if not resolved_player_id:
+        raise ValueError("propwar_player_id is required")
+
+    ffverse = validate_ffverse_player_ids(ffverse_player_ids)
+    gsis_values = ffverse["gsis_id"].map(_clean_id)
+    rows = ffverse.loc[gsis_values.eq(resolved_player_id)].copy()
+
+    if rows.empty:
+        return PropWarSleeperResolution(
+            propwar_player_id=resolved_player_id,
+            status=UNRESOLVED,
+            reason_codes=("NO_EXACT_FFVERSE_GSIS_ID",),
+        )
+
+    sleeper_ids = _unique_clean_values(rows, "sleeper_id")
+    name = _representative_value(rows, "name")
+    position = _representative_value(rows, "position")
+    team_raw = _representative_value(rows, "team")
+    team = canonical_team(team_raw) if team_raw else None
+
+    if len(sleeper_ids) > 1:
+        return PropWarSleeperResolution(
+            propwar_player_id=resolved_player_id,
+            status=NEEDS_REVIEW,
+            name=name,
+            position=position,
+            team=team,
+            reason_codes=("FFVERSE_GSIS_ID_MAPS_TO_MULTIPLE_SLEEPER_IDS",),
+            ffverse_rows=len(rows),
+        )
+
+    if not sleeper_ids:
+        return PropWarSleeperResolution(
+            propwar_player_id=resolved_player_id,
+            status=UNRESOLVED,
+            name=name,
+            position=position,
+            team=team,
+            reason_codes=("EXACT_GSIS_ID_WITHOUT_SLEEPER_ID",),
+            ffverse_rows=len(rows),
+        )
+
+    return PropWarSleeperResolution(
+        propwar_player_id=resolved_player_id,
+        status=MATCHED,
+        sleeper_id=sleeper_ids[0],
+        name=name,
+        position=position,
+        team=team,
+        reason_codes=("EXACT_GSIS_TO_SLEEPER_MATCH",),
         ffverse_rows=len(rows),
     )
 
