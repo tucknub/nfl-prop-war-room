@@ -30,6 +30,9 @@ class FantasyShadowDeploymentEvidence:
     database_id: str
     worker_url: str
     version_id: str
+    source_run_id: int
+    source_commit_sha: str
+    source_ref: str
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -46,6 +49,24 @@ class FantasyShadowDeploymentEvidence:
             raise FantasyRemoteCloudflareError(
                 "shadow deployment version ID must be canonical text"
             )
+        if isinstance(self.source_run_id, bool) or not isinstance(self.source_run_id, int) or self.source_run_id <= 0:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source run ID must be a positive integer"
+            )
+        if not isinstance(self.source_commit_sha, str) or len(self.source_commit_sha) != 40:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source commit SHA must be 40 hexadecimal characters"
+            )
+        try:
+            int(self.source_commit_sha, 16)
+        except ValueError as exc:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source commit SHA must be hexadecimal"
+            ) from exc
+        if self.source_ref != "streamlit-cloud-deploy":
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment evidence must originate from streamlit-cloud-deploy"
+            )
 
     def safe_summary(self) -> dict[str, Any]:
         return {
@@ -55,6 +76,9 @@ class FantasyShadowDeploymentEvidence:
             "worker_url": self.worker_url,
             "version_id": self.version_id,
             "database_id": self.database_id,
+            "source_run_id": self.source_run_id,
+            "source_commit_sha": self.source_commit_sha,
+            "source_ref": self.source_ref,
             "cron_count": 0,
             "d1_schema_ready": True,
             "d1_empty_persistence_state": True,
@@ -112,6 +136,8 @@ class FantasyRemoteDeployResult:
 
 def validate_fantasy_hq_shadow_deployment_evidence(
     payload: Any,
+    *,
+    expected_run_id: int | None = None,
 ) -> FantasyShadowDeploymentEvidence:
     """Validate the exact sanitized evidence required before the first real write."""
 
@@ -127,6 +153,9 @@ def validate_fantasy_hq_shadow_deployment_evidence(
         "worker_url",
         "version_id",
         "database_id",
+        "source_run_id",
+        "source_commit_sha",
+        "source_ref",
         "cron_count",
         "d1_schema_ready",
         "d1_empty_persistence_state",
@@ -178,11 +207,19 @@ def validate_fantasy_hq_shadow_deployment_evidence(
             "shadow deployment runtime handshake evidence is not READY/read-only"
         )
 
-    return FantasyShadowDeploymentEvidence(
+    evidence = FantasyShadowDeploymentEvidence(
         database_id=payload.get("database_id"),
         worker_url=payload.get("worker_url"),
         version_id=payload.get("version_id"),
+        source_run_id=payload.get("source_run_id"),
+        source_commit_sha=payload.get("source_commit_sha"),
+        source_ref=payload.get("source_ref"),
     )
+    if expected_run_id is not None and evidence.source_run_id != expected_run_id:
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence run ID does not match requested workflow run"
+        )
+    return evidence
 
 
 def select_fantasy_hq_remote_d1(
