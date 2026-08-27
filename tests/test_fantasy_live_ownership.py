@@ -106,8 +106,9 @@ def test_my_players_available_elsewhere_only_returns_actionable_players():
 
     rows = my_players_available_elsewhere(leagues)
 
-    assert [row.sleeper_player_id for row in rows] == []
-    
+    assert [row.sleeper_player_id for row in rows] == ["p1"]
+    assert rows[0].available_in == ("Third",)
+
     leagues = (
         _league("l1", "Papa John's", my_players=("p1", "p2")),
         _league("l2", "Franchise", other_players=("p2",)),
