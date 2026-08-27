@@ -1,0 +1,50 @@
+name: Fantasy HQ data-path performance
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-fantasy-data-path.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile Sleeper and Fantasy HQ
+        run: |
+          python -m py_compile src/fantasy/sleeper.py
+          python -m py_compile dashboard/pages/11_Fantasy_HQ.py
+      - name: Run all fantasy regressions
+        run: |
+          pytest -q tests/test_fantasy_*.py
+      - name: Streamlit Fantasy HQ startup
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          sys.path.insert(0, str(root / "dashboard"))
+          sys.path.insert(0, str(root))
+
+          at = AppTest.from_file("dashboard/pages/11_Fantasy_HQ.py")
+          at.run(timeout=45)
+          if at.exception:
+              for exc in at.exception:
+                  print(exc.value)
+              raise SystemExit(1)
+          print("Fantasy HQ startup ok")
+          PY
