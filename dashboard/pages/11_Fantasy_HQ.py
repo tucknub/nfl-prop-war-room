@@ -120,7 +120,7 @@ def _load_sleeper_league(league_id: str, user_id: str):
         )
 
 
-@st.cache_data(ttl=120, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
 def _load_all_sleeper_states(
     user_id: str,
     league_ids: tuple[str, ...],
@@ -158,7 +158,7 @@ def _load_free_agent_pool(
     )
 
 
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, refresh_mode="background")
 def _load_player_catalog() -> dict[str, dict[str, Any]]:
     with SleeperClient() as client:
         return {
