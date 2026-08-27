@@ -125,6 +125,47 @@ class SleeperClient:
             raise ValueError(f"Sleeper returned malformed {label}")
         return payload
 
+    def fetch_user(self, username_or_user_id: str) -> Mapping[str, Any]:
+        identifier = _required_id(username_or_user_id, "username_or_user_id")
+        payload = self._get_json(f"user/{identifier}")
+        if not isinstance(payload, Mapping):
+            raise ValueError("Sleeper user was not found")
+        user_id = str(payload.get("user_id") or "").strip()
+        if not user_id:
+            raise ValueError("Sleeper returned a malformed user")
+        return dict(payload)
+
+    def fetch_user_leagues(
+        self,
+        user_id: str,
+        *,
+        season: str,
+    ) -> tuple[Mapping[str, Any], ...]:
+        user_id = _required_id(user_id, "user_id")
+        season = _required_id(season, "season")
+        payload = self._get_list(
+            f"user/{user_id}/leagues/nfl/{season}",
+            label="user leagues",
+        )
+        leagues: list[Mapping[str, Any]] = []
+        for row in payload:
+            if not isinstance(row, Mapping):
+                continue
+            league_id = str(row.get("league_id") or "").strip()
+            if league_id:
+                leagues.append(dict(row))
+        return tuple(leagues)
+
+    def fetch_players(self) -> Mapping[str, Mapping[str, Any]]:
+        payload = self._get_json("players/nfl")
+        if not isinstance(payload, Mapping):
+            raise ValueError("Sleeper returned a malformed player catalog")
+        return {
+            str(player_id): dict(player)
+            for player_id, player in payload.items()
+            if isinstance(player, Mapping)
+        }
+
     def fetch_league_bundle(self, league_id: str) -> SleeperLeagueBundle:
         league_id = _required_id(league_id, "league_id")
         league = self._get_json(f"league/{league_id}")
