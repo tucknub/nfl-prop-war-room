@@ -50,6 +50,7 @@ from src.fantasy.roster_health import (  # noqa: E402
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
 from src.fantasy.team_explorer import build_league_team_profile  # noqa: E402
+from src.fantasy.trade_candidates import build_trade_candidate_board  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
 from src.fantasy.waiver_fit import build_roster_need_waiver_board  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
@@ -1735,6 +1736,94 @@ def _render_sleeper() -> None:
                         "overlaps one of theirs. It does not account for player "
                         "quality, keeper value, draft picks, or willingness to trade."
                     )
+
+                st.markdown("##### Specific trade candidates")
+                try:
+                    trade_candidates = build_trade_candidate_board(
+                        league,
+                        team_catalog,
+                    )
+                except Exception as exc:
+                    st.warning("Specific trade candidates could not be built.")
+                    st.caption(str(exc))
+                    trade_candidates = None
+
+                if trade_candidates is not None:
+                    if not trade_candidates.matches:
+                        st.info(
+                            "No roster-structure trade candidate pairing is "
+                            "specific enough to show player names right now."
+                        )
+                    else:
+                        for match in trade_candidates.matches:
+                            fit_label = (
+                                "Two-way fit"
+                                if match.two_way
+                                else "One-way fit"
+                            )
+                            with st.expander(
+                                f"{match.partner_team_name} · {fit_label}",
+                                expanded=match.two_way,
+                            ):
+                                left, right = st.columns(2)
+                                with left:
+                                    st.markdown("**Players I could target**")
+                                    if not match.players_i_could_target:
+                                        st.caption(
+                                            "No player on this roster matches "
+                                            "the positions they can structurally "
+                                            "help me at."
+                                        )
+                                    else:
+                                        st.dataframe(
+                                            pd.DataFrame(
+                                                [
+                                                    {
+                                                        "Player": row.name,
+                                                        "Pos": row.position,
+                                                        "NFL": row.nfl_team,
+                                                        "Slot": row.roster_slot,
+                                                        "Status": row.status,
+                                                    }
+                                                    for row
+                                                    in match.players_i_could_target
+                                                ]
+                                            ),
+                                            hide_index=True,
+                                            width="stretch",
+                                        )
+                                with right:
+                                    st.markdown("**My players that fit them**")
+                                    if not match.my_players_they_could_target:
+                                        st.caption(
+                                            "No player on my roster matches "
+                                            "their detected need positions."
+                                        )
+                                    else:
+                                        st.dataframe(
+                                            pd.DataFrame(
+                                                [
+                                                    {
+                                                        "Player": row.name,
+                                                        "Pos": row.position,
+                                                        "NFL": row.nfl_team,
+                                                        "Slot": row.roster_slot,
+                                                        "Status": row.status,
+                                                    }
+                                                    for row
+                                                    in match.my_players_they_could_target
+                                                ]
+                                            ),
+                                            hide_index=True,
+                                            width="stretch",
+                                        )
+
+                                st.caption(
+                                    "These are roster-position candidates only, "
+                                    "not a fair-trade verdict. Bench players are "
+                                    "shown before starters when status is otherwise "
+                                    "comparable."
+                                )
 
             st.divider()
 
