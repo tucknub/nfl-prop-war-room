@@ -224,7 +224,7 @@ def test_fantasy_hq_exposes_free_agent_explorer():
         / "11_Fantasy_HQ.py"
     ).read_text(encoding="utf-8")
 
-    assert '"Free Agents"' in page
-    assert "Free Agent / Waiver Explorer" in page
+    assert '"Waiver Watch"' in page
+    assert "Search all available players" in page
     assert "Only players I roster elsewhere" in page
     assert "find_live_free_agents" in page
