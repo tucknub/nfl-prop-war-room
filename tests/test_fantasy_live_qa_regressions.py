@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 
@@ -65,12 +66,18 @@ def test_background_refresh_is_limited_to_heavy_pure_fantasy_caches():
         'def _load_weekly_action_feed('
     ) in source
 
+    tree = ast.parse(source)
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
     for function_name in (
         "_load_all_sleeper_states",
         "_load_player_catalog",
     ):
-        start = source.index(f"def {function_name}")
-        next_def = source.find("\ndef ", start + 4)
-        block = source[start : next_def if next_def != -1 else len(source)]
-        assert "st.session_state" not in block
-        assert "st." not in block
+        node = functions[function_name]
+        assert not any(
+            isinstance(child, ast.Name) and child.id == "st"
+            for child in ast.walk(node)
+        )
