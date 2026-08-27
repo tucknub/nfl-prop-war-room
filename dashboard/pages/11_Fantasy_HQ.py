@@ -27,6 +27,10 @@ from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
 from src.fantasy.league_selector import build_sleeper_league_options  # noqa: E402
+from src.fantasy.manager_intelligence import (  # noqa: E402
+    build_manager_intelligence,
+    build_manager_recent_behavior,
+)
 from src.fantasy.lineup_check import (  # noqa: E402
     NEEDS_ACTION as LINEUP_NEEDS_ACTION,
     build_lineup_check,
@@ -1541,7 +1545,7 @@ def _render_sleeper() -> None:
             "League Activity",
             "Current matchup",
             "Opponent Scout",
-            "Team Explorer",
+            "Manager Intelligence",
             "Standings",
             "League settings",
             "Cross-league",
@@ -2849,15 +2853,16 @@ def _render_sleeper() -> None:
                     )
 
     with team_explorer_tab:
-        st.markdown("#### League Team Explorer")
+        st.markdown("#### Manager Intelligence")
         st.caption(
-            "Scout any manager in this Sleeper league, not only your current "
-            "weekly opponent. Shopping areas are roster-fit signals, not mind-reading."
+            "Select any manager and get one consolidated roster-fit report: needs, likely shopping, "
+            "movable depth, mutual trade fits, and optional recent behavior. This is roster-fit inference, "
+            "not mind-reading."
         )
 
         if pre_draft_mode:
             st.info(
-                "Pre-draft mode: Team Explorer will activate after Sleeper "
+                "Pre-draft mode: Manager Intelligence will activate after Sleeper "
                 "populates the league's drafted rosters."
             )
         else:
@@ -2872,7 +2877,278 @@ def _render_sleeper() -> None:
                 st.caption(str(exc))
                 league_needs = None
 
-            st.markdown("##### League Needs Board")
+            try:
+                trade_candidates = build_trade_candidate_board(
+                    league,
+                    team_catalog,
+                )
+            except Exception as exc:
+                st.warning("Specific trade candidates could not be built.")
+                st.caption(str(exc))
+                trade_candidates = None
+
+            manager_by_user = {
+                manager.platform_user_id: manager
+                for manager in league.managers
+            }
+            team_options = {}
+            for roster in league.rosters:
+                manager = manager_by_user.get(roster.platform_user_id or "")
+                label = (
+                    manager.team_name
+                    if manager and manager.team_name
+                    else manager.display_name
+                    if manager
+                    else f"Roster {roster.platform_roster_id}"
+                )
+                if roster.platform_roster_id == league.my_platform_roster_id:
+                    label = f"{label} · MY TEAM"
+                team_options[label] = roster.platform_roster_id
+
+            manager_report = None
+            selected_roster_id = None
+            if not team_options:
+                st.info("No drafted team rosters are available yet.")
+            else:
+                selected_team_label = st.selectbox(
+                    "Select manager / team",
+                    tuple(sorted(team_options)),
+                    key="fantasy_hq_team_explorer_team",
+                )
+                selected_roster_id = team_options[selected_team_label]
+                try:
+                    team_trends = _load_sleeper_trending_adds(48, 100)
+                    team_profile = build_league_team_profile(
+                        league,
+                        selected_roster_id,
+                        team_catalog,
+                        trends=team_trends,
+                    )
+                    manager_report = build_manager_intelligence(
+                        league,
+                        selected_roster_id,
+                        team_catalog,
+                        trends=team_trends,
+                        team_profile=team_profile,
+                        needs_board=league_needs,
+                        trade_board=trade_candidates,
+                    )
+                except Exception as exc:
+                    st.warning("Manager Intelligence could not build this roster profile.")
+                    st.caption(str(exc))
+                    manager_report = None
+
+            if manager_report is not None:
+                manager_a, manager_b, manager_c, manager_d = st.columns(4)
+                manager_a.metric("Team", manager_report.team_name)
+                manager_b.metric("Record", manager_report.record)
+                manager_c.metric("Season PF", f"{manager_report.points_for:.2f}")
+                manager_d.metric("Rostered", manager_report.roster_size)
+
+                st.markdown("##### Biggest needs")
+                needs_rows = [
+                    {
+                        "Pressure": row.level,
+                        "Position": row.position,
+                        "Why": row.reason,
+                    }
+                    for row in (
+                        *manager_report.high_needs,
+                        *manager_report.medium_needs,
+                    )
+                ]
+                if needs_rows:
+                    st.dataframe(
+                        pd.DataFrame(needs_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                else:
+                    st.success("No HIGH or MEDIUM structural need is showing right now.")
+
+                st.markdown("##### Likely shopping")
+                if manager_report.likely_shopping:
+                    st.write(" · ".join(manager_report.likely_shopping))
+                    st.caption(
+                        "Positions are inferred from starter demand, depth, and serious player statuses."
+                    )
+                else:
+                    st.caption("No clear structural shopping area is showing.")
+
+                if manager_report.available_targets:
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {
+                                    "Available fit": row.player_name,
+                                    "Pos": row.position,
+                                    "NFL": row.nfl_team,
+                                    "Need pressure": row.need_level,
+                                    "Sleeper adds · 48h": row.trend_count or "—",
+                                }
+                                for row in manager_report.available_targets
+                            ]
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+                st.markdown("##### Players they could reasonably move")
+                st.caption(
+                    "These are players at positions where this roster has conservative depth above starter demand. "
+                    "This is not a claim that the manager is shopping them."
+                )
+                if manager_report.movable_depth_players:
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {
+                                    "Player": row.name,
+                                    "Pos": row.position,
+                                    "NFL": row.nfl_team,
+                                    "Roster slot": row.roster_slot,
+                                    "Status": row.status,
+                                }
+                                for row in manager_report.movable_depth_players
+                            ]
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                else:
+                    st.caption("No conservative depth-based move candidate is showing.")
+
+                fit_left, fit_right = st.columns(2)
+                with fit_left:
+                    st.markdown("##### My players that fit them")
+                    if manager_report.my_players_fit_them:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Player": row.name,
+                                        "Pos": row.position,
+                                        "Slot": row.roster_slot,
+                                        "Status": row.status,
+                                    }
+                                    for row in manager_report.my_players_fit_them
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+                    else:
+                        st.caption("No specific player on my roster matches their detected structural needs.")
+                with fit_right:
+                    st.markdown("##### Their players that fit me")
+                    if manager_report.their_players_fit_me:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Player": row.name,
+                                        "Pos": row.position,
+                                        "Slot": row.roster_slot,
+                                        "Status": row.status,
+                                    }
+                                    for row in manager_report.their_players_fit_me
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+                    else:
+                        st.caption("No specific player on their roster matches my detected structural needs.")
+
+                st.markdown("##### Best mutual trade fits")
+                if manager_report.mutual_trade_starting_points:
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {
+                                    "I give": row.i_give.name,
+                                    "Give pos": row.i_give.position,
+                                    "I receive": row.i_receive.name,
+                                    "Receive pos": row.i_receive.position,
+                                    "Fit": manager_report.trade_fit_signal or "—",
+                                }
+                                for row in manager_report.mutual_trade_starting_points
+                            ]
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    st.caption(
+                        "These are structural two-way starting points, not value-balanced trade verdicts. "
+                        "Use the Market-Assisted Trade Analyzer below to test a real offer."
+                    )
+                else:
+                    st.caption("No two-way structural player pairing is specific enough to show.")
+
+                st.markdown("##### Recent behavior")
+                current_manager_week = _fantasy_regular_week(nfl_state)
+                behavior_enabled = st.toggle(
+                    "Load recent manager behavior",
+                    value=False,
+                    key="fantasy_hq_manager_behavior_enabled",
+                    help="Loads up to the current and prior fantasy week only when requested.",
+                )
+                if not behavior_enabled:
+                    st.caption(
+                        "Off by default to keep Manager Intelligence fast. Turn it on to inspect recent adds, drops, trades, and FAAB."
+                    )
+                elif current_manager_week < 1:
+                    st.caption("Regular-season transaction history is not available yet.")
+                else:
+                    try:
+                        behavior_transactions = []
+                        for behavior_week in range(
+                            max(1, current_manager_week - 1),
+                            current_manager_week + 1,
+                        ):
+                            behavior_transactions.extend(
+                                _load_transactions(
+                                    league_id,
+                                    behavior_week,
+                                )
+                            )
+                        behavior = build_manager_recent_behavior(
+                            league,
+                            manager_report.roster_id,
+                            behavior_transactions,
+                            team_catalog,
+                        )
+                    except Exception as exc:
+                        st.warning("Recent manager behavior could not be loaded.")
+                        st.caption(str(exc))
+                        behavior = ()
+
+                    if behavior:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Week": row.week or "—",
+                                        "Type": row.kind,
+                                        "What happened": row.summary,
+                                        "When": _format_activity_time(row.timestamp_ms),
+                                    }
+                                    for row in behavior
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+                    else:
+                        st.caption("No recent transaction behavior was returned for this manager.")
+
+                st.caption(
+                    "Manager Intelligence is roster-fit inference. It identifies structural pressure and factual behavior; "
+                    "it does not claim to know another manager's intent, willingness to trade, or private valuation."
+                )
+
+            st.divider()
+            st.markdown("##### League-wide context · League Needs Board")
             st.caption(
                 "One view of every team's structural pressure and depth above "
                 "starter demand. This is roster construction, not player-value grading."
@@ -2961,16 +3237,6 @@ def _render_sleeper() -> None:
                     )
 
                 st.markdown("##### Specific trade candidates")
-                try:
-                    trade_candidates = build_trade_candidate_board(
-                        league,
-                        team_catalog,
-                    )
-                except Exception as exc:
-                    st.warning("Specific trade candidates could not be built.")
-                    st.caption(str(exc))
-                    trade_candidates = None
-
                 if trade_candidates is not None:
                     if not trade_candidates.matches:
                         st.info(
@@ -3513,147 +3779,7 @@ def _render_sleeper() -> None:
                                     )
 
             st.divider()
-
-            manager_by_user = {
-                manager.platform_user_id: manager
-                for manager in league.managers
-            }
-            team_options = {}
-            for roster in league.rosters:
-                manager = manager_by_user.get(roster.platform_user_id or "")
-                label = (
-                    manager.team_name
-                    if manager and manager.team_name
-                    else manager.display_name
-                    if manager
-                    else f"Roster {roster.platform_roster_id}"
-                )
-                if roster.platform_roster_id == league.my_platform_roster_id:
-                    label = f"{label} · MY TEAM"
-                team_options[label] = roster.platform_roster_id
-
-            if not team_options:
-                st.info("No drafted team rosters are available yet.")
-            else:
-                selected_team_label = st.selectbox(
-                    "Search / select league team",
-                    tuple(sorted(team_options)),
-                    key="fantasy_hq_team_explorer_team",
-                )
-                selected_roster_id = team_options[selected_team_label]
-
-                try:
-                    team_trends = _load_sleeper_trending_adds(48, 100)
-                    team_profile = build_league_team_profile(
-                        league,
-                        selected_roster_id,
-                        team_catalog,
-                        trends=team_trends,
-                    )
-                except Exception as exc:
-                    st.warning("Team Explorer could not build this roster profile.")
-                    st.caption(str(exc))
-                    team_profile = None
-
-                if team_profile is not None:
-                    team_a, team_b, team_c, team_d = st.columns(4)
-                    team_a.metric("Team", team_profile.team_name)
-                    team_b.metric("Record", team_profile.record)
-                    team_c.metric("Season PF", f"{team_profile.points_for:.2f}")
-                    team_d.metric("Rostered", team_profile.roster_size)
-
-                    depth_a, depth_b, depth_c = st.columns(3)
-                    depth_a.metric(
-                        "Starters filled",
-                        f"{team_profile.filled_starter_slots}/"
-                        f"{team_profile.starter_slots}",
-                    )
-                    depth_b.metric(
-                        "Serious statuses",
-                        team_profile.serious_status_count,
-                    )
-                    depth_c.metric(
-                        "Questionable",
-                        team_profile.questionable_status_count,
-                    )
-
-                    st.markdown("##### Likely shopping areas")
-                    if not team_profile.needs:
-                        st.success(
-                            "No obvious structural shopping area is showing "
-                            "from starter requirements, depth, or serious statuses."
-                        )
-                    else:
-                        st.dataframe(
-                            pd.DataFrame(
-                                [
-                                    {
-                                        "Pressure": row.level,
-                                        "Position": row.position,
-                                        "Why": row.reason,
-                                    }
-                                    for row in team_profile.needs
-                                ]
-                            ),
-                            hide_index=True,
-                            width="stretch",
-                        )
-
-                    st.markdown("##### Position depth")
-                    if team_profile.position_counts:
-                        st.dataframe(
-                            pd.DataFrame(
-                                [
-                                    {"Position": position, "Rostered": count}
-                                    for position, count
-                                    in team_profile.position_counts.items()
-                                ]
-                            ),
-                            hide_index=True,
-                            width="stretch",
-                        )
-
-                    st.markdown("##### Available players that fit")
-                    st.caption(
-                        "These are players available in this league whose "
-                        "positions match that team's structural needs. Sleeper "
-                        "48-hour add activity is used only as a tie-break signal."
-                    )
-                    if not team_profile.targets:
-                        st.info(
-                            "No live available-player target list is available "
-                            "for this team's current structural needs."
-                        )
-                    else:
-                        st.dataframe(
-                            pd.DataFrame(
-                                [
-                                    {
-                                        "Player": row.player_name,
-                                        "Pos": row.position,
-                                        "NFL": row.nfl_team,
-                                        "Status": row.status,
-                                        "Need pressure": row.need_level,
-                                        "Sleeper adds · 48h": (
-                                            row.trend_count
-                                            if row.trend_count
-                                            else "—"
-                                        ),
-                                    }
-                                    for row in team_profile.targets
-                                ]
-                            ),
-                            hide_index=True,
-                            width="stretch",
-                        )
-
-                    st.caption(
-                        "Team Explorer does not claim another manager will make "
-                        "a specific move. It identifies the roster areas and "
-                        "available-player fits most worth monitoring."
-                    )
-
-                _render_player_market_map(league, all_states, all_catalog)
+            _render_player_market_map(league, all_states, all_catalog)
 
     with standings_tab:
         if pre_draft_mode:
