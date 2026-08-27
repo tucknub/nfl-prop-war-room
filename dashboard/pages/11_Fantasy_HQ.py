@@ -431,6 +431,10 @@ def _player_search_matches(
         if raw_player.get("active") is False:
             continue
 
+        position = str(raw_player.get("position") or "—").strip().upper() or "—"
+        if position not in FANTASY_POSITIONS:
+            continue
+
         full_name = str(raw_player.get("full_name") or "").strip()
         if not full_name:
             first = str(raw_player.get("first_name") or "").strip()
@@ -439,12 +443,17 @@ def _player_search_matches(
         if not full_name or normalized not in full_name.casefold():
             continue
 
-        position = str(raw_player.get("position") or "—").strip().upper() or "—"
         nfl_team = str(raw_player.get("team") or "FA").strip().upper() or "FA"
         name_key = full_name.casefold()
-        prefix_rank = 0 if name_key.startswith(normalized) else 1
+        name_parts = tuple(part for part in name_key.split() if part)
+        if name_key.startswith(normalized):
+            match_rank = 0
+        elif any(part.startswith(normalized) for part in name_parts):
+            match_rank = 1
+        else:
+            match_rank = 2
         label = f"{full_name} · {position} · {nfl_team}"
-        rows.append((prefix_rank, name_key, label, player_id))
+        rows.append((match_rank, name_key, label, player_id))
 
     rows.sort(key=lambda row: (row[0], row[1], row[3]))
     return tuple((row[2], row[3]) for row in rows[:limit])
@@ -650,8 +659,10 @@ def _render_player_market_map(league: FantasyLeagueState, all_states: tuple[Fant
         )
 
     submitted_query_key = "fantasy_hq_player_market_submitted_query"
+    selected_player_key = "fantasy_hq_player_market_player"
     if market_search_submitted:
         st.session_state[submitted_query_key] = market_query_input
+        st.session_state.pop(selected_player_key, None)
     market_query = str(
         st.session_state.get(submitted_query_key) or ""
     ).strip()
@@ -671,11 +682,20 @@ def _render_player_market_map(league: FantasyLeagueState, all_states: tuple[Fant
             label: player_id
             for label, player_id in market_matches
         }
+        st.caption(
+            f"{len(market_matches)} matching fantasy player"
+            + ("" if len(market_matches) == 1 else "s")
+        )
         market_label = st.selectbox(
             "Player",
             tuple(market_options),
-            key="fantasy_hq_player_market_player",
+            index=None,
+            placeholder="Choose a matching player",
+            key=selected_player_key,
         )
+        if market_label is None:
+            st.info("Choose a player from the matching results to open his market map.")
+            return
         market_player_id = market_options[market_label]
 
         try:
