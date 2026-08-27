@@ -22,6 +22,7 @@ if str(REPO_ROOT) not in sys.path:
 from research_ui import page_intro, section  # noqa: E402
 from glitch_radar_props_cache import shared_prop_snapshot  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
+from src.fantasy.action_feed import build_weekly_action_feed  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
@@ -193,6 +194,84 @@ def _load_sleeper_trending_drops(
             lookback_hours=lookback_hours,
             limit=limit,
         )
+
+
+@st.cache_data(ttl=5 * 60, show_spinner=False)
+def _load_weekly_action_feed(
+    user_id: str,
+    league_ids: tuple[str, ...],
+    current_week: int,
+    parlay_key: str,
+):
+    states = _load_all_sleeper_states(user_id, league_ids)
+    catalog = _load_player_catalog()
+    snapshot = shared_prop_snapshot(parlay_key)
+    trends = _load_sleeper_trending_adds(24, 100)
+
+    matchup_map = {}
+    transaction_map = {}
+    data_errors = []
+
+    for league in states:
+        if (
+            league.status == "pre_draft"
+            or not league.ownership_ready
+            or not league.my_platform_roster_id
+        ):
+            continue
+
+        if current_week >= 1:
+            try:
+                matchups = _load_matchups(
+                    league.platform_league_id,
+                    current_week,
+                )
+                matchup_map[league.platform_league_id] = next(
+                    (
+                        row
+                        for row in matchups
+                        if row.platform_roster_id
+                        == league.my_platform_roster_id
+                    ),
+                    None,
+                )
+            except Exception as exc:
+                data_errors.append(
+                    f"{league.name or league.platform_league_id} matchup: {exc}"
+                )
+
+            transactions = []
+            for week in range(
+                max(1, current_week - 3),
+                current_week + 1,
+            ):
+                try:
+                    transactions.extend(
+                        _load_transactions(
+                            league.platform_league_id,
+                            week,
+                        )
+                    )
+                except Exception as exc:
+                    data_errors.append(
+                        f"{league.name or league.platform_league_id} "
+                        f"Week {week} transactions: {exc}"
+                    )
+            transaction_map[league.platform_league_id] = tuple(
+                transactions
+            )
+
+    feed = build_weekly_action_feed(
+        states,
+        catalog,
+        snapshot.get("rows", ()),
+        current_week=current_week,
+        trends=trends,
+        matchups_by_league=matchup_map,
+        transactions_by_league=transaction_map,
+        limit=30,
+    )
+    return feed, tuple(data_errors)
 
 
 def _secret_default(name: str) -> str:
@@ -497,6 +576,137 @@ def _render_sleeper() -> None:
             )
     except Exception as exc:
         all_scan_error = str(exc)
+
+    st.markdown("### What Should I Do?")
+    st.caption(
+        "Across all Sleeper leagues, ranked by urgency and expected impact. "
+        "This combines lineup, waiver, FAAB, roster-health, and mutual trade "
+        "signals into one decision feed."
+    )
+
+    weekly_feed = None
+    weekly_feed_error = None
+    weekly_feed_data_errors = ()
+    feed_parlay_key = _secret_default("PARLAY_API_KEY")
+    feed_week = int(nfl_state.week or nfl_state.display_week or 0)
+
+    if not all_states or not all_catalog:
+        st.info(
+            "The ranked action feed needs the all-leagues Sleeper snapshot "
+            "above to load successfully."
+        )
+    elif not feed_parlay_key:
+        st.info(
+            "The ranked action feed is unavailable because PARLAY_API_KEY "
+            "is not configured."
+        )
+    else:
+        try:
+            with st.spinner(
+                "Ranking the best moves across all Sleeper leagues..."
+            ):
+                weekly_feed, weekly_feed_data_errors = (
+                    _load_weekly_action_feed(
+                        str(sleeper_user["user_id"]),
+                        all_league_ids,
+                        feed_week,
+                        feed_parlay_key,
+                    )
+                )
+        except Exception as exc:
+            weekly_feed_error = str(exc)
+
+        if weekly_feed is None:
+            st.warning("What Should I Do? could not be built.")
+            if weekly_feed_error:
+                st.caption(weekly_feed_error)
+        else:
+            feed_a, feed_b, feed_c, feed_d = st.columns(4)
+            feed_a.metric(
+                "Ranked actions",
+                len(weekly_feed.actions),
+            )
+            feed_b.metric("HIGH priority", weekly_feed.high_count)
+            feed_c.metric(
+                "Actionable leagues",
+                (
+                    f"{weekly_feed.actionable_league_count}/"
+                    f"{weekly_feed.drafted_leagues}"
+                    if weekly_feed.drafted_leagues
+                    else "0"
+                ),
+            )
+            feed_d.metric(
+                "Drafted leagues scanned",
+                weekly_feed.drafted_leagues,
+            )
+
+            if not weekly_feed.actions:
+                if weekly_feed.drafted_leagues:
+                    st.success(
+                        "No market-backed lineup, waiver, FAAB, health, or "
+                        "mutual trade action currently clears the feed."
+                    )
+                else:
+                    st.info(
+                        "Your Sleeper leagues are still pre-draft. This feed "
+                        "will populate automatically after rosters exist."
+                    )
+            else:
+                feed_rows = []
+                for rank, row in enumerate(
+                    weekly_feed.actions,
+                    start=1,
+                ):
+                    feed_rows.append(
+                        {
+                            "Rank": rank,
+                            "Priority": row.priority,
+                            "League": row.league_name,
+                            "Type": row.action_type.title(),
+                            "Move": row.title,
+                            "Recommended action": row.action,
+                            "Impact": (
+                                f"{row.impact_points:+.2f} pts"
+                                if row.impact_points is not None
+                                else "—"
+                            ),
+                            "FAAB": (
+                                (
+                                    f"{row.faab_range} "
+                                    f"(target {row.faab_target})"
+                                )
+                                if row.faab_range and row.faab_target
+                                else row.faab_range or "—"
+                            ),
+                            "Confidence": row.confidence,
+                            "Why": row.detail,
+                        }
+                    )
+
+                st.dataframe(
+                    pd.DataFrame(feed_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+                st.caption(
+                    "Priority is global across leagues: lineup fixes first, "
+                    "then meaningful waiver/FAAB upgrades, then mutual trade "
+                    "opportunities and unresolved factual health issues. "
+                    "Market-backed moves require usable sportsbook coverage."
+                )
+
+            combined_feed_errors = (
+                *weekly_feed.errors,
+                *weekly_feed_data_errors,
+            )
+            if combined_feed_errors:
+                with st.expander(
+                    "Partial feed data warnings",
+                    expanded=False,
+                ):
+                    for error in combined_feed_errors:
+                        st.caption(error)
 
     st.markdown("### All-Leagues Action Center")
     if action_center is None:
