@@ -70,7 +70,6 @@ from src.fantasy.roster_health import (  # noqa: E402
     analyze_roster_health,
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
-from src.fantasy.sleeper_current import fantasy_regular_week  # noqa: E402
 from src.fantasy.team_explorer import build_league_team_profile  # noqa: E402
 from src.fantasy.trade_candidates import build_trade_candidate_board  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
@@ -144,6 +143,20 @@ def _load_player_catalog() -> dict[str, dict[str, Any]]:
 def _load_nfl_state():
     with SleeperClient() as client:
         return client.fetch_nfl_state()
+
+
+def _fantasy_regular_week(nfl_state: Any) -> int:
+    """Return the active regular-season fantasy week, or 0 outside it."""
+
+    season_type = str(getattr(nfl_state, "season_type", "") or "").strip().casefold()
+    if season_type not in {"regular", "reg"}:
+        return 0
+
+    try:
+        leg = int(getattr(nfl_state, "leg", 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+    return leg if 1 <= leg <= 18 else 0
 
 
 @st.cache_data(ttl=60, show_spinner=False)
@@ -590,7 +603,7 @@ def _render_sleeper() -> None:
     weekly_feed_error = None
     weekly_feed_data_errors = ()
     feed_parlay_key = _secret_default("PARLAY_API_KEY")
-    feed_week = fantasy_regular_week(nfl_state)
+    feed_week = _fantasy_regular_week(nfl_state)
 
     if not all_states or not all_catalog:
         st.info(
@@ -1055,7 +1068,7 @@ def _render_sleeper() -> None:
                 "configured starter slots."
             )
         else:
-            current_week = fantasy_regular_week(nfl_state)
+            current_week = _fantasy_regular_week(nfl_state)
             lineup_matchup = None
             lineup_matchup_error: str | None = None
             if current_week >= 1 and my_roster is not None:
@@ -1686,7 +1699,7 @@ def _render_sleeper() -> None:
                     "is available."
                 )
             else:
-                faab_week = fantasy_regular_week(nfl_state)
+                faab_week = _fantasy_regular_week(nfl_state)
                 faab_transactions = []
                 faab_history_errors = []
                 if faab_week >= 1 and market_waivers.candidates:
@@ -1959,7 +1972,7 @@ def _render_sleeper() -> None:
                 "league's active transaction week here."
             )
         else:
-            current_activity_week = fantasy_regular_week(nfl_state)
+            current_activity_week = _fantasy_regular_week(nfl_state)
             if current_activity_week < 1:
                 st.info(
                     "No regular-season transaction week is available yet."
@@ -2080,7 +2093,7 @@ def _render_sleeper() -> None:
                 "draft and Sleeper publishes roster/matchup data."
             )
         else:
-            week = fantasy_regular_week(nfl_state)
+            week = _fantasy_regular_week(nfl_state)
             if week < 1 or not my_roster:
                 st.info("No regular-season matchup is available yet.")
             else:
@@ -2167,7 +2180,7 @@ def _render_sleeper() -> None:
                 "has drafted rosters and a real fantasy matchup pairing."
             )
         else:
-            scout_week = fantasy_regular_week(nfl_state)
+            scout_week = _fantasy_regular_week(nfl_state)
             if scout_week < 1 or not my_roster:
                 st.info("No regular-season opponent is available yet.")
             else:
