@@ -296,15 +296,34 @@ jobs:
           import json
           import os
           from pathlib import Path
-          result = json.loads(
-              Path(os.environ["RUNNER_TEMP"], "fantasy-hq-canary-result.json").read_text()
-          )
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          result = json.loads((root / "fantasy-hq-canary-result.json").read_text())
+          violation = None
           if result.get("ready") is not True:
-              raise SystemExit("Canary result is not READY")
-          if result.get("mode") != "ACCEPTED":
-              raise SystemExit("First pristine canary must produce ACCEPTED")
-          if result.get("readback_verified") is not True:
-              raise SystemExit("Canary read-back verification did not pass")
+              violation = "NOT_READY"
+          elif result.get("mode") != "ACCEPTED":
+              violation = "NOT_ACCEPTED"
+          elif result.get("readback_verified") is not True:
+              violation = "READBACK_NOT_VERIFIED"
+
+          if violation is not None:
+              (root / "fantasy-hq-canary-error.json").write_text(
+                  json.dumps(
+                      {
+                          "ready": False,
+                          "error_type": "FantasyCanaryInvariantError",
+                          "stage": "POST_RESULT",
+                          "write_may_have_committed": True,
+                          "reason_code": violation,
+                      },
+                      sort_keys=True,
+                      separators=(",", ":"),
+                  )
+                  + "\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit("Fantasy HQ canary post-result invariant failed")
           PY
 
       - name: Publish successful canary evidence
