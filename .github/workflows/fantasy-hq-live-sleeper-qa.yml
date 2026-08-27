@@ -274,3 +274,54 @@ jobs:
 
           print("LIVE_QA_RESULT=PASS")
           PY
+
+      - name: Inspect Fantasy HQ all-league discovery labels
+        run: |
+          python - <<'PY'
+          from collections import defaultdict
+          from src.fantasy.sleeper import SleeperClient
+
+          user_id = "76890409808576512"
+          with SleeperClient() as client:
+              user = client.fetch_user(user_id)
+              leagues = client.fetch_user_leagues(user_id, season="2026")
+
+          print(f"SLEEPER_USERNAME={user.get('username')}")
+          print(f"SLEEPER_DISPLAY_NAME={user.get('display_name')}")
+          print(f"USER_2026_LEAGUE_COUNT={len(leagues)}")
+
+          labels = defaultdict(list)
+          for row in leagues:
+              label = (
+                  f"{row.get('name') or 'Unnamed league'} · "
+                  f"{row.get('total_rosters') or '?'} teams"
+              )
+              league_id = str(row.get("league_id") or "")
+              labels[label].append(league_id)
+              print(
+                  "LEAGUE "
+                  f"id={league_id} "
+                  f"status={row.get('status')} "
+                  f"name={row.get('name')!r} "
+                  f"teams={row.get('total_rosters')}"
+              )
+
+          collisions = {
+              label: ids
+              for label, ids in labels.items()
+              if len(ids) > 1
+          }
+          if collisions:
+              print("FANTASY_HQ_SELECTOR_COLLISIONS=YES")
+              for label, ids in collisions.items():
+                  print(f"COLLISION label={label!r} ids={','.join(ids)}")
+          else:
+              print("FANTASY_HQ_SELECTOR_COLLISIONS=NO")
+
+          test_id = "1398735222102671360"
+          assert any(str(row.get("league_id")) == test_id for row in leagues), (
+              "Converted mock league is not discoverable through "
+              "Sleeper user leagues endpoint"
+          )
+          print("DISCOVERY_QA_RESULT=PASS")
+          PY
