@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 import httpx
 
 from src.fantasy.sleeper import SleeperClient, SleeperLeagueBundle, normalize_sleeper_bundle
@@ -330,3 +332,71 @@ def test_client_rejects_invalid_trending_parameters():
             pass
         else:
             raise AssertionError("invalid trending parameters must fail before HTTP")
+
+
+def test_client_loads_multiple_leagues_concurrently_and_preserves_input_order():
+    ffl = _ffl_bundle()
+    payloads = {}
+    for league_id in ("a", "b"):
+        payloads[f"/v1/league/{league_id}"] = {
+            **ffl.league,
+            "league_id": league_id,
+            "name": f"League {league_id.upper()}",
+        }
+        payloads[f"/v1/league/{league_id}/users"] = ffl.users
+        payloads[f"/v1/league/{league_id}/rosters"] = ffl.rosters
+        payloads[f"/v1/league/{league_id}/drafts"] = [
+            {
+                **ffl.drafts[0],
+                "draft_id": f"{league_id}-draft",
+            }
+        ]
+
+    barrier = threading.Barrier(2, timeout=2.0)
+    root_paths = {"/v1/league/a", "/v1/league/b"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path in root_paths:
+            barrier.wait()
+        payload = payloads.get(request.url.path)
+        return httpx.Response(
+            200 if payload is not None else 404,
+            json=payload or {},
+        )
+
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(handler),
+    )
+    client = SleeperClient(client=http)
+
+    states = client.fetch_normalized_leagues(
+        ("a", "b"),
+        current_user_id="me",
+        max_workers=2,
+    )
+
+    assert [state.platform_league_id for state in states] == ["a", "b"]
+    assert [state.name for state in states] == ["League A", "League B"]
+
+
+def test_multi_league_loader_rejects_unsafe_worker_counts_before_http():
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(500)
+        ),
+    )
+    client = SleeperClient(client=http)
+
+    for workers in (0, 9, True):
+        try:
+            client.fetch_normalized_leagues(
+                ("a", "b"),
+                current_user_id="me",
+                max_workers=workers,
+            )
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid max_workers must fail before HTTP")
