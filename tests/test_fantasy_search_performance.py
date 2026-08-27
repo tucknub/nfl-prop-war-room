@@ -38,3 +38,14 @@ def test_player_market_search_requires_submit_before_heavy_work():
     assert "st.form_submit_button(" in source
     assert '"Search player market"' in source
     assert "fantasy_hq_player_market_submitted_query" in source
+
+
+def test_player_market_search_filters_fantasy_positions_and_requires_choice():
+    source = _source()
+
+    assert "if position not in FANTASY_POSITIONS:" in source
+    assert 'selected_player_key = "fantasy_hq_player_market_player"' in source
+    assert "st.session_state.pop(selected_player_key, None)" in source
+    assert "index=None" in source
+    assert 'placeholder="Choose a matching player"' in source
+    assert "matching fantasy player" in source
