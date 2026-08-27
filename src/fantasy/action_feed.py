@@ -34,6 +34,8 @@ _TYPE_SCORE = {
     HEALTH: 10.0,
 }
 
+MIN_LOW_WAIVER_FEED_EDGE = 2.0
+
 
 @dataclass(frozen=True)
 class WeeklyActionItem:
@@ -263,6 +265,14 @@ def _league_actions(
             LOW: PRIORITY_LOW,
         }.get(candidate.need, PRIORITY_LOW)
         improvement = candidate.expected_lineup_improvement
+        if (
+            candidate.need == LOW
+            and (
+                improvement is None
+                or float(improvement) < MIN_LOW_WAIVER_FEED_EDGE
+            )
+        ):
+            continue
         faab = faab_by_player.get(candidate.sleeper_player_id)
         if faab is not None:
             faab_range = f"${faab.range_low_bid}–${faab.range_high_bid}"
@@ -458,6 +468,7 @@ def _confidence_rank(value: str) -> int:
 __all__ = [
     "HEALTH",
     "LINEUP",
+    "MIN_LOW_WAIVER_FEED_EDGE",
     "PRIORITY_HIGH",
     "PRIORITY_LOW",
     "PRIORITY_MEDIUM",
