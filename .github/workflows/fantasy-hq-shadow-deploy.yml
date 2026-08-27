@@ -29,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       WRANGLER_VERSION: "4.125.0"
       WRANGLER_SEND_METRICS: "false"
       WRANGLER_LOG_SANITIZE: "true"
@@ -43,9 +43,9 @@ jobs:
 
       - name: Validate manual deployment gate
         env:
-          CONFIRMATION: \${{ inputs.confirmation }}
-          DATABASE_ID_INPUT: \${{ inputs.database_id }}
-          FANTASY_PERSISTENCE_TOKEN: \${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          DATABASE_ID_INPUT: ${{ inputs.database_id }}
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
         run: |
           python - <<'PY'
           import os
@@ -95,8 +95,8 @@ jobs:
       - name: Resolve or intentionally create D1
         id: d1
         env:
-          DATABASE_ID_INPUT: \${{ inputs.database_id }}
-          CREATE_DATABASE_IF_MISSING: \${{ inputs.create_database_if_missing }}
+          DATABASE_ID_INPUT: ${{ inputs.database_id }}
+          CREATE_DATABASE_IF_MISSING: ${{ inputs.create_database_if_missing }}
         run: |
           set -euo pipefail
           INVENTORY="$RUNNER_TEMP/fantasy-hq-d1-inventory.json"
@@ -108,7 +108,7 @@ jobs:
           fi
 
           set +e
-          DATABASE_ID="$(python scripts/resolve_fantasy_hq_remote_d1.py "\${args[@]}")"
+          DATABASE_ID="$(python scripts/resolve_fantasy_hq_remote_d1.py "${args[@]}")"
           status=$?
           set -e
 
@@ -135,7 +135,7 @@ jobs:
       - name: Render fail-closed Wrangler config
         run: |
           python scripts/render_fantasy_hq_wrangler.py \
-            --database-id "\${{ steps.d1.outputs.database_id }}"
+            --database-id "${{ steps.d1.outputs.database_id }}"
           python - <<'PY'
           import json
           from pathlib import Path
@@ -181,7 +181,7 @@ jobs:
       - name: Dry-run and deploy Worker with one secret
         id: deploy
         env:
-          FANTASY_PERSISTENCE_TOKEN: \${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
         run: |
           set -euo pipefail
           CONFIG="workers/fantasy-hq/wrangler.generated.jsonc"
@@ -256,7 +256,7 @@ jobs:
 
       - name: Smoke test public and unauthorized boundaries
         env:
-          WORKER_URL: \${{ steps.deploy.outputs.worker_url }}
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
         run: |
           set -euo pipefail
           curl --fail-with-body --silent --show-error "$WORKER_URL/health" \
@@ -287,16 +287,16 @@ jobs:
 
       - name: Run authenticated read-only runtime handshake
         env:
-          FANTASY_PERSISTENCE_URL: \${{ steps.deploy.outputs.worker_url }}/v1/fantasy/persistence
-          FANTASY_PERSISTENCE_TOKEN: \${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+          FANTASY_PERSISTENCE_URL: ${{ steps.deploy.outputs.worker_url }}/v1/fantasy/persistence
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
         run: |
           python scripts/check_fantasy_hq_runtime_handshake.py \
             > "$RUNNER_TEMP/runtime-handshake.json"
 
       - name: Publish sanitized deployment evidence
         env:
-          WORKER_URL: \${{ steps.deploy.outputs.worker_url }}
-          VERSION_ID: \${{ steps.deploy.outputs.version_id }}
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+          VERSION_ID: ${{ steps.deploy.outputs.version_id }}
         run: |
           python - <<'PY'
           import json
@@ -347,6 +347,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fantasy-hq-shadow-deployment-evidence
-          path: \${{ runner.temp }}/fantasy-hq-shadow-deployment-evidence.json
+          path: ${{ runner.temp }}/fantasy-hq-shadow-deployment-evidence.json
           if-no-files-found: error
           retention-days: 7
