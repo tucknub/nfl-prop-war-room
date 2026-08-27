@@ -1,0 +1,133 @@
+name: Fantasy HQ Live UI QA
+
+on:
+  push:
+    branches:
+      - fantasy-hq-live-ui-qa
+
+jobs:
+  app-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run Fantasy HQ page with live Sleeper account
+        run: |
+          python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+
+          expected_test = (
+              "Franchise Football League · 10 teams · "
+              "In Season · …671360"
+          )
+          expected_real = (
+              "Franchise Football League · 10 teams · "
+              "Pre Draft · …987712"
+          )
+
+          at = AppTest.from_file(
+              "dashboard/pages/11_Fantasy_HQ.py",
+              default_timeout=120,
+          )
+          at.query_params["fh_sleeper"] = "tucknub"
+          at.run()
+
+          if at.exception:
+              raise AssertionError(
+                  "Fantasy HQ page raised on initial live run: "
+                  + " | ".join(str(row.value) for row in at.exception)
+              )
+
+          print(f"TEXT_INPUTS={len(at.text_input)}")
+          print(f"SELECTBOXES={len(at.selectbox)}")
+          for index, select in enumerate(at.selectbox):
+              print(
+                  f"SELECTBOX[{index}] "
+                  f"label={select.label!r} "
+                  f"options={list(select.options)!r}"
+              )
+
+          league_select = next(
+              (
+                  row
+                  for row in at.selectbox
+                  if row.label == "Sleeper league"
+              ),
+              None,
+          )
+          assert league_select is not None, (
+              "Live Fantasy HQ did not render Sleeper league selector"
+          )
+
+          options = list(league_select.options)
+          assert expected_test in options, (
+              f"Converted mock missing from selector: {options!r}"
+          )
+          assert expected_real in options, (
+              f"Real pre-draft league missing from selector: {options!r}"
+          )
+          assert len(options) == 3, (
+              f"Expected all 3 2026 Sleeper leagues, got {options!r}"
+          )
+
+          league_select.select(expected_test)
+          at.run()
+
+          if at.exception:
+              raise AssertionError(
+                  "Fantasy HQ page raised after selecting converted mock: "
+                  + " | ".join(str(row.value) for row in at.exception)
+              )
+
+          visible_text = "\n".join(
+              str(row.value)
+              for collection in (
+                  at.markdown,
+                  at.caption,
+                  at.info,
+                  at.warning,
+                  at.success,
+                  at.error,
+              )
+              for row in collection
+          )
+          assert "Franchise Football League" in visible_text
+          assert "10 teams" in visible_text
+          assert "2026" in visible_text
+
+          tab_labels = [row.label for row in at.tabs]
+          print(f"TABS={tab_labels!r}")
+          for required in (
+              "My roster",
+              "Roster Health",
+              "Lineup Check",
+              "Waiver Watch",
+              "League Activity",
+              "Current matchup",
+              "Opponent Scout",
+              "Team Explorer",
+              "Standings",
+              "League settings",
+              "Cross-league",
+          ):
+              assert required in tab_labels, (
+                  f"Missing Fantasy HQ tab {required!r}: {tab_labels!r}"
+              )
+
+          metrics = [
+              (row.label, row.value)
+              for row in at.metric
+          ]
+          print(f"METRICS={metrics!r}")
+          print("LIVE_UI_QA_RESULT=PASS")
+          PY
