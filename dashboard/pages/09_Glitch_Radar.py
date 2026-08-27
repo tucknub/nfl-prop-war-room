@@ -38,6 +38,7 @@ from glitch_radar_history import (  # noqa: E402
     REAPPEARED,
     UNCHANGED,
     WORSENED,
+    MarketHistoryStore,
     build_market_observations,
     ev_opportunity_key,
     glitch_opportunity_key,
@@ -81,6 +82,11 @@ def _require_owner() -> None:
 @st.cache_data(ttl=600, show_spinner=False)
 def _live_snapshot() -> dict:
     return build_snapshot()
+
+
+@st.cache_resource
+def _market_history_store() -> MarketHistoryStore:
+    return MarketHistoryStore()
 
 
 def _pct(value: object, digits: int = 2) -> str:
@@ -492,14 +498,11 @@ my_books_seen = user_books_seen(books)
 comparison_books = comparison_books_seen(books)
 missing_books = [book for book in USER_BOOKS if book not in my_books_seen]
 
-history_state_key = "glitch_radar_market_history_v1"
 observations = build_market_observations(alerts, evs)
-market_history = update_market_history(
-    st.session_state.get(history_state_key),
+market_history = _market_history_store().update(
     observations,
     fetched_at=str(snapshot.get("fetched_at") or ""),
 )
-st.session_state[history_state_key] = market_history
 
 for alert in alerts:
     alert["_history"] = history_for_key(
@@ -552,8 +555,8 @@ scan_b.metric("Improved", movement_summary["improved"])
 scan_c.metric("Worsened", movement_summary["worsened"])
 scan_d.metric("Disappeared", movement_summary["disappeared"])
 st.caption(
-    "Movement memory compares unique 10-minute/fresh scans in this owner session. "
-    "A Streamlit app reboot resets this in-memory history; durable cross-reboot market history is a later persistence step."
+    "Movement memory compares unique 10-minute/fresh scans across this running owner app, including browser refreshes/new tabs. "
+    "A Streamlit app reboot/deploy resets this in-memory history; durable cross-reboot market history is a later persistence step."
 )
 
 disappeared_rows = market_history.get("disappeared", []) or []
