@@ -57,6 +57,71 @@ The workflow pins Wrangler `4.126.0` for reproducible first-deployment behavior.
 
 The local Wrangler procedure below remains the operator fallback when GitHub-hosted deployment credentials are intentionally not used.
 
+### Two-pass one-league canary workflow
+
+After this change is merged, the first real Fantasy HQ write uses the separate manual workflow:
+
+`.github/workflows/fantasy-hq-single-league-canary.yml`
+
+The repository is public. **Never place a real Sleeper league ID, Sleeper user ID, league display name, or internal league identity into workflow-dispatch inputs, logs, summaries, or public artifacts.** Stable real-league configuration lives only in GitHub Actions secrets:
+
+- `FANTASY_CANARY_LEAGUE_SEASON_ID`
+- `FANTASY_CANARY_PLATFORM_LEAGUE_ID`
+- `FANTASY_CANARY_SEASON`
+- `FANTASY_CANARY_LEAGUE_FAMILY_ID`
+- `FANTASY_CANARY_FAMILY_DISPLAY_NAME`
+- `FANTASY_CANARY_SEASON_DISPLAY_NAME`
+- `FANTASY_CANARY_REGISTRATION_CREATED_AT_MS`
+- `FANTASY_CANARY_CURRENT_USER_ID`
+
+The canary workflow also requires the existing deployment secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `FANTASY_PERSISTENCE_TOKEN`
+
+The only operator inputs are the mode, successful shadow workflow run ID, explicit canary timestamp, and—during execution—the reviewed deterministic sync-run ID plus the exact write confirmation.
+
+The workflow is intentionally **two-pass**.
+
+**Pass 1 — PREVIEW_ONLY**
+
+1. Run **Fantasy HQ Shadow Deploy** from the current `streamlit-cloud-deploy` commit and require it to finish successfully.
+2. Copy that successful shadow workflow run ID.
+3. Run **Fantasy HQ Single-League Canary** with mode `PREVIEW_ONLY`, the shadow run ID, and an explicit `canary_at_ms`.
+4. The workflow downloads the exact immutable shadow evidence artifact using `actions:read`.
+5. It requires the artifact's source run ID and source commit SHA to match the requested shadow run and the current canary workflow commit.
+6. It re-verifies remote D1 is still pristine.
+7. It queries the live Cloudflare Worker deployment and requires exactly the shadow artifact's version ID serving 100% of traffic.
+8. It requires remote Cron Triggers to remain empty and the authenticated runtime handshake to remain READY/read-only.
+9. It validates the private league configuration and builds the deterministic canary plan with no provider or persistence write.
+10. Public preview evidence contains only the season, a one-way league-identity fingerprint, canary timestamp, batch ID, sync-run ID, and snapshot ID. It does not contain the real league/user identifiers.
+11. No fantasy write occurs.
+
+Review the preview's `sync_run_id` before moving on.
+
+**Pass 2 — EXECUTE_ONE_WRITE**
+
+Run the workflow again with:
+
+- the **same** successful shadow run ID;
+- the **same** `canary_at_ms`;
+- mode `EXECUTE_ONE_WRITE`;
+- `expected_sync_run_id` copied exactly from Pass 1;
+- confirmation exactly `RUN_ONE_REAL_FANTASY_WRITE`.
+
+Before the write, the workflow repeats the shadow evidence validation, D1 pristine-state probe, active Worker-version parity check, Cron check, runtime handshake, and deterministic preview. Execution is blocked unless the newly generated sync-run ID exactly matches the operator-reviewed value.
+
+The write then invokes only `scripts/run_fantasy_hq_single_league_canary.py`, which performs the #80 one-league canary and immediate authenticated read-back verification. For the first pristine database, the result must be `ACCEPTED`; `NO_CHANGE` or an existing-final slot is not accepted as proof of a new real canary.
+
+A successful public canary artifact contains only sanitized evidence: the one-way league identity fingerprint, season, logical canary timestamp, deterministic IDs, accepted snapshot ID, content fingerprint, read-back status, shadow run/version identity, zero-cron proof, and `recurring_schedule_enabled=false`.
+
+If execution fails, the workflow uploads only the sanitized canary error JSON and fails the job. **Do not retry automatically.** If the failure indicates that a write may have committed, use authenticated recovery reads before doing anything else.
+
+After a successful first canary, the D1 database is no longer pristine. This workflow's pre-write D1 guard will therefore block a second "first canary" run. Expansion beyond the first league must be a separate reviewed milestone.
+
+Any repository change after the successful shadow deployment changes `GITHUB_SHA`; the canary workflow will reject an older shadow artifact. Re-run the shadow deployment from the new exact commit before attempting another preview.
+
 ## 1. Authenticate and record the tool version
 
 Run Wrangler from a trusted local shell and record the exact version used in the deployment log.

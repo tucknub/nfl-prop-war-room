@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from hashlib import sha256
 import os
 from typing import Any, Mapping
 
-from .persistence import LeagueSeasonIdentity
+from .persistence import LeagueSeasonIdentity, canonical_json
 from .persistence_http import (
     FantasyPersistenceClientConfig,
     FantasyPersistenceHttpClient,
@@ -17,7 +18,10 @@ from .runtime_entrypoint import (
     FantasyScheduledRuntimeResult,
     run_handshake_gated_scheduled_sleeper_sync,
 )
-from .scheduled_sync import SleeperScheduledLeague
+from .scheduled_sync import (
+    SleeperScheduledLeague,
+    build_sleeper_scheduled_sync_plan,
+)
 from .sleeper import SleeperClient
 from .sleeper_multi_persistence import SleeperMultiPersistenceReader
 from .sleeper_persistence import (
@@ -47,14 +51,17 @@ class FantasySingleLeagueCanaryConfig:
     def from_env(
         cls,
         environ: Mapping[str, str] | None = None,
+        *,
+        require_confirmation: bool = True,
     ) -> "FantasySingleLeagueCanaryConfig":
         env = os.environ if environ is None else environ
 
-        confirmation = _required_env_text(env, "FANTASY_CANARY_CONFIRM")
-        if confirmation != FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION:
-            raise ValueError(
-                "FANTASY_CANARY_CONFIRM must explicitly authorize one real fantasy write"
-            )
+        if require_confirmation:
+            confirmation = _required_env_text(env, "FANTASY_CANARY_CONFIRM")
+            if confirmation != FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION:
+                raise ValueError(
+                    "FANTASY_CANARY_CONFIRM must explicitly authorize one real fantasy write"
+                )
 
         season = _required_env_text(env, "FANTASY_CANARY_SEASON")
         identity = LeagueSeasonIdentity(
@@ -306,6 +313,48 @@ def run_single_league_persistence_canary(
         content_fingerprint=expected_fingerprint,
         mode=run_result.mode,
     )
+
+
+def preview_single_league_persistence_canary_from_env(
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Validate and summarize the exact deterministic canary plan without I/O."""
+
+    config = FantasySingleLeagueCanaryConfig.from_env(
+        environ,
+        require_confirmation=False,
+    )
+    tagged_league = _canary_league(config.league)
+    plan = build_sleeper_scheduled_sync_plan(
+        (tagged_league,),
+        scheduled_at_ms=config.canary_at_ms,
+        schedule_name=FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME,
+    )
+    spec = plan.specs[0]
+    identity_fingerprint = sha256(
+        canonical_json(
+            {
+                "league_season_id": spec.identity.league_season_id,
+                "platform": spec.identity.platform,
+                "platform_league_id": spec.identity.platform_league_id,
+                "season": spec.identity.season,
+                "league_family_id": spec.league_family_id,
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "ready": True,
+        "canary_version": FANTASY_SINGLE_LEAGUE_CANARY_VERSION,
+        "platform": spec.identity.platform,
+        "season": spec.identity.season,
+        "league_identity_fingerprint": identity_fingerprint,
+        "canary_at_ms": config.canary_at_ms,
+        "batch_id": plan.batch_id,
+        "sync_run_id": spec.sync_run_id,
+        "snapshot_id": spec.snapshot_id,
+        "execution_mode": "CANARY",
+    }
 
 
 def run_single_league_persistence_canary_from_env(

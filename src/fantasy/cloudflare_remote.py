@@ -26,6 +26,67 @@ class FantasyRemoteD1NotFound(FantasyRemoteCloudflareError):
 
 
 @dataclass(frozen=True)
+class FantasyShadowDeploymentEvidence:
+    database_id: str
+    worker_url: str
+    version_id: str
+    source_run_id: int
+    source_commit_sha: str
+    source_ref: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "database_id",
+            canonical_d1_database_id(self.database_id),
+        )
+        object.__setattr__(
+            self,
+            "worker_url",
+            _validated_workers_dev_url(self.worker_url),
+        )
+        if not _canonical_text(self.version_id):
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment version ID must be canonical text"
+            )
+        if isinstance(self.source_run_id, bool) or not isinstance(self.source_run_id, int) or self.source_run_id <= 0:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source run ID must be a positive integer"
+            )
+        if not isinstance(self.source_commit_sha, str) or len(self.source_commit_sha) != 40:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source commit SHA must be 40 hexadecimal characters"
+            )
+        try:
+            int(self.source_commit_sha, 16)
+        except ValueError as exc:
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment source commit SHA must be hexadecimal"
+            ) from exc
+        if self.source_ref != "streamlit-cloud-deploy":
+            raise FantasyRemoteCloudflareError(
+                "shadow deployment evidence must originate from streamlit-cloud-deploy"
+            )
+
+    def safe_summary(self) -> dict[str, Any]:
+        return {
+            "ready": True,
+            "deployment_mode": "SHADOW",
+            "worker_name": EXPECTED_WORKER_NAME,
+            "worker_url": self.worker_url,
+            "version_id": self.version_id,
+            "database_id": self.database_id,
+            "source_run_id": self.source_run_id,
+            "source_commit_sha": self.source_commit_sha,
+            "source_ref": self.source_ref,
+            "cron_count": 0,
+            "d1_schema_ready": True,
+            "d1_empty_persistence_state": True,
+            "real_fantasy_write_performed": False,
+        }
+
+
+@dataclass(frozen=True)
 class FantasyRemoteD1Selection:
     database_id: str
     database_name: str = EXPECTED_D1_DATABASE_NAME
@@ -71,6 +132,102 @@ class FantasyRemoteDeployResult:
             "schedule_mode": "SHADOW",
             "cron_count": 0,
         }
+
+
+def validate_fantasy_hq_shadow_deployment_evidence(
+    payload: Any,
+    *,
+    expected_run_id: int | None = None,
+    expected_commit_sha: str | None = None,
+) -> FantasyShadowDeploymentEvidence:
+    """Validate the exact sanitized evidence required before the first real write."""
+
+    if not isinstance(payload, Mapping):
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence must be a JSON object"
+        )
+
+    expected_keys = {
+        "ready",
+        "deployment_mode",
+        "worker_name",
+        "worker_url",
+        "version_id",
+        "database_id",
+        "source_run_id",
+        "source_commit_sha",
+        "source_ref",
+        "cron_count",
+        "d1_schema_ready",
+        "d1_empty_persistence_state",
+        "health",
+        "runtime_handshake",
+        "real_fantasy_write_performed",
+    }
+    if set(payload) != expected_keys:
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence has an unexpected shape"
+        )
+
+    expected_scalars = {
+        "ready": True,
+        "deployment_mode": "SHADOW",
+        "worker_name": EXPECTED_WORKER_NAME,
+        "cron_count": 0,
+        "d1_schema_ready": True,
+        "d1_empty_persistence_state": True,
+        "real_fantasy_write_performed": False,
+    }
+    for key, expected in expected_scalars.items():
+        if payload.get(key) != expected:
+            raise FantasyRemoteCloudflareError(
+                f"shadow deployment evidence field {key} is not ready"
+            )
+
+    if payload.get("health") != {
+        "ok": True,
+        "status": "ok",
+        "protocol_version": 1,
+    }:
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment health evidence does not match protocol v1"
+        )
+
+    handshake = payload.get("runtime_handshake")
+    expected_handshake = {
+        "authenticated_read_ready": True,
+        "handshake_version": 1,
+        "health_ready": True,
+        "probe_absent": True,
+        "protocol_version": 1,
+        "ready": True,
+        "write_enabled": False,
+    }
+    if handshake != expected_handshake:
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment runtime handshake evidence is not READY/read-only"
+        )
+
+    evidence = FantasyShadowDeploymentEvidence(
+        database_id=payload.get("database_id"),
+        worker_url=payload.get("worker_url"),
+        version_id=payload.get("version_id"),
+        source_run_id=payload.get("source_run_id"),
+        source_commit_sha=payload.get("source_commit_sha"),
+        source_ref=payload.get("source_ref"),
+    )
+    if expected_run_id is not None and evidence.source_run_id != expected_run_id:
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence run ID does not match requested workflow run"
+        )
+    if (
+        expected_commit_sha is not None
+        and evidence.source_commit_sha != expected_commit_sha
+    ):
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence commit does not match canary workflow commit"
+        )
+    return evidence
 
 
 def select_fantasy_hq_remote_d1(

@@ -297,6 +297,7 @@ jobs:
         env:
           WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
           VERSION_ID: ${{ steps.deploy.outputs.version_id }}
+          DATABASE_ID: ${{ steps.d1.outputs.database_id }}
         run: |
           python - <<'PY'
           import json
@@ -319,6 +320,10 @@ jobs:
               "worker_name": "propwar-fantasy-hq",
               "worker_url": os.environ["WORKER_URL"],
               "version_id": os.environ["VERSION_ID"],
+              "database_id": os.environ["DATABASE_ID"],
+              "source_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "source_commit_sha": os.environ["GITHUB_SHA"],
+              "source_ref": os.environ["GITHUB_REF_NAME"],
               "cron_count": 0,
               "d1_schema_ready": True,
               "d1_empty_persistence_state": True,
