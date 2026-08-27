@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from dashboard.role_change import (
     INSUFFICIENT,
@@ -53,7 +54,7 @@ def test_role_change_detector_calls_consistent_large_gain_a_surge():
 
     assert signal.classification == SURGE
     assert signal.trend == STRONGLY_RISING
-    assert signal.shift_pp == 11.0
+    assert signal.shift_pp == pytest.approx(11.0)
     assert signal.rank_label_last8 == "WR3"
     assert signal.rank_label_last2 == "WR2"
     assert signal.confidence == "HIGH"
