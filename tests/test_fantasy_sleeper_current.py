@@ -18,6 +18,7 @@ from src.fantasy.sleeper_current import (
     SleeperNflState,
     UnsafeSleeperCurrentSnapshot,
     build_current_sleeper_snapshot,
+    fantasy_regular_week,
     normalize_sleeper_nfl_state,
 )
 
@@ -157,6 +158,34 @@ def test_normalize_nfl_state_and_client_use_public_state_endpoint():
     assert state == normalize_sleeper_nfl_state(payload)
     assert state.leg == 3
     assert seen == ["/v1/state/nfl"]
+
+
+def test_fantasy_regular_week_ignores_preseason_display_week():
+    preseason = SleeperNflState(
+        season="2026",
+        league_season="2026",
+        season_type="pre",
+        week=3,
+        leg=0,
+        display_week=3,
+        season_start_date="2026-09-10",
+        previous_season="2025",
+        league_create_season="2026",
+    )
+    regular = SleeperNflState(
+        season="2026",
+        league_season="2026",
+        season_type="regular",
+        week=99,
+        leg=1,
+        display_week=99,
+        season_start_date="2026-09-10",
+        previous_season="2025",
+        league_create_season="2026",
+    )
+
+    assert fantasy_regular_week(preseason) == 0
+    assert fantasy_regular_week(regular) == 1
 
 
 def test_pre_draft_snapshot_fetches_no_transaction_rounds():
