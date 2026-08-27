@@ -92,13 +92,13 @@ SLEEPER_USERNAME_SESSION_KEY = "fantasy_hq_sleeper_username"
 SLEEPER_USERNAME_QUERY_KEY = "fh_sleeper"
 
 
-@st.cache_data(ttl=300, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=300, show_spinner=False)
 def _resolve_sleeper_user(username_or_id: str) -> dict[str, Any]:
     with SleeperClient() as client:
         return dict(client.fetch_user(username_or_id))
 
 
-@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=120, show_spinner=False)
 def _load_sleeper_leagues(user_id: str, season: str) -> tuple[dict[str, Any], ...]:
     with SleeperClient() as client:
         return tuple(
@@ -107,7 +107,7 @@ def _load_sleeper_leagues(user_id: str, season: str) -> tuple[dict[str, Any], ..
         )
 
 
-@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=120, show_spinner=False)
 def _load_sleeper_league(league_id: str, user_id: str):
     with SleeperClient() as client:
         return client.fetch_normalized_league(
@@ -116,7 +116,7 @@ def _load_sleeper_league(league_id: str, user_id: str):
         )
 
 
-@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=120, show_spinner=False)
 def _load_all_sleeper_states(
     user_id: str,
     league_ids: tuple[str, ...],
@@ -131,7 +131,7 @@ def _load_all_sleeper_states(
         )
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=60, show_spinner=False)
 def _load_free_agent_pool(
     user_id: str,
     selected_league_id: str,
@@ -156,7 +156,7 @@ def _load_free_agent_pool(
     )
 
 
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
 def _load_player_catalog() -> dict[str, dict[str, Any]]:
     with SleeperClient() as client:
         return {
@@ -165,7 +165,7 @@ def _load_player_catalog() -> dict[str, dict[str, Any]]:
         }
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=60, show_spinner=False)
 def _load_nfl_state():
     with SleeperClient() as client:
         return client.fetch_nfl_state()
@@ -185,7 +185,7 @@ def _fantasy_regular_week(nfl_state: Any) -> int:
     return leg if 1 <= leg <= 18 else 0
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=60, show_spinner=False)
 def _load_matchups(league_id: str, week: int):
     if week < 1:
         return ()
@@ -193,7 +193,7 @@ def _load_matchups(league_id: str, week: int):
         return client.fetch_matchups(league_id, week)
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=60, show_spinner=False)
 def _load_transactions(league_id: str, week: int):
     if week < 1:
         return ()
@@ -211,7 +211,7 @@ def _format_activity_time(timestamp_ms: int | None) -> str:
     return value.strftime("%b %d · %I:%M %p ET").replace(" 0", " ")
 
 
-@st.cache_data(ttl=5 * 60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=5 * 60, show_spinner=False)
 def _load_sleeper_trending_adds(
     lookback_hours: int,
     limit: int = 100,
@@ -224,7 +224,7 @@ def _load_sleeper_trending_adds(
         )
 
 
-@st.cache_data(ttl=5 * 60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=5 * 60, show_spinner=False)
 def _load_sleeper_trending_drops(
     lookback_hours: int,
     limit: int = 100,
@@ -237,7 +237,7 @@ def _load_sleeper_trending_drops(
         )
 
 
-@st.cache_data(ttl=5 * 60, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=5 * 60, show_spinner=False)
 def _load_weekly_action_feed(
     user_id: str,
     league_ids: tuple[str, ...],
@@ -1525,2448 +1525,2408 @@ def _render_sleeper() -> None:
             "Standings",
             "League settings",
             "Cross-league",
-        ],
-        key="fantasy_hq_league_tabs",
-        on_change="rerun",
+        ]
     )
 
-    lineup = None
-    if waiver_tab.open and not pre_draft_mode:
-        waiver_lineup_matchup = None
-        waiver_week = _fantasy_regular_week(nfl_state)
-        if waiver_week >= 1 and my_roster is not None:
-            try:
-                waiver_matchups = _load_matchups(league_id, waiver_week)
-                waiver_lineup_matchup = next(
-                    (
-                        row
-                        for row in waiver_matchups
-                        if row.platform_roster_id
-                        == my_roster.platform_roster_id
-                    ),
-                    None,
-                )
-            except Exception:
-                waiver_lineup_matchup = None
-        try:
-            lineup = build_lineup_check(
-                league,
-                all_catalog or _load_player_catalog(),
-                matchup=waiver_lineup_matchup,
+    with roster_tab:
+        if not my_roster or not my_roster.players:
+            st.info(
+                "Your roster is not populated yet. "
+                "This is normal before the draft."
             )
-        except Exception:
-            lineup = None
+        else:
+            with st.spinner("Loading player names..."):
+                catalog = _load_player_catalog()
+            starter_set = set(my_roster.starters)
+            reserve_set = set(my_roster.reserve)
+            taxi_set = set(my_roster.taxi)
+            rows = [
+                _sleeper_player_row(
+                    player_id,
+                    starter=player_id in starter_set,
+                    reserve=reserve_set,
+                    taxi=taxi_set,
+                    catalog=catalog,
+                )
+                for player_id in my_roster.players
+            ]
+            role_order = {"Starter": 0, "Bench": 1, "IR": 2, "Taxi": 3}
+            rows.sort(
+                key=lambda row: (
+                    role_order.get(row["Fantasy role"], 9),
+                    row["Pos"],
+                    row["Player"],
+                )
+            )
+            st.dataframe(
+                pd.DataFrame(rows),
+                hide_index=True,
+                width="stretch",
+            )
+            st.caption(
+                f"{len(starter_set)} starters · "
+                f"{max(0, len(my_roster.players) - len(starter_set))} non-starters"
+            )
 
-    if roster_tab.open:
-        with roster_tab:
-            if not my_roster or not my_roster.players:
+    with health_tab:
+        with st.spinner("Checking roster health..."):
+            health_catalog = _load_player_catalog()
+            health = analyze_roster_health(
+                league,
+                health_catalog,
+            )
+
+        health_a, health_b, health_c, health_d = st.columns(4)
+        status_label = {
+            READY: "Ready",
+            WATCH: "Watch",
+            NEEDS_ATTENTION: "Needs attention",
+            PRE_DRAFT: "Pre-draft",
+        }.get(health.status, health.status.replace("_", " ").title())
+        health_a.metric("Roster health", status_label)
+        health_b.metric("Rostered", health.roster_size)
+        health_c.metric(
+            "Starter slots filled",
+            f"{health.filled_starter_slots}/{health.starter_slots}",
+        )
+        health_d.metric("Open starters", health.open_starter_slots)
+
+        if health.status == READY:
+            st.success(
+                "No factual roster-construction or player-status alerts are "
+                "showing right now."
+            )
+        elif health.status == PRE_DRAFT:
+            st.info(
+                "This roster is not populated yet. Recheck after the draft."
+            )
+        elif health.status == NEEDS_ATTENTION:
+            st.error(
+                "At least one roster-construction or player-availability issue "
+                "needs attention."
+            )
+        else:
+            st.warning(
+                "The roster is usable, but at least one depth, lineup, or "
+                "player-status item is worth watching."
+            )
+
+        if health.position_counts:
+            position_rows = [
+                {"Position": position, "Rostered": count}
+                for position, count in health.position_counts.items()
+            ]
+            st.markdown("##### Position depth")
+            st.dataframe(
+                pd.DataFrame(position_rows),
+                hide_index=True,
+                width="stretch",
+            )
+
+        st.markdown("##### Alerts")
+        if not health.issues:
+            st.caption("No current alerts.")
+        else:
+            issue_rows = [
+                {
+                    "Level": row.severity,
+                    "Area": row.position or "Roster",
+                    "Alert": row.message,
+                }
+                for row in health.issues
+            ]
+            st.dataframe(
+                pd.DataFrame(issue_rows),
+                hide_index=True,
+                width="stretch",
+            )
+
+        st.caption(
+            "Roster Health uses league starter requirements and Sleeper's "
+            "current roster/player status. It is not a player-ranking model."
+        )
+
+    with lineup_tab:
+        st.markdown("#### Lineup Check")
+        st.caption(
+            "Checks your actual Sleeper starter slots for open spots, "
+            "player-status risk, and healthy bench players eligible for each slot."
+        )
+
+        if pre_draft_mode:
+            lineup = None
+            st.info(
+                "Pre-draft mode: Lineup Check will activate after Sleeper "
+                "populates your drafted roster. Configured starter slots are "
+                "not treated as lineup mistakes before the draft."
+            )
+            st.caption(
+                f"This league has {len(league.rules.starter_positions)} "
+                "configured starter slots."
+            )
+        else:
+            current_week = _fantasy_regular_week(nfl_state)
+            lineup_matchup = None
+            lineup_matchup_error: str | None = None
+            if current_week >= 1 and my_roster is not None:
+                try:
+                    current_matchups = _load_matchups(league_id, current_week)
+                    lineup_matchup = next(
+                        (
+                            row
+                            for row in current_matchups
+                            if row.platform_roster_id
+                            == my_roster.platform_roster_id
+                        ),
+                        None,
+                    )
+                except Exception as exc:
+                    lineup_matchup_error = str(exc)
+
+            try:
+                lineup_catalog = all_catalog or _load_player_catalog()
+                lineup = build_lineup_check(
+                    league,
+                    lineup_catalog,
+                    matchup=lineup_matchup,
+                )
+            except Exception as exc:
+                st.warning("Lineup Check could not be built.")
+                st.caption(str(exc))
+                lineup = None
+
+            if lineup is None:
                 st.info(
-                    "Your roster is not populated yet. "
-                    "This is normal before the draft."
+                    "Your Sleeper roster is not available yet. "
+                    "Lineup Check will populate after the roster exists."
                 )
             else:
-                with st.spinner("Loading player names..."):
-                    catalog = _load_player_catalog()
-                starter_set = set(my_roster.starters)
-                reserve_set = set(my_roster.reserve)
-                taxi_set = set(my_roster.taxi)
-                rows = [
-                    _sleeper_player_row(
-                        player_id,
-                        starter=player_id in starter_set,
-                        reserve=reserve_set,
-                        taxi=taxi_set,
-                        catalog=catalog,
+                lineup_a, lineup_b, lineup_c, lineup_d = st.columns(4)
+                lineup_a.metric(
+                    "Starters filled",
+                    f"{lineup.filled_starter_slots}/{lineup.starter_slots}",
+                )
+                lineup_b.metric("Needs action", lineup.needs_action_count)
+                lineup_c.metric("Watch", lineup.watch_count)
+                lineup_d.metric("Healthy bench", lineup.healthy_bench_count)
+
+                if lineup.needs_action:
+                    st.error(
+                        "At least one starter slot is open, ineligible, "
+                        "or occupied by a player with a serious status."
                     )
-                    for player_id in my_roster.players
-                ]
-                role_order = {"Starter": 0, "Bench": 1, "IR": 2, "Taxi": 3}
-                rows.sort(
-                    key=lambda row: (
-                        role_order.get(row["Fantasy role"], 9),
-                        row["Pos"],
-                        row["Player"],
+                elif lineup.needs_watch:
+                    st.warning(
+                        "No forced lineup issue is showing, but at least one "
+                        "Questionable starter is worth monitoring."
+                    )
+                elif lineup.starter_slots:
+                    st.success(
+                        "No factual starter-slot or player-status issue is showing."
+                    )
+                else:
+                    st.info("This league has no active starter slots configured.")
+
+                lineup_rows = []
+                state_labels = {
+                    LINEUP_NEEDS_ACTION: "ACTION",
+                    WATCH: "WATCH",
+                    READY: "READY",
+                }
+                for row in lineup.slots:
+                    starter = row.starter
+                    alternatives = tuple(row.eligible_alternatives)
+                    alternative_labels = [
+                        f"{player.name} · {player.position} · {player.status}"
+                        for player in alternatives[:8]
+                    ]
+                    if len(alternatives) > 8:
+                        alternative_labels.append(
+                            f"+{len(alternatives) - 8} more"
+                        )
+                    lineup_rows.append(
+                        {
+                            "Slot": row.slot,
+                            "Starter": starter.name if starter else "OPEN",
+                            "Pos": starter.position if starter else "—",
+                            "NFL": starter.nfl_team if starter else "—",
+                            "Status": starter.status if starter else "Open",
+                            "Check": state_labels.get(row.state, row.state),
+                            "Why": row.reason,
+                            "Eligible bench options": (
+                                " | ".join(alternative_labels) or "—"
+                            ),
+                        }
+                    )
+
+                if lineup_rows:
+                    st.dataframe(
+                        pd.DataFrame(lineup_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+                source = (
+                    f"Week {current_week} matchup lineup"
+                    if lineup.used_matchup_lineup and current_week >= 1
+                    else "Current Sleeper roster starters"
+                )
+                st.caption(f"Lineup source: {source}.")
+                if lineup_matchup_error:
+                    st.caption(
+                        "Current-week matchup data was unavailable, so Lineup "
+                        "Check fell back to the roster starter list."
+                    )
+
+                st.caption(
+                    "Eligible bench options above are eligibility/status only. "
+                    "The market-assisted layer below adds current sportsbook "
+                    "context when sufficient coverage exists."
+                )
+
+                st.markdown("##### Market-Assisted Start/Sit")
+                st.caption(
+                    "Compares each current starter with eligible bench options "
+                    "using this league's scoring and PropWar's shared consensus "
+                    "prop snapshot. A SWAP verdict requires FULL/PARTIAL market "
+                    "coverage for both players and at least a 1.00-point edge."
+                )
+
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Market-assisted Start/Sit is unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        market_lineup_snapshot = shared_prop_snapshot(parlay_key)
+                        market_start_sit = build_market_start_sit_board(
+                            lineup,
+                            league.rules.scoring_settings,
+                            lineup_catalog,
+                            market_lineup_snapshot.get("rows", ()),
+                        )
+                    except Exception as exc:
+                        st.warning("Market-assisted Start/Sit could not be built.")
+                        st.caption(str(exc))
+                        market_start_sit = None
+
+                    if market_start_sit is not None:
+                        ms_a, ms_b = st.columns(2)
+                        ms_a.metric(
+                            "Market lineup actions",
+                            market_start_sit.actionable_count,
+                        )
+                        ms_b.metric("Suggested swaps", market_start_sit.swap_count)
+
+                        market_lineup_rows = []
+                        lineup_slot_by_index = {
+                            row.slot_index: row
+                            for row in lineup.slots
+                        }
+                        for advice in market_start_sit.slots:
+                            starter_market = advice.starter
+                            bench_market = advice.best_bench
+                            lineup_slot = lineup_slot_by_index.get(
+                                advice.slot_index
+                            )
+                            starter_fact = (
+                                lineup_slot.starter
+                                if lineup_slot is not None
+                                else None
+                            )
+                            if starter_market is not None:
+                                starter_name = starter_market.name
+                                starter_coverage = starter_market.coverage
+                            elif starter_fact is not None:
+                                starter_name = starter_fact.name
+                                starter_coverage = (
+                                    "UNSUPPORTED"
+                                    if starter_fact.position in {"K", "DEF"}
+                                    else "MISSING"
+                                )
+                            else:
+                                starter_name = "OPEN"
+                                starter_coverage = "—"
+
+                            market_lineup_rows.append(
+                                {
+                                    "Slot": advice.slot,
+                                    "Starter": starter_name,
+                                    "Starter baseline": (
+                                        round(starter_market.fantasy_points, 2)
+                                        if starter_market
+                                        else "—"
+                                    ),
+                                    "Starter coverage": starter_coverage,
+                                    "Best bench": (
+                                        bench_market.name
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Bench baseline": (
+                                        round(bench_market.fantasy_points, 2)
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Bench coverage": (
+                                        bench_market.coverage
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Market edge": (
+                                        round(advice.edge_points, 2)
+                                        if advice.edge_points is not None
+                                        else "—"
+                                    ),
+                                    "Verdict": advice.verdict,
+                                    "Why": advice.reason,
+                                }
+                            )
+
+                        if market_lineup_rows:
+                            st.dataframe(
+                                pd.DataFrame(market_lineup_rows),
+                                hide_index=True,
+                                width="stretch",
+                            )
+
+                        if market_start_sit.swap_count:
+                            st.warning(
+                                f"{market_start_sit.swap_count} starter slot"
+                                f"{'s have' if market_start_sit.swap_count != 1 else ' has'} "
+                                "an eligible bench option with at least a "
+                                "1.00-point market-baseline advantage."
+                            )
+                        elif market_start_sit.actionable_count:
+                            st.info(
+                                "No covered starter-to-bench swap cleared the "
+                                "1.00-point threshold, but at least one open "
+                                "slot has a covered fill option."
+                            )
+                        else:
+                            st.success(
+                                "No covered starter-to-bench market swap clears "
+                                "the 1.00-point threshold right now."
+                            )
+
+                        st.caption(
+                            "This is market-assisted decision support, not a "
+                            "guaranteed projection. THIN/missing coverage never "
+                            "creates a SWAP verdict, and current injury/status "
+                            "alerts from Lineup Check still matter."
+                        )
+
+    with waiver_tab:
+        st.markdown("#### Waiver Watch")
+        st.caption(
+            "Sleeper's trending-add activity filtered to players who are "
+            "actually available in this league."
+        )
+
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: Waiver Watch, Roster Need Matches, and the "
+                "live free-agent pool will activate after Sleeper populates "
+                "roster ownership from the draft."
+            )
+            st.caption(
+                "No ownership or availability warnings are shown before "
+                "there is a real roster pool to evaluate."
+            )
+        else:
+            lookback_hours = st.selectbox(
+                "Trending window",
+                (24, 48, 72),
+                format_func=lambda hours: f"Last {hours} hours",
+                key="fantasy_hq_waiver_lookback",
+            )
+            all_league_ids = tuple(
+                str(row["league_id"])
+                for row in leagues
+                if str(row.get("league_id") or "").strip()
+            )
+            try:
+                with st.spinner("Building live Waiver Watch..."):
+                    waiver_states = _load_all_sleeper_states(
+                        str(sleeper_user["user_id"]),
+                        all_league_ids,
+                    )
+                    waiver_catalog = _load_player_catalog()
+                    trending_adds = _load_sleeper_trending_adds(
+                        int(lookback_hours),
+                        100,
+                    )
+                    waiver_candidates = build_sleeper_waiver_watch(
+                        waiver_states,
+                        selected_league_id=league_id,
+                        trends=trending_adds,
+                        player_catalog=waiver_catalog,
+                    )
+            except Exception as exc:
+                st.warning("Waiver Watch could not be loaded.")
+                st.caption(str(exc))
+                waiver_candidates = ()
+                trending_adds = ()
+
+            if waiver_candidates:
+                positions = tuple(
+                    sorted(
+                        {
+                            row.position
+                            for row in waiver_candidates
+                            if row.position and row.position != "—"
+                        }
                     )
                 )
+                default_positions = tuple(
+                    position
+                    for position in ("QB", "RB", "WR", "TE", "DEF", "K")
+                    if position in positions
+                )
+                selected_positions = st.multiselect(
+                    "Positions",
+                    positions,
+                    default=default_positions or positions,
+                    key="fantasy_hq_waiver_positions",
+                )
+                filtered = tuple(
+                    row
+                    for row in waiver_candidates
+                    if not selected_positions or row.position in selected_positions
+                )
+
+                waiver_a, waiver_b, waiver_c = st.columns(3)
+                waiver_a.metric("Trending adds scanned", len(trending_adds))
+                waiver_b.metric("Available here", len(waiver_candidates))
+                waiver_c.metric(
+                    "I roster elsewhere",
+                    sum(1 for row in waiver_candidates if row.mine_elsewhere),
+                )
+
+                rows = []
+                for candidate in filtered[:75]:
+                    raw_status = str(candidate.injury_status or "Active")
+                    normalized_status = raw_status.replace("_", " ").title()
+                    rows.append(
+                        {
+                            "Player": candidate.player_name,
+                            "Pos": candidate.position,
+                            "NFL": candidate.nfl_team,
+                            "Sleeper adds": candidate.trend_count,
+                            "Status": normalized_status,
+                            "I roster elsewhere": (
+                                " · ".join(candidate.mine_elsewhere) or "—"
+                            ),
+                            "Owned elsewhere": (
+                                " · ".join(candidate.owned_elsewhere) or "—"
+                            ),
+                        }
+                    )
+
                 st.dataframe(
                     pd.DataFrame(rows),
                     hide_index=True,
                     width="stretch",
                 )
                 st.caption(
-                    f"{len(starter_set)} starters · "
-                    f"{max(0, len(my_roster.players) - len(starter_set))} non-starters"
+                    "Higher add counts mean more Sleeper managers added the player "
+                    "during the selected window; this is activity, not a PropWar "
+                    "player ranking."
                 )
-    
-    if health_tab.open:
-        with health_tab:
-            with st.spinner("Checking roster health..."):
-                health_catalog = _load_player_catalog()
-                health = analyze_roster_health(
-                    league,
-                    health_catalog,
-                )
-    
-            health_a, health_b, health_c, health_d = st.columns(4)
-            status_label = {
-                READY: "Ready",
-                WATCH: "Watch",
-                NEEDS_ATTENTION: "Needs attention",
-                PRE_DRAFT: "Pre-draft",
-            }.get(health.status, health.status.replace("_", " ").title())
-            health_a.metric("Roster health", status_label)
-            health_b.metric("Rostered", health.roster_size)
-            health_c.metric(
-                "Starter slots filled",
-                f"{health.filled_starter_slots}/{health.starter_slots}",
-            )
-            health_d.metric("Open starters", health.open_starter_slots)
-    
-            if health.status == READY:
-                st.success(
-                    "No factual roster-construction or player-status alerts are "
-                    "showing right now."
-                )
-            elif health.status == PRE_DRAFT:
+            elif trending_adds:
                 st.info(
-                    "This roster is not populated yet. Recheck after the draft."
+                    "None of Sleeper's current trending adds are available in this "
+                    "league."
                 )
-            elif health.status == NEEDS_ATTENTION:
-                st.error(
-                    "At least one roster-construction or player-availability issue "
-                    "needs attention."
-                )
-            else:
-                st.warning(
-                    "The roster is usable, but at least one depth, lineup, or "
-                    "player-status item is worth watching."
-                )
-    
-            if health.position_counts:
-                position_rows = [
-                    {"Position": position, "Rostered": count}
-                    for position, count in health.position_counts.items()
-                ]
-                st.markdown("##### Position depth")
-                st.dataframe(
-                    pd.DataFrame(position_rows),
-                    hide_index=True,
-                    width="stretch",
-                )
-    
-            st.markdown("##### Alerts")
-            if not health.issues:
-                st.caption("No current alerts.")
-            else:
-                issue_rows = [
-                    {
-                        "Level": row.severity,
-                        "Area": row.position or "Roster",
-                        "Alert": row.message,
-                    }
-                    for row in health.issues
-                ]
-                st.dataframe(
-                    pd.DataFrame(issue_rows),
-                    hide_index=True,
-                    width="stretch",
-                )
-    
+
+            st.markdown("##### Roster Need Matches")
             st.caption(
-                "Roster Health uses league starter requirements and Sleeper's "
-                "current roster/player status. It is not a player-ranking model."
+                "Connects your current Lineup Check issues to players who are "
+                "actually available in this league."
             )
-    
-    if lineup_tab.open:
-        with lineup_tab:
-            st.markdown("#### Lineup Check")
-            st.caption(
-                "Checks your actual Sleeper starter slots for open spots, "
-                "player-status risk, and healthy bench players eligible for each slot."
-            )
-    
-            if pre_draft_mode:
-                lineup = None
+
+            if lineup is None:
                 st.info(
-                    "Pre-draft mode: Lineup Check will activate after Sleeper "
-                    "populates your drafted roster. Configured starter slots are "
-                    "not treated as lineup mistakes before the draft."
-                )
-                st.caption(
-                    f"This league has {len(league.rules.starter_positions)} "
-                    "configured starter slots."
+                    "Roster Need Matches will populate after Lineup Check can "
+                    "identify your current starter slots."
                 )
             else:
-                current_week = _fantasy_regular_week(nfl_state)
-                lineup_matchup = None
-                lineup_matchup_error: str | None = None
-                if current_week >= 1 and my_roster is not None:
-                    try:
-                        current_matchups = _load_matchups(league_id, current_week)
-                        lineup_matchup = next(
-                            (
-                                row
-                                for row in current_matchups
-                                if row.platform_roster_id
-                                == my_roster.platform_roster_id
-                            ),
-                            None,
-                        )
-                    except Exception as exc:
-                        lineup_matchup_error = str(exc)
-    
                 try:
-                    lineup_catalog = all_catalog or _load_player_catalog()
-                    lineup = build_lineup_check(
+                    need_board = build_roster_need_waiver_board(
                         league,
-                        lineup_catalog,
-                        matchup=lineup_matchup,
+                        lineup,
+                        all_catalog or _load_player_catalog(),
+                        all_leagues=(all_states or (league,)),
+                        trends=trending_adds,
+                        limit=75,
                     )
                 except Exception as exc:
-                    st.warning("Lineup Check could not be built.")
+                    st.warning("Roster Need Matches could not be built.")
                     st.caption(str(exc))
-                    lineup = None
-    
-                if lineup is None:
-                    st.info(
-                        "Your Sleeper roster is not available yet. "
-                        "Lineup Check will populate after the roster exists."
+                    need_board = None
+
+                if need_board is not None:
+                    need_a, need_b, need_c, need_d = st.columns(4)
+                    need_a.metric("Action slots", need_board.action_need_count)
+                    need_b.metric("Watch slots", need_board.watch_need_count)
+                    need_c.metric("Available fits", len(need_board.matches))
+                    need_d.metric(
+                        "I roster elsewhere",
+                        need_board.familiar_match_count,
                     )
-                else:
-                    lineup_a, lineup_b, lineup_c, lineup_d = st.columns(4)
-                    lineup_a.metric(
-                        "Starters filled",
-                        f"{lineup.filled_starter_slots}/{lineup.starter_slots}",
-                    )
-                    lineup_b.metric("Needs action", lineup.needs_action_count)
-                    lineup_c.metric("Watch", lineup.watch_count)
-                    lineup_d.metric("Healthy bench", lineup.healthy_bench_count)
-    
-                    if lineup.needs_action:
-                        st.error(
-                            "At least one starter slot is open, ineligible, "
-                            "or occupied by a player with a serious status."
-                        )
-                    elif lineup.needs_watch:
-                        st.warning(
-                            "No forced lineup issue is showing, but at least one "
-                            "Questionable starter is worth monitoring."
-                        )
-                    elif lineup.starter_slots:
+
+                    if not need_board.needs:
                         st.success(
-                            "No factual starter-slot or player-status issue is showing."
+                            "Lineup Check has no current Action or Watch slot, so "
+                            "there is no factual roster need to match right now."
                         )
                     else:
-                        st.info("This league has no active starter slots configured.")
-    
-                    lineup_rows = []
-                    state_labels = {
-                        LINEUP_NEEDS_ACTION: "ACTION",
-                        WATCH: "WATCH",
-                        READY: "READY",
-                    }
-                    for row in lineup.slots:
-                        starter = row.starter
-                        alternatives = tuple(row.eligible_alternatives)
-                        alternative_labels = [
-                            f"{player.name} · {player.position} · {player.status}"
-                            for player in alternatives[:8]
-                        ]
-                        if len(alternatives) > 8:
-                            alternative_labels.append(
-                                f"+{len(alternatives) - 8} more"
-                            )
-                        lineup_rows.append(
+                        need_rows = [
                             {
-                                "Slot": row.slot,
-                                "Starter": starter.name if starter else "OPEN",
-                                "Pos": starter.position if starter else "—",
-                                "NFL": starter.nfl_team if starter else "—",
-                                "Status": starter.status if starter else "Open",
-                                "Check": state_labels.get(row.state, row.state),
-                                "Why": row.reason,
-                                "Eligible bench options": (
-                                    " | ".join(alternative_labels) or "—"
+                                "Need": row.label,
+                                "Level": (
+                                    "ACTION"
+                                    if row.level == LINEUP_NEEDS_ACTION
+                                    else "WATCH"
                                 ),
+                                "Why": row.reason,
                             }
-                        )
-    
-                    if lineup_rows:
+                            for row in need_board.needs
+                        ]
                         st.dataframe(
-                            pd.DataFrame(lineup_rows),
+                            pd.DataFrame(need_rows),
                             hide_index=True,
                             width="stretch",
                         )
-    
-                    source = (
-                        f"Week {current_week} matchup lineup"
-                        if lineup.used_matchup_lineup and current_week >= 1
-                        else "Current Sleeper roster starters"
-                    )
-                    st.caption(f"Lineup source: {source}.")
-                    if lineup_matchup_error:
-                        st.caption(
-                            "Current-week matchup data was unavailable, so Lineup "
-                            "Check fell back to the roster starter list."
-                        )
-    
-                    st.caption(
-                        "Eligible bench options above are eligibility/status only. "
-                        "The market-assisted layer below adds current sportsbook "
-                        "context when sufficient coverage exists."
-                    )
-    
-                    st.markdown("##### Market-Assisted Start/Sit")
-                    st.caption(
-                        "Compares each current starter with eligible bench options "
-                        "using this league's scoring and PropWar's shared consensus "
-                        "prop snapshot. A SWAP verdict requires FULL/PARTIAL market "
-                        "coverage for both players and at least a 1.00-point edge."
-                    )
-    
-                    parlay_key = _secret_default("PARLAY_API_KEY")
-                    if not parlay_key:
-                        st.info(
-                            "Market-assisted Start/Sit is unavailable because "
-                            "PARLAY_API_KEY is not configured."
-                        )
-                    else:
-                        try:
-                            market_lineup_snapshot = shared_prop_snapshot(parlay_key)
-                            market_start_sit = build_market_start_sit_board(
-                                lineup,
-                                league.rules.scoring_settings,
-                                lineup_catalog,
-                                market_lineup_snapshot.get("rows", ()),
-                            )
-                        except Exception as exc:
-                            st.warning("Market-assisted Start/Sit could not be built.")
-                            st.caption(str(exc))
-                            market_start_sit = None
-    
-                        if market_start_sit is not None:
-                            ms_a, ms_b = st.columns(2)
-                            ms_a.metric(
-                                "Market lineup actions",
-                                market_start_sit.actionable_count,
-                            )
-                            ms_b.metric("Suggested swaps", market_start_sit.swap_count)
-    
-                            market_lineup_rows = []
-                            lineup_slot_by_index = {
-                                row.slot_index: row
-                                for row in lineup.slots
-                            }
-                            for advice in market_start_sit.slots:
-                                starter_market = advice.starter
-                                bench_market = advice.best_bench
-                                lineup_slot = lineup_slot_by_index.get(
-                                    advice.slot_index
-                                )
-                                starter_fact = (
-                                    lineup_slot.starter
-                                    if lineup_slot is not None
-                                    else None
-                                )
-                                if starter_market is not None:
-                                    starter_name = starter_market.name
-                                    starter_coverage = starter_market.coverage
-                                elif starter_fact is not None:
-                                    starter_name = starter_fact.name
-                                    starter_coverage = (
-                                        "UNSUPPORTED"
-                                        if starter_fact.position in {"K", "DEF"}
-                                        else "MISSING"
-                                    )
-                                else:
-                                    starter_name = "OPEN"
-                                    starter_coverage = "—"
-    
-                                market_lineup_rows.append(
-                                    {
-                                        "Slot": advice.slot,
-                                        "Starter": starter_name,
-                                        "Starter baseline": (
-                                            round(starter_market.fantasy_points, 2)
-                                            if starter_market
-                                            else "—"
-                                        ),
-                                        "Starter coverage": starter_coverage,
-                                        "Best bench": (
-                                            bench_market.name
-                                            if bench_market
-                                            else "—"
-                                        ),
-                                        "Bench baseline": (
-                                            round(bench_market.fantasy_points, 2)
-                                            if bench_market
-                                            else "—"
-                                        ),
-                                        "Bench coverage": (
-                                            bench_market.coverage
-                                            if bench_market
-                                            else "—"
-                                        ),
-                                        "Market edge": (
-                                            round(advice.edge_points, 2)
-                                            if advice.edge_points is not None
-                                            else "—"
-                                        ),
-                                        "Verdict": advice.verdict,
-                                        "Why": advice.reason,
-                                    }
-                                )
-    
-                            if market_lineup_rows:
-                                st.dataframe(
-                                    pd.DataFrame(market_lineup_rows),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-    
-                            if market_start_sit.swap_count:
-                                st.warning(
-                                    f"{market_start_sit.swap_count} starter slot"
-                                    f"{'s have' if market_start_sit.swap_count != 1 else ' has'} "
-                                    "an eligible bench option with at least a "
-                                    "1.00-point market-baseline advantage."
-                                )
-                            elif market_start_sit.actionable_count:
-                                st.info(
-                                    "No covered starter-to-bench swap cleared the "
-                                    "1.00-point threshold, but at least one open "
-                                    "slot has a covered fill option."
-                                )
-                            else:
-                                st.success(
-                                    "No covered starter-to-bench market swap clears "
-                                    "the 1.00-point threshold right now."
-                                )
-    
-                            st.caption(
-                                "This is market-assisted decision support, not a "
-                                "guaranteed projection. THIN/missing coverage never "
-                                "creates a SWAP verdict, and current injury/status "
-                                "alerts from Lineup Check still matter."
-                            )
-    
-    if waiver_tab.open:
-        with waiver_tab:
-            st.markdown("#### Waiver Watch")
-            st.caption(
-                "Sleeper's trending-add activity filtered to players who are "
-                "actually available in this league."
-            )
-    
-            if pre_draft_mode:
-                st.info(
-                    "Pre-draft mode: Waiver Watch, Roster Need Matches, and the "
-                    "live free-agent pool will activate after Sleeper populates "
-                    "roster ownership from the draft."
-                )
-                st.caption(
-                    "No ownership or availability warnings are shown before "
-                    "there is a real roster pool to evaluate."
-                )
-            else:
-                lookback_hours = st.selectbox(
-                    "Trending window",
-                    (24, 48, 72),
-                    format_func=lambda hours: f"Last {hours} hours",
-                    key="fantasy_hq_waiver_lookback",
-                )
-                all_league_ids = tuple(
-                    str(row["league_id"])
-                    for row in leagues
-                    if str(row.get("league_id") or "").strip()
-                )
-                try:
-                    with st.spinner("Building live Waiver Watch..."):
-                        waiver_states = _load_all_sleeper_states(
-                            str(sleeper_user["user_id"]),
-                            all_league_ids,
-                        )
-                        waiver_catalog = _load_player_catalog()
-                        trending_adds = _load_sleeper_trending_adds(
-                            int(lookback_hours),
-                            100,
-                        )
-                        waiver_candidates = build_sleeper_waiver_watch(
-                            waiver_states,
-                            selected_league_id=league_id,
-                            trends=trending_adds,
-                            player_catalog=waiver_catalog,
-                        )
-                except Exception as exc:
-                    st.warning("Waiver Watch could not be loaded.")
-                    st.caption(str(exc))
-                    waiver_candidates = ()
-                    trending_adds = ()
-    
-                if waiver_candidates:
-                    positions = tuple(
-                        sorted(
-                            {
-                                row.position
-                                for row in waiver_candidates
-                                if row.position and row.position != "—"
-                            }
-                        )
-                    )
-                    default_positions = tuple(
-                        position
-                        for position in ("QB", "RB", "WR", "TE", "DEF", "K")
-                        if position in positions
-                    )
-                    selected_positions = st.multiselect(
-                        "Positions",
-                        positions,
-                        default=default_positions or positions,
-                        key="fantasy_hq_waiver_positions",
-                    )
-                    filtered = tuple(
-                        row
-                        for row in waiver_candidates
-                        if not selected_positions or row.position in selected_positions
-                    )
-    
-                    waiver_a, waiver_b, waiver_c = st.columns(3)
-                    waiver_a.metric("Trending adds scanned", len(trending_adds))
-                    waiver_b.metric("Available here", len(waiver_candidates))
-                    waiver_c.metric(
-                        "I roster elsewhere",
-                        sum(1 for row in waiver_candidates if row.mine_elsewhere),
-                    )
-    
-                    rows = []
-                    for candidate in filtered[:75]:
-                        raw_status = str(candidate.injury_status or "Active")
-                        normalized_status = raw_status.replace("_", " ").title()
-                        rows.append(
-                            {
-                                "Player": candidate.player_name,
-                                "Pos": candidate.position,
-                                "NFL": candidate.nfl_team,
-                                "Sleeper adds": candidate.trend_count,
-                                "Status": normalized_status,
-                                "I roster elsewhere": (
-                                    " · ".join(candidate.mine_elsewhere) or "—"
-                                ),
-                                "Owned elsewhere": (
-                                    " · ".join(candidate.owned_elsewhere) or "—"
-                                ),
-                            }
-                        )
-    
-                    st.dataframe(
-                        pd.DataFrame(rows),
-                        hide_index=True,
-                        width="stretch",
-                    )
-                    st.caption(
-                        "Higher add counts mean more Sleeper managers added the player "
-                        "during the selected window; this is activity, not a PropWar "
-                        "player ranking."
-                    )
-                elif trending_adds:
-                    st.info(
-                        "None of Sleeper's current trending adds are available in this "
-                        "league."
-                    )
-    
-                st.markdown("##### Roster Need Matches")
-                st.caption(
-                    "Connects your current Lineup Check issues to players who are "
-                    "actually available in this league."
-                )
-    
-                if lineup is None:
-                    st.info(
-                        "Roster Need Matches will populate after Lineup Check can "
-                        "identify your current starter slots."
-                    )
-                else:
-                    try:
-                        need_board = build_roster_need_waiver_board(
-                            league,
-                            lineup,
-                            all_catalog or _load_player_catalog(),
-                            all_leagues=(all_states or (league,)),
-                            trends=trending_adds,
-                            limit=75,
-                        )
-                    except Exception as exc:
-                        st.warning("Roster Need Matches could not be built.")
-                        st.caption(str(exc))
-                        need_board = None
-    
-                    if need_board is not None:
-                        need_a, need_b, need_c, need_d = st.columns(4)
-                        need_a.metric("Action slots", need_board.action_need_count)
-                        need_b.metric("Watch slots", need_board.watch_need_count)
-                        need_c.metric("Available fits", len(need_board.matches))
-                        need_d.metric(
-                            "I roster elsewhere",
-                            need_board.familiar_match_count,
-                        )
-    
-                        if not need_board.needs:
-                            st.success(
-                                "Lineup Check has no current Action or Watch slot, so "
-                                "there is no factual roster need to match right now."
+
+                        if not need_board.matches:
+                            st.info(
+                                "No currently available healthy player matched "
+                                "these starter-slot needs."
                             )
                         else:
-                            need_rows = [
+                            match_rows = [
                                 {
-                                    "Need": row.label,
-                                    "Level": (
-                                        "ACTION"
-                                        if row.level == LINEUP_NEEDS_ACTION
-                                        else "WATCH"
+                                    "Player": row.player_name,
+                                    "Pos": row.position,
+                                    "NFL": row.nfl_team,
+                                    "Status": row.status,
+                                    "Fits action slots": (
+                                        " · ".join(row.action_slots) or "—"
                                     ),
-                                    "Why": row.reason,
+                                    "Fits watch slots": (
+                                        " · ".join(row.watch_slots) or "—"
+                                    ),
+                                    "Sleeper adds": (
+                                        row.trend_count
+                                        if row.trend_count > 0
+                                        else "—"
+                                    ),
+                                    "I roster elsewhere": (
+                                        " · ".join(row.mine_elsewhere) or "—"
+                                    ),
                                 }
-                                for row in need_board.needs
+                                for row in need_board.matches
                             ]
                             st.dataframe(
-                                pd.DataFrame(need_rows),
+                                pd.DataFrame(match_rows),
                                 hide_index=True,
                                 width="stretch",
                             )
-    
-                            if not need_board.matches:
+                            if need_board.familiar_match_count:
+                                st.success(
+                                    f"{need_board.familiar_match_count} fit"
+                                    f"{'s' if need_board.familiar_match_count != 1 else ''} "
+                                    "shown are already on one of your other "
+                                    "Sleeper rosters."
+                                )
+
+                    st.caption(
+                        "Ordering favors players who cover more Action slots, then "
+                        "players you already roster elsewhere and current Sleeper "
+                        "add activity. This is not a player-value ranking."
+                    )
+
+            st.markdown("##### Market-Ranked Waivers")
+            st.caption(
+                "Ranks actual live free agents by roster urgency, this league's "
+                "scoring, sportsbook-implied fantasy value, and the best legal "
+                "starter-slot improvement."
+            )
+
+            market_waivers = None
+            if lineup is None:
+                st.info(
+                    "Market-Ranked Waivers will populate after Lineup Check can "
+                    "identify your current starter slots."
+                )
+            else:
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Market-Ranked Waivers are unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        market_waiver_snapshot = shared_prop_snapshot(parlay_key)
+                        market_waivers = build_market_ranked_waivers(
+                            league,
+                            lineup,
+                            all_catalog or _load_player_catalog(),
+                            market_waiver_snapshot.get("rows", ()),
+                            all_leagues=(all_states or (league,)),
+                            trends=trending_adds,
+                            limit=50,
+                        )
+                    except Exception as exc:
+                        st.warning("Market-Ranked Waivers could not be built.")
+                        st.caption(str(exc))
+                        market_waivers = None
+
+                    if market_waivers is not None:
+                        mw_a, mw_b, mw_c, mw_d = st.columns(4)
+                        mw_a.metric(
+                            "Market-covered FAs",
+                            market_waivers.market_covered_count,
+                        )
+                        mw_b.metric(
+                            "Ranked options",
+                            len(market_waivers.candidates),
+                        )
+                        mw_c.metric("HIGH need", market_waivers.high_need_count)
+                        mw_d.metric(
+                            "+1.0 pt upgrades",
+                            market_waivers.upgrade_count,
+                        )
+
+                        if not market_waivers.candidates:
+                            if market_waivers.market_covered_count:
                                 st.info(
-                                    "No currently available healthy player matched "
-                                    "these starter-slot needs."
+                                    "Current market-covered free agents do not "
+                                    "clear a roster need or a decision-grade "
+                                    "+1.00 point healthy-lineup upgrade."
                                 )
                             else:
-                                match_rows = [
+                                st.info(
+                                    "No eligible live free agent currently has "
+                                    "FULL/PARTIAL sportsbook market coverage."
+                                )
+                        else:
+                            market_waiver_rows = []
+                            for rank, row in enumerate(
+                                market_waivers.candidates,
+                                start=1,
+                            ):
+                                market_waiver_rows.append(
                                     {
+                                        "Rank": rank,
                                         "Player": row.player_name,
                                         "Pos": row.position,
                                         "NFL": row.nfl_team,
-                                        "Status": row.status,
-                                        "Fits action slots": (
-                                            " · ".join(row.action_slots) or "—"
+                                        "Need": row.need,
+                                        "Best fit": row.target_slot,
+                                        "Fits": " · ".join(row.fit_slots),
+                                        "Market baseline": round(
+                                            row.market_fantasy_points,
+                                            2,
                                         ),
-                                        "Fits watch slots": (
-                                            " · ".join(row.watch_slots) or "—"
+                                        "Current replacement": (
+                                            row.replacement_player
                                         ),
+                                        "Replacement baseline": (
+                                            round(
+                                                row.replacement_fantasy_points,
+                                                2,
+                                            )
+                                            if row.replacement_fantasy_points
+                                            is not None
+                                            else "—"
+                                        ),
+                                        "Expected lineup improvement": (
+                                            round(
+                                                row.expected_lineup_improvement,
+                                                2,
+                                            )
+                                            if row.expected_lineup_improvement
+                                            is not None
+                                            else "—"
+                                        ),
+                                        "Coverage": row.coverage,
                                         "Sleeper adds": (
                                             row.trend_count
                                             if row.trend_count > 0
                                             else "—"
                                         ),
+                                        "Available": "Yes",
                                         "I roster elsewhere": (
                                             " · ".join(row.mine_elsewhere) or "—"
                                         ),
-                                    }
-                                    for row in need_board.matches
-                                ]
-                                st.dataframe(
-                                    pd.DataFrame(match_rows),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-                                if need_board.familiar_match_count:
-                                    st.success(
-                                        f"{need_board.familiar_match_count} fit"
-                                        f"{'s' if need_board.familiar_match_count != 1 else ''} "
-                                        "shown are already on one of your other "
-                                        "Sleeper rosters."
-                                    )
-    
-                        st.caption(
-                            "Ordering favors players who cover more Action slots, then "
-                            "players you already roster elsewhere and current Sleeper "
-                            "add activity. This is not a player-value ranking."
-                        )
-    
-                st.markdown("##### Market-Ranked Waivers")
-                st.caption(
-                    "Ranks actual live free agents by roster urgency, this league's "
-                    "scoring, sportsbook-implied fantasy value, and the best legal "
-                    "starter-slot improvement."
-                )
-    
-                market_waivers = None
-                if lineup is None:
-                    st.info(
-                        "Market-Ranked Waivers will populate after Lineup Check can "
-                        "identify your current starter slots."
-                    )
-                else:
-                    parlay_key = _secret_default("PARLAY_API_KEY")
-                    if not parlay_key:
-                        st.info(
-                            "Market-Ranked Waivers are unavailable because "
-                            "PARLAY_API_KEY is not configured."
-                        )
-                    else:
-                        try:
-                            market_waiver_snapshot = shared_prop_snapshot(parlay_key)
-                            market_waivers = build_market_ranked_waivers(
-                                league,
-                                lineup,
-                                all_catalog or _load_player_catalog(),
-                                market_waiver_snapshot.get("rows", ()),
-                                all_leagues=(all_states or (league,)),
-                                trends=trending_adds,
-                                limit=50,
-                            )
-                        except Exception as exc:
-                            st.warning("Market-Ranked Waivers could not be built.")
-                            st.caption(str(exc))
-                            market_waivers = None
-    
-                        if market_waivers is not None:
-                            mw_a, mw_b, mw_c, mw_d = st.columns(4)
-                            mw_a.metric(
-                                "Market-covered FAs",
-                                market_waivers.market_covered_count,
-                            )
-                            mw_b.metric(
-                                "Ranked options",
-                                len(market_waivers.candidates),
-                            )
-                            mw_c.metric("HIGH need", market_waivers.high_need_count)
-                            mw_d.metric(
-                                "+1.0 pt upgrades",
-                                market_waivers.upgrade_count,
-                            )
-    
-                            if not market_waivers.candidates:
-                                if market_waivers.market_covered_count:
-                                    st.info(
-                                        "Current market-covered free agents do not "
-                                        "clear a roster need or a decision-grade "
-                                        "+1.00 point healthy-lineup upgrade."
-                                    )
-                                else:
-                                    st.info(
-                                        "No eligible live free agent currently has "
-                                        "FULL/PARTIAL sportsbook market coverage."
-                                    )
-                            else:
-                                market_waiver_rows = []
-                                for rank, row in enumerate(
-                                    market_waivers.candidates,
-                                    start=1,
-                                ):
-                                    market_waiver_rows.append(
-                                        {
-                                            "Rank": rank,
-                                            "Player": row.player_name,
-                                            "Pos": row.position,
-                                            "NFL": row.nfl_team,
-                                            "Need": row.need,
-                                            "Best fit": row.target_slot,
-                                            "Fits": " · ".join(row.fit_slots),
-                                            "Market baseline": round(
-                                                row.market_fantasy_points,
-                                                2,
-                                            ),
-                                            "Current replacement": (
-                                                row.replacement_player
-                                            ),
-                                            "Replacement baseline": (
-                                                round(
-                                                    row.replacement_fantasy_points,
-                                                    2,
-                                                )
-                                                if row.replacement_fantasy_points
-                                                is not None
-                                                else "—"
-                                            ),
-                                            "Expected lineup improvement": (
-                                                round(
-                                                    row.expected_lineup_improvement,
-                                                    2,
-                                                )
-                                                if row.expected_lineup_improvement
-                                                is not None
-                                                else "—"
-                                            ),
-                                            "Coverage": row.coverage,
-                                            "Sleeper adds": (
-                                                row.trend_count
-                                                if row.trend_count > 0
-                                                else "—"
-                                            ),
-                                            "Available": "Yes",
-                                            "I roster elsewhere": (
-                                                " · ".join(row.mine_elsewhere) or "—"
-                                            ),
-                                            "Why": row.reason,
-                                        }
-                                    )
-    
-                                st.dataframe(
-                                    pd.DataFrame(market_waiver_rows),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-                                st.caption(
-                                    "HIGH = an open/ineligible/serious starter slot. "
-                                    "MEDIUM = a current WATCH slot. LOW is shown only "
-                                    "when a healthy starter can be improved by at "
-                                    "least 1.00 market-implied fantasy point and "
-                                    "both players have decision-grade core prop "
-                                    "coverage for their positions. HIGH/MEDIUM "
-                                    "needs may still use FULL/PARTIAL coverage; "
-                                    "THIN or missing markets never create a ranking."
-                                )
-    
-                st.markdown("##### FAAB Advisor")
-                st.caption(
-                    "Turns the Market-Ranked Waivers board into league-specific "
-                    "bid guidance using your FAAB budget, live remaining balance "
-                    "when Sleeper exposes it, roster need, market edge, demand, "
-                    "scarcity, league size, and recent winning bids."
-                )
-    
-                if market_waivers is None:
-                    st.info(
-                        "FAAB Advisor will populate when Market-Ranked Waivers "
-                        "is available."
-                    )
-                else:
-                    faab_week = _fantasy_regular_week(nfl_state)
-                    faab_transactions = []
-                    faab_history_errors = []
-                    if faab_week >= 1 and market_waivers.candidates:
-                        for history_week in range(
-                            max(1, faab_week - 3),
-                            faab_week + 1,
-                        ):
-                            try:
-                                faab_transactions.extend(
-                                    _load_transactions(
-                                        league_id,
-                                        history_week,
-                                    )
-                                )
-                            except Exception as exc:
-                                faab_history_errors.append(
-                                    f"Week {history_week}: {exc}"
-                                )
-    
-                    try:
-                        faab_board = build_faab_advice_board(
-                            league,
-                            market_waivers,
-                            current_week=faab_week,
-                            transactions=faab_transactions,
-                            limit=20,
-                        )
-                    except Exception as exc:
-                        st.warning("FAAB Advisor could not be built.")
-                        st.caption(str(exc))
-                        faab_board = None
-    
-                    if faab_board is not None:
-                        if not faab_board.enabled:
-                            st.info(faab_board.reason)
-                        else:
-                            faab_a, faab_b, faab_c, faab_d = st.columns(4)
-                            faab_a.metric(
-                                "Starting FAAB",
-                                f"${faab_board.starting_budget}",
-                            )
-                            faab_b.metric(
-                                "Remaining FAAB",
-                                (
-                                    f"${faab_board.remaining_budget}"
-                                    if faab_board.remaining_budget is not None
-                                    else "Unknown"
-                                ),
-                            )
-                            faab_c.metric(
-                                "Recent winning bids",
-                                faab_board.historical_bid_count,
-                            )
-                            faab_d.metric(
-                                "Recent bid median",
-                                (
-                                    f"{faab_board.historical_median_pct:.1f}%"
-                                    if faab_board.historical_median_pct is not None
-                                    else "—"
-                                ),
-                            )
-    
-                            if not faab_board.live_balance:
-                                st.warning(
-                                    "Sleeper did not expose your live "
-                                    "waiver_budget_used value. Dollar advice below "
-                                    "is based on the league's starting FAAB budget "
-                                    "and is not capped to a guessed balance."
-                                )
-    
-                            if not faab_board.advice:
-                                st.info(
-                                    "There are no current Market-Ranked Waiver "
-                                    "candidates to price."
-                                )
-                            else:
-                                faab_rows = []
-                                for rank, advice in enumerate(
-                                    faab_board.advice,
-                                    start=1,
-                                ):
-                                    row = advice.candidate
-                                    faab_rows.append(
-                                        {
-                                            "Rank": rank,
-                                            "Player": row.player_name,
-                                            "Pos": row.position,
-                                            "Need": row.need,
-                                            "Best fit": row.target_slot,
-                                            "Market edge": (
-                                                round(
-                                                    row.expected_lineup_improvement,
-                                                    2,
-                                                )
-                                                if row.expected_lineup_improvement
-                                                is not None
-                                                else "—"
-                                            ),
-                                            "Recommended bid": (
-                                                f"${advice.recommended_bid}"
-                                            ),
-                                            "Recommended range": (
-                                                f"${advice.range_low_bid}"
-                                                f"–${advice.range_high_bid}"
-                                            ),
-                                            "Aggressive bid": (
-                                                f"${advice.aggressive_bid}"
-                                            ),
-                                            "Max bid": f"${advice.max_bid}",
-                                            "Target budget %": (
-                                                f"{advice.recommended_pct:.1f}%"
-                                            ),
-                                            "Competition": advice.competition,
-                                            "Confidence": advice.confidence,
-                                            "Sleeper adds": (
-                                                row.trend_count
-                                                if row.trend_count > 0
-                                                else "—"
-                                            ),
-                                            "Comparable supply": (
-                                                advice.comparable_supply
-                                            ),
-                                            "Why": advice.reason,
-                                        }
-                                    )
-    
-                                st.dataframe(
-                                    pd.DataFrame(faab_rows),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-    
-                                limited_count = sum(
-                                    1
-                                    for advice in faab_board.advice
-                                    if advice.budget_limited
-                                )
-                                if limited_count:
-                                    st.warning(
-                                        f"{limited_count} recommendation"
-                                        f"{'s are' if limited_count != 1 else ' is'} "
-                                        "capped by your live remaining FAAB."
-                                    )
-    
-                                st.caption(
-                                    "Recommended = default bid. Range = reasonable "
-                                    "landing zone. Aggressive = pay up when you "
-                                    "really want the player. Max = strategic ceiling, "
-                                    "not a target. Percentages are measured against "
-                                    "the league's starting FAAB budget. The model "
-                                    "uses recent completed winning bids only; failed "
-                                    "claims are not treated as market-clearing prices."
-                                )
-    
-                            if faab_history_errors:
-                                st.caption(
-                                    "Recent FAAB history was partially unavailable: "
-                                    + " | ".join(faab_history_errors)
-                                )
-    
-                _render_available_player_search(
-                    str(sleeper_user["user_id"]),
-                    league_id,
-                    all_league_ids,
-                )
-    
-    if activity_tab.open:
-        with activity_tab:
-            st.markdown("#### League Activity")
-            st.caption(
-                "Recent adds, drops, waivers and trades from Sleeper for the "
-                "selected league."
-            )
-    
-            if pre_draft_mode:
-                st.info(
-                    "Pre-draft mode: League Activity will switch on after the "
-                    "draft. The NFL preseason week is not treated as your fantasy "
-                    "league's active transaction week here."
-                )
-            else:
-                current_activity_week = _fantasy_regular_week(nfl_state)
-                if current_activity_week < 1:
-                    st.info(
-                        "No regular-season transaction week is available yet."
-                    )
-                else:
-                    activity_weeks = tuple(
-                        range(
-                            max(1, current_activity_week - 3),
-                            current_activity_week + 1,
-                        )
-                    )
-                    activity_week = st.selectbox(
-                        "Activity week",
-                        tuple(reversed(activity_weeks)),
-                        format_func=lambda value: f"Week {value}",
-                        key="fantasy_hq_activity_week",
-                    )
-    
-                    try:
-                        activity_transactions = _load_transactions(
-                            league_id,
-                            int(activity_week),
-                        )
-                        activity_catalog = all_catalog or _load_player_catalog()
-                        activity = build_league_activity(
-                            league,
-                            activity_transactions,
-                            activity_catalog,
-                        )
-                    except Exception as exc:
-                        st.warning("League Activity could not be loaded.")
-                        st.caption(str(exc))
-                        activity = None
-    
-                    if activity is not None:
-                        activity_a, activity_b, activity_c, activity_d = st.columns(4)
-                        activity_a.metric(
-                            "Transactions",
-                            activity.transaction_count,
-                        )
-                        activity_b.metric("Adds", activity.add_count)
-                        activity_c.metric("Drops", activity.drop_count)
-                        activity_d.metric("Trades", activity.trade_count)
-    
-                        if not activity.transactions:
-                            st.info(
-                                f"No Sleeper transactions were returned for "
-                                f"Week {activity_week}."
-                            )
-                        else:
-                            activity_rows = []
-                            for transaction in activity.transactions:
-                                add_text = " · ".join(
-                                    f"{row.name} ({row.team_name})"
-                                    for row in transaction.adds
-                                ) or "—"
-                                drop_text = " · ".join(
-                                    f"{row.name} ({row.team_name})"
-                                    for row in transaction.drops
-                                ) or "—"
-    
-                                faab_parts = []
-                                if transaction.waiver_bid is not None:
-                                    faab_parts.append(
-                                        "Bid $" + str(transaction.waiver_bid)
-                                    )
-                                for transfer in transaction.faab_transfers:
-                                    if transfer.amount is None:
-                                        continue
-                                    sender = transfer.sender_team or "Unknown"
-                                    receiver = transfer.receiver_team or "Unknown"
-                                    faab_parts.append(
-                                        "$"
-                                        + str(transfer.amount)
-                                        + f" {sender} → {receiver}"
-                                    )
-    
-                                activity_rows.append(
-                                    {
-                                        "When": _format_activity_time(
-                                            transaction.sort_timestamp_ms
-                                        ),
-                                        "Type": transaction.type_label,
-                                        "Status": transaction.status.replace(
-                                            "_", " "
-                                        ).title(),
-                                        "Teams": (
-                                            " · ".join(transaction.teams) or "—"
-                                        ),
-                                        "Adds": add_text,
-                                        "Drops": drop_text,
-                                        "FAAB / bid": (
-                                            " · ".join(faab_parts) or "—"
-                                        ),
-                                        "Picks": (
-                                            transaction.traded_pick_count
-                                            if transaction.traded_pick_count
-                                            else "—"
-                                        ),
+                                        "Why": row.reason,
                                     }
                                 )
-    
+
                             st.dataframe(
-                                pd.DataFrame(activity_rows),
+                                pd.DataFrame(market_waiver_rows),
                                 hide_index=True,
                                 width="stretch",
                             )
                             st.caption(
-                                "Activity is direct Sleeper transaction data. "
-                                "Pending transactions remain labeled Pending rather "
-                                "than being treated as completed moves."
+                                "HIGH = an open/ineligible/serious starter slot. "
+                                "MEDIUM = a current WATCH slot. LOW is shown only "
+                                "when a healthy starter can be improved by at "
+                                "least 1.00 market-implied fantasy point and "
+                                "both players have decision-grade core prop "
+                                "coverage for their positions. HIGH/MEDIUM "
+                                "needs may still use FULL/PARTIAL coverage; "
+                                "THIN or missing markets never create a ranking."
                             )
-    
-    if matchup_tab.open:
-        with matchup_tab:
-            if pre_draft_mode:
-                st.info(
-                    "Pre-draft mode: your fantasy matchup will appear after the "
-                    "draft and Sleeper publishes roster/matchup data."
-                )
-            else:
-                week = _fantasy_regular_week(nfl_state)
-                if week < 1 or not my_roster:
-                    st.info("No regular-season matchup is available yet.")
-                else:
-                    try:
-                        matchups = _load_matchups(league_id, week)
-                        mine = next(
-                            (
-                                row
-                                for row in matchups
-                                if row.platform_roster_id
-                                == my_roster.platform_roster_id
-                            ),
-                            None,
-                        )
-                        opponent = next(
-                            (
-                                row
-                                for row in matchups
-                                if mine
-                                and row.matchup_id == mine.matchup_id
-                                and row.platform_roster_id
-                                != mine.platform_roster_id
-                            ),
-                            None,
-                        )
-                        opponent_roster = next(
-                            (
-                                roster
-                                for roster in league.rosters
-                                if opponent
-                                and roster.platform_roster_id
-                                == opponent.platform_roster_id
-                            ),
-                            None,
-                        )
-                        opponent_manager = next(
-                            (
-                                manager
-                                for manager in league.managers
-                                if opponent_roster
-                                and manager.platform_user_id
-                                == opponent_roster.platform_user_id
-                            ),
-                            None,
-                        )
-                        if mine and opponent:
-                            left, right = st.columns(2)
-                            left.metric(
-                                (
-                                    my_manager.team_name
-                                    if my_manager and my_manager.team_name
-                                    else "My team"
-                                ),
-                                f"{float(mine.points or 0):.2f}",
-                            )
-                            right.metric(
-                                (
-                                    opponent_manager.team_name
-                                    if opponent_manager
-                                    and opponent_manager.team_name
-                                    else opponent_manager.display_name
-                                    if opponent_manager
-                                    else "Opponent"
-                                ),
-                                f"{float(opponent.points or 0):.2f}",
-                            )
-                            st.caption(f"Week {week} · live Sleeper matchup")
-                        else:
-                            st.info(f"Week {week} matchup is not available yet.")
-                    except Exception as exc:
-                        st.warning("Current matchup could not be loaded.")
-                        st.caption(str(exc))
-    
-    if opponent_tab.open:
-        with opponent_tab:
-            st.markdown("#### Opponent Scout")
+
+            st.markdown("##### FAAB Advisor")
             st.caption(
-                "Factual live Sleeper scouting for your current weekly opponent. "
-                "No projected winner or player ranking is inferred."
+                "Turns the Market-Ranked Waivers board into league-specific "
+                "bid guidance using your FAAB budget, live remaining balance "
+                "when Sleeper exposes it, roster need, market edge, demand, "
+                "scarcity, league size, and recent winning bids."
             )
-    
-            if pre_draft_mode:
+
+            if market_waivers is None:
                 st.info(
-                    "Pre-draft mode: Opponent Scout will activate once Sleeper "
-                    "has drafted rosters and a real fantasy matchup pairing."
+                    "FAAB Advisor will populate when Market-Ranked Waivers "
+                    "is available."
                 )
             else:
-                scout_week = _fantasy_regular_week(nfl_state)
-                if scout_week < 1 or not my_roster:
-                    st.info("No regular-season opponent is available yet.")
-                else:
-                    try:
-                        scout_matchups = _load_matchups(league_id, scout_week)
-                        scout_catalog = all_catalog or _load_player_catalog()
-                        scout = build_opponent_scout(
-                            league,
-                            scout_matchups,
-                            week=scout_week,
-                            player_catalog=scout_catalog,
-                        )
-                    except Exception as exc:
-                        st.warning("Opponent Scout could not be loaded.")
-                        st.caption(str(exc))
-                        scout = None
-    
-                    if scout is None:
-                        st.info(
-                            f"Week {scout_week} opponent pairing is not available yet."
-                        )
-                    else:
-                        scout_a, scout_b, scout_c, scout_d = st.columns(4)
-                        scout_a.metric("Opponent", scout.opponent_name)
-                        scout_b.metric("Record", scout.opponent_record)
-                        scout_c.metric("Season PF", f"{scout.opponent_points_for:.2f}")
-                        scout_d.metric("Starter alerts", scout.starter_alert_count)
-    
-                        score_left, score_right = st.columns(2)
-                        score_left.metric(
-                            "My live matchup points",
-                            (
-                                f"{float(scout.my_matchup_points):.2f}"
-                                if scout.my_matchup_points is not None
-                                else "—"
-                            ),
-                        )
-                        score_right.metric(
-                            "Opponent live matchup points",
-                            (
-                                f"{float(scout.opponent_matchup_points):.2f}"
-                                if scout.opponent_matchup_points is not None
-                                else "—"
-                            ),
-                        )
-    
-                        if scout.open_starter_slots:
-                            st.warning(
-                                f"Opponent currently has {scout.open_starter_slots} "
-                                "unfilled starter slot"
-                                f"{'s' if scout.open_starter_slots != 1 else ''}."
+                faab_week = _fantasy_regular_week(nfl_state)
+                faab_transactions = []
+                faab_history_errors = []
+                if faab_week >= 1 and market_waivers.candidates:
+                    for history_week in range(
+                        max(1, faab_week - 3),
+                        faab_week + 1,
+                    ):
+                        try:
+                            faab_transactions.extend(
+                                _load_transactions(
+                                    league_id,
+                                    history_week,
+                                )
                             )
-    
-                        st.markdown("##### Starter availability")
-                        if not scout.starters:
-                            st.info("Opponent starters have not been populated yet.")
+                        except Exception as exc:
+                            faab_history_errors.append(
+                                f"Week {history_week}: {exc}"
+                            )
+
+                try:
+                    faab_board = build_faab_advice_board(
+                        league,
+                        market_waivers,
+                        current_week=faab_week,
+                        transactions=faab_transactions,
+                        limit=20,
+                    )
+                except Exception as exc:
+                    st.warning("FAAB Advisor could not be built.")
+                    st.caption(str(exc))
+                    faab_board = None
+
+                if faab_board is not None:
+                    if not faab_board.enabled:
+                        st.info(faab_board.reason)
+                    else:
+                        faab_a, faab_b, faab_c, faab_d = st.columns(4)
+                        faab_a.metric(
+                            "Starting FAAB",
+                            f"${faab_board.starting_budget}",
+                        )
+                        faab_b.metric(
+                            "Remaining FAAB",
+                            (
+                                f"${faab_board.remaining_budget}"
+                                if faab_board.remaining_budget is not None
+                                else "Unknown"
+                            ),
+                        )
+                        faab_c.metric(
+                            "Recent winning bids",
+                            faab_board.historical_bid_count,
+                        )
+                        faab_d.metric(
+                            "Recent bid median",
+                            (
+                                f"{faab_board.historical_median_pct:.1f}%"
+                                if faab_board.historical_median_pct is not None
+                                else "—"
+                            ),
+                        )
+
+                        if not faab_board.live_balance:
+                            st.warning(
+                                "Sleeper did not expose your live "
+                                "waiver_budget_used value. Dollar advice below "
+                                "is based on the league's starting FAAB budget "
+                                "and is not capped to a guessed balance."
+                            )
+
+                        if not faab_board.advice:
+                            st.info(
+                                "There are no current Market-Ranked Waiver "
+                                "candidates to price."
+                            )
                         else:
-                            starter_rows = [
-                                {
-                                    "Player": row.name,
-                                    "Pos": row.position,
-                                    "NFL": row.nfl_team,
-                                    "Status": row.status,
-                                    "Week points": (
-                                        row.points if row.points is not None else "—"
-                                    ),
-                                }
-                                for row in scout.starters
-                            ]
+                            faab_rows = []
+                            for rank, advice in enumerate(
+                                faab_board.advice,
+                                start=1,
+                            ):
+                                row = advice.candidate
+                                faab_rows.append(
+                                    {
+                                        "Rank": rank,
+                                        "Player": row.player_name,
+                                        "Pos": row.position,
+                                        "Need": row.need,
+                                        "Best fit": row.target_slot,
+                                        "Market edge": (
+                                            round(
+                                                row.expected_lineup_improvement,
+                                                2,
+                                            )
+                                            if row.expected_lineup_improvement
+                                            is not None
+                                            else "—"
+                                        ),
+                                        "Recommended bid": (
+                                            f"${advice.recommended_bid}"
+                                        ),
+                                        "Recommended range": (
+                                            f"${advice.range_low_bid}"
+                                            f"–${advice.range_high_bid}"
+                                        ),
+                                        "Aggressive bid": (
+                                            f"${advice.aggressive_bid}"
+                                        ),
+                                        "Max bid": f"${advice.max_bid}",
+                                        "Target budget %": (
+                                            f"{advice.recommended_pct:.1f}%"
+                                        ),
+                                        "Competition": advice.competition,
+                                        "Confidence": advice.confidence,
+                                        "Sleeper adds": (
+                                            row.trend_count
+                                            if row.trend_count > 0
+                                            else "—"
+                                        ),
+                                        "Comparable supply": (
+                                            advice.comparable_supply
+                                        ),
+                                        "Why": advice.reason,
+                                    }
+                                )
+
                             st.dataframe(
-                                pd.DataFrame(starter_rows),
+                                pd.DataFrame(faab_rows),
                                 hide_index=True,
                                 width="stretch",
                             )
-    
-                            if scout.serious_starter_count:
-                                st.error(
-                                    f"{scout.serious_starter_count} opponent starter"
-                                    f"{'s have' if scout.serious_starter_count != 1 else ' has'} "
-                                    "an Out/IR/PUP/Suspended/Doubtful status."
-                                )
-                            if scout.questionable_starter_count:
+
+                            limited_count = sum(
+                                1
+                                for advice in faab_board.advice
+                                if advice.budget_limited
+                            )
+                            if limited_count:
                                 st.warning(
-                                    f"{scout.questionable_starter_count} opponent starter"
-                                    f"{'s are' if scout.questionable_starter_count != 1 else ' is'} "
-                                    "currently Questionable."
+                                    f"{limited_count} recommendation"
+                                    f"{'s are' if limited_count != 1 else ' is'} "
+                                    "capped by your live remaining FAAB."
                                 )
-                            if not scout.starter_alert_count:
-                                st.success(
-                                    "No opponent starter currently carries a serious "
-                                    "or Questionable Sleeper status."
+
+                            st.caption(
+                                "Recommended = default bid. Range = reasonable "
+                                "landing zone. Aggressive = pay up when you "
+                                "really want the player. Max = strategic ceiling, "
+                                "not a target. Percentages are measured against "
+                                "the league's starting FAAB budget. The model "
+                                "uses recent completed winning bids only; failed "
+                                "claims are not treated as market-clearing prices."
+                            )
+
+                        if faab_history_errors:
+                            st.caption(
+                                "Recent FAAB history was partially unavailable: "
+                                + " | ".join(faab_history_errors)
+                            )
+
+            _render_available_player_search(
+                str(sleeper_user["user_id"]),
+                league_id,
+                all_league_ids,
+            )
+
+    with activity_tab:
+        st.markdown("#### League Activity")
+        st.caption(
+            "Recent adds, drops, waivers and trades from Sleeper for the "
+            "selected league."
+        )
+
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: League Activity will switch on after the "
+                "draft. The NFL preseason week is not treated as your fantasy "
+                "league's active transaction week here."
+            )
+        else:
+            current_activity_week = _fantasy_regular_week(nfl_state)
+            if current_activity_week < 1:
+                st.info(
+                    "No regular-season transaction week is available yet."
+                )
+            else:
+                activity_weeks = tuple(
+                    range(
+                        max(1, current_activity_week - 3),
+                        current_activity_week + 1,
+                    )
+                )
+                activity_week = st.selectbox(
+                    "Activity week",
+                    tuple(reversed(activity_weeks)),
+                    format_func=lambda value: f"Week {value}",
+                    key="fantasy_hq_activity_week",
+                )
+
+                try:
+                    activity_transactions = _load_transactions(
+                        league_id,
+                        int(activity_week),
+                    )
+                    activity_catalog = all_catalog or _load_player_catalog()
+                    activity = build_league_activity(
+                        league,
+                        activity_transactions,
+                        activity_catalog,
+                    )
+                except Exception as exc:
+                    st.warning("League Activity could not be loaded.")
+                    st.caption(str(exc))
+                    activity = None
+
+                if activity is not None:
+                    activity_a, activity_b, activity_c, activity_d = st.columns(4)
+                    activity_a.metric(
+                        "Transactions",
+                        activity.transaction_count,
+                    )
+                    activity_b.metric("Adds", activity.add_count)
+                    activity_c.metric("Drops", activity.drop_count)
+                    activity_d.metric("Trades", activity.trade_count)
+
+                    if not activity.transactions:
+                        st.info(
+                            f"No Sleeper transactions were returned for "
+                            f"Week {activity_week}."
+                        )
+                    else:
+                        activity_rows = []
+                        for transaction in activity.transactions:
+                            add_text = " · ".join(
+                                f"{row.name} ({row.team_name})"
+                                for row in transaction.adds
+                            ) or "—"
+                            drop_text = " · ".join(
+                                f"{row.name} ({row.team_name})"
+                                for row in transaction.drops
+                            ) or "—"
+
+                            faab_parts = []
+                            if transaction.waiver_bid is not None:
+                                faab_parts.append(
+                                    "Bid $" + str(transaction.waiver_bid)
                                 )
-    
-                        st.markdown("##### Opponent position depth")
-                        if scout.position_counts:
+                            for transfer in transaction.faab_transfers:
+                                if transfer.amount is None:
+                                    continue
+                                sender = transfer.sender_team or "Unknown"
+                                receiver = transfer.receiver_team or "Unknown"
+                                faab_parts.append(
+                                    "$"
+                                    + str(transfer.amount)
+                                    + f" {sender} → {receiver}"
+                                )
+
+                            activity_rows.append(
+                                {
+                                    "When": _format_activity_time(
+                                        transaction.sort_timestamp_ms
+                                    ),
+                                    "Type": transaction.type_label,
+                                    "Status": transaction.status.replace(
+                                        "_", " "
+                                    ).title(),
+                                    "Teams": (
+                                        " · ".join(transaction.teams) or "—"
+                                    ),
+                                    "Adds": add_text,
+                                    "Drops": drop_text,
+                                    "FAAB / bid": (
+                                        " · ".join(faab_parts) or "—"
+                                    ),
+                                    "Picks": (
+                                        transaction.traded_pick_count
+                                        if transaction.traded_pick_count
+                                        else "—"
+                                    ),
+                                }
+                            )
+
+                        st.dataframe(
+                            pd.DataFrame(activity_rows),
+                            hide_index=True,
+                            width="stretch",
+                        )
+                        st.caption(
+                            "Activity is direct Sleeper transaction data. "
+                            "Pending transactions remain labeled Pending rather "
+                            "than being treated as completed moves."
+                        )
+
+    with matchup_tab:
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: your fantasy matchup will appear after the "
+                "draft and Sleeper publishes roster/matchup data."
+            )
+        else:
+            week = _fantasy_regular_week(nfl_state)
+            if week < 1 or not my_roster:
+                st.info("No regular-season matchup is available yet.")
+            else:
+                try:
+                    matchups = _load_matchups(league_id, week)
+                    mine = next(
+                        (
+                            row
+                            for row in matchups
+                            if row.platform_roster_id
+                            == my_roster.platform_roster_id
+                        ),
+                        None,
+                    )
+                    opponent = next(
+                        (
+                            row
+                            for row in matchups
+                            if mine
+                            and row.matchup_id == mine.matchup_id
+                            and row.platform_roster_id
+                            != mine.platform_roster_id
+                        ),
+                        None,
+                    )
+                    opponent_roster = next(
+                        (
+                            roster
+                            for roster in league.rosters
+                            if opponent
+                            and roster.platform_roster_id
+                            == opponent.platform_roster_id
+                        ),
+                        None,
+                    )
+                    opponent_manager = next(
+                        (
+                            manager
+                            for manager in league.managers
+                            if opponent_roster
+                            and manager.platform_user_id
+                            == opponent_roster.platform_user_id
+                        ),
+                        None,
+                    )
+                    if mine and opponent:
+                        left, right = st.columns(2)
+                        left.metric(
+                            (
+                                my_manager.team_name
+                                if my_manager and my_manager.team_name
+                                else "My team"
+                            ),
+                            f"{float(mine.points or 0):.2f}",
+                        )
+                        right.metric(
+                            (
+                                opponent_manager.team_name
+                                if opponent_manager
+                                and opponent_manager.team_name
+                                else opponent_manager.display_name
+                                if opponent_manager
+                                else "Opponent"
+                            ),
+                            f"{float(opponent.points or 0):.2f}",
+                        )
+                        st.caption(f"Week {week} · live Sleeper matchup")
+                    else:
+                        st.info(f"Week {week} matchup is not available yet.")
+                except Exception as exc:
+                    st.warning("Current matchup could not be loaded.")
+                    st.caption(str(exc))
+
+    with opponent_tab:
+        st.markdown("#### Opponent Scout")
+        st.caption(
+            "Factual live Sleeper scouting for your current weekly opponent. "
+            "No projected winner or player ranking is inferred."
+        )
+
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: Opponent Scout will activate once Sleeper "
+                "has drafted rosters and a real fantasy matchup pairing."
+            )
+        else:
+            scout_week = _fantasy_regular_week(nfl_state)
+            if scout_week < 1 or not my_roster:
+                st.info("No regular-season opponent is available yet.")
+            else:
+                try:
+                    scout_matchups = _load_matchups(league_id, scout_week)
+                    scout_catalog = all_catalog or _load_player_catalog()
+                    scout = build_opponent_scout(
+                        league,
+                        scout_matchups,
+                        week=scout_week,
+                        player_catalog=scout_catalog,
+                    )
+                except Exception as exc:
+                    st.warning("Opponent Scout could not be loaded.")
+                    st.caption(str(exc))
+                    scout = None
+
+                if scout is None:
+                    st.info(
+                        f"Week {scout_week} opponent pairing is not available yet."
+                    )
+                else:
+                    scout_a, scout_b, scout_c, scout_d = st.columns(4)
+                    scout_a.metric("Opponent", scout.opponent_name)
+                    scout_b.metric("Record", scout.opponent_record)
+                    scout_c.metric("Season PF", f"{scout.opponent_points_for:.2f}")
+                    scout_d.metric("Starter alerts", scout.starter_alert_count)
+
+                    score_left, score_right = st.columns(2)
+                    score_left.metric(
+                        "My live matchup points",
+                        (
+                            f"{float(scout.my_matchup_points):.2f}"
+                            if scout.my_matchup_points is not None
+                            else "—"
+                        ),
+                    )
+                    score_right.metric(
+                        "Opponent live matchup points",
+                        (
+                            f"{float(scout.opponent_matchup_points):.2f}"
+                            if scout.opponent_matchup_points is not None
+                            else "—"
+                        ),
+                    )
+
+                    if scout.open_starter_slots:
+                        st.warning(
+                            f"Opponent currently has {scout.open_starter_slots} "
+                            "unfilled starter slot"
+                            f"{'s' if scout.open_starter_slots != 1 else ''}."
+                        )
+
+                    st.markdown("##### Starter availability")
+                    if not scout.starters:
+                        st.info("Opponent starters have not been populated yet.")
+                    else:
+                        starter_rows = [
+                            {
+                                "Player": row.name,
+                                "Pos": row.position,
+                                "NFL": row.nfl_team,
+                                "Status": row.status,
+                                "Week points": (
+                                    row.points if row.points is not None else "—"
+                                ),
+                            }
+                            for row in scout.starters
+                        ]
+                        st.dataframe(
+                            pd.DataFrame(starter_rows),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                        if scout.serious_starter_count:
+                            st.error(
+                                f"{scout.serious_starter_count} opponent starter"
+                                f"{'s have' if scout.serious_starter_count != 1 else ' has'} "
+                                "an Out/IR/PUP/Suspended/Doubtful status."
+                            )
+                        if scout.questionable_starter_count:
+                            st.warning(
+                                f"{scout.questionable_starter_count} opponent starter"
+                                f"{'s are' if scout.questionable_starter_count != 1 else ' is'} "
+                                "currently Questionable."
+                            )
+                        if not scout.starter_alert_count:
+                            st.success(
+                                "No opponent starter currently carries a serious "
+                                "or Questionable Sleeper status."
+                            )
+
+                    st.markdown("##### Opponent position depth")
+                    if scout.position_counts:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {"Position": position, "Rostered": count}
+                                    for position, count in scout.position_counts.items()
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                    with st.expander(
+                        f"Opponent bench / reserve ({len(scout.bench)})",
+                        expanded=False,
+                    ):
+                        if not scout.bench:
+                            st.caption("No non-starter players are populated.")
+                        else:
                             st.dataframe(
                                 pd.DataFrame(
                                     [
-                                        {"Position": position, "Rostered": count}
-                                        for position, count in scout.position_counts.items()
+                                        {
+                                            "Player": row.name,
+                                            "Pos": row.position,
+                                            "NFL": row.nfl_team,
+                                            "Slot": row.fantasy_slot,
+                                            "Status": row.status,
+                                            "Week points": (
+                                                row.points
+                                                if row.points is not None
+                                                else "—"
+                                            ),
+                                        }
+                                        for row in scout.bench
                                     ]
                                 ),
                                 hide_index=True,
                                 width="stretch",
                             )
-    
-                        with st.expander(
-                            f"Opponent bench / reserve ({len(scout.bench)})",
-                            expanded=False,
-                        ):
-                            if not scout.bench:
-                                st.caption("No non-starter players are populated.")
-                            else:
-                                st.dataframe(
-                                    pd.DataFrame(
-                                        [
-                                            {
-                                                "Player": row.name,
-                                                "Pos": row.position,
-                                                "NFL": row.nfl_team,
-                                                "Slot": row.fantasy_slot,
-                                                "Status": row.status,
-                                                "Week points": (
-                                                    row.points
-                                                    if row.points is not None
-                                                    else "—"
-                                                ),
-                                            }
-                                            for row in scout.bench
-                                        ]
-                                    ),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-    
-                        st.caption(
-                            "Opponent Scout reflects Sleeper roster, matchup, and "
-                            "player-status facts only. It does not project the matchup."
-                        )
-    
-    if team_explorer_tab.open:
-        with team_explorer_tab:
-            st.markdown("#### League Team Explorer")
-            st.caption(
-                "Scout any manager in this Sleeper league, not only your current "
-                "weekly opponent. Shopping areas are roster-fit signals, not mind-reading."
+
+                    st.caption(
+                        "Opponent Scout reflects Sleeper roster, matchup, and "
+                        "player-status facts only. It does not project the matchup."
+                    )
+
+    with team_explorer_tab:
+        st.markdown("#### League Team Explorer")
+        st.caption(
+            "Scout any manager in this Sleeper league, not only your current "
+            "weekly opponent. Shopping areas are roster-fit signals, not mind-reading."
+        )
+
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: Team Explorer will activate after Sleeper "
+                "populates the league's drafted rosters."
             )
-    
-            if pre_draft_mode:
-                st.info(
-                    "Pre-draft mode: Team Explorer will activate after Sleeper "
-                    "populates the league's drafted rosters."
+        else:
+            team_catalog = all_catalog or _load_player_catalog()
+            try:
+                league_needs = build_league_needs_board(
+                    league,
+                    team_catalog,
                 )
-            else:
-                team_catalog = all_catalog or _load_player_catalog()
-                try:
-                    league_needs = build_league_needs_board(
-                        league,
-                        team_catalog,
-                    )
-                except Exception as exc:
-                    st.warning("League Needs Board could not be built.")
-                    st.caption(str(exc))
-                    league_needs = None
-    
-                st.markdown("##### League Needs Board")
-                st.caption(
-                    "One view of every team's structural pressure and depth above "
-                    "starter demand. This is roster construction, not player-value grading."
+            except Exception as exc:
+                st.warning("League Needs Board could not be built.")
+                st.caption(str(exc))
+                league_needs = None
+
+            st.markdown("##### League Needs Board")
+            st.caption(
+                "One view of every team's structural pressure and depth above "
+                "starter demand. This is roster construction, not player-value grading."
+            )
+
+            if league_needs is not None:
+                needs_a, needs_b, needs_c = st.columns(3)
+                needs_a.metric("Teams", league_needs.team_count)
+                needs_b.metric(
+                    "Teams with HIGH need",
+                    league_needs.high_need_team_count,
                 )
-    
-                if league_needs is not None:
-                    needs_a, needs_b, needs_c = st.columns(3)
-                    needs_a.metric("Teams", league_needs.team_count)
-                    needs_b.metric(
-                        "Teams with HIGH need",
-                        league_needs.high_need_team_count,
+                needs_c.metric(
+                    "Two-way trade fits",
+                    league_needs.two_way_trade_fit_count,
+                )
+
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {
+                                "Team": (
+                                    row.team_name + " · MY TEAM"
+                                    if row.is_mine
+                                    else row.team_name
+                                ),
+                                "HIGH needs": (
+                                    " · ".join(row.high_needs) or "—"
+                                ),
+                                "MEDIUM needs": (
+                                    " · ".join(row.medium_needs) or "—"
+                                ),
+                                "Depth above starter demand": (
+                                    " · ".join(row.depth_positions) or "—"
+                                ),
+                                "Serious": row.serious_status_count,
+                                "Questionable": row.questionable_status_count,
+                            }
+                            for row in league_needs.rows
+                        ]
+                    ),
+                    hide_index=True,
+                    width="stretch",
+                )
+
+                st.markdown("##### Potential trade-fit teams")
+                if not league_needs.trade_fits:
+                    st.info(
+                        "No clear complementary roster-structure trade fit is "
+                        "showing right now."
                     )
-                    needs_c.metric(
-                        "Two-way trade fits",
-                        league_needs.two_way_trade_fit_count,
-                    )
-    
+                else:
                     st.dataframe(
                         pd.DataFrame(
                             [
                                 {
-                                    "Team": (
-                                        row.team_name + " · MY TEAM"
-                                        if row.is_mine
-                                        else row.team_name
+                                    "Team": row.team_name,
+                                    "Fit": (
+                                        "Two-way fit"
+                                        if row.two_way
+                                        else "One-way fit"
                                     ),
-                                    "HIGH needs": (
-                                        " · ".join(row.high_needs) or "—"
+                                    "They can help me at": (
+                                        " · ".join(row.they_can_help_me_at)
+                                        or "—"
                                     ),
-                                    "MEDIUM needs": (
-                                        " · ".join(row.medium_needs) or "—"
+                                    "I can help them at": (
+                                        " · ".join(row.i_can_help_them_at)
+                                        or "—"
                                     ),
-                                    "Depth above starter demand": (
-                                        " · ".join(row.depth_positions) or "—"
+                                    "Their needs": (
+                                        " · ".join(row.their_needs) or "—"
                                     ),
-                                    "Serious": row.serious_status_count,
-                                    "Questionable": row.questionable_status_count,
                                 }
-                                for row in league_needs.rows
+                                for row in league_needs.trade_fits
                             ]
                         ),
                         hide_index=True,
                         width="stretch",
                     )
-    
-                    st.markdown("##### Potential trade-fit teams")
-                    if not league_needs.trade_fits:
+                    st.caption(
+                        "Two-way fit means their conservative depth overlaps "
+                        "one of your detected needs and your conservative depth "
+                        "overlaps one of theirs. It does not account for player "
+                        "quality, keeper value, draft picks, or willingness to trade."
+                    )
+
+                st.markdown("##### Specific trade candidates")
+                try:
+                    trade_candidates = build_trade_candidate_board(
+                        league,
+                        team_catalog,
+                    )
+                except Exception as exc:
+                    st.warning("Specific trade candidates could not be built.")
+                    st.caption(str(exc))
+                    trade_candidates = None
+
+                if trade_candidates is not None:
+                    if not trade_candidates.matches:
                         st.info(
-                            "No clear complementary roster-structure trade fit is "
-                            "showing right now."
+                            "No roster-structure trade candidate pairing is "
+                            "specific enough to show player names right now."
+                        )
+                    else:
+                        for match in trade_candidates.matches:
+                            fit_label = (
+                                "Two-way fit"
+                                if match.two_way
+                                else "One-way fit"
+                            )
+                            with st.expander(
+                                f"{match.partner_team_name} · {fit_label}",
+                                expanded=match.two_way,
+                            ):
+                                left, right = st.columns(2)
+                                with left:
+                                    st.markdown("**Players I could target**")
+                                    if not match.players_i_could_target:
+                                        st.caption(
+                                            "No player on this roster matches "
+                                            "the positions they can structurally "
+                                            "help me at."
+                                        )
+                                    else:
+                                        st.dataframe(
+                                            pd.DataFrame(
+                                                [
+                                                    {
+                                                        "Player": row.name,
+                                                        "Pos": row.position,
+                                                        "NFL": row.nfl_team,
+                                                        "Slot": row.roster_slot,
+                                                        "Status": row.status,
+                                                    }
+                                                    for row
+                                                    in match.players_i_could_target
+                                                ]
+                                            ),
+                                            hide_index=True,
+                                            width="stretch",
+                                        )
+                                with right:
+                                    st.markdown("**My players that fit them**")
+                                    if not match.my_players_they_could_target:
+                                        st.caption(
+                                            "No player on my roster matches "
+                                            "their detected need positions."
+                                        )
+                                    else:
+                                        st.dataframe(
+                                            pd.DataFrame(
+                                                [
+                                                    {
+                                                        "Player": row.name,
+                                                        "Pos": row.position,
+                                                        "NFL": row.nfl_team,
+                                                        "Slot": row.roster_slot,
+                                                        "Status": row.status,
+                                                    }
+                                                    for row
+                                                    in match.my_players_they_could_target
+                                                ]
+                                            ),
+                                            hide_index=True,
+                                            width="stretch",
+                                        )
+
+                                st.caption(
+                                    "These are roster-position candidates only, "
+                                    "not a fair-trade verdict. Bench players are "
+                                    "shown before starters when status is otherwise "
+                                    "comparable."
+                                )
+
+                st.markdown("##### Market-Assisted Trade Analyzer")
+                st.caption(
+                    "Build a real proposed trade and compare both teams' "
+                    "optimized legal starting lineups before and after it using "
+                    "this league's scoring and PropWar's shared sportsbook "
+                    "fantasy baselines."
+                )
+
+                trade_parlay_key = _secret_default("PARLAY_API_KEY")
+                my_trade_roster = next(
+                    (
+                        roster
+                        for roster in league.rosters
+                        if roster.platform_roster_id
+                        == league.my_platform_roster_id
+                    ),
+                    None,
+                )
+
+                if not league.ownership_ready or my_trade_roster is None:
+                    st.info(
+                        "Market-Assisted Trade Analyzer will activate when "
+                        "Sleeper ownership and your drafted roster are available."
+                    )
+                elif not trade_parlay_key:
+                    st.info(
+                        "Market-Assisted Trade Analyzer is unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    trade_manager_by_user = {
+                        manager.platform_user_id: manager
+                        for manager in league.managers
+                    }
+                    trade_partner_options = {}
+                    for roster in league.rosters:
+                        if (
+                            roster.platform_roster_id
+                            == my_trade_roster.platform_roster_id
+                        ):
+                            continue
+                        manager = trade_manager_by_user.get(
+                            roster.platform_user_id or ""
+                        )
+                        label = (
+                            manager.team_name
+                            if manager and manager.team_name
+                            else manager.display_name
+                            if manager
+                            else f"Roster {roster.platform_roster_id}"
+                        )
+                        trade_partner_options[
+                            f"{label} · Roster {roster.platform_roster_id}"
+                        ] = roster.platform_roster_id
+
+                    if not trade_partner_options:
+                        st.info("No other drafted roster is available to trade with.")
+                    else:
+                        selected_trade_partner_label = st.selectbox(
+                            "Trade partner",
+                            tuple(trade_partner_options),
+                            key="fantasy_hq_trade_partner",
+                        )
+                        selected_trade_partner_id = trade_partner_options[
+                            selected_trade_partner_label
+                        ]
+                        selected_trade_partner = next(
+                            (
+                                roster
+                                for roster in league.rosters
+                                if roster.platform_roster_id
+                                == selected_trade_partner_id
+                            ),
+                            None,
+                        )
+
+                        def _trade_player_ids(roster):
+                            return tuple(
+                                dict.fromkeys(
+                                    str(value).strip()
+                                    for value in (
+                                        *roster.players,
+                                        *roster.starters,
+                                        *roster.reserve,
+                                        *roster.taxi,
+                                    )
+                                    if str(value or "").strip()
+                                    not in {"", "0"}
+                                )
+                            )
+
+                        def _trade_player_label(player_id):
+                            player = team_catalog.get(player_id) or {}
+                            name = (
+                                str(player.get("full_name") or "").strip()
+                                or (
+                                    str(player.get("first_name") or "").strip()
+                                    + " "
+                                    + str(player.get("last_name") or "").strip()
+                                ).strip()
+                                or player_id
+                            )
+                            position = (
+                                str(player.get("position") or "—")
+                                .strip()
+                                .upper()
+                                or "—"
+                            )
+                            nfl_team = (
+                                str(player.get("team") or "FA")
+                                .strip()
+                                .upper()
+                                or "FA"
+                            )
+                            return (
+                                f"{name} · {position} · {nfl_team} · "
+                                f"{player_id}"
+                            )
+
+                        my_trade_options = {
+                            _trade_player_label(player_id): player_id
+                            for player_id
+                            in _trade_player_ids(my_trade_roster)
+                        }
+                        partner_trade_options = (
+                            {
+                                _trade_player_label(player_id): player_id
+                                for player_id
+                                in _trade_player_ids(selected_trade_partner)
+                            }
+                            if selected_trade_partner is not None
+                            else {}
+                        )
+
+                        trade_left, trade_right = st.columns(2)
+                        with trade_left:
+                            give_labels = st.multiselect(
+                                "I give",
+                                tuple(my_trade_options),
+                                key="fantasy_hq_trade_give",
+                                help="Select one to four players.",
+                            )
+                        with trade_right:
+                            receive_labels = st.multiselect(
+                                "I receive",
+                                tuple(partner_trade_options),
+                                key="fantasy_hq_trade_receive",
+                                help="Select one to four players.",
+                            )
+
+                        if len(give_labels) > 4 or len(receive_labels) > 4:
+                            st.warning(
+                                "The analyzer supports up to four players per side."
+                            )
+
+                        if st.button(
+                            "Analyze trade",
+                            key="fantasy_hq_analyze_trade",
+                            type="primary",
+                        ):
+                            give_ids = tuple(
+                                my_trade_options[label]
+                                for label in give_labels
+                            )
+                            receive_ids = tuple(
+                                partner_trade_options[label]
+                                for label in receive_labels
+                            )
+
+                            if not give_ids or not receive_ids:
+                                st.info(
+                                    "Select at least one player on each side "
+                                    "before analyzing the trade."
+                                )
+                            elif len(give_ids) > 4 or len(receive_ids) > 4:
+                                st.warning(
+                                    "Reduce the trade to four players or fewer "
+                                    "on each side."
+                                )
+                            else:
+                                try:
+                                    trade_market_snapshot = shared_prop_snapshot(
+                                        trade_parlay_key
+                                    )
+                                    trade_analysis = analyze_market_trade(
+                                        league,
+                                        team_catalog,
+                                        trade_market_snapshot.get("rows", ()),
+                                        partner_roster_id=(
+                                            selected_trade_partner_id
+                                        ),
+                                        give_player_ids=give_ids,
+                                        receive_player_ids=receive_ids,
+                                    )
+                                except Exception as exc:
+                                    st.warning(
+                                        "Market-Assisted Trade Analyzer could "
+                                        "not evaluate this proposal."
+                                    )
+                                    st.caption(str(exc))
+                                    trade_analysis = None
+
+                                if trade_analysis is not None:
+                                    verdict_labels = {
+                                        "ACCEPT": "ACCEPT",
+                                        "BALANCED": "BALANCED",
+                                        "DECLINE": "DECLINE",
+                                        "INCOMPLETE": "INCOMPLETE",
+                                    }
+                                    partner_fit_labels = {
+                                        "GOOD_FOR_BOTH": "GOOD FOR BOTH",
+                                        "PLAUSIBLE": "PLAUSIBLE",
+                                        "HARD_SELL": "HARD SELL",
+                                    }
+
+                                    ta, tb, tc, td = st.columns(4)
+                                    ta.metric(
+                                        "Verdict",
+                                        verdict_labels.get(
+                                            trade_analysis.verdict,
+                                            trade_analysis.verdict,
+                                        ),
+                                    )
+                                    tb.metric(
+                                        "My lineup impact",
+                                        (
+                                            f"{trade_analysis.my_team.lineup_delta:+.2f}"
+                                            " pts"
+                                        ),
+                                    )
+                                    tc.metric(
+                                        "Partner lineup impact",
+                                        (
+                                            f"{trade_analysis.partner_team.lineup_delta:+.2f}"
+                                            " pts"
+                                        ),
+                                    )
+                                    td.metric(
+                                        "Partner fit",
+                                        partner_fit_labels.get(
+                                            trade_analysis.partner_fit,
+                                            trade_analysis.partner_fit,
+                                        ),
+                                    )
+
+                                    te, tf, tg, th = st.columns(4)
+                                    te.metric(
+                                        "Raw asset delta",
+                                        (
+                                            f"{trade_analysis.raw_asset_delta:+.2f}"
+                                            " pts"
+                                            if trade_analysis.raw_asset_delta
+                                            is not None
+                                            else "—"
+                                        ),
+                                    )
+                                    tf.metric(
+                                        "Confidence",
+                                        trade_analysis.confidence,
+                                    )
+                                    tg.metric(
+                                        "Minimum lineup coverage",
+                                        (
+                                            f"{trade_analysis.minimum_lineup_coverage:.0%}"
+                                        ),
+                                    )
+                                    th.metric(
+                                        "Decision edge",
+                                        (
+                                            f"{trade_analysis.decision_edge:+.2f}"
+                                            if trade_analysis.decision_edge
+                                            is not None
+                                            else "—"
+                                        ),
+                                    )
+
+                                    if trade_analysis.verdict == "ACCEPT":
+                                        st.success(trade_analysis.reason)
+                                    elif trade_analysis.verdict == "DECLINE":
+                                        st.error(trade_analysis.reason)
+                                    elif trade_analysis.verdict == "INCOMPLETE":
+                                        st.warning(trade_analysis.reason)
+                                    else:
+                                        st.info(trade_analysis.reason)
+
+                                    trade_asset_rows = []
+                                    for side, players in (
+                                        (
+                                            "I give",
+                                            trade_analysis.give_players,
+                                        ),
+                                        (
+                                            "I receive",
+                                            trade_analysis.receive_players,
+                                        ),
+                                    ):
+                                        for row in players:
+                                            trade_asset_rows.append(
+                                                {
+                                                    "Side": side,
+                                                    "Player": row.name,
+                                                    "Pos": row.position,
+                                                    "NFL": row.nfl_team,
+                                                    "Market baseline": (
+                                                        round(
+                                                            row.market_fantasy_points,
+                                                            2,
+                                                        )
+                                                        if row.market_fantasy_points
+                                                        is not None
+                                                        else "—"
+                                                    ),
+                                                    "Coverage": row.coverage,
+                                                    "Components": (
+                                                        row.component_count
+                                                    ),
+                                                }
+                                            )
+                                    st.dataframe(
+                                        pd.DataFrame(trade_asset_rows),
+                                        hide_index=True,
+                                        width="stretch",
+                                    )
+
+                                    impact_rows = [
+                                        {
+                                            "Team": (
+                                                trade_analysis.my_team.team_name
+                                            ),
+                                            "Before": round(
+                                                trade_analysis.my_team.current.covered_points,
+                                                2,
+                                            ),
+                                            "After": round(
+                                                trade_analysis.my_team.post_trade.covered_points,
+                                                2,
+                                            ),
+                                            "Lineup delta": round(
+                                                trade_analysis.my_team.lineup_delta,
+                                                2,
+                                            ),
+                                            "Covered starters before": (
+                                                f"{trade_analysis.my_team.current.covered_starters}/"
+                                                f"{trade_analysis.my_team.current.starter_slots}"
+                                            ),
+                                            "Covered starters after": (
+                                                f"{trade_analysis.my_team.post_trade.covered_starters}/"
+                                                f"{trade_analysis.my_team.post_trade.starter_slots}"
+                                            ),
+                                            "Roster size": (
+                                                f"{trade_analysis.my_team.roster_size_before}"
+                                                f" → {trade_analysis.my_team.roster_size_after}"
+                                            ),
+                                            "Post-trade depth warnings": (
+                                                " · ".join(
+                                                    trade_analysis.my_team.depth_warnings_after
+                                                )
+                                                or "—"
+                                            ),
+                                        },
+                                        {
+                                            "Team": (
+                                                trade_analysis.partner_team.team_name
+                                            ),
+                                            "Before": round(
+                                                trade_analysis.partner_team.current.covered_points,
+                                                2,
+                                            ),
+                                            "After": round(
+                                                trade_analysis.partner_team.post_trade.covered_points,
+                                                2,
+                                            ),
+                                            "Lineup delta": round(
+                                                trade_analysis.partner_team.lineup_delta,
+                                                2,
+                                            ),
+                                            "Covered starters before": (
+                                                f"{trade_analysis.partner_team.current.covered_starters}/"
+                                                f"{trade_analysis.partner_team.current.starter_slots}"
+                                            ),
+                                            "Covered starters after": (
+                                                f"{trade_analysis.partner_team.post_trade.covered_starters}/"
+                                                f"{trade_analysis.partner_team.post_trade.starter_slots}"
+                                            ),
+                                            "Roster size": (
+                                                f"{trade_analysis.partner_team.roster_size_before}"
+                                                f" → {trade_analysis.partner_team.roster_size_after}"
+                                            ),
+                                            "Post-trade depth warnings": (
+                                                " · ".join(
+                                                    trade_analysis.partner_team.depth_warnings_after
+                                                )
+                                                or "—"
+                                            ),
+                                        },
+                                    ]
+                                    st.dataframe(
+                                        pd.DataFrame(impact_rows),
+                                        hide_index=True,
+                                        width="stretch",
+                                    )
+
+                                    with st.expander(
+                                        "Optimized post-trade starters",
+                                        expanded=False,
+                                    ):
+                                        starter_left, starter_right = st.columns(2)
+                                        with starter_left:
+                                            st.markdown(
+                                                f"**{trade_analysis.my_team.team_name}**"
+                                            )
+                                            st.dataframe(
+                                                pd.DataFrame(
+                                                    [
+                                                        {
+                                                            "Slot": slot,
+                                                            "Player": player,
+                                                            "Market FP": round(
+                                                                points,
+                                                                2,
+                                                            ),
+                                                        }
+                                                        for slot, player, points
+                                                        in trade_analysis.my_team.post_trade.assignments
+                                                    ]
+                                                ),
+                                                hide_index=True,
+                                                width="stretch",
+                                            )
+                                        with starter_right:
+                                            st.markdown(
+                                                f"**{trade_analysis.partner_team.team_name}**"
+                                            )
+                                            st.dataframe(
+                                                pd.DataFrame(
+                                                    [
+                                                        {
+                                                            "Slot": slot,
+                                                            "Player": player,
+                                                            "Market FP": round(
+                                                                points,
+                                                                2,
+                                                            ),
+                                                        }
+                                                        for slot, player, points
+                                                        in trade_analysis.partner_team.post_trade.assignments
+                                                    ]
+                                                ),
+                                                hide_index=True,
+                                                width="stretch",
+                                            )
+
+                                    st.caption(
+                                        "The verdict weights optimized starting-"
+                                        "lineup impact more heavily than raw "
+                                        "asset totals. Traded players require "
+                                        "FULL/PARTIAL sportsbook coverage, and "
+                                        "the analyzer refuses a verdict when "
+                                        "overall lineup coverage is too thin. "
+                                        "Keeper value, draft picks, long-term "
+                                        "dynasty value, and subjective manager "
+                                        "preferences are not included."
+                                    )
+
+            st.divider()
+
+            manager_by_user = {
+                manager.platform_user_id: manager
+                for manager in league.managers
+            }
+            team_options = {}
+            for roster in league.rosters:
+                manager = manager_by_user.get(roster.platform_user_id or "")
+                label = (
+                    manager.team_name
+                    if manager and manager.team_name
+                    else manager.display_name
+                    if manager
+                    else f"Roster {roster.platform_roster_id}"
+                )
+                if roster.platform_roster_id == league.my_platform_roster_id:
+                    label = f"{label} · MY TEAM"
+                team_options[label] = roster.platform_roster_id
+
+            if not team_options:
+                st.info("No drafted team rosters are available yet.")
+            else:
+                selected_team_label = st.selectbox(
+                    "Search / select league team",
+                    tuple(sorted(team_options)),
+                    key="fantasy_hq_team_explorer_team",
+                )
+                selected_roster_id = team_options[selected_team_label]
+
+                try:
+                    team_trends = _load_sleeper_trending_adds(48, 100)
+                    team_profile = build_league_team_profile(
+                        league,
+                        selected_roster_id,
+                        team_catalog,
+                        trends=team_trends,
+                    )
+                except Exception as exc:
+                    st.warning("Team Explorer could not build this roster profile.")
+                    st.caption(str(exc))
+                    team_profile = None
+
+                if team_profile is not None:
+                    team_a, team_b, team_c, team_d = st.columns(4)
+                    team_a.metric("Team", team_profile.team_name)
+                    team_b.metric("Record", team_profile.record)
+                    team_c.metric("Season PF", f"{team_profile.points_for:.2f}")
+                    team_d.metric("Rostered", team_profile.roster_size)
+
+                    depth_a, depth_b, depth_c = st.columns(3)
+                    depth_a.metric(
+                        "Starters filled",
+                        f"{team_profile.filled_starter_slots}/"
+                        f"{team_profile.starter_slots}",
+                    )
+                    depth_b.metric(
+                        "Serious statuses",
+                        team_profile.serious_status_count,
+                    )
+                    depth_c.metric(
+                        "Questionable",
+                        team_profile.questionable_status_count,
+                    )
+
+                    st.markdown("##### Likely shopping areas")
+                    if not team_profile.needs:
+                        st.success(
+                            "No obvious structural shopping area is showing "
+                            "from starter requirements, depth, or serious statuses."
                         )
                     else:
                         st.dataframe(
                             pd.DataFrame(
                                 [
                                     {
-                                        "Team": row.team_name,
-                                        "Fit": (
-                                            "Two-way fit"
-                                            if row.two_way
-                                            else "One-way fit"
-                                        ),
-                                        "They can help me at": (
-                                            " · ".join(row.they_can_help_me_at)
-                                            or "—"
-                                        ),
-                                        "I can help them at": (
-                                            " · ".join(row.i_can_help_them_at)
-                                            or "—"
-                                        ),
-                                        "Their needs": (
-                                            " · ".join(row.their_needs) or "—"
-                                        ),
+                                        "Pressure": row.level,
+                                        "Position": row.position,
+                                        "Why": row.reason,
                                     }
-                                    for row in league_needs.trade_fits
+                                    for row in team_profile.needs
                                 ]
                             ),
                             hide_index=True,
                             width="stretch",
                         )
-                        st.caption(
-                            "Two-way fit means their conservative depth overlaps "
-                            "one of your detected needs and your conservative depth "
-                            "overlaps one of theirs. It does not account for player "
-                            "quality, keeper value, draft picks, or willingness to trade."
+
+                    st.markdown("##### Position depth")
+                    if team_profile.position_counts:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {"Position": position, "Rostered": count}
+                                    for position, count
+                                    in team_profile.position_counts.items()
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
                         )
-    
-                    st.markdown("##### Specific trade candidates")
-                    try:
-                        trade_candidates = build_trade_candidate_board(
-                            league,
-                            team_catalog,
-                        )
-                    except Exception as exc:
-                        st.warning("Specific trade candidates could not be built.")
-                        st.caption(str(exc))
-                        trade_candidates = None
-    
-                    if trade_candidates is not None:
-                        if not trade_candidates.matches:
-                            st.info(
-                                "No roster-structure trade candidate pairing is "
-                                "specific enough to show player names right now."
-                            )
-                        else:
-                            for match in trade_candidates.matches:
-                                fit_label = (
-                                    "Two-way fit"
-                                    if match.two_way
-                                    else "One-way fit"
-                                )
-                                with st.expander(
-                                    f"{match.partner_team_name} · {fit_label}",
-                                    expanded=match.two_way,
-                                ):
-                                    left, right = st.columns(2)
-                                    with left:
-                                        st.markdown("**Players I could target**")
-                                        if not match.players_i_could_target:
-                                            st.caption(
-                                                "No player on this roster matches "
-                                                "the positions they can structurally "
-                                                "help me at."
-                                            )
-                                        else:
-                                            st.dataframe(
-                                                pd.DataFrame(
-                                                    [
-                                                        {
-                                                            "Player": row.name,
-                                                            "Pos": row.position,
-                                                            "NFL": row.nfl_team,
-                                                            "Slot": row.roster_slot,
-                                                            "Status": row.status,
-                                                        }
-                                                        for row
-                                                        in match.players_i_could_target
-                                                    ]
-                                                ),
-                                                hide_index=True,
-                                                width="stretch",
-                                            )
-                                    with right:
-                                        st.markdown("**My players that fit them**")
-                                        if not match.my_players_they_could_target:
-                                            st.caption(
-                                                "No player on my roster matches "
-                                                "their detected need positions."
-                                            )
-                                        else:
-                                            st.dataframe(
-                                                pd.DataFrame(
-                                                    [
-                                                        {
-                                                            "Player": row.name,
-                                                            "Pos": row.position,
-                                                            "NFL": row.nfl_team,
-                                                            "Slot": row.roster_slot,
-                                                            "Status": row.status,
-                                                        }
-                                                        for row
-                                                        in match.my_players_they_could_target
-                                                    ]
-                                                ),
-                                                hide_index=True,
-                                                width="stretch",
-                                            )
-    
-                                    st.caption(
-                                        "These are roster-position candidates only, "
-                                        "not a fair-trade verdict. Bench players are "
-                                        "shown before starters when status is otherwise "
-                                        "comparable."
-                                    )
-    
-                    st.markdown("##### Market-Assisted Trade Analyzer")
+
+                    st.markdown("##### Available players that fit")
                     st.caption(
-                        "Build a real proposed trade and compare both teams' "
-                        "optimized legal starting lineups before and after it using "
-                        "this league's scoring and PropWar's shared sportsbook "
-                        "fantasy baselines."
+                        "These are players available in this league whose "
+                        "positions match that team's structural needs. Sleeper "
+                        "48-hour add activity is used only as a tie-break signal."
                     )
-    
-                    trade_parlay_key = _secret_default("PARLAY_API_KEY")
-                    my_trade_roster = next(
-                        (
-                            roster
-                            for roster in league.rosters
-                            if roster.platform_roster_id
-                            == league.my_platform_roster_id
-                        ),
-                        None,
-                    )
-    
-                    if not league.ownership_ready or my_trade_roster is None:
+                    if not team_profile.targets:
                         st.info(
-                            "Market-Assisted Trade Analyzer will activate when "
-                            "Sleeper ownership and your drafted roster are available."
-                        )
-                    elif not trade_parlay_key:
-                        st.info(
-                            "Market-Assisted Trade Analyzer is unavailable because "
-                            "PARLAY_API_KEY is not configured."
+                            "No live available-player target list is available "
+                            "for this team's current structural needs."
                         )
                     else:
-                        trade_manager_by_user = {
-                            manager.platform_user_id: manager
-                            for manager in league.managers
-                        }
-                        trade_partner_options = {}
-                        for roster in league.rosters:
-                            if (
-                                roster.platform_roster_id
-                                == my_trade_roster.platform_roster_id
-                            ):
-                                continue
-                            manager = trade_manager_by_user.get(
-                                roster.platform_user_id or ""
-                            )
-                            label = (
-                                manager.team_name
-                                if manager and manager.team_name
-                                else manager.display_name
-                                if manager
-                                else f"Roster {roster.platform_roster_id}"
-                            )
-                            trade_partner_options[
-                                f"{label} · Roster {roster.platform_roster_id}"
-                            ] = roster.platform_roster_id
-    
-                        if not trade_partner_options:
-                            st.info("No other drafted roster is available to trade with.")
-                        else:
-                            selected_trade_partner_label = st.selectbox(
-                                "Trade partner",
-                                tuple(trade_partner_options),
-                                key="fantasy_hq_trade_partner",
-                            )
-                            selected_trade_partner_id = trade_partner_options[
-                                selected_trade_partner_label
-                            ]
-                            selected_trade_partner = next(
-                                (
-                                    roster
-                                    for roster in league.rosters
-                                    if roster.platform_roster_id
-                                    == selected_trade_partner_id
-                                ),
-                                None,
-                            )
-    
-                            def _trade_player_ids(roster):
-                                return tuple(
-                                    dict.fromkeys(
-                                        str(value).strip()
-                                        for value in (
-                                            *roster.players,
-                                            *roster.starters,
-                                            *roster.reserve,
-                                            *roster.taxi,
-                                        )
-                                        if str(value or "").strip()
-                                        not in {"", "0"}
-                                    )
-                                )
-    
-                            def _trade_player_label(player_id):
-                                player = team_catalog.get(player_id) or {}
-                                name = (
-                                    str(player.get("full_name") or "").strip()
-                                    or (
-                                        str(player.get("first_name") or "").strip()
-                                        + " "
-                                        + str(player.get("last_name") or "").strip()
-                                    ).strip()
-                                    or player_id
-                                )
-                                position = (
-                                    str(player.get("position") or "—")
-                                    .strip()
-                                    .upper()
-                                    or "—"
-                                )
-                                nfl_team = (
-                                    str(player.get("team") or "FA")
-                                    .strip()
-                                    .upper()
-                                    or "FA"
-                                )
-                                return (
-                                    f"{name} · {position} · {nfl_team} · "
-                                    f"{player_id}"
-                                )
-    
-                            my_trade_options = {
-                                _trade_player_label(player_id): player_id
-                                for player_id
-                                in _trade_player_ids(my_trade_roster)
-                            }
-                            partner_trade_options = (
-                                {
-                                    _trade_player_label(player_id): player_id
-                                    for player_id
-                                    in _trade_player_ids(selected_trade_partner)
-                                }
-                                if selected_trade_partner is not None
-                                else {}
-                            )
-    
-                            trade_left, trade_right = st.columns(2)
-                            with trade_left:
-                                give_labels = st.multiselect(
-                                    "I give",
-                                    tuple(my_trade_options),
-                                    key="fantasy_hq_trade_give",
-                                    help="Select one to four players.",
-                                )
-                            with trade_right:
-                                receive_labels = st.multiselect(
-                                    "I receive",
-                                    tuple(partner_trade_options),
-                                    key="fantasy_hq_trade_receive",
-                                    help="Select one to four players.",
-                                )
-    
-                            if len(give_labels) > 4 or len(receive_labels) > 4:
-                                st.warning(
-                                    "The analyzer supports up to four players per side."
-                                )
-    
-                            if st.button(
-                                "Analyze trade",
-                                key="fantasy_hq_analyze_trade",
-                                type="primary",
-                            ):
-                                give_ids = tuple(
-                                    my_trade_options[label]
-                                    for label in give_labels
-                                )
-                                receive_ids = tuple(
-                                    partner_trade_options[label]
-                                    for label in receive_labels
-                                )
-    
-                                if not give_ids or not receive_ids:
-                                    st.info(
-                                        "Select at least one player on each side "
-                                        "before analyzing the trade."
-                                    )
-                                elif len(give_ids) > 4 or len(receive_ids) > 4:
-                                    st.warning(
-                                        "Reduce the trade to four players or fewer "
-                                        "on each side."
-                                    )
-                                else:
-                                    try:
-                                        trade_market_snapshot = shared_prop_snapshot(
-                                            trade_parlay_key
-                                        )
-                                        trade_analysis = analyze_market_trade(
-                                            league,
-                                            team_catalog,
-                                            trade_market_snapshot.get("rows", ()),
-                                            partner_roster_id=(
-                                                selected_trade_partner_id
-                                            ),
-                                            give_player_ids=give_ids,
-                                            receive_player_ids=receive_ids,
-                                        )
-                                    except Exception as exc:
-                                        st.warning(
-                                            "Market-Assisted Trade Analyzer could "
-                                            "not evaluate this proposal."
-                                        )
-                                        st.caption(str(exc))
-                                        trade_analysis = None
-    
-                                    if trade_analysis is not None:
-                                        verdict_labels = {
-                                            "ACCEPT": "ACCEPT",
-                                            "BALANCED": "BALANCED",
-                                            "DECLINE": "DECLINE",
-                                            "INCOMPLETE": "INCOMPLETE",
-                                        }
-                                        partner_fit_labels = {
-                                            "GOOD_FOR_BOTH": "GOOD FOR BOTH",
-                                            "PLAUSIBLE": "PLAUSIBLE",
-                                            "HARD_SELL": "HARD SELL",
-                                        }
-    
-                                        ta, tb, tc, td = st.columns(4)
-                                        ta.metric(
-                                            "Verdict",
-                                            verdict_labels.get(
-                                                trade_analysis.verdict,
-                                                trade_analysis.verdict,
-                                            ),
-                                        )
-                                        tb.metric(
-                                            "My lineup impact",
-                                            (
-                                                f"{trade_analysis.my_team.lineup_delta:+.2f}"
-                                                " pts"
-                                            ),
-                                        )
-                                        tc.metric(
-                                            "Partner lineup impact",
-                                            (
-                                                f"{trade_analysis.partner_team.lineup_delta:+.2f}"
-                                                " pts"
-                                            ),
-                                        )
-                                        td.metric(
-                                            "Partner fit",
-                                            partner_fit_labels.get(
-                                                trade_analysis.partner_fit,
-                                                trade_analysis.partner_fit,
-                                            ),
-                                        )
-    
-                                        te, tf, tg, th = st.columns(4)
-                                        te.metric(
-                                            "Raw asset delta",
-                                            (
-                                                f"{trade_analysis.raw_asset_delta:+.2f}"
-                                                " pts"
-                                                if trade_analysis.raw_asset_delta
-                                                is not None
-                                                else "—"
-                                            ),
-                                        )
-                                        tf.metric(
-                                            "Confidence",
-                                            trade_analysis.confidence,
-                                        )
-                                        tg.metric(
-                                            "Minimum lineup coverage",
-                                            (
-                                                f"{trade_analysis.minimum_lineup_coverage:.0%}"
-                                            ),
-                                        )
-                                        th.metric(
-                                            "Decision edge",
-                                            (
-                                                f"{trade_analysis.decision_edge:+.2f}"
-                                                if trade_analysis.decision_edge
-                                                is not None
-                                                else "—"
-                                            ),
-                                        )
-    
-                                        if trade_analysis.verdict == "ACCEPT":
-                                            st.success(trade_analysis.reason)
-                                        elif trade_analysis.verdict == "DECLINE":
-                                            st.error(trade_analysis.reason)
-                                        elif trade_analysis.verdict == "INCOMPLETE":
-                                            st.warning(trade_analysis.reason)
-                                        else:
-                                            st.info(trade_analysis.reason)
-    
-                                        trade_asset_rows = []
-                                        for side, players in (
-                                            (
-                                                "I give",
-                                                trade_analysis.give_players,
-                                            ),
-                                            (
-                                                "I receive",
-                                                trade_analysis.receive_players,
-                                            ),
-                                        ):
-                                            for row in players:
-                                                trade_asset_rows.append(
-                                                    {
-                                                        "Side": side,
-                                                        "Player": row.name,
-                                                        "Pos": row.position,
-                                                        "NFL": row.nfl_team,
-                                                        "Market baseline": (
-                                                            round(
-                                                                row.market_fantasy_points,
-                                                                2,
-                                                            )
-                                                            if row.market_fantasy_points
-                                                            is not None
-                                                            else "—"
-                                                        ),
-                                                        "Coverage": row.coverage,
-                                                        "Components": (
-                                                            row.component_count
-                                                        ),
-                                                    }
-                                                )
-                                        st.dataframe(
-                                            pd.DataFrame(trade_asset_rows),
-                                            hide_index=True,
-                                            width="stretch",
-                                        )
-    
-                                        impact_rows = [
-                                            {
-                                                "Team": (
-                                                    trade_analysis.my_team.team_name
-                                                ),
-                                                "Before": round(
-                                                    trade_analysis.my_team.current.covered_points,
-                                                    2,
-                                                ),
-                                                "After": round(
-                                                    trade_analysis.my_team.post_trade.covered_points,
-                                                    2,
-                                                ),
-                                                "Lineup delta": round(
-                                                    trade_analysis.my_team.lineup_delta,
-                                                    2,
-                                                ),
-                                                "Covered starters before": (
-                                                    f"{trade_analysis.my_team.current.covered_starters}/"
-                                                    f"{trade_analysis.my_team.current.starter_slots}"
-                                                ),
-                                                "Covered starters after": (
-                                                    f"{trade_analysis.my_team.post_trade.covered_starters}/"
-                                                    f"{trade_analysis.my_team.post_trade.starter_slots}"
-                                                ),
-                                                "Roster size": (
-                                                    f"{trade_analysis.my_team.roster_size_before}"
-                                                    f" → {trade_analysis.my_team.roster_size_after}"
-                                                ),
-                                                "Post-trade depth warnings": (
-                                                    " · ".join(
-                                                        trade_analysis.my_team.depth_warnings_after
-                                                    )
-                                                    or "—"
-                                                ),
-                                            },
-                                            {
-                                                "Team": (
-                                                    trade_analysis.partner_team.team_name
-                                                ),
-                                                "Before": round(
-                                                    trade_analysis.partner_team.current.covered_points,
-                                                    2,
-                                                ),
-                                                "After": round(
-                                                    trade_analysis.partner_team.post_trade.covered_points,
-                                                    2,
-                                                ),
-                                                "Lineup delta": round(
-                                                    trade_analysis.partner_team.lineup_delta,
-                                                    2,
-                                                ),
-                                                "Covered starters before": (
-                                                    f"{trade_analysis.partner_team.current.covered_starters}/"
-                                                    f"{trade_analysis.partner_team.current.starter_slots}"
-                                                ),
-                                                "Covered starters after": (
-                                                    f"{trade_analysis.partner_team.post_trade.covered_starters}/"
-                                                    f"{trade_analysis.partner_team.post_trade.starter_slots}"
-                                                ),
-                                                "Roster size": (
-                                                    f"{trade_analysis.partner_team.roster_size_before}"
-                                                    f" → {trade_analysis.partner_team.roster_size_after}"
-                                                ),
-                                                "Post-trade depth warnings": (
-                                                    " · ".join(
-                                                        trade_analysis.partner_team.depth_warnings_after
-                                                    )
-                                                    or "—"
-                                                ),
-                                            },
-                                        ]
-                                        st.dataframe(
-                                            pd.DataFrame(impact_rows),
-                                            hide_index=True,
-                                            width="stretch",
-                                        )
-    
-                                        with st.expander(
-                                            "Optimized post-trade starters",
-                                            expanded=False,
-                                        ):
-                                            starter_left, starter_right = st.columns(2)
-                                            with starter_left:
-                                                st.markdown(
-                                                    f"**{trade_analysis.my_team.team_name}**"
-                                                )
-                                                st.dataframe(
-                                                    pd.DataFrame(
-                                                        [
-                                                            {
-                                                                "Slot": slot,
-                                                                "Player": player,
-                                                                "Market FP": round(
-                                                                    points,
-                                                                    2,
-                                                                ),
-                                                            }
-                                                            for slot, player, points
-                                                            in trade_analysis.my_team.post_trade.assignments
-                                                        ]
-                                                    ),
-                                                    hide_index=True,
-                                                    width="stretch",
-                                                )
-                                            with starter_right:
-                                                st.markdown(
-                                                    f"**{trade_analysis.partner_team.team_name}**"
-                                                )
-                                                st.dataframe(
-                                                    pd.DataFrame(
-                                                        [
-                                                            {
-                                                                "Slot": slot,
-                                                                "Player": player,
-                                                                "Market FP": round(
-                                                                    points,
-                                                                    2,
-                                                                ),
-                                                            }
-                                                            for slot, player, points
-                                                            in trade_analysis.partner_team.post_trade.assignments
-                                                        ]
-                                                    ),
-                                                    hide_index=True,
-                                                    width="stretch",
-                                                )
-    
-                                        st.caption(
-                                            "The verdict weights optimized starting-"
-                                            "lineup impact more heavily than raw "
-                                            "asset totals. Traded players require "
-                                            "FULL/PARTIAL sportsbook coverage, and "
-                                            "the analyzer refuses a verdict when "
-                                            "overall lineup coverage is too thin. "
-                                            "Keeper value, draft picks, long-term "
-                                            "dynasty value, and subjective manager "
-                                            "preferences are not included."
-                                        )
-    
-                st.divider()
-    
-                manager_by_user = {
-                    manager.platform_user_id: manager
-                    for manager in league.managers
-                }
-                team_options = {}
-                for roster in league.rosters:
-                    manager = manager_by_user.get(roster.platform_user_id or "")
-                    label = (
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Player": row.player_name,
+                                        "Pos": row.position,
+                                        "NFL": row.nfl_team,
+                                        "Status": row.status,
+                                        "Need pressure": row.need_level,
+                                        "Sleeper adds · 48h": (
+                                            row.trend_count
+                                            if row.trend_count
+                                            else "—"
+                                        ),
+                                    }
+                                    for row in team_profile.targets
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                    st.caption(
+                        "Team Explorer does not claim another manager will make "
+                        "a specific move. It identifies the roster areas and "
+                        "available-player fits most worth monitoring."
+                    )
+
+                _render_player_market_map(league, all_states, all_catalog)
+
+    with standings_tab:
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft standings are informational only; records and "
+                "points will begin changing once the fantasy season starts."
+            )
+
+        manager_by_user = {
+            manager.platform_user_id: manager
+            for manager in league.managers
+        }
+        standings = []
+        for roster in league.rosters:
+            manager = manager_by_user.get(roster.platform_user_id or "")
+            standings.append(
+                {
+                    "Team": (
                         manager.team_name
                         if manager and manager.team_name
                         else manager.display_name
                         if manager
                         else f"Roster {roster.platform_roster_id}"
-                    )
-                    if roster.platform_roster_id == league.my_platform_roster_id:
-                        label = f"{label} · MY TEAM"
-                    team_options[label] = roster.platform_roster_id
-    
-                if not team_options:
-                    st.info("No drafted team rosters are available yet.")
-                else:
-                    selected_team_label = st.selectbox(
-                        "Search / select league team",
-                        tuple(sorted(team_options)),
-                        key="fantasy_hq_team_explorer_team",
-                    )
-                    selected_roster_id = team_options[selected_team_label]
-    
-                    try:
-                        team_trends = _load_sleeper_trending_adds(48, 100)
-                        team_profile = build_league_team_profile(
-                            league,
-                            selected_roster_id,
-                            team_catalog,
-                            trends=team_trends,
-                        )
-                    except Exception as exc:
-                        st.warning("Team Explorer could not build this roster profile.")
-                        st.caption(str(exc))
-                        team_profile = None
-    
-                    if team_profile is not None:
-                        team_a, team_b, team_c, team_d = st.columns(4)
-                        team_a.metric("Team", team_profile.team_name)
-                        team_b.metric("Record", team_profile.record)
-                        team_c.metric("Season PF", f"{team_profile.points_for:.2f}")
-                        team_d.metric("Rostered", team_profile.roster_size)
-    
-                        depth_a, depth_b, depth_c = st.columns(3)
-                        depth_a.metric(
-                            "Starters filled",
-                            f"{team_profile.filled_starter_slots}/"
-                            f"{team_profile.starter_slots}",
-                        )
-                        depth_b.metric(
-                            "Serious statuses",
-                            team_profile.serious_status_count,
-                        )
-                        depth_c.metric(
-                            "Questionable",
-                            team_profile.questionable_status_count,
-                        )
-    
-                        st.markdown("##### Likely shopping areas")
-                        if not team_profile.needs:
-                            st.success(
-                                "No obvious structural shopping area is showing "
-                                "from starter requirements, depth, or serious statuses."
-                            )
-                        else:
-                            st.dataframe(
-                                pd.DataFrame(
-                                    [
-                                        {
-                                            "Pressure": row.level,
-                                            "Position": row.position,
-                                            "Why": row.reason,
-                                        }
-                                        for row in team_profile.needs
-                                    ]
-                                ),
-                                hide_index=True,
-                                width="stretch",
-                            )
-    
-                        st.markdown("##### Position depth")
-                        if team_profile.position_counts:
-                            st.dataframe(
-                                pd.DataFrame(
-                                    [
-                                        {"Position": position, "Rostered": count}
-                                        for position, count
-                                        in team_profile.position_counts.items()
-                                    ]
-                                ),
-                                hide_index=True,
-                                width="stretch",
-                            )
-    
-                        st.markdown("##### Available players that fit")
-                        st.caption(
-                            "These are players available in this league whose "
-                            "positions match that team's structural needs. Sleeper "
-                            "48-hour add activity is used only as a tie-break signal."
-                        )
-                        if not team_profile.targets:
-                            st.info(
-                                "No live available-player target list is available "
-                                "for this team's current structural needs."
-                            )
-                        else:
-                            st.dataframe(
-                                pd.DataFrame(
-                                    [
-                                        {
-                                            "Player": row.player_name,
-                                            "Pos": row.position,
-                                            "NFL": row.nfl_team,
-                                            "Status": row.status,
-                                            "Need pressure": row.need_level,
-                                            "Sleeper adds · 48h": (
-                                                row.trend_count
-                                                if row.trend_count
-                                                else "—"
-                                            ),
-                                        }
-                                        for row in team_profile.targets
-                                    ]
-                                ),
-                                hide_index=True,
-                                width="stretch",
-                            )
-    
-                        st.caption(
-                            "Team Explorer does not claim another manager will make "
-                            "a specific move. It identifies the roster areas and "
-                            "available-player fits most worth monitoring."
-                        )
-    
-                    _render_player_market_map(league, all_states, all_catalog)
-    
-    if standings_tab.open:
-        with standings_tab:
-            if pre_draft_mode:
-                st.info(
-                    "Pre-draft standings are informational only; records and "
-                    "points will begin changing once the fantasy season starts."
-                )
-    
-            manager_by_user = {
-                manager.platform_user_id: manager
-                for manager in league.managers
-            }
-            standings = []
-            for roster in league.rosters:
-                manager = manager_by_user.get(roster.platform_user_id or "")
-                standings.append(
+                    ),
+                    "Record": _record(roster),
+                    "PF": round(_points(roster), 2),
+                    "Mine": (
+                        "Yes"
+                        if roster.platform_roster_id
+                        == league.my_platform_roster_id
+                        else ""
+                    ),
+                }
+            )
+        standings.sort(key=lambda row: row["PF"], reverse=True)
+        st.dataframe(
+            pd.DataFrame(standings),
+            hide_index=True,
+            width="stretch",
+        )
+
+    with rules_tab:
+        if pre_draft_mode:
+            st.success(
+                "League settings are available now and are the most useful "
+                "pre-draft Fantasy HQ section."
+            )
+
+        settings = [
+            ("Teams", league.team_count),
+            ("Roster", " · ".join(league.rules.roster_positions)),
+            (
+                "Scoring",
+                (
+                    "Full PPR"
+                    if league.rules.scoring_settings.get("rec") == 1
+                    else f"Reception: "
+                    f"{league.rules.scoring_settings.get('rec', 0)}"
+                ),
+            ),
+            (
+                "FAAB budget",
+                (
+                    league.rules.waiver_budget
+                    if league.rules.waiver_budget is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Playoff teams",
+                (
+                    league.rules.playoff_teams
+                    if league.rules.playoff_teams is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Trade deadline",
+                (
+                    league.rules.trade_deadline
+                    if league.rules.trade_deadline is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Keepers",
+                (
+                    league.rules.max_keepers
+                    if league.rules.max_keepers is not None
+                    else "—"
+                ),
+            ),
+            (
+                "Draft",
+                (
+                    league.draft.status.replace("_", " ").title()
+                    if league.draft
+                    else "Unavailable"
+                ),
+            ),
+        ]
+        st.dataframe(
+            pd.DataFrame(settings, columns=["Setting", "Value"]),
+            hide_index=True,
+            width="stretch",
+        )
+
+
+    with cross_tab:
+        st.markdown("#### Sleeper cross-league ownership")
+        if pre_draft_mode:
+            st.info(
+                "This selected league is still pre-draft. Cross-league "
+                "ownership and exposure will fill in automatically as your "
+                "Sleeper drafts populate rosters."
+            )
+
+        st.caption(
+            "Live roster ownership across every Sleeper NFL league found for "
+            "this account. Draft results will appear here as Sleeper rosters update."
+        )
+
+        catalog = all_catalog
+        if not all_states:
+            st.warning("Cross-league ownership could not be loaded.")
+            if all_scan_error:
+                st.caption(all_scan_error)
+
+        if all_states:
+            scan_a, scan_b = st.columns(2)
+            scan_a.metric("Sleeper leagues scanned", len(all_states))
+
+            actionable = my_players_available_elsewhere(all_states)
+            scan_b.metric(
+                "My players free elsewhere",
+                len(actionable),
+            )
+
+            exposure = build_my_player_exposure(all_states)
+            st.markdown("##### My Player Exposure")
+            exposure_a, exposure_b, exposure_c, exposure_d = st.columns(4)
+            exposure_a.metric(
+                "Distinct players",
+                exposure.distinct_player_count,
+            )
+            exposure_b.metric(
+                "Multi-league players",
+                exposure.multi_league_player_count,
+            )
+            exposure_c.metric(
+                "Max leagues / player",
+                exposure.max_league_count,
+            )
+            exposure_d.metric(
+                "My roster slots",
+                exposure.total_roster_slots,
+            )
+
+            exposure_positions = tuple(
+                sorted(
                     {
-                        "Team": (
-                            manager.team_name
-                            if manager and manager.team_name
-                            else manager.display_name
-                            if manager
-                            else f"Roster {roster.platform_roster_id}"
+                        str(
+                            (catalog.get(row.sleeper_player_id) or {}).get(
+                                "position"
+                            )
+                            or "—"
+                        ).upper()
+                        for row in exposure.players
+                    }
+                    - {"—"}
+                )
+            )
+            exposure_filter_a, exposure_filter_b = st.columns([1, 2])
+            with exposure_filter_a:
+                exposure_multi_only = st.checkbox(
+                    "Only players owned in 2+ leagues",
+                    value=False,
+                    key="fantasy_hq_exposure_multi_only",
+                )
+            with exposure_filter_b:
+                exposure_selected_positions = st.multiselect(
+                    "Exposure positions",
+                    exposure_positions,
+                    default=exposure_positions,
+                    key="fantasy_hq_exposure_positions",
+                )
+
+            exposure_rows = []
+            for exposure_row in exposure.players:
+                if exposure_multi_only and not exposure_row.multi_league:
+                    continue
+                player = catalog.get(exposure_row.sleeper_player_id) or {}
+                position = str(player.get("position") or "—").upper()
+                if (
+                    exposure_selected_positions
+                    and position not in exposure_selected_positions
+                ):
+                    continue
+                name = str(player.get("full_name") or "").strip()
+                if not name:
+                    first = str(player.get("first_name") or "").strip()
+                    last = str(player.get("last_name") or "").strip()
+                    name = (
+                        f"{first} {last}".strip()
+                        or exposure_row.sleeper_player_id
+                    )
+                exposure_rows.append(
+                    {
+                        "Player": name,
+                        "Pos": position,
+                        "NFL": str(player.get("team") or "FA"),
+                        "Leagues owned": exposure_row.league_count,
+                        "Where": " · ".join(
+                            f"{item.league_name} ({item.roster_slot})"
+                            for item in exposure_row.leagues
                         ),
-                        "Record": _record(roster),
-                        "PF": round(_points(roster), 2),
-                        "Mine": (
-                            "Yes"
-                            if roster.platform_roster_id
-                            == league.my_platform_roster_id
-                            else ""
-                        ),
+                        "Starts": exposure_row.starter_count,
+                        "Bench": exposure_row.bench_count,
+                        "IR": exposure_row.reserve_count,
+                        "Taxi": exposure_row.taxi_count,
                     }
                 )
-            standings.sort(key=lambda row: row["PF"], reverse=True)
-            st.dataframe(
-                pd.DataFrame(standings),
-                hide_index=True,
-                width="stretch",
-            )
-    
-    if rules_tab.open:
-        with rules_tab:
-            if pre_draft_mode:
-                st.success(
-                    "League settings are available now and are the most useful "
-                    "pre-draft Fantasy HQ section."
+
+            exposure_rows.sort(
+                key=lambda row: (
+                    -int(row["Leagues owned"]),
+                    -int(row["Starts"]),
+                    str(row["Player"]).casefold(),
                 )
-    
-            settings = [
-                ("Teams", league.team_count),
-                ("Roster", " · ".join(league.rules.roster_positions)),
-                (
-                    "Scoring",
-                    (
-                        "Full PPR"
-                        if league.rules.scoring_settings.get("rec") == 1
-                        else f"Reception: "
-                        f"{league.rules.scoring_settings.get('rec', 0)}"
-                    ),
-                ),
-                (
-                    "FAAB budget",
-                    (
-                        league.rules.waiver_budget
-                        if league.rules.waiver_budget is not None
-                        else "—"
-                    ),
-                ),
-                (
-                    "Playoff teams",
-                    (
-                        league.rules.playoff_teams
-                        if league.rules.playoff_teams is not None
-                        else "—"
-                    ),
-                ),
-                (
-                    "Trade deadline",
-                    (
-                        league.rules.trade_deadline
-                        if league.rules.trade_deadline is not None
-                        else "—"
-                    ),
-                ),
-                (
-                    "Keepers",
-                    (
-                        league.rules.max_keepers
-                        if league.rules.max_keepers is not None
-                        else "—"
-                    ),
-                ),
-                (
-                    "Draft",
-                    (
-                        league.draft.status.replace("_", " ").title()
-                        if league.draft
-                        else "Unavailable"
-                    ),
-                ),
-            ]
-            st.dataframe(
-                pd.DataFrame(settings, columns=["Setting", "Value"]),
-                hide_index=True,
-                width="stretch",
             )
-    
-    
-    if cross_tab.open:
-        with cross_tab:
-            st.markdown("#### Sleeper cross-league ownership")
-            if pre_draft_mode:
+            if exposure_rows:
+                st.dataframe(
+                    pd.DataFrame(exposure_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+            elif exposure.players:
+                st.info("No owned player matches the exposure filters.")
+            else:
                 st.info(
-                    "This selected league is still pre-draft. Cross-league "
-                    "ownership and exposure will fill in automatically as your "
-                    "Sleeper drafts populate rosters."
+                    "No drafted Sleeper roster exposure is available yet."
                 )
-    
+
             st.caption(
-                "Live roster ownership across every Sleeper NFL league found for "
-                "this account. Draft results will appear here as Sleeper rosters update."
+                "Exposure is ownership only, not a recommendation to diversify "
+                "or concentrate. Pre-draft leagues add exposure after rosters populate."
             )
-    
-            catalog = all_catalog
-            if not all_states:
-                st.warning("Cross-league ownership could not be loaded.")
-                if all_scan_error:
-                    st.caption(all_scan_error)
-    
-            if all_states:
-                scan_a, scan_b = st.columns(2)
-                scan_a.metric("Sleeper leagues scanned", len(all_states))
-    
-                actionable = my_players_available_elsewhere(all_states)
-                scan_b.metric(
-                    "My players free elsewhere",
-                    len(actionable),
+
+            st.markdown("##### My players available in another league")
+            if not actionable:
+                st.info(
+                    "No current player on one of your Sleeper rosters is "
+                    "available in another scanned Sleeper league yet."
                 )
-    
-                exposure = build_my_player_exposure(all_states)
-                st.markdown("##### My Player Exposure")
-                exposure_a, exposure_b, exposure_c, exposure_d = st.columns(4)
-                exposure_a.metric(
-                    "Distinct players",
-                    exposure.distinct_player_count,
-                )
-                exposure_b.metric(
-                    "Multi-league players",
-                    exposure.multi_league_player_count,
-                )
-                exposure_c.metric(
-                    "Max leagues / player",
-                    exposure.max_league_count,
-                )
-                exposure_d.metric(
-                    "My roster slots",
-                    exposure.total_roster_slots,
-                )
-    
-                exposure_positions = tuple(
-                    sorted(
-                        {
-                            str(
-                                (catalog.get(row.sleeper_player_id) or {}).get(
-                                    "position"
-                                )
-                                or "—"
-                            ).upper()
-                            for row in exposure.players
-                        }
-                        - {"—"}
-                    )
-                )
-                exposure_filter_a, exposure_filter_b = st.columns([1, 2])
-                with exposure_filter_a:
-                    exposure_multi_only = st.checkbox(
-                        "Only players owned in 2+ leagues",
-                        value=False,
-                        key="fantasy_hq_exposure_multi_only",
-                    )
-                with exposure_filter_b:
-                    exposure_selected_positions = st.multiselect(
-                        "Exposure positions",
-                        exposure_positions,
-                        default=exposure_positions,
-                        key="fantasy_hq_exposure_positions",
-                    )
-    
-                exposure_rows = []
-                for exposure_row in exposure.players:
-                    if exposure_multi_only and not exposure_row.multi_league:
-                        continue
-                    player = catalog.get(exposure_row.sleeper_player_id) or {}
-                    position = str(player.get("position") or "—").upper()
-                    if (
-                        exposure_selected_positions
-                        and position not in exposure_selected_positions
-                    ):
-                        continue
+            else:
+                action_rows = []
+                for item in actionable:
+                    player = catalog.get(item.sleeper_player_id) or {}
                     name = str(player.get("full_name") or "").strip()
                     if not name:
                         first = str(player.get("first_name") or "").strip()
                         last = str(player.get("last_name") or "").strip()
                         name = (
                             f"{first} {last}".strip()
-                            or exposure_row.sleeper_player_id
+                            or item.sleeper_player_id
                         )
-                    exposure_rows.append(
+                    action_rows.append(
                         {
                             "Player": name,
-                            "Pos": position,
+                            "Pos": str(player.get("position") or "—"),
                             "NFL": str(player.get("team") or "FA"),
-                            "Leagues owned": exposure_row.league_count,
-                            "Where": " · ".join(
-                                f"{item.league_name} ({item.roster_slot})"
-                                for item in exposure_row.leagues
+                            "I roster him in": " · ".join(item.mine_in),
+                            "Available in": " · ".join(item.available_in),
+                            "Opponent-owned in": (
+                                " · ".join(item.owned_elsewhere_in) or "—"
                             ),
-                            "Starts": exposure_row.starter_count,
-                            "Bench": exposure_row.bench_count,
-                            "IR": exposure_row.reserve_count,
-                            "Taxi": exposure_row.taxi_count,
                         }
                     )
-    
-                exposure_rows.sort(
+                action_rows.sort(
                     key=lambda row: (
-                        -int(row["Leagues owned"]),
-                        -int(row["Starts"]),
-                        str(row["Player"]).casefold(),
+                        row["Pos"],
+                        row["Player"],
                     )
                 )
-                if exposure_rows:
-                    st.dataframe(
-                        pd.DataFrame(exposure_rows),
-                        hide_index=True,
-                        width="stretch",
-                    )
-                elif exposure.players:
-                    st.info("No owned player matches the exposure filters.")
-                else:
-                    st.info(
-                        "No drafted Sleeper roster exposure is available yet."
-                    )
-    
-                st.caption(
-                    "Exposure is ownership only, not a recommendation to diversify "
-                    "or concentrate. Pre-draft leagues add exposure after rosters populate."
+                st.dataframe(
+                    pd.DataFrame(action_rows),
+                    hide_index=True,
+                    width="stretch",
                 )
-    
-                st.markdown("##### My players available in another league")
-                if not actionable:
-                    st.info(
-                        "No current player on one of your Sleeper rosters is "
-                        "available in another scanned Sleeper league yet."
-                    )
-                else:
-                    action_rows = []
-                    for item in actionable:
-                        player = catalog.get(item.sleeper_player_id) or {}
-                        name = str(player.get("full_name") or "").strip()
-                        if not name:
-                            first = str(player.get("first_name") or "").strip()
-                            last = str(player.get("last_name") or "").strip()
-                            name = (
-                                f"{first} {last}".strip()
-                                or item.sleeper_player_id
-                            )
-                        action_rows.append(
-                            {
-                                "Player": name,
-                                "Pos": str(player.get("position") or "—"),
-                                "NFL": str(player.get("team") or "FA"),
-                                "I roster him in": " · ".join(item.mine_in),
-                                "Available in": " · ".join(item.available_in),
-                                "Opponent-owned in": (
-                                    " · ".join(item.owned_elsewhere_in) or "—"
-                                ),
-                            }
-                        )
-                    action_rows.sort(
-                        key=lambda row: (
-                            row["Pos"],
-                            row["Player"],
-                        )
-                    )
-                    st.dataframe(
-                        pd.DataFrame(action_rows),
-                        hide_index=True,
-                        width="stretch",
-                    )
-    
-                _render_cross_league_player_lookup(catalog, all_states)
-    
-    
+
+            _render_cross_league_player_lookup(catalog, all_states)
+
+
 def _render_yahoo(
     config: YahooOAuthConfig | None,
     access_token: str | None,
@@ -4171,18 +4131,12 @@ with source_b:
             st.info("Optional · parked")
             st.caption("Not required to use Fantasy HQ or your Sleeper tools")
 
-sleeper_tab, yahoo_tab = st.tabs(
-    ["Sleeper leagues", "Yahoo leagues"],
-    key="fantasy_hq_provider_tabs",
-    on_change="rerun",
-)
-if sleeper_tab.open:
-    with sleeper_tab:
-        _render_sleeper()
-if yahoo_tab.open:
-    with yahoo_tab:
-        _render_yahoo(yahoo_config, yahoo_access_token)
-    
+sleeper_tab, yahoo_tab = st.tabs(["Sleeper leagues", "Yahoo leagues"])
+with sleeper_tab:
+    _render_sleeper()
+with yahoo_tab:
+    _render_yahoo(yahoo_config, yahoo_access_token)
+
 st.divider()
 st.caption(
     "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
