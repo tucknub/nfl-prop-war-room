@@ -217,6 +217,10 @@ def test_real_canary_workflow_rechecks_remote_state_before_any_write():
     for required in (
         "Re-verify remote D1 is still pristine",
         "verify_fantasy_hq_remote_d1.py",
+        "Re-verify active Worker version matches shadow deployment",
+        "/workers/scripts/propwar-fantasy-hq/deployments",
+        "EXPECTED_VERSION_ID",
+        "Fantasy HQ active Worker version differs from shadow evidence",
         "Re-verify remote Cron Triggers are empty",
         "/workers/scripts/propwar-fantasy-hq/schedules",
         "Re-run authenticated read-only runtime handshake",
