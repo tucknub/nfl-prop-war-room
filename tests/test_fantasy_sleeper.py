@@ -180,3 +180,82 @@ def test_client_uses_public_read_only_league_resources():
         "/v1/league/test/rosters",
         "/v1/league/test/drafts",
     ]
+
+
+def test_client_discovers_user_leagues_and_player_catalog():
+    payloads = {
+        "/v1/user/tuck": {
+            "user_id": "u1",
+            "username": "tuck",
+            "display_name": "Tuck",
+        },
+        "/v1/user/u1/leagues/nfl/2026": [
+            {
+                "league_id": "l1",
+                "name": "League One",
+                "season": "2026",
+                "total_rosters": 12,
+            },
+            {
+                "league_id": "",
+                "name": "Malformed",
+            },
+        ],
+        "/v1/players/nfl": {
+            "p1": {
+                "player_id": "p1",
+                "full_name": "Player One",
+                "position": "RB",
+                "team": "IND",
+            }
+        },
+    }
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        payload = payloads.get(request.url.path)
+        return httpx.Response(200 if payload is not None else 404, json=payload or {})
+
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(handler),
+    )
+    client = SleeperClient(client=http)
+
+    user = client.fetch_user("tuck")
+    leagues = client.fetch_user_leagues(user["user_id"], season="2026")
+    players = client.fetch_players()
+
+    assert user["user_id"] == "u1"
+    assert [row["league_id"] for row in leagues] == ["l1"]
+    assert players["p1"]["full_name"] == "Player One"
+    assert seen == [
+        "/v1/user/tuck",
+        "/v1/user/u1/leagues/nfl/2026",
+        "/v1/players/nfl",
+    ]
+
+
+def test_user_discovery_rejects_malformed_user_and_league_shapes():
+    responses = [
+        None,
+        {},
+    ]
+
+    for payload in responses:
+        def handler(request: httpx.Request, payload=payload) -> httpx.Response:
+            return httpx.Response(200, json=payload)
+
+        http = httpx.Client(
+            base_url="https://api.sleeper.app/v1/",
+            transport=httpx.MockTransport(handler),
+        )
+        client = SleeperClient(client=http)
+
+        try:
+            client.fetch_user("tuck")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("malformed Sleeper user must fail closed")
