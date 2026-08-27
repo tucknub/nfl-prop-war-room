@@ -9,7 +9,7 @@ from .models import FantasyLeagueState
 
 FANTASY_POSITIONS = ("QB", "RB", "WR", "TE", "K", "DEF")
 _POSITION_ORDER = {position: index for index, position in enumerate(FANTASY_POSITIONS)}
-_EXCLUDED_STATUSES = {"retired"}
+_EXCLUDED_STATUSES = {"retired", "inactive"}
 
 
 @dataclass(frozen=True)
