@@ -23,40 +23,8 @@ on:
         description: "EXECUTE only: exact sync_run_id copied from PREVIEW_ONLY"
         required: false
         type: string
-      league_season_id:
-        description: "Canonical internal league-season ID"
-        required: true
-        type: string
-      platform_league_id:
-        description: "Exact Sleeper league ID"
-        required: true
-        type: string
-      season:
-        description: "Sleeper season, e.g. 2026"
-        required: true
-        type: string
-      league_family_id:
-        description: "Canonical league family ID"
-        required: true
-        type: string
-      family_display_name:
-        description: "League family display name"
-        required: true
-        type: string
-      season_display_name:
-        description: "League-season display name"
-        required: true
-        type: string
-      registration_created_at_ms:
-        description: "Explicit registration timestamp in Unix milliseconds"
-        required: true
-        type: string
       canary_at_ms:
         description: "Explicit logical canary slot in Unix milliseconds"
-        required: true
-        type: string
-      current_user_id:
-        description: "Exact Sleeper user ID used to identify the owner's roster"
         required: true
         type: string
 
@@ -76,6 +44,14 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+      FANTASY_CANARY_LEAGUE_SEASON_ID: ${{ secrets.FANTASY_CANARY_LEAGUE_SEASON_ID }}
+      FANTASY_CANARY_PLATFORM_LEAGUE_ID: ${{ secrets.FANTASY_CANARY_PLATFORM_LEAGUE_ID }}
+      FANTASY_CANARY_SEASON: ${{ secrets.FANTASY_CANARY_SEASON }}
+      FANTASY_CANARY_LEAGUE_FAMILY_ID: ${{ secrets.FANTASY_CANARY_LEAGUE_FAMILY_ID }}
+      FANTASY_CANARY_FAMILY_DISPLAY_NAME: ${{ secrets.FANTASY_CANARY_FAMILY_DISPLAY_NAME }}
+      FANTASY_CANARY_SEASON_DISPLAY_NAME: ${{ secrets.FANTASY_CANARY_SEASON_DISPLAY_NAME }}
+      FANTASY_CANARY_REGISTRATION_CREATED_AT_MS: ${{ secrets.FANTASY_CANARY_REGISTRATION_CREATED_AT_MS }}
+      FANTASY_CANARY_CURRENT_USER_ID: ${{ secrets.FANTASY_CANARY_CURRENT_USER_ID }}
       WRANGLER_VERSION: "4.126.0"
       WRANGLER_SEND_METRICS: "false"
       WRANGLER_LOG_SANITIZE: "true"
@@ -111,6 +87,14 @@ jobs:
               "CLOUDFLARE_API_TOKEN",
               "CLOUDFLARE_ACCOUNT_ID",
               "FANTASY_PERSISTENCE_TOKEN",
+              "FANTASY_CANARY_LEAGUE_SEASON_ID",
+              "FANTASY_CANARY_PLATFORM_LEAGUE_ID",
+              "FANTASY_CANARY_SEASON",
+              "FANTASY_CANARY_LEAGUE_FAMILY_ID",
+              "FANTASY_CANARY_FAMILY_DISPLAY_NAME",
+              "FANTASY_CANARY_SEASON_DISPLAY_NAME",
+              "FANTASY_CANARY_REGISTRATION_CREATED_AT_MS",
+              "FANTASY_CANARY_CURRENT_USER_ID",
           ):
               value = os.environ.get(name, "")
               if not value or value != value.strip():
@@ -241,15 +225,7 @@ jobs:
       - name: Build deterministic canary preview
         id: preview
         env:
-          FANTASY_CANARY_LEAGUE_SEASON_ID: ${{ inputs.league_season_id }}
-          FANTASY_CANARY_PLATFORM_LEAGUE_ID: ${{ inputs.platform_league_id }}
-          FANTASY_CANARY_SEASON: ${{ inputs.season }}
-          FANTASY_CANARY_LEAGUE_FAMILY_ID: ${{ inputs.league_family_id }}
-          FANTASY_CANARY_FAMILY_DISPLAY_NAME: ${{ inputs.family_display_name }}
-          FANTASY_CANARY_SEASON_DISPLAY_NAME: ${{ inputs.season_display_name }}
-          FANTASY_CANARY_REGISTRATION_CREATED_AT_MS: ${{ inputs.registration_created_at_ms }}
           FANTASY_CANARY_AT_MS: ${{ inputs.canary_at_ms }}
-          FANTASY_CANARY_CURRENT_USER_ID: ${{ inputs.current_user_id }}
         run: |
           set -euo pipefail
           PREVIEW="$RUNNER_TEMP/fantasy-hq-canary-preview.json"
@@ -270,8 +246,7 @@ jobs:
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
               handle.write("## Fantasy HQ one-league canary preview\n\n")
-              handle.write(f"- League season ID: {preview['league_season_id']}\n")
-              handle.write(f"- Sleeper league ID: {preview['platform_league_id']}\n")
+              handle.write(f"- League identity fingerprint: {preview['league_identity_fingerprint']}\n")
               handle.write(f"- Season: {preview['season']}\n")
               handle.write(f"- Canary slot: {preview['canary_at_ms']}\n")
               handle.write(f"- Sync run ID: {preview['sync_run_id']}\n")
@@ -304,15 +279,7 @@ jobs:
         env:
           FANTASY_PERSISTENCE_URL: ${{ steps.shadow.outputs.worker_url }}/v1/fantasy/persistence
           FANTASY_CANARY_CONFIRM: ${{ inputs.confirmation }}
-          FANTASY_CANARY_LEAGUE_SEASON_ID: ${{ inputs.league_season_id }}
-          FANTASY_CANARY_PLATFORM_LEAGUE_ID: ${{ inputs.platform_league_id }}
-          FANTASY_CANARY_SEASON: ${{ inputs.season }}
-          FANTASY_CANARY_LEAGUE_FAMILY_ID: ${{ inputs.league_family_id }}
-          FANTASY_CANARY_FAMILY_DISPLAY_NAME: ${{ inputs.family_display_name }}
-          FANTASY_CANARY_SEASON_DISPLAY_NAME: ${{ inputs.season_display_name }}
-          FANTASY_CANARY_REGISTRATION_CREATED_AT_MS: ${{ inputs.registration_created_at_ms }}
           FANTASY_CANARY_AT_MS: ${{ inputs.canary_at_ms }}
-          FANTASY_CANARY_CURRENT_USER_ID: ${{ inputs.current_user_id }}
         run: |
           set +e
           python scripts/run_fantasy_hq_single_league_canary.py \
@@ -362,8 +329,7 @@ jobs:
               "shadow_run_id": int(os.environ["SHADOW_RUN_ID"]),
               "shadow_version_id": os.environ["SHADOW_VERSION_ID"],
               "source_commit_sha": os.environ["GITHUB_SHA"],
-              "league_season_id": preview["league_season_id"],
-              "platform_league_id": preview["platform_league_id"],
+              "league_identity_fingerprint": preview["league_identity_fingerprint"],
               "season": preview["season"],
               "canary_at_ms": preview["canary_at_ms"],
               "batch_id": result["batch_id"],
