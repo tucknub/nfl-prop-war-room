@@ -41,6 +41,9 @@ from src.fantasy.player_intelligence import (  # noqa: E402
 from src.fantasy.market_fantasy import (  # noqa: E402
     build_market_fantasy_baseline,
 )
+from src.fantasy.market_start_sit import (  # noqa: E402
+    build_market_start_sit_board,
+)
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -947,10 +950,126 @@ def _render_sleeper() -> None:
                     )
 
                 st.caption(
-                    "Eligible bench options are eligibility/status only, not "
-                    "ranked start/sit recommendations. FLEX, WRRB Flex, Rec Flex, "
-                    "Super Flex, and IDP Flex use Sleeper slot eligibility."
+                    "Eligible bench options above are eligibility/status only. "
+                    "The market-assisted layer below adds current sportsbook "
+                    "context when sufficient coverage exists."
                 )
+
+                st.markdown("##### Market-Assisted Start/Sit")
+                st.caption(
+                    "Compares each current starter with eligible bench options "
+                    "using this league's scoring and PropWar's shared consensus "
+                    "prop snapshot. A SWAP verdict requires FULL/PARTIAL market "
+                    "coverage for both players and at least a 1.00-point edge."
+                )
+
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Market-assisted Start/Sit is unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        market_lineup_snapshot = shared_prop_snapshot(parlay_key)
+                        market_start_sit = build_market_start_sit_board(
+                            lineup,
+                            league.rules.scoring_settings,
+                            lineup_catalog,
+                            market_lineup_snapshot.get("rows", ()),
+                        )
+                    except Exception as exc:
+                        st.warning("Market-assisted Start/Sit could not be built.")
+                        st.caption(str(exc))
+                        market_start_sit = None
+
+                    if market_start_sit is not None:
+                        ms_a, ms_b = st.columns(2)
+                        ms_a.metric(
+                            "Market lineup actions",
+                            market_start_sit.actionable_count,
+                        )
+                        ms_b.metric("Suggested swaps", market_start_sit.swap_count)
+
+                        market_lineup_rows = []
+                        for advice in market_start_sit.slots:
+                            starter_market = advice.starter
+                            bench_market = advice.best_bench
+                            market_lineup_rows.append(
+                                {
+                                    "Slot": advice.slot,
+                                    "Starter": (
+                                        starter_market.name
+                                        if starter_market
+                                        else "OPEN / UNCOVERED"
+                                    ),
+                                    "Starter baseline": (
+                                        round(starter_market.fantasy_points, 2)
+                                        if starter_market
+                                        else "—"
+                                    ),
+                                    "Starter coverage": (
+                                        starter_market.coverage
+                                        if starter_market
+                                        else "—"
+                                    ),
+                                    "Best bench": (
+                                        bench_market.name
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Bench baseline": (
+                                        round(bench_market.fantasy_points, 2)
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Bench coverage": (
+                                        bench_market.coverage
+                                        if bench_market
+                                        else "—"
+                                    ),
+                                    "Market edge": (
+                                        round(advice.edge_points, 2)
+                                        if advice.edge_points is not None
+                                        else "—"
+                                    ),
+                                    "Verdict": advice.verdict,
+                                    "Why": advice.reason,
+                                }
+                            )
+
+                        if market_lineup_rows:
+                            st.dataframe(
+                                pd.DataFrame(market_lineup_rows),
+                                hide_index=True,
+                                width="stretch",
+                            )
+
+                        if market_start_sit.swap_count:
+                            st.warning(
+                                f"{market_start_sit.swap_count} starter slot"
+                                f"{'s have' if market_start_sit.swap_count != 1 else ' has'} "
+                                "an eligible bench option with at least a "
+                                "1.00-point market-baseline advantage."
+                            )
+                        elif market_start_sit.actionable_count:
+                            st.info(
+                                "No covered starter-to-bench swap cleared the "
+                                "1.00-point threshold, but at least one open "
+                                "slot has a covered fill option."
+                            )
+                        else:
+                            st.success(
+                                "No covered starter-to-bench market swap clears "
+                                "the 1.00-point threshold right now."
+                            )
+
+                        st.caption(
+                            "This is market-assisted decision support, not a "
+                            "guaranteed projection. THIN/missing coverage never "
+                            "creates a SWAP verdict, and current injury/status "
+                            "alerts from Lineup Check still matter."
+                        )
 
     with waiver_tab:
         st.markdown("#### Waiver Watch")
