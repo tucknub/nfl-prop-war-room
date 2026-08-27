@@ -1,0 +1,352 @@
+name: Fantasy HQ Shadow Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_FANTASY_HQ_SHADOW"
+        required: true
+        type: string
+      database_id:
+        description: "Existing D1 UUID; leave blank to resolve exact database name"
+        required: false
+        type: string
+      create_database_if_missing:
+        description: "Create propwar-fantasy-hq only when no exact-name D1 exists"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fantasy-hq-shadow-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_VERSION: "4.126.0"
+      WRANGLER_SEND_METRICS: "false"
+      WRANGLER_LOG_SANITIZE: "true"
+      WRANGLER_SEND_ERROR_REPORTS: "false"
+      FORCE_COLOR: "0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate manual deployment gate
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          DATABASE_ID_INPUT: ${{ inputs.database_id }}
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import sys
+
+          if os.environ.get("GITHUB_REF_NAME") != "streamlit-cloud-deploy":
+              raise SystemExit("Fantasy HQ shadow deploy must run from streamlit-cloud-deploy")
+          if os.environ.get("CONFIRMATION") != "DEPLOY_FANTASY_HQ_SHADOW":
+              raise SystemExit("Exact shadow deployment confirmation is required")
+
+          for name in (
+              "CLOUDFLARE_API_TOKEN",
+              "CLOUDFLARE_ACCOUNT_ID",
+              "FANTASY_PERSISTENCE_TOKEN",
+          ):
+              value = os.environ.get(name, "")
+              if not value or value != value.strip():
+                  raise SystemExit(f"Required deployment secret {name} is not configured")
+
+          persistence_token = os.environ["FANTASY_PERSISTENCE_TOKEN"]
+          if len(persistence_token) < 32 or re.search(r"\s", persistence_token):
+              raise SystemExit("FANTASY_PERSISTENCE_TOKEN does not satisfy Worker requirements")
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify pinned Wrangler and Cloudflare authentication
+        run: |
+          test "$(npx --yes wrangler@$WRANGLER_VERSION --version | awk '{print $NF}')" = "$WRANGLER_VERSION"
+          npx --yes wrangler@$WRANGLER_VERSION whoami
+
+      - name: Resolve or intentionally create D1
+        id: d1
+        env:
+          DATABASE_ID_INPUT: ${{ inputs.database_id }}
+          CREATE_DATABASE_IF_MISSING: ${{ inputs.create_database_if_missing }}
+        run: |
+          set -euo pipefail
+          INVENTORY="$RUNNER_TEMP/fantasy-hq-d1-inventory.json"
+          npx --yes wrangler@$WRANGLER_VERSION d1 list --json > "$INVENTORY"
+
+          args=(--inventory "$INVENTORY")
+          if [ -n "$DATABASE_ID_INPUT" ]; then
+            args+=(--expected-id "$DATABASE_ID_INPUT")
+          fi
+
+          set +e
+          DATABASE_ID="$(python scripts/resolve_fantasy_hq_remote_d1.py "${args[@]}")"
+          status=$?
+          set -e
+
+          if [ "$status" -eq 3 ]; then
+            if [ -n "$DATABASE_ID_INPUT" ]; then
+              echo "Explicit D1 UUID was not found; refusing to create a replacement." >&2
+              exit 1
+            fi
+            if [ "$CREATE_DATABASE_IF_MISSING" != "true" ]; then
+              echo "Fantasy HQ D1 is absent and create_database_if_missing is false." >&2
+              exit 1
+            fi
+
+            npx --yes wrangler@$WRANGLER_VERSION d1 create propwar-fantasy-hq
+            npx --yes wrangler@$WRANGLER_VERSION d1 list --json > "$INVENTORY"
+            DATABASE_ID="$(python scripts/resolve_fantasy_hq_remote_d1.py --inventory "$INVENTORY")"
+          elif [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+
+          echo "database_id=$DATABASE_ID" >> "$GITHUB_OUTPUT"
+          echo "Resolved exactly one Fantasy HQ D1 resource."
+
+      - name: Render fail-closed Wrangler config
+        run: |
+          python scripts/render_fantasy_hq_wrangler.py \
+            --database-id "${{ steps.d1.outputs.database_id }}"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("workers/fantasy-hq/wrangler.generated.jsonc")
+          config = json.loads(path.read_text(encoding="utf-8"))
+          assert config["vars"] == {"FANTASY_SCHEDULE_MODE": "SHADOW"}
+          assert config["triggers"] == {"crons": []}
+          assert config["secrets"] == {"required": ["FANTASY_PERSISTENCE_TOKEN"]}
+          assert config["workers_dev"] is True
+          PY
+
+      - name: Apply only tracked D1 migrations
+        run: |
+          CONFIG="workers/fantasy-hq/wrangler.generated.jsonc"
+          npx --yes wrangler@$WRANGLER_VERSION d1 migrations list FANTASY_DB \
+            --remote --config "$CONFIG"
+          npx --yes wrangler@$WRANGLER_VERSION d1 migrations apply FANTASY_DB \
+            --remote --config "$CONFIG"
+          npx --yes wrangler@$WRANGLER_VERSION d1 migrations list FANTASY_DB \
+            --remote --config "$CONFIG"
+
+      - name: Verify migrated D1 is pristine
+        run: |
+          CONFIG="workers/fantasy-hq/wrangler.generated.jsonc"
+          PROBE="$RUNNER_TEMP/fantasy-hq-d1-probe.json"
+          SQL="SELECT \
+          (SELECT COUNT(*) FROM sqlite_schema WHERE type='table' AND name IN (\
+          'fantasy_league_families','fantasy_league_seasons','fantasy_state_snapshots',\
+          'fantasy_change_events','fantasy_sync_runs','football_entities',\
+          'football_external_ids','football_identity_review_events')) AS required_table_count, \
+          (SELECT COUNT(*) FROM fantasy_league_families) AS league_families, \
+          (SELECT COUNT(*) FROM fantasy_league_seasons) AS league_seasons, \
+          (SELECT COUNT(*) FROM fantasy_state_snapshots) AS state_snapshots, \
+          (SELECT COUNT(*) FROM fantasy_change_events) AS change_events, \
+          (SELECT COUNT(*) FROM fantasy_sync_runs) AS sync_runs"
+
+          npx --yes wrangler@$WRANGLER_VERSION d1 execute FANTASY_DB \
+            --remote --json --command "$SQL" --config "$CONFIG" > "$PROBE"
+          python scripts/verify_fantasy_hq_remote_d1.py --probe "$PROBE" \
+            > "$RUNNER_TEMP/d1-readiness.json"
+
+      - name: Dry-run and deploy Worker with one secret
+        id: deploy
+        env:
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+        run: |
+          set -euo pipefail
+          CONFIG="workers/fantasy-hq/wrangler.generated.jsonc"
+          SECRET_FILE="$RUNNER_TEMP/fantasy-hq-secrets.env"
+          WRANGLER_OUTPUT="$RUNNER_TEMP/wrangler-output.ndjson"
+          trap 'rm -f "$SECRET_FILE"' EXIT
+
+          export SECRET_FILE
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["SECRET_FILE"])
+          path.write_text(
+              "FANTASY_PERSISTENCE_TOKEN="
+              + os.environ["FANTASY_PERSISTENCE_TOKEN"]
+              + "\n",
+              encoding="utf-8",
+          )
+          path.chmod(0o600)
+          PY
+
+          npx --yes wrangler@$WRANGLER_VERSION deploy \
+            --dry-run --secrets-file "$SECRET_FILE" --config "$CONFIG"
+
+          WRANGLER_OUTPUT_FILE_PATH="$WRANGLER_OUTPUT" \
+            npx --yes wrangler@$WRANGLER_VERSION deploy \
+              --secrets-file "$SECRET_FILE" --config "$CONFIG"
+
+          python scripts/parse_fantasy_hq_wrangler_output.py \
+            --output "$WRANGLER_OUTPUT" > "$RUNNER_TEMP/deploy-summary.json"
+
+          WORKER_URL="$(python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          data = json.loads(Path(os.environ["RUNNER_TEMP"], "deploy-summary.json").read_text())
+          print(data["worker_url"])
+          PY
+          )"
+          VERSION_ID="$(python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          data = json.loads(Path(os.environ["RUNNER_TEMP"], "deploy-summary.json").read_text())
+          print(data["version_id"])
+          PY
+          )"
+          echo "worker_url=$WORKER_URL" >> "$GITHUB_OUTPUT"
+          echo "version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Verify remote Cron Triggers are empty
+        run: |
+          SCHEDULES="$RUNNER_TEMP/cron-schedules.json"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/propwar-fantasy-hq/schedules" \
+            > "$SCHEDULES"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path(os.environ["RUNNER_TEMP"], "cron-schedules.json").read_text())
+          if payload.get("success") is not True:
+              raise SystemExit("Cloudflare Cron Trigger read was not successful")
+          result = payload.get("result")
+          if not isinstance(result, dict) or result.get("schedules") != []:
+              raise SystemExit("Fantasy HQ remote Cron Triggers are not empty")
+          PY
+
+      - name: Smoke test public and unauthorized boundaries
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error "$WORKER_URL/health" \
+            > "$RUNNER_TEMP/health.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path(os.environ["RUNNER_TEMP"], "health.json").read_text())
+          if payload != {"ok": True, "status": "ok", "protocol_version": 1}:
+              raise SystemExit("Fantasy HQ health response does not match protocol v1")
+          PY
+
+          status="$(curl --silent --show-error --output "$RUNNER_TEMP/unauthorized.json" \
+            --write-out "%{http_code}" \
+            -X POST -H "Content-Type: application/json" \
+            --data '{}' "$WORKER_URL/v1/fantasy/persistence")"
+          test "$status" = "401"
+
+          status="$(curl --silent --show-error --output "$RUNNER_TEMP/wrong-bearer.json" \
+            --write-out "%{http_code}" \
+            -X POST -H "Content-Type: application/json" \
+            -H "Authorization: Bearer definitely-not-the-real-token" \
+            --data '{}' "$WORKER_URL/v1/fantasy/persistence")"
+          test "$status" = "401"
+
+      - name: Run authenticated read-only runtime handshake
+        env:
+          FANTASY_PERSISTENCE_URL: ${{ steps.deploy.outputs.worker_url }}/v1/fantasy/persistence
+          FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+        run: |
+          python scripts/check_fantasy_hq_runtime_handshake.py \
+            > "$RUNNER_TEMP/runtime-handshake.json"
+
+      - name: Publish sanitized deployment evidence
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+          VERSION_ID: ${{ steps.deploy.outputs.version_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          handshake = json.loads((root / "runtime-handshake.json").read_text())
+          readiness = json.loads((root / "d1-readiness.json").read_text())
+          health = json.loads((root / "health.json").read_text())
+
+          if handshake.get("ready") is not True or handshake.get("write_enabled") is not False:
+              raise SystemExit("Runtime handshake evidence is not READY/read-only")
+          if readiness.get("ready") is not True:
+              raise SystemExit("D1 readiness evidence is not READY")
+
+          evidence = {
+              "ready": True,
+              "deployment_mode": "SHADOW",
+              "worker_name": "propwar-fantasy-hq",
+              "worker_url": os.environ["WORKER_URL"],
+              "version_id": os.environ["VERSION_ID"],
+              "cron_count": 0,
+              "d1_schema_ready": True,
+              "d1_empty_persistence_state": True,
+              "health": health,
+              "runtime_handshake": handshake,
+              "real_fantasy_write_performed": False,
+          }
+          output = root / "fantasy-hq-shadow-deployment-evidence.json"
+          output.write_text(
+              json.dumps(evidence, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary, "a", encoding="utf-8") as handle:
+              handle.write("## Fantasy HQ shadow deployment\n\n")
+              handle.write("- Remote Worker deployed: yes\n")
+              handle.write("- D1 schema ready: yes\n")
+              handle.write("- Fantasy persistence rows: 0\n")
+              handle.write("- Cron Triggers: 0\n")
+              handle.write("- Runtime handshake: READY\n")
+              handle.write("- Real fantasy write performed: no\n")
+          PY
+
+      - name: Upload sanitized evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: fantasy-hq-shadow-deployment-evidence
+          path: ${{ runner.temp }}/fantasy-hq-shadow-deployment-evidence.json
+          if-no-files-found: error
+          retention-days: 7

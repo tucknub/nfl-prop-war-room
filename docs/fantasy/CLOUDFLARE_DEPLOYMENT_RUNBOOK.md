@@ -18,6 +18,45 @@ Status: shadow-deployment contract. Following the remote steps creates Cloudflar
 - The secret value must never be committed, placed in Wrangler `vars`, written into the generated config, pasted into documentation, or placed on a shell command line
 - The real D1 UUID is resource identity, not a secret, but the generated config is ignored so provisioning remains an explicit operator step
 
+## Manual GitHub shadow deployment gate
+
+The repository also contains `.github/workflows/fantasy-hq-shadow-deploy.yml` for the first remote deployment. It is **manual only**: the workflow has `workflow_dispatch` and no push, pull-request, schedule, or Cron trigger.
+
+Repository or environment secrets required by that workflow:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `FANTASY_PERSISTENCE_TOKEN`
+
+The Cloudflare token must be scoped narrowly enough to perform the intended D1 operations and Worker deployment and to read Worker Cron schedules. The workflow never writes these values into source or artifacts.
+
+To authorize a run, the operator must enter the exact confirmation:
+
+`DEPLOY_FANTASY_HQ_SHADOW`
+
+The optional `database_id` input pins the run to a known D1 UUID. If supplied and that UUID is missing or belongs to another database name, the workflow stops. It will never create a replacement for an explicitly requested UUID.
+
+`create_database_if_missing` defaults to **false**. Only a manually dispatched run that explicitly sets it to true may create `propwar-fantasy-hq`, and only when there is no exact-name database already present.
+
+Before deployment, the workflow requires the migrated D1 target to contain the complete tracked Fantasy HQ schema and **zero** existing rows in the persistence tables used by the first canary. It then:
+
+1. renders the validated SHADOW Wrangler config;
+2. lists/applies/lists only tracked remote D1 migrations;
+3. performs a read-only schema/data probe;
+4. runs a Wrangler dry-run;
+5. deploys the Worker with the persistence secret from an ephemeral runner-temp file;
+6. parses structured Wrangler deployment output and requires the expected `workers.dev` origin;
+7. calls the Cloudflare Cron schedules API and requires zero schedules;
+8. verifies public health and both unauthorized persistence boundaries;
+9. runs the authenticated #78 read-only runtime handshake;
+10. uploads only a sanitized deployment-evidence JSON artifact.
+
+A successful shadow-deployment workflow still reports `real_fantasy_write_performed=false`. It does **not** invoke #80's single-league canary, enable recurring scheduling, or authorize multi-league persistence. The first real league write remains a separate deliberate action after reviewing the shadow evidence.
+
+The workflow pins Wrangler `4.126.0` for reproducible first-deployment behavior. Upgrade that pin only in a reviewed change after checking current Cloudflare documentation and rerunning repository tests.
+
+The local Wrangler procedure below remains the operator fallback when GitHub-hosted deployment credentials are intentionally not used.
+
 ## 1. Authenticate and record the tool version
 
 Run Wrangler from a trusted local shell and record the exact version used in the deployment log.
