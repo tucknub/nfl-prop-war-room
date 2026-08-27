@@ -33,7 +33,8 @@ from src.fantasy.lineup_check import (  # noqa: E402
 )
 from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
-    find_live_free_agents,
+    build_live_free_agent_pool,
+    filter_live_free_agents,
 )
 from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
 from src.fantasy.player_market import build_player_market_map  # noqa: E402
@@ -128,6 +129,31 @@ def _load_all_sleeper_states(
             )
             for league_id in league_ids
         )
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _load_free_agent_pool(
+    user_id: str,
+    selected_league_id: str,
+    league_ids: tuple[str, ...],
+):
+    states = _load_all_sleeper_states(user_id, league_ids)
+    league = next(
+        (
+            row
+            for row in states
+            if row.platform_league_id == selected_league_id
+        ),
+        None,
+    )
+    if league is None:
+        league = _load_sleeper_league(selected_league_id, user_id)
+    catalog = _load_player_catalog()
+    return build_live_free_agent_pool(
+        league,
+        catalog,
+        all_leagues=states or (league,),
+    )
 
 
 @st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
@@ -493,8 +519,13 @@ def _store_sleeper_username(username: str) -> None:
 
 
 @st.fragment
-def _render_available_player_search(league: FantasyLeagueState, all_catalog: Mapping[str, Mapping[str, Any]], all_states: tuple[FantasyLeagueState, ...]) -> None:
+def _render_available_player_search(
+    user_id: str,
+    league_id: str,
+    all_league_ids: tuple[str, ...],
+) -> None:
     """Render free-agent search without rerunning the full Fantasy HQ page."""
+
     st.markdown("##### Search all available players")
     st.caption(
         "Not limited to trending adds. Search the complete live Sleeper "
@@ -522,11 +553,13 @@ def _render_available_player_search(league: FantasyLeagueState, all_catalog: Map
         )
 
     try:
-        available_catalog = all_catalog or _load_player_catalog()
-        available_rows = find_live_free_agents(
-            league,
-            available_catalog,
-            all_leagues=(all_states or (league,)),
+        free_agent_pool = _load_free_agent_pool(
+            user_id,
+            league_id,
+            all_league_ids,
+        )
+        available_rows = filter_live_free_agents(
+            free_agent_pool,
             query=available_search,
             position=available_position,
             mine_elsewhere_only=available_familiar_only,
@@ -543,11 +576,7 @@ def _render_available_player_search(league: FantasyLeagueState, all_catalog: Map
     available_b.metric("I roster elsewhere", familiar_available)
 
     if not available_rows:
-        if not league.ownership_ready:
-            st.info(
-                "Sleeper ownership is not initialized for this league yet."
-            )
-        elif available_familiar_only:
+        if available_familiar_only:
             st.info(
                 "No player you roster in another scanned Sleeper league "
                 "matches these filters and is available here."
@@ -586,13 +615,13 @@ def _render_available_player_search(league: FantasyLeagueState, all_catalog: Map
     st.caption(
         "Availability is factual live Sleeper roster absence. "
         "Inactive/retired catalog entries are excluded. "
+        "The free-agent index is cached briefly so repeated searches stay fast. "
         "This search does not assign a player-quality score."
     )
 
     st.markdown(
         "[Trending data provided by Sleeper](https://sleeper.com/)"
     )
-
 
 
 @st.fragment
@@ -2430,7 +2459,11 @@ def _render_sleeper() -> None:
                                 + " | ".join(faab_history_errors)
                             )
 
-            _render_available_player_search(league, all_catalog, all_states)
+            _render_available_player_search(
+                str(sleeper_user["user_id"]),
+                league_id,
+                all_league_ids,
+            )
 
     with activity_tab:
         st.markdown("#### League Activity")
