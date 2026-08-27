@@ -19,6 +19,10 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
+from src.fantasy.free_agents import (  # noqa: E402
+    FANTASY_POSITIONS,
+    find_live_free_agents,
+)
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -764,6 +768,99 @@ def _render_sleeper() -> None:
                 "None of Sleeper's current trending adds are available in this "
                 "league."
             )
+
+        st.markdown("##### Search all available players")
+        st.caption(
+            "Not limited to trending adds. Search the complete live Sleeper "
+            "player pool against this league's current roster ownership."
+        )
+
+        search_a, search_b, search_c = st.columns([1, 2, 1])
+        with search_a:
+            available_position = st.selectbox(
+                "Free-agent position",
+                ("ALL", *FANTASY_POSITIONS),
+                key="fantasy_hq_available_position",
+            )
+        with search_b:
+            available_search = st.text_input(
+                "Free-agent search",
+                placeholder="Player name",
+                key="fantasy_hq_available_search",
+            ).strip()
+        with search_c:
+            available_familiar_only = st.checkbox(
+                "Only players I roster elsewhere",
+                value=False,
+                key="fantasy_hq_available_familiar_only",
+            )
+
+        try:
+            available_catalog = all_catalog or _load_player_catalog()
+            available_rows = find_live_free_agents(
+                league,
+                available_catalog,
+                all_leagues=(all_states or (league,)),
+                query=available_search,
+                position=available_position,
+                mine_elsewhere_only=available_familiar_only,
+                limit=100,
+            )
+        except Exception as exc:
+            st.warning("All-player free-agent search could not be loaded.")
+            st.caption(str(exc))
+            available_rows = ()
+
+        familiar_available = sum(1 for row in available_rows if row.familiar)
+        available_a, available_b = st.columns(2)
+        available_a.metric("Available matches", len(available_rows))
+        available_b.metric("I roster elsewhere", familiar_available)
+
+        if not available_rows:
+            if not league.ownership_ready:
+                st.info(
+                    "Sleeper ownership is not initialized for this league yet."
+                )
+            elif available_familiar_only:
+                st.info(
+                    "No player you roster in another scanned Sleeper league "
+                    "matches these filters and is available here."
+                )
+            elif available_search:
+                st.info("No available player matched this search.")
+            else:
+                st.info("No available player matched the selected filters.")
+        else:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "Player": row.name,
+                            "Pos": row.position,
+                            "NFL": row.nfl_team,
+                            "Status": row.status,
+                            "I roster elsewhere": (
+                                " · ".join(row.mine_elsewhere) or "—"
+                            ),
+                        }
+                        for row in available_rows
+                    ]
+                ),
+                hide_index=True,
+                width="stretch",
+            )
+            if familiar_available:
+                st.success(
+                    f"{familiar_available} available player"
+                    f"{'s' if familiar_available != 1 else ''} shown "
+                    f"{'are' if familiar_available != 1 else 'is'} already "
+                    "on one of your other Sleeper rosters."
+                )
+
+        st.caption(
+            "Availability is factual live Sleeper roster absence. "
+            "This search does not assign a player-quality score."
+        )
 
         st.markdown(
             "[Trending data provided by Sleeper](https://sleeper.com/)"
