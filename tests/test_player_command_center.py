@@ -219,3 +219,22 @@ def test_player_prop_rows_uses_maintained_team_aliases():
     )
 
     assert len(matched) == 1
+
+
+def test_players_page_exposes_owner_command_center_without_replacing_public_role_profile():
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "02_Players.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'page_intro("Player Role Profile"' in source
+    assert 'section(\n        "Player Command Center"' in source
+    assert "if _owner_mode():" in source
+    assert "resolve_propwar_player_to_sleeper" in source
+    assert "ROLE/LINE MISMATCH: NOT SCORED" in source
+    assert "build_player_intelligence_card" in source
+    assert "shared_prop_snapshot" in source
