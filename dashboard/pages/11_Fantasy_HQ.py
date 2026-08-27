@@ -25,6 +25,13 @@ from src.fantasy.live_ownership import (  # noqa: E402
     lookup_live_sleeper_player,
     my_players_available_elsewhere,
 )
+from src.fantasy.roster_health import (  # noqa: E402
+    NEEDS_ATTENTION,
+    PRE_DRAFT,
+    READY,
+    WATCH,
+    analyze_roster_health,
+)
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
     DEFAULT_YAHOO_REDIRECT_URI,
@@ -358,9 +365,17 @@ def _render_sleeper() -> None:
         ),
     )
 
-    roster_tab, matchup_tab, standings_tab, rules_tab, cross_tab = st.tabs(
+    (
+        roster_tab,
+        health_tab,
+        matchup_tab,
+        standings_tab,
+        rules_tab,
+        cross_tab,
+    ) = st.tabs(
         [
             "My roster",
+            "Roster Health",
             "Current matchup",
             "Standings",
             "League settings",
@@ -407,6 +422,84 @@ def _render_sleeper() -> None:
                 f"{len(starter_set)} starters · "
                 f"{max(0, len(my_roster.players) - len(starter_set))} non-starters"
             )
+
+    with health_tab:
+        with st.spinner("Checking roster health..."):
+            health_catalog = _load_player_catalog()
+            health = analyze_roster_health(
+                league,
+                health_catalog,
+            )
+
+        health_a, health_b, health_c, health_d = st.columns(4)
+        status_label = {
+            READY: "Ready",
+            WATCH: "Watch",
+            NEEDS_ATTENTION: "Needs attention",
+            PRE_DRAFT: "Pre-draft",
+        }.get(health.status, health.status.replace("_", " ").title())
+        health_a.metric("Roster health", status_label)
+        health_b.metric("Rostered", health.roster_size)
+        health_c.metric(
+            "Starter slots filled",
+            f"{health.filled_starter_slots}/{health.starter_slots}",
+        )
+        health_d.metric("Open starters", health.open_starter_slots)
+
+        if health.status == READY:
+            st.success(
+                "No factual roster-construction or player-status alerts are "
+                "showing right now."
+            )
+        elif health.status == PRE_DRAFT:
+            st.info(
+                "This roster is not populated yet. Recheck after the draft."
+            )
+        elif health.status == NEEDS_ATTENTION:
+            st.error(
+                "At least one roster-construction or player-availability issue "
+                "needs attention."
+            )
+        else:
+            st.warning(
+                "The roster is usable, but at least one depth, lineup, or "
+                "player-status item is worth watching."
+            )
+
+        if health.position_counts:
+            position_rows = [
+                {"Position": position, "Rostered": count}
+                for position, count in health.position_counts.items()
+            ]
+            st.markdown("##### Position depth")
+            st.dataframe(
+                pd.DataFrame(position_rows),
+                hide_index=True,
+                width="stretch",
+            )
+
+        st.markdown("##### Alerts")
+        if not health.issues:
+            st.caption("No current alerts.")
+        else:
+            issue_rows = [
+                {
+                    "Level": row.severity,
+                    "Area": row.position or "Roster",
+                    "Alert": row.message,
+                }
+                for row in health.issues
+            ]
+            st.dataframe(
+                pd.DataFrame(issue_rows),
+                hide_index=True,
+                width="stretch",
+            )
+
+        st.caption(
+            "Roster Health uses league starter requirements and Sleeper's "
+            "current roster/player status. It is not a player-ranking model."
+        )
 
     with matchup_tab:
         week = int(nfl_state.week or nfl_state.display_week or 0)
