@@ -1,4 +1,5 @@
 name: Fantasy HQ data-path performance
+# rerun after formatting-safe source assertion
 
 on:
   push:
