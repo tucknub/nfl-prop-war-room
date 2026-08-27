@@ -102,6 +102,16 @@ def _rank_label(position: str, rank: int | None) -> str | None:
     return f"{prefix}{rank}"
 
 
+def _first_text(*values: object) -> str:
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
 def _confidence(last8_games: int, last4_games: int, last2_games: int) -> str:
     if last8_games >= 6 and last4_games >= 4 and last2_games >= 2:
         return "HIGH"
@@ -292,17 +302,16 @@ def build_team_role_change_table(
         player_id = str(row.get("player_id") or "").strip()
         if not player_id:
             continue
-        player_name = (
-            row.get("last2_player_name")
-            or row.get("last4_player_name")
-            or row.get("last8_player_name")
-            or player_id
+        player_name = _first_text(
+            row.get("last2_player_name"),
+            row.get("last4_player_name"),
+            row.get("last8_player_name"),
+            player_id,
         )
-        position = (
-            row.get("last2_position")
-            or row.get("last4_position")
-            or row.get("last8_position")
-            or ""
+        position = _first_text(
+            row.get("last2_position"),
+            row.get("last4_position"),
+            row.get("last8_position"),
         )
         l8 = _numeric(row.get("last8_share"))
         l4 = _numeric(row.get("last4_share"))
