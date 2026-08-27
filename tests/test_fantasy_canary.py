@@ -65,6 +65,7 @@ def _state() -> FantasyLeagueState:
         season="2026",
         status="in_season",
         team_count=10,
+        previous_platform_league_id=None,
         current_platform_user_id="me",
         my_platform_roster_id="1",
         rules=LeagueRules(
@@ -72,6 +73,7 @@ def _state() -> FantasyLeagueState:
             scoring_settings={"rec": 1},
             waiver_budget=100,
         ),
+        draft=None,
         managers=(
             Manager(
                 platform_user_id="me",
