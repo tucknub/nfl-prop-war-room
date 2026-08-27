@@ -77,6 +77,24 @@ def test_role_change_detector_does_not_overcall_small_noise():
     assert signal.trend == "Stable"
 
 
+
+def test_large_early_sample_move_is_gain_not_surge():
+    signal = build_role_change_signal(
+        player_id="p1",
+        position="WR",
+        windows=_windows(0.12, 0.18, 0.25, g8=4, g4=4, g2=2),
+        team_last8=_team(
+            [{"player_id": "p1", "player_name": "Player", "share": 0.12, "raw_opportunities": 6}]
+        ),
+        team_last2=_team(
+            [{"player_id": "p1", "player_name": "Player", "share": 0.25, "raw_opportunities": 5}]
+        ),
+    )
+
+    assert signal.classification == "ROLE GAIN"
+    assert signal.confidence == "MEDIUM"
+
+
 def test_role_change_detector_marks_thin_two_game_context_low_confidence():
     signal = build_role_change_signal(
         player_id="p1",
