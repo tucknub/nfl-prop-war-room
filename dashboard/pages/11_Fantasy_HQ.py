@@ -44,6 +44,9 @@ from src.fantasy.market_fantasy import (  # noqa: E402
 from src.fantasy.market_start_sit import (  # noqa: E402
     build_market_start_sit_board,
 )
+from src.fantasy.market_waivers import (  # noqa: E402
+    build_market_ranked_waivers,
+)
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -1301,6 +1304,138 @@ def _render_sleeper() -> None:
                         "players you already roster elsewhere and current Sleeper "
                         "add activity. This is not a player-value ranking."
                     )
+
+            st.markdown("##### Market-Ranked Waivers")
+            st.caption(
+                "Ranks actual live free agents by roster urgency, this league's "
+                "scoring, sportsbook-implied fantasy value, and the best legal "
+                "starter-slot improvement."
+            )
+
+            if lineup is None:
+                st.info(
+                    "Market-Ranked Waivers will populate after Lineup Check can "
+                    "identify your current starter slots."
+                )
+            else:
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Market-Ranked Waivers are unavailable because "
+                        "PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        market_waiver_snapshot = shared_prop_snapshot(parlay_key)
+                        market_waivers = build_market_ranked_waivers(
+                            league,
+                            lineup,
+                            all_catalog or _load_player_catalog(),
+                            market_waiver_snapshot.get("rows", ()),
+                            all_leagues=(all_states or (league,)),
+                            trends=trending_adds,
+                            limit=50,
+                        )
+                    except Exception as exc:
+                        st.warning("Market-Ranked Waivers could not be built.")
+                        st.caption(str(exc))
+                        market_waivers = None
+
+                    if market_waivers is not None:
+                        mw_a, mw_b, mw_c, mw_d = st.columns(4)
+                        mw_a.metric(
+                            "Market-covered FAs",
+                            market_waivers.market_covered_count,
+                        )
+                        mw_b.metric(
+                            "Ranked options",
+                            len(market_waivers.candidates),
+                        )
+                        mw_c.metric("HIGH need", market_waivers.high_need_count)
+                        mw_d.metric(
+                            "+1.0 pt upgrades",
+                            market_waivers.upgrade_count,
+                        )
+
+                        if not market_waivers.candidates:
+                            if market_waivers.market_covered_count:
+                                st.info(
+                                    "Current FULL/PARTIAL market-covered free "
+                                    "agents do not clear a roster-need or +1.00 "
+                                    "point healthy-lineup upgrade threshold."
+                                )
+                            else:
+                                st.info(
+                                    "No eligible live free agent currently has "
+                                    "FULL/PARTIAL sportsbook market coverage."
+                                )
+                        else:
+                            market_waiver_rows = []
+                            for rank, row in enumerate(
+                                market_waivers.candidates,
+                                start=1,
+                            ):
+                                market_waiver_rows.append(
+                                    {
+                                        "Rank": rank,
+                                        "Player": row.player_name,
+                                        "Pos": row.position,
+                                        "NFL": row.nfl_team,
+                                        "Need": row.need,
+                                        "Best fit": row.target_slot,
+                                        "Fits": " · ".join(row.fit_slots),
+                                        "Market baseline": round(
+                                            row.market_fantasy_points,
+                                            2,
+                                        ),
+                                        "Current replacement": (
+                                            row.replacement_player
+                                        ),
+                                        "Replacement baseline": (
+                                            round(
+                                                row.replacement_fantasy_points,
+                                                2,
+                                            )
+                                            if row.replacement_fantasy_points
+                                            is not None
+                                            else "—"
+                                        ),
+                                        "Expected lineup improvement": (
+                                            round(
+                                                row.expected_lineup_improvement,
+                                                2,
+                                            )
+                                            if row.expected_lineup_improvement
+                                            is not None
+                                            else "—"
+                                        ),
+                                        "Coverage": row.coverage,
+                                        "Sleeper adds": (
+                                            row.trend_count
+                                            if row.trend_count > 0
+                                            else "—"
+                                        ),
+                                        "Available": "Yes",
+                                        "I roster elsewhere": (
+                                            " · ".join(row.mine_elsewhere) or "—"
+                                        ),
+                                        "Why": row.reason,
+                                    }
+                                )
+
+                            st.dataframe(
+                                pd.DataFrame(market_waiver_rows),
+                                hide_index=True,
+                                width="stretch",
+                            )
+                            st.caption(
+                                "HIGH = an open/ineligible/serious starter slot. "
+                                "MEDIUM = a current WATCH slot. LOW is shown only "
+                                "when a healthy starter can be improved by at "
+                                "least 1.00 market-implied fantasy point. "
+                                "Candidates require FULL/PARTIAL coverage; THIN "
+                                "or missing markets never create a ranking."
+                            )
 
             st.markdown("##### Search all available players")
             st.caption(
