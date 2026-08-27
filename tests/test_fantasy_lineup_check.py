@@ -369,7 +369,8 @@ def test_fantasy_hq_predraft_mode_suppresses_live_tool_noise():
     ).read_text(encoding="utf-8")
 
     assert "pre_draft_mode" in page
-    assert "Configured starter slots are not treated as lineup mistakes" in page
+    assert "Configured starter slots are " in page
+    assert "not treated as lineup mistakes before the draft." in page
     assert "No ownership or availability warnings are shown before" in page
     assert "The NFL preseason week is not treated as your fantasy" in page
     assert "Opponent Scout will activate once Sleeper" in page
