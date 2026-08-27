@@ -152,7 +152,7 @@ else:
                 "Last 8": None if pd.isna(row["last8_share"]) else float(row["last8_share"]) * 100,
                 "Last 4": None if pd.isna(row["last4_share"]) else float(row["last4_share"]) * 100,
                 "Last 2": None if pd.isna(row["last2_share"]) else float(row["last2_share"]) * 100,
-                "Shift": shift,
+                "Shift (pp)": shift,
                 "Team rank": rank_text,
             }
         )
@@ -177,7 +177,7 @@ else:
         radar_cards,
         key="teams_role_change_radar",
         height=430,
-        percent_columns=["Last 8", "Last 4", "Last 2", "Shift"],
+        percent_columns=["Last 8", "Last 4", "Last 2"],
         label="View complete role-change table",
     )
     st.caption(
