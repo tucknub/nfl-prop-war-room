@@ -148,8 +148,8 @@ def test_command_does_not_promote_bad_side_price_outlier():
 
 def test_command_surfaces_line_shop_before_generic_line_gap():
     rows = (
-        _row(book="DraftKings", line=260.5, over=-110),
-        _row(book="FanDuel", line=270.5, over=-105),
+        _row(book="DraftKings", line=260.5, over=-110, under=None),
+        _row(book="FanDuel", line=270.5, over=-105, under=None),
     )
 
     action = build_player_prop_action(rows)
@@ -225,24 +225,29 @@ def test_player_prop_rows_uses_maintained_team_aliases():
     assert len(matched) == 1
 
 
-def test_players_page_exposes_owner_command_center_without_replacing_public_role_profile():
+def test_players_page_exposes_owner_command_hook_without_polluting_public_role_source():
     from pathlib import Path
 
-    source = (
-        Path(__file__).resolve().parents[1]
-        / "dashboard"
-        / "pages"
-        / "02_Players.py"
+    root = Path(__file__).resolve().parents[1]
+    public_source = (
+        root / "dashboard" / "pages" / "02_Players.py"
+    ).read_text(encoding="utf-8")
+    owner_source = (
+        root / "dashboard" / "player_command_owner.py"
     ).read_text(encoding="utf-8")
 
-    assert 'page_intro("Player Role Profile"' in source
-    assert 'section(\n        "Player Command Center"' in source
-    assert "if _owner_mode():" in source
-    assert "resolve_propwar_player_to_sleeper" in source
-    assert "ROLE/LINE MISMATCH: NOT SCORED" in source
-    assert "build_player_intelligence_card" in source
-    assert "shared_prop_snapshot" in source
+    assert 'page_intro("Player Role Profile"' in public_source
+    assert "owner_player_command_available" in public_source
+    assert "render_owner_player_command_center" in public_source
+    assert "sportsbook" not in public_source.lower()
+    assert "betting" not in public_source.lower()
+    assert "odds" not in public_source.lower()
 
+    assert '"Player Command Center"' in owner_source
+    assert "resolve_propwar_player_to_sleeper" in owner_source
+    assert "ROLE/LINE MISMATCH: NOT SCORED" in owner_source
+    assert "build_player_intelligence_card" in owner_source
+    assert "shared_prop_snapshot" in owner_source
 
 def test_command_ignores_same_name_signal_from_different_event():
     rows = (
