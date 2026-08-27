@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -247,6 +248,54 @@ class SleeperClient:
             self.fetch_league_bundle(league_id),
             current_user_id=current_user_id,
         )
+
+    def fetch_normalized_leagues(
+        self,
+        league_ids: Sequence[str],
+        *,
+        current_user_id: str | None = None,
+        max_workers: int = 3,
+    ) -> tuple[FantasyLeagueState, ...]:
+        """Fetch multiple independent leagues concurrently while preserving order.
+
+        Each league still uses the same four public read-only resources in the
+        same sequence. Concurrency is only across league IDs and is deliberately
+        bounded to avoid unnecessary pressure on Sleeper.
+        """
+
+        if isinstance(max_workers, bool) or not isinstance(max_workers, int):
+            raise ValueError("max_workers must be a positive integer")
+        if max_workers < 1 or max_workers > 8:
+            raise ValueError("max_workers must be between 1 and 8")
+
+        normalized_ids = tuple(
+            _required_id(league_id, "league_id")
+            for league_id in league_ids
+        )
+        if not normalized_ids:
+            return ()
+        if len(normalized_ids) == 1 or max_workers == 1:
+            return tuple(
+                self.fetch_normalized_league(
+                    league_id,
+                    current_user_id=current_user_id,
+                )
+                for league_id in normalized_ids
+            )
+
+        worker_count = min(max_workers, len(normalized_ids))
+
+        def fetch_one(league_id: str) -> FantasyLeagueState:
+            return self.fetch_normalized_league(
+                league_id,
+                current_user_id=current_user_id,
+            )
+
+        with ThreadPoolExecutor(
+            max_workers=worker_count,
+            thread_name_prefix="sleeper-league",
+        ) as executor:
+            return tuple(executor.map(fetch_one, normalized_ids))
 
     def fetch_nfl_state(self) -> SleeperNflState:
         payload = self._get_json("state/nfl")

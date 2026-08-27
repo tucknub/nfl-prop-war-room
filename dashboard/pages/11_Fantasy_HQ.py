@@ -126,12 +126,10 @@ def _load_all_sleeper_states(
     league_ids: tuple[str, ...],
 ):
     with SleeperClient() as client:
-        return tuple(
-            client.fetch_normalized_league(
-                league_id,
-                current_user_id=user_id,
-            )
-            for league_id in league_ids
+        return client.fetch_normalized_leagues(
+            league_ids,
+            current_user_id=user_id,
+            max_workers=3,
         )
 
 
@@ -1459,16 +1457,25 @@ def _render_sleeper() -> None:
     )
     league_id = league_options[selected_label]
 
-    try:
-        with st.spinner("Loading league and roster..."):
-            league = _load_sleeper_league(
-                league_id,
-                str(sleeper_user["user_id"]),
-            )
-    except Exception as exc:
-        st.error("Fantasy HQ could not load this Sleeper league.")
-        st.caption(str(exc))
-        return
+    league = next(
+        (
+            state
+            for state in all_states
+            if state.platform_league_id == league_id
+        ),
+        None,
+    )
+    if league is None:
+        try:
+            with st.spinner("Loading league and roster..."):
+                league = _load_sleeper_league(
+                    league_id,
+                    str(sleeper_user["user_id"]),
+                )
+        except Exception as exc:
+            st.error("Fantasy HQ could not load this Sleeper league.")
+            st.caption(str(exc))
+            return
 
     my_roster = next(
         (

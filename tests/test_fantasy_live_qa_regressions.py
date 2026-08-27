@@ -35,3 +35,13 @@ def test_action_center_watch_metric_matches_watch_rows():
 
     assert '"Watch / action leagues"' in source
     assert "len(action_center.action_leagues)" in source
+
+
+def test_fantasy_hq_parallelizes_all_leagues_and_reuses_selected_state():
+    source = _page_source()
+
+    assert "client.fetch_normalized_leagues(" in source
+    assert "max_workers=3" in source
+    assert "for state in all_states" in source
+    assert "if league is None:" in source
+    assert 'with st.spinner("Loading league and roster..."):' in source
