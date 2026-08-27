@@ -107,6 +107,13 @@ from .persistence_http import (
     FantasyPersistenceTransportError,
     UnsafeFantasyPersistenceTransport,
 )
+from .runtime_entrypoint import (
+    FantasyScheduledRuntimeClient,
+    FantasyScheduledRuntimeGateError,
+    FantasyScheduledRuntimeResult,
+    build_handshake_gated_scheduled_plan,
+    run_handshake_gated_scheduled_sleeper_sync,
+)
 from .runtime_handshake import (
     FANTASY_RUNTIME_HANDSHAKE_PROBE_SYNC_RUN_ID,
     FANTASY_RUNTIME_HANDSHAKE_VERSION,
@@ -152,6 +159,7 @@ from .scheduled_sync import (
     SleeperScheduledSyncRunResult,
     build_sleeper_scheduled_sync_plan,
     run_scheduled_sleeper_persistence_sync,
+    run_sleeper_scheduled_sync_plan,
 )
 from .service import (
     CatalogBackedMultiSleeperSyncResult,
@@ -235,6 +243,9 @@ __all__ = [
     "FantasyRuntimeDeploymentHandshakeError",
     "FantasyRuntimeDeploymentHandshakeResult",
     "FantasyRuntimeHandshakeClient",
+    "FantasyScheduledRuntimeClient",
+    "FantasyScheduledRuntimeGateError",
+    "FantasyScheduledRuntimeResult",
     "FantasySnapshot",
     "FantasySyncSession",
     "JAVASCRIPT_MAX_SAFE_INTEGER",
@@ -324,6 +335,7 @@ __all__ = [
     "backfill_completed_sleeper_season",
     "backfill_sleeper_league_history",
     "build_current_sleeper_snapshot",
+    "build_handshake_gated_scheduled_plan",
     "build_failed_sync_command",
     "build_failed_sync_statement",
     "build_no_change_sync_command",
@@ -354,8 +366,10 @@ __all__ = [
     "rehydrate_persisted_snapshot_record",
     "run_fantasy_runtime_deployment_handshake",
     "run_fantasy_runtime_deployment_handshake_from_env",
+    "run_handshake_gated_scheduled_sleeper_sync",
     "run_multi_sleeper_persistence_sync",
     "run_scheduled_sleeper_persistence_sync",
+    "run_sleeper_scheduled_sync_plan",
     "run_sleeper_persistence_sync",
     "resolve_sleeper_player",
     "resolve_sleeper_players",
