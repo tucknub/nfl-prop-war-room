@@ -1,4 +1,5 @@
 name: Glitch Radar WHY NOW validation
+# rerun after process-level history
 
 on:
   push:
