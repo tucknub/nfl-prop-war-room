@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from hashlib import sha256
 import os
 from typing import Any, Mapping
 
-from .persistence import LeagueSeasonIdentity
+from .persistence import LeagueSeasonIdentity, canonical_json
 from .persistence_http import (
     FantasyPersistenceClientConfig,
     FantasyPersistenceHttpClient,
@@ -331,16 +332,23 @@ def preview_single_league_persistence_canary_from_env(
         schedule_name=FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME,
     )
     spec = plan.specs[0]
+    identity_fingerprint = sha256(
+        canonical_json(
+            {
+                "league_season_id": spec.identity.league_season_id,
+                "platform": spec.identity.platform,
+                "platform_league_id": spec.identity.platform_league_id,
+                "season": spec.identity.season,
+                "league_family_id": spec.league_family_id,
+            }
+        ).encode("utf-8")
+    ).hexdigest()
     return {
         "ready": True,
         "canary_version": FANTASY_SINGLE_LEAGUE_CANARY_VERSION,
         "platform": spec.identity.platform,
-        "league_season_id": spec.identity.league_season_id,
-        "platform_league_id": spec.identity.platform_league_id,
         "season": spec.identity.season,
-        "league_family_id": spec.league_family_id,
-        "family_display_name": spec.family_display_name,
-        "season_display_name": spec.season_display_name,
+        "league_identity_fingerprint": identity_fingerprint,
         "canary_at_ms": config.canary_at_ms,
         "batch_id": plan.batch_id,
         "sync_run_id": spec.sync_run_id,
