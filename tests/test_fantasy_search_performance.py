@@ -24,7 +24,9 @@ def test_fantasy_hq_search_tools_are_fragment_isolated():
         assert f"def {helper}" in source
 
     assert source.count("@st.fragment") >= 3
-    assert "_render_available_player_search(league, all_catalog, all_states)" in source
+    assert "_render_available_player_search(" in source
+    assert "_load_free_agent_pool(" in source
+    assert "filter_live_free_agents(" in source
     assert "_render_player_market_map(league, all_states, all_catalog)" in source
     assert "_render_cross_league_player_lookup(catalog, all_states)" in source
 
