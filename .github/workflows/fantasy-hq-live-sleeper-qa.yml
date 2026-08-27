@@ -1,0 +1,276 @@
+name: Fantasy HQ Live Sleeper QA
+
+on:
+  push:
+    branches:
+      - fantasy-hq-live-qa-1398735222102671360
+
+jobs:
+  live-sleeper-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Exercise converted mock league through Fantasy HQ models
+        env:
+          TEST_LEAGUE_ID: "1398735222102671360"
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          from src.fantasy.action_center import build_fantasy_action_center
+          from src.fantasy.action_feed import build_weekly_action_feed
+          from src.fantasy.faab_advisor import build_faab_advice_board
+          from src.fantasy.lineup_check import build_lineup_check
+          from src.fantasy.market_start_sit import build_market_start_sit_board
+          from src.fantasy.market_waivers import build_market_ranked_waivers
+          from src.fantasy.roster_health import analyze_roster_health
+          from src.fantasy.sleeper import SleeperClient
+          from src.fantasy.trade_candidates import build_trade_candidate_board
+
+          league_id = os.environ["TEST_LEAGUE_ID"]
+
+          with SleeperClient() as client:
+              bundle = client.fetch_league_bundle(league_id)
+              nfl_state = client.fetch_nfl_state()
+              catalog = client.fetch_players()
+
+          users = tuple(bundle.users)
+          owners = tuple(row for row in users if bool(row.get("is_owner")))
+          selected_user = owners[0] if owners else (users[0] if users else None)
+          if selected_user is None:
+              raise AssertionError("Converted league has no Sleeper users")
+          user_id = str(selected_user.get("user_id") or "").strip()
+          if not user_id:
+              raise AssertionError("Selected Sleeper user has no user_id")
+
+          with SleeperClient() as client:
+              league = client.fetch_normalized_league(
+                  league_id,
+                  current_user_id=user_id,
+              )
+
+          print("LIVE_LEAGUE")
+          print(json.dumps({
+              "league_id": league.platform_league_id,
+              "name": league.name,
+              "season": league.season,
+              "status": league.status,
+              "team_count": league.team_count,
+              "draft_status": league.draft.status if league.draft else None,
+              "rules_ready": league.rules_ready,
+              "draft_ready": league.draft_ready,
+              "ownership_ready": league.ownership_ready,
+              "selected_user_id": user_id,
+              "selected_display_name": selected_user.get("display_name"),
+              "my_roster_id": league.my_platform_roster_id,
+              "manager_count": len(league.managers),
+              "roster_count": len(league.rosters),
+              "roster_positions": list(league.rules.roster_positions),
+              "waiver_budget": league.rules.waiver_budget,
+          }, indent=2))
+
+          print("LIVE_USERS")
+          print(json.dumps([
+              {
+                  "user_id": str(row.get("user_id") or ""),
+                  "display_name": row.get("display_name"),
+                  "is_owner": bool(row.get("is_owner")),
+                  "team_name": (row.get("metadata") or {}).get("team_name"),
+              }
+              for row in users
+          ], indent=2))
+
+          print("LIVE_ROSTERS")
+          print(json.dumps([
+              {
+                  "roster_id": roster.platform_roster_id,
+                  "owner_id": roster.platform_user_id,
+                  "players": len(roster.players),
+                  "starters": len(roster.starters),
+                  "reserve": len(roster.reserve),
+                  "taxi": len(roster.taxi),
+              }
+              for roster in league.rosters
+          ], indent=2))
+
+          assert league.platform_league_id == league_id
+          assert league.rules_ready, "League rules did not normalize"
+          assert league.draft is not None, "Converted league has no draft"
+          assert league.draft.status == "complete", (
+              f"Expected complete draft, got {league.draft.status!r}"
+          )
+          assert league.draft_ready, "Draft did not normalize as ready"
+          assert league.ownership_ready, "Roster ownership did not normalize as ready"
+          assert league.my_platform_roster_id, "Fantasy HQ could not identify my roster"
+          assert len(league.rosters) == league.team_count, (
+              f"Expected {league.team_count} rosters, found {len(league.rosters)}"
+          )
+          assert all(roster.players for roster in league.rosters), (
+              "At least one converted mock roster has no players"
+          )
+
+          my_roster = next(
+              roster
+              for roster in league.rosters
+              if roster.platform_roster_id == league.my_platform_roster_id
+          )
+          assert my_roster.players, "My converted roster has no players"
+          assert my_roster.starters, "My converted roster has no starters"
+
+          lineup = build_lineup_check(league, catalog)
+          assert lineup is not None, "Lineup Check could not be built"
+          assert lineup.slots, "Lineup Check has no starter slots"
+
+          health = analyze_roster_health(league, catalog)
+          action_center = build_fantasy_action_center((league,), catalog)
+          trade_board = build_trade_candidate_board(
+              league,
+              catalog,
+              per_side_limit=4,
+          )
+
+          rostered_ids = {
+              player_id
+              for roster in league.rosters
+              for player_id in roster.players
+          }
+          market_ids = list(my_roster.players)
+          for player_id, player in catalog.items():
+              if len(market_ids) >= len(my_roster.players) + 60:
+                  break
+              if player_id in rostered_ids:
+                  continue
+              if player.get("active") is False:
+                  continue
+              pos = str(player.get("position") or "").upper()
+              if pos not in {"QB", "RB", "WR", "TE", "FB"}:
+                  continue
+              if not str(player.get("team") or "").strip():
+                  continue
+              market_ids.append(player_id)
+
+          def player_name(player_id):
+              row = catalog.get(player_id) or {}
+              return (
+                  str(row.get("full_name") or "").strip()
+                  or (
+                      f"{str(row.get('first_name') or '').strip()} "
+                      f"{str(row.get('last_name') or '').strip()}"
+                  ).strip()
+                  or player_id
+              )
+
+          prop_rows = []
+          for player_id in market_ids:
+              row = catalog.get(player_id) or {}
+              name = player_name(player_id)
+              pos = str(row.get("position") or "").upper()
+              if pos == "QB":
+                  markets = [
+                      ("passing_yards", 245.5),
+                      ("passing_tds", 1.5),
+                      ("interceptions", 0.5),
+                      ("rushing_yards", 18.5),
+                  ]
+              else:
+                  markets = [
+                      ("receiving_yards", 54.5),
+                      ("receptions", 4.5),
+                      ("rushing_yards", 19.5),
+                  ]
+              for market, line in markets:
+                  prop_rows.append({
+                      "player": name,
+                      "market": market,
+                      "line": line,
+                      "book": "qa",
+                      "event_id": "qa-event",
+                      "away_team": "QA1",
+                      "home_team": "QA2",
+                  })
+              prop_rows.append({
+                  "player": name,
+                  "market": "anytime_td",
+                  "line": 0.5,
+                  "over_implied_prob": 0.45,
+                  "under_implied_prob": 0.55,
+                  "book": "qa",
+                  "event_id": "qa-event",
+                  "away_team": "QA1",
+                  "home_team": "QA2",
+              })
+
+          market_start_sit = build_market_start_sit_board(
+              lineup,
+              league.rules.scoring_settings,
+              catalog,
+              prop_rows,
+          )
+          market_waivers = build_market_ranked_waivers(
+              league,
+              lineup,
+              catalog,
+              prop_rows,
+              all_leagues=(league,),
+              trends=(),
+              limit=10,
+          )
+          faab = build_faab_advice_board(
+              league,
+              market_waivers,
+              current_week=max(1, int(getattr(nfl_state, "week", 1) or 1)),
+              transactions=(),
+              limit=10,
+          )
+          weekly_feed = build_weekly_action_feed(
+              (league,),
+              catalog,
+              prop_rows,
+              current_week=max(1, int(getattr(nfl_state, "week", 1) or 1)),
+              trends=(),
+              limit=20,
+          )
+
+          assert weekly_feed.drafted_leagues == 1
+          assert not weekly_feed.errors, weekly_feed.errors
+
+          print("FANTASY_HQ_SMOKE")
+          print(json.dumps({
+              "health_status": health.status,
+              "health_issues": [issue.message for issue in health.issues[:5]],
+              "lineup_slots": len(lineup.slots),
+              "bench_players": len(lineup.bench),
+              "action_center_drafted": action_center.drafted_count,
+              "trade_candidate_matches": len(trade_board.matches),
+              "trade_candidate_two_way": trade_board.two_way_count,
+              "market_start_sit_actionable": market_start_sit.actionable_count,
+              "market_waiver_candidates": len(market_waivers.candidates),
+              "faab_enabled": faab.enabled,
+              "faab_rows": len(faab.advice),
+              "weekly_feed_actions": len(weekly_feed.actions),
+              "weekly_feed_high": weekly_feed.high_count,
+              "weekly_feed_titles": [
+                  {
+                      "priority": action.priority,
+                      "type": action.action_type,
+                      "title": action.title,
+                      "impact": action.impact_points,
+                  }
+                  for action in weekly_feed.actions[:10]
+              ],
+          }, indent=2))
+
+          print("LIVE_QA_RESULT=PASS")
+          PY
