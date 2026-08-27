@@ -96,7 +96,11 @@ def build_roster_need_waiver_board(
     if selected_roster is None:
         return RosterNeedWaiverBoard(needs=needs, matches=())
 
-    selected_rostered = set(_all_roster_player_ids(selected_roster))
+    selected_rostered = {
+        player_id
+        for roster in league.rosters
+        for player_id in _all_roster_player_ids(roster)
+    }
     elsewhere = _mine_elsewhere(
         all_leagues,
         selected_league_id=league.platform_league_id,
