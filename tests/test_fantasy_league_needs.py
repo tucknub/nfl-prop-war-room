@@ -117,6 +117,42 @@ def test_flex_depth_is_conservative_not_fake_surplus():
     assert "RB" not in other.depth_positions
 
 
+def test_backup_only_medium_qb_need_does_not_create_trade_fit():
+    league = FantasyLeagueState(
+        platform="SLEEPER",
+        platform_league_id="backup-only",
+        name="Backup Only",
+        season="2026",
+        status="in_season",
+        team_count=2,
+        previous_platform_league_id=None,
+        current_platform_user_id="me",
+        my_platform_roster_id="1",
+        rules=LeagueRules(
+            roster_positions=("QB", "BN"),
+            scoring_settings={"rec": 1},
+        ),
+        draft=None,
+        managers=(
+            Manager("me", "Me", "My Team"),
+            Manager("partner", "Partner", "Partner"),
+        ),
+        rosters=(
+            Roster("1", "me", ("qb1",), ("qb1",), (), ()),
+            Roster("2", "partner", ("qb2", "qb3"), ("qb2",), (), ()),
+        ),
+        rules_ready=True,
+        draft_ready=True,
+        ownership_ready=True,
+    )
+
+    board = build_league_needs_board(league, CATALOG)
+
+    mine = next(row for row in board.rows if row.is_mine)
+    assert "QB" in mine.medium_needs
+    assert board.trade_fits == ()
+
+
 def test_trade_fit_rows_rank_two_way_before_one_way():
     board = build_league_needs_board(_league(), CATALOG)
 
