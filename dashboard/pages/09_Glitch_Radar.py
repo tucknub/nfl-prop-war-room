@@ -438,6 +438,8 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
     for alert in alerts:
         if shown >= 3:
             break
+        if glitch_action(alert).action == PASS:
+            continue
         _render_glitch_card(alert, show_evidence=False)
         shown += 1
 
@@ -456,6 +458,8 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
     for row in evs:
         if shown >= 3:
             break
+        if ev_action(row).action == PASS:
+            continue
         _render_ev_card(row, show_evidence=False)
         shown += 1
 
