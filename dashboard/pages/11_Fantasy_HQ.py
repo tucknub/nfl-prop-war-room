@@ -33,6 +33,7 @@ from src.fantasy.roster_health import (  # noqa: E402
     analyze_roster_health,
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
+from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
     DEFAULT_YAHOO_REDIRECT_URI,
     YahooFantasyClient,
@@ -108,6 +109,19 @@ def _load_matchups(league_id: str, week: int):
         return ()
     with SleeperClient() as client:
         return client.fetch_matchups(league_id, week)
+
+
+@st.cache_data(ttl=5 * 60, show_spinner=False)
+def _load_sleeper_trending_adds(
+    lookback_hours: int,
+    limit: int = 100,
+):
+    with SleeperClient() as client:
+        return client.fetch_trending_players(
+            "add",
+            lookback_hours=lookback_hours,
+            limit=limit,
+        )
 
 
 def _secret_default(name: str) -> str:
@@ -368,6 +382,7 @@ def _render_sleeper() -> None:
     (
         roster_tab,
         health_tab,
+        waiver_tab,
         matchup_tab,
         standings_tab,
         rules_tab,
@@ -376,6 +391,7 @@ def _render_sleeper() -> None:
         [
             "My roster",
             "Roster Health",
+            "Waiver Watch",
             "Current matchup",
             "Standings",
             "League settings",
@@ -499,6 +515,128 @@ def _render_sleeper() -> None:
         st.caption(
             "Roster Health uses league starter requirements and Sleeper's "
             "current roster/player status. It is not a player-ranking model."
+        )
+
+    with waiver_tab:
+        st.markdown("#### Waiver Watch")
+        st.caption(
+            "Sleeper's trending-add activity filtered to players who are "
+            "actually available in this league."
+        )
+
+        if league.status == "pre_draft":
+            st.info(
+                "This league is still pre-draft. Waiver Watch becomes most "
+                "useful as soon as Sleeper populates roster ownership."
+            )
+
+        lookback_hours = st.selectbox(
+            "Trending window",
+            (24, 48, 72),
+            format_func=lambda hours: f"Last {hours} hours",
+            key="fantasy_hq_waiver_lookback",
+        )
+        all_league_ids = tuple(
+            str(row["league_id"])
+            for row in leagues
+            if str(row.get("league_id") or "").strip()
+        )
+        try:
+            with st.spinner("Building live Waiver Watch..."):
+                waiver_states = _load_all_sleeper_states(
+                    str(sleeper_user["user_id"]),
+                    all_league_ids,
+                )
+                waiver_catalog = _load_player_catalog()
+                trending_adds = _load_sleeper_trending_adds(
+                    int(lookback_hours),
+                    100,
+                )
+                waiver_candidates = build_sleeper_waiver_watch(
+                    waiver_states,
+                    selected_league_id=league_id,
+                    trends=trending_adds,
+                    player_catalog=waiver_catalog,
+                )
+        except Exception as exc:
+            st.warning("Waiver Watch could not be loaded.")
+            st.caption(str(exc))
+            waiver_candidates = ()
+            trending_adds = ()
+
+        if waiver_candidates:
+            positions = tuple(
+                sorted(
+                    {
+                        row.position
+                        for row in waiver_candidates
+                        if row.position and row.position != "—"
+                    }
+                )
+            )
+            default_positions = tuple(
+                position
+                for position in ("QB", "RB", "WR", "TE", "DEF", "K")
+                if position in positions
+            )
+            selected_positions = st.multiselect(
+                "Positions",
+                positions,
+                default=default_positions or positions,
+                key="fantasy_hq_waiver_positions",
+            )
+            filtered = tuple(
+                row
+                for row in waiver_candidates
+                if not selected_positions or row.position in selected_positions
+            )
+
+            waiver_a, waiver_b, waiver_c = st.columns(3)
+            waiver_a.metric("Trending adds scanned", len(trending_adds))
+            waiver_b.metric("Available here", len(waiver_candidates))
+            waiver_c.metric(
+                "I roster elsewhere",
+                sum(1 for row in waiver_candidates if row.mine_elsewhere),
+            )
+
+            rows = []
+            for candidate in filtered[:75]:
+                raw_status = str(candidate.injury_status or "Active")
+                normalized_status = raw_status.replace("_", " ").title()
+                rows.append(
+                    {
+                        "Player": candidate.player_name,
+                        "Pos": candidate.position,
+                        "NFL": candidate.nfl_team,
+                        "Sleeper adds": candidate.trend_count,
+                        "Status": normalized_status,
+                        "I roster elsewhere": (
+                            " · ".join(candidate.mine_elsewhere) or "—"
+                        ),
+                        "Owned elsewhere": (
+                            " · ".join(candidate.owned_elsewhere) or "—"
+                        ),
+                    }
+                )
+
+            st.dataframe(
+                pd.DataFrame(rows),
+                hide_index=True,
+                width="stretch",
+            )
+            st.caption(
+                "Higher add counts mean more Sleeper managers added the player "
+                "during the selected window; this is activity, not a PropWar "
+                "player ranking."
+            )
+        elif trending_adds:
+            st.info(
+                "None of Sleeper's current trending adds are available in this "
+                "league."
+            )
+
+        st.markdown(
+            "[Trending data provided by Sleeper](https://sleeper.com/)"
         )
 
     with matchup_tab:
