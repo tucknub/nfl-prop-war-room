@@ -13,7 +13,7 @@ from .cloudflare_config import (
 )
 
 
-WRANGLER_PINNED_VERSION = "4.125.0"
+WRANGLER_PINNED_VERSION = "4.126.0"
 REMOTE_D1_REQUIRED_TABLE_COUNT = 8
 
 
