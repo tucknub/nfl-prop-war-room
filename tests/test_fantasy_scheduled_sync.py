@@ -15,6 +15,7 @@ from src.fantasy.scheduled_sync import (
     SleeperScheduledSyncRunResult,
     build_sleeper_scheduled_sync_plan,
     run_scheduled_sleeper_persistence_sync,
+    run_sleeper_scheduled_sync_plan,
 )
 
 
@@ -314,4 +315,8 @@ def test_public_package_exports_scheduled_sync_contract():
     assert (
         fantasy.run_scheduled_sleeper_persistence_sync
         is run_scheduled_sleeper_persistence_sync
+    )
+    assert (
+        fantasy.run_sleeper_scheduled_sync_plan
+        is run_sleeper_scheduled_sync_plan
     )
