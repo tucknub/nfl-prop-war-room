@@ -1,4 +1,5 @@
 name: Player Command Center validation
+# rerun after canonical-team reverse fix
 
 on:
   push:
