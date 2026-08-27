@@ -50,14 +50,17 @@ class FantasySingleLeagueCanaryConfig:
     def from_env(
         cls,
         environ: Mapping[str, str] | None = None,
+        *,
+        require_confirmation: bool = True,
     ) -> "FantasySingleLeagueCanaryConfig":
         env = os.environ if environ is None else environ
 
-        confirmation = _required_env_text(env, "FANTASY_CANARY_CONFIRM")
-        if confirmation != FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION:
-            raise ValueError(
-                "FANTASY_CANARY_CONFIRM must explicitly authorize one real fantasy write"
-            )
+        if require_confirmation:
+            confirmation = _required_env_text(env, "FANTASY_CANARY_CONFIRM")
+            if confirmation != FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION:
+                raise ValueError(
+                    "FANTASY_CANARY_CONFIRM must explicitly authorize one real fantasy write"
+                )
 
         season = _required_env_text(env, "FANTASY_CANARY_SEASON")
         identity = LeagueSeasonIdentity(
@@ -317,7 +320,10 @@ def preview_single_league_persistence_canary_from_env(
 ) -> dict[str, Any]:
     """Validate and summarize the exact deterministic canary plan without I/O."""
 
-    config = FantasySingleLeagueCanaryConfig.from_env(environ)
+    config = FantasySingleLeagueCanaryConfig.from_env(
+        environ,
+        require_confirmation=False,
+    )
     tagged_league = _canary_league(config.league)
     plan = build_sleeper_scheduled_sync_plan(
         (tagged_league,),
