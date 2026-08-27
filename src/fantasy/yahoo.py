@@ -268,6 +268,7 @@ class YahooFantasyClient:
         timeout_seconds: float = 20.0,
     ) -> None:
         token = _canonical_text(access_token, "access_token")
+        self._access_token = token
         self._owns_client = client is None
         self._client = client or httpx.Client(
             base_url=base_url.rstrip("/") + "/",
@@ -275,7 +276,6 @@ class YahooFantasyClient:
             follow_redirects=False,
             headers={
                 "Accept": "application/json",
-                "Authorization": f"Bearer {token}",
                 "User-Agent": "PropWar-FantasyHQ/1.0",
             },
         )
@@ -291,7 +291,11 @@ class YahooFantasyClient:
         self.close()
 
     def _get_json(self, path: str) -> Any:
-        response = self._client.get(path.lstrip("/"), params={"format": "json"})
+        response = self._client.get(
+            path.lstrip("/"),
+            params={"format": "json"},
+            headers={"Authorization": f"Bearer {self._access_token}"},
+        )
         if response.status_code != 200:
             raise YahooFantasyError(
                 f"Yahoo Fantasy request failed with HTTP {response.status_code}"
