@@ -194,15 +194,33 @@ def _slot_state(
     return READY, "No factual lineup-status issue."
 
 
-def _eligible_for_slot(player: LineupPlayerFact, slot: str) -> bool:
-    slot = str(slot or "").strip().upper()
-    positions = set(player.fantasy_positions) or {player.position}
-
-    flex_positions = FLEX_ELIGIBILITY.get(slot)
+def eligible_positions_for_slot(slot: str) -> frozenset[str]:
+    normalized = str(slot or "").strip().upper()
+    if not normalized:
+        raise ValueError("slot is required")
+    flex_positions = FLEX_ELIGIBILITY.get(normalized)
     if flex_positions is not None:
-        return bool(positions & flex_positions)
+        return flex_positions
+    return frozenset({normalized})
 
-    return slot in positions
+
+def positions_eligible_for_slot(
+    positions: Iterable[str],
+    slot: str,
+) -> bool:
+    normalized_positions = {
+        str(value).strip().upper()
+        for value in positions
+        if str(value or "").strip()
+    }
+    if not normalized_positions:
+        return False
+    return bool(normalized_positions & eligible_positions_for_slot(slot))
+
+
+def _eligible_for_slot(player: LineupPlayerFact, slot: str) -> bool:
+    positions = player.fantasy_positions or (player.position,)
+    return positions_eligible_for_slot(positions, slot)
 
 
 def _alternative_sort_key(player: LineupPlayerFact) -> tuple[int, str, str]:
