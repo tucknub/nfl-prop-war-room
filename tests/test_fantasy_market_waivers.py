@@ -258,8 +258,8 @@ def test_market_ranked_waivers_use_league_ppr_scoring_for_ordering():
         my_players=("qb1", "rb1", "te1"),
     )
     rows = [
-        *_wr_rows("Market Wideout", rec=2.0, rec_yd=70.0, td=False),
-        *_wr_rows("Volume Wideout", rec=5.0, rec_yd=50.0, td=False),
+        *_wr_rows("Market Wideout", rec=2.0, rec_yd=70.0),
+        *_wr_rows("Volume Wideout", rec=5.0, rec_yd=50.0),
     ]
 
     standard_lineup = build_lineup_check(standard, CATALOG)
