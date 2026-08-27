@@ -138,6 +138,7 @@ def validate_fantasy_hq_shadow_deployment_evidence(
     payload: Any,
     *,
     expected_run_id: int | None = None,
+    expected_commit_sha: str | None = None,
 ) -> FantasyShadowDeploymentEvidence:
     """Validate the exact sanitized evidence required before the first real write."""
 
@@ -218,6 +219,13 @@ def validate_fantasy_hq_shadow_deployment_evidence(
     if expected_run_id is not None and evidence.source_run_id != expected_run_id:
         raise FantasyRemoteCloudflareError(
             "shadow deployment evidence run ID does not match requested workflow run"
+        )
+    if (
+        expected_commit_sha is not None
+        and evidence.source_commit_sha != expected_commit_sha
+    ):
+        raise FantasyRemoteCloudflareError(
+            "shadow deployment evidence commit does not match canary workflow commit"
         )
     return evidence
 
