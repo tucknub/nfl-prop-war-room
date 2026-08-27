@@ -273,3 +273,23 @@ def test_fantasy_hq_exposes_market_implied_baseline():
     assert "build_market_fantasy_baseline" in page
     assert "Consensus base prop lines" in page
     assert "PARLAY_API_KEY" in page
+
+
+def test_deep_prop_radar_and_fantasy_hq_share_prop_snapshot():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    deep = (root / "dashboard" / "pages" / "10_Deep_Prop_Radar.py").read_text(
+        encoding="utf-8"
+    )
+    fantasy = (root / "dashboard" / "pages" / "11_Fantasy_HQ.py").read_text(
+        encoding="utf-8"
+    )
+    cache = (root / "dashboard" / "glitch_radar_props_cache.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "shared_prop_snapshot" in deep
+    assert "shared_prop_snapshot" in fantasy
+    assert "PROP_SNAPSHOT_CACHE_SECONDS = 10_800" in cache
+    assert "def _deep_snapshot" not in deep
