@@ -16,6 +16,7 @@ from research_ui import inject_styles, section  # noqa: E402
 from research_data import operational_status_text  # noqa: E402
 from public_copy import role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
+from propwar_today_owner import render_propwar_today_if_owner  # noqa: E402
 
 
 REPORT_CARDS = (
@@ -98,6 +99,9 @@ def render_launch_home() -> None:
         f'<div class="pw-status-line"><strong>Data status</strong><span>{operational_status_text()}</span></div>',
         unsafe_allow_html=True,
     )
+
+    render_propwar_today_if_owner()
+
     section("Choose a report", "Each report answers one documented role question without market or outcome claims.")
     report_columns = st.columns(3)
     for column, (title, description) in zip(report_columns, REPORT_CARDS):
