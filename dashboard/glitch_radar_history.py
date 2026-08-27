@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timezone
 from threading import RLock
 from typing import Any, Iterable, Mapping
 
@@ -12,6 +13,12 @@ WORSENED = "WORSENED"
 UNCHANGED = "UNCHANGED"
 REAPPEARED = "REAPPEARED"
 DISAPPEARED = "DISAPPEARED"
+FRESH = "FRESH"
+AGING = "AGING"
+STALE = "STALE"
+
+MAX_KNOWN_RECORDS = 2500
+MAX_RECENT_CHANGES = 500
 
 
 def _text(value: object) -> str:
@@ -110,12 +117,96 @@ def build_market_observations(
 
 def empty_market_history() -> dict[str, Any]:
     return {
+        "schema_version": 2,
         "last_scan_at": None,
         "scan_count": 0,
         "active": {},
         "known": {},
         "disappeared": [],
+        "recent_changes": [],
     }
+
+
+def _parse_datetime(value: object) -> datetime | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def freshness_status(
+    last_seen: object,
+    *,
+    now: datetime | None = None,
+    fresh_minutes: float = 15.0,
+    stale_minutes: float = 30.0,
+) -> str:
+    parsed = _parse_datetime(last_seen)
+    if parsed is None:
+        return STALE
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    age_minutes = max(
+        0.0,
+        (current.astimezone(timezone.utc) - parsed).total_seconds() / 60.0,
+    )
+    if age_minutes <= fresh_minutes:
+        return FRESH
+    if age_minutes <= stale_minutes:
+        return AGING
+    return STALE
+
+
+def _change_event(record: Mapping[str, Any], *, changed_at: str) -> dict[str, Any]:
+    return {
+        "key": str(record.get("key") or ""),
+        "kind": str(record.get("kind") or ""),
+        "status": str(record.get("status") or ""),
+        "book": str(record.get("book") or ""),
+        "event": str(record.get("event") or ""),
+        "away_team": str(record.get("away_team") or ""),
+        "home_team": str(record.get("home_team") or ""),
+        "market": str(record.get("market") or ""),
+        "side": str(record.get("side") or ""),
+        "threshold": record.get("threshold"),
+        "opening_price": _price(record.get("opening_price")),
+        "previous_price": _price(record.get("previous_price")),
+        "current_price": _price(record.get("current_price")),
+        "first_seen": str(record.get("first_seen") or ""),
+        "last_seen": str(record.get("last_seen") or ""),
+        "changed_at": changed_at,
+    }
+
+
+def _bounded_known(
+    known: Mapping[str, Mapping[str, Any]],
+    active_keys: set[str],
+) -> dict[str, dict[str, Any]]:
+    rows = [
+        (str(key), dict(value))
+        for key, value in known.items()
+        if isinstance(value, Mapping)
+    ]
+    rows.sort(
+        key=lambda item: str(item[1].get("last_seen") or ""),
+        reverse=True,
+    )
+    selected: dict[str, dict[str, Any]] = {}
+    for key, row in rows:
+        if key in active_keys:
+            selected[key] = row
+    for key, row in rows:
+        if len(selected) >= MAX_KNOWN_RECORDS:
+            break
+        selected.setdefault(key, row)
+    return selected
 
 
 def update_market_history(
@@ -143,6 +234,11 @@ def update_market_history(
         if isinstance(value, Mapping)
     }
     scan_count = int(previous_state.get("scan_count") or 0) + 1
+    recent_changes = [
+        dict(row)
+        for row in list(previous_state.get("recent_changes") or [])
+        if isinstance(row, Mapping)
+    ]
 
     active: dict[str, dict[str, Any]] = {}
     for key, raw_observation in observations.items():
@@ -168,16 +264,27 @@ def update_market_history(
             else:
                 status = UNCHANGED
             first_seen = str(prior_active.get("first_seen") or current_scan)
+            opening_price = _price(
+                prior_active.get("opening_price")
+                if prior_active.get("opening_price") is not None
+                else prior_active.get("current_price")
+            )
             seen_count = int(prior_active.get("seen_count") or 1) + 1
         elif prior_known is not None:
             previous_price = _price(prior_known.get("current_price"))
             status = REAPPEARED
             first_seen = str(prior_known.get("first_seen") or current_scan)
+            opening_price = _price(
+                prior_known.get("opening_price")
+                if prior_known.get("opening_price") is not None
+                else prior_known.get("current_price")
+            )
             seen_count = int(prior_known.get("seen_count") or 0) + 1
         else:
             previous_price = None
             status = BASELINE if scan_count == 1 else NEW
             first_seen = current_scan
+            opening_price = current_price
             seen_count = 1
 
         record = {
@@ -185,12 +292,17 @@ def update_market_history(
             "status": status,
             "first_seen": first_seen,
             "last_seen": current_scan,
+            "opening_price": opening_price,
             "previous_price": previous_price,
             "current_price": current_price,
             "seen_count": seen_count,
         }
         active[key] = record
         known[key] = dict(record)
+        if status in {NEW, IMPROVED, WORSENED, REAPPEARED}:
+            recent_changes.append(
+                _change_event(record, changed_at=current_scan)
+            )
 
     disappeared: list[dict[str, Any]] = []
     for key, prior in previous_active.items():
@@ -203,13 +315,21 @@ def update_market_history(
         }
         disappeared.append(record)
         known[key] = dict(record)
+        recent_changes.append(
+            _change_event(record, changed_at=current_scan)
+        )
+
+    recent_changes = recent_changes[-MAX_RECENT_CHANGES:]
+    known = _bounded_known(known, set(active))
 
     return {
+        "schema_version": 2,
         "last_scan_at": current_scan,
         "scan_count": scan_count,
         "active": active,
         "known": known,
         "disappeared": disappeared,
+        "recent_changes": recent_changes,
     }
 
 
@@ -261,6 +381,22 @@ def history_for_key(
     return dict(row) if isinstance(row, Mapping) else None
 
 
+def recent_history_changes(
+    state: Mapping[str, Any],
+    *,
+    limit: int = 50,
+) -> tuple[dict[str, Any], ...]:
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 0:
+        raise ValueError("limit must be a non-negative integer")
+    rows = [
+        dict(row)
+        for row in list(state.get("recent_changes") or [])
+        if isinstance(row, Mapping)
+    ]
+    rows.reverse()
+    return tuple(rows[:limit])
+
+
 __all__ = [
     "BASELINE",
     "NEW",
@@ -269,12 +405,17 @@ __all__ = [
     "UNCHANGED",
     "REAPPEARED",
     "DISAPPEARED",
+    "FRESH",
+    "AGING",
+    "STALE",
     "build_market_observations",
     "empty_market_history",
     "ev_opportunity_key",
     "glitch_opportunity_key",
     "MarketHistoryStore",
+    "freshness_status",
     "history_for_key",
     "history_summary",
+    "recent_history_changes",
     "update_market_history",
 ]
