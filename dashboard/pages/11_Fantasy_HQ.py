@@ -48,6 +48,7 @@ from src.fantasy.roster_health import (  # noqa: E402
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
+from src.fantasy.waiver_fit import build_roster_need_waiver_board  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
     DEFAULT_YAHOO_REDIRECT_URI,
     YahooFantasyClient,
@@ -927,6 +928,114 @@ def _render_sleeper() -> None:
                 "None of Sleeper's current trending adds are available in this "
                 "league."
             )
+
+        st.markdown("##### Roster Need Matches")
+        st.caption(
+            "Connects your current Lineup Check issues to players who are "
+            "actually available in this league."
+        )
+
+        if lineup is None:
+            st.info(
+                "Roster Need Matches will populate after Lineup Check can "
+                "identify your current starter slots."
+            )
+        else:
+            try:
+                need_board = build_roster_need_waiver_board(
+                    league,
+                    lineup,
+                    all_catalog or _load_player_catalog(),
+                    all_leagues=(all_states or (league,)),
+                    trends=trending_adds,
+                    limit=75,
+                )
+            except Exception as exc:
+                st.warning("Roster Need Matches could not be built.")
+                st.caption(str(exc))
+                need_board = None
+
+            if need_board is not None:
+                need_a, need_b, need_c, need_d = st.columns(4)
+                need_a.metric("Action slots", need_board.action_need_count)
+                need_b.metric("Watch slots", need_board.watch_need_count)
+                need_c.metric("Available fits", len(need_board.matches))
+                need_d.metric(
+                    "I roster elsewhere",
+                    need_board.familiar_match_count,
+                )
+
+                if not need_board.needs:
+                    st.success(
+                        "Lineup Check has no current Action or Watch slot, so "
+                        "there is no factual roster need to match right now."
+                    )
+                else:
+                    need_rows = [
+                        {
+                            "Need": row.label,
+                            "Level": (
+                                "ACTION"
+                                if row.level == LINEUP_NEEDS_ACTION
+                                else "WATCH"
+                            ),
+                            "Why": row.reason,
+                        }
+                        for row in need_board.needs
+                    ]
+                    st.dataframe(
+                        pd.DataFrame(need_rows),
+                        hide_index=True,
+                        width="stretch",
+                    )
+
+                    if not need_board.matches:
+                        st.info(
+                            "No currently available healthy player matched "
+                            "these starter-slot needs."
+                        )
+                    else:
+                        match_rows = [
+                            {
+                                "Player": row.player_name,
+                                "Pos": row.position,
+                                "NFL": row.nfl_team,
+                                "Status": row.status,
+                                "Fits action slots": (
+                                    " · ".join(row.action_slots) or "—"
+                                ),
+                                "Fits watch slots": (
+                                    " · ".join(row.watch_slots) or "—"
+                                ),
+                                "Sleeper adds": (
+                                    row.trend_count
+                                    if row.trend_count > 0
+                                    else "—"
+                                ),
+                                "I roster elsewhere": (
+                                    " · ".join(row.mine_elsewhere) or "—"
+                                ),
+                            }
+                            for row in need_board.matches
+                        ]
+                        st.dataframe(
+                            pd.DataFrame(match_rows),
+                            hide_index=True,
+                            width="stretch",
+                        )
+                        if need_board.familiar_match_count:
+                            st.success(
+                                f"{need_board.familiar_match_count} fit"
+                                f"{'s' if need_board.familiar_match_count != 1 else ''} "
+                                "shown are already on one of your other "
+                                "Sleeper rosters."
+                            )
+
+                st.caption(
+                    "Ordering favors players who cover more Action slots, then "
+                    "players you already roster elsewhere and current Sleeper "
+                    "add activity. This is not a player-value ranking."
+                )
 
         st.markdown("##### Search all available players")
         st.caption(
