@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from threading import RLock
 from typing import Any, Iterable, Mapping
 
 
@@ -212,6 +213,32 @@ def update_market_history(
     }
 
 
+class MarketHistoryStore:
+    """Thread-safe process-level scan memory for the owner-only radar."""
+
+    def __init__(self) -> None:
+        self._lock = RLock()
+        self._state = empty_market_history()
+
+    def update(
+        self,
+        observations: Mapping[str, Mapping[str, Any]],
+        *,
+        fetched_at: str,
+    ) -> dict[str, Any]:
+        with self._lock:
+            self._state = update_market_history(
+                self._state,
+                observations,
+                fetched_at=fetched_at,
+            )
+            return deepcopy(self._state)
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            return deepcopy(self._state)
+
+
 def history_summary(state: Mapping[str, Any]) -> dict[str, int]:
     active = [
         row
@@ -246,6 +273,7 @@ __all__ = [
     "empty_market_history",
     "ev_opportunity_key",
     "glitch_opportunity_key",
+    "MarketHistoryStore",
     "history_for_key",
     "history_summary",
     "update_market_history",
