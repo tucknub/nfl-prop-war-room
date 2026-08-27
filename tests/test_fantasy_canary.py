@@ -449,11 +449,20 @@ def test_public_package_exports_canary_contract():
         fantasy.FANTASY_SINGLE_LEAGUE_CANARY_VERSION
         == FANTASY_SINGLE_LEAGUE_CANARY_VERSION
     )
+    assert (
+        fantasy.FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION
+        == FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION
+    )
+    assert fantasy.FantasySingleLeagueCanaryConfig is FantasySingleLeagueCanaryConfig
     assert fantasy.FantasySingleLeagueCanaryError is FantasySingleLeagueCanaryError
     assert fantasy.FantasySingleLeagueCanaryResult is FantasySingleLeagueCanaryResult
     assert (
         fantasy.run_single_league_persistence_canary
         is run_single_league_persistence_canary
+    )
+    assert (
+        fantasy.run_single_league_persistence_canary_from_env
+        is run_single_league_persistence_canary_from_env
     )
 
 
