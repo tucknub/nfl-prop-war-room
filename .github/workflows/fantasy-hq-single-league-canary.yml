@@ -1,0 +1,416 @@
+name: Fantasy HQ Single-League Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Preview first; execute only after reviewing the deterministic sync_run_id"
+        required: true
+        default: "PREVIEW_ONLY"
+        type: choice
+        options:
+          - PREVIEW_ONLY
+          - EXECUTE_ONE_WRITE
+      confirmation:
+        description: "EXECUTE only: type RUN_ONE_REAL_FANTASY_WRITE"
+        required: false
+        type: string
+      shadow_run_id:
+        description: "Successful Fantasy HQ Shadow Deploy workflow run ID"
+        required: true
+        type: string
+      expected_sync_run_id:
+        description: "EXECUTE only: exact sync_run_id copied from PREVIEW_ONLY"
+        required: false
+        type: string
+      league_season_id:
+        description: "Canonical internal league-season ID"
+        required: true
+        type: string
+      platform_league_id:
+        description: "Exact Sleeper league ID"
+        required: true
+        type: string
+      season:
+        description: "Sleeper season, e.g. 2026"
+        required: true
+        type: string
+      league_family_id:
+        description: "Canonical league family ID"
+        required: true
+        type: string
+      family_display_name:
+        description: "League family display name"
+        required: true
+        type: string
+      season_display_name:
+        description: "League-season display name"
+        required: true
+        type: string
+      registration_created_at_ms:
+        description: "Explicit registration timestamp in Unix milliseconds"
+        required: true
+        type: string
+      canary_at_ms:
+        description: "Explicit logical canary slot in Unix milliseconds"
+        required: true
+        type: string
+      current_user_id:
+        description: "Exact Sleeper user ID used to identify the owner's roster"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: fantasy-hq-single-league-real-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      FANTASY_PERSISTENCE_TOKEN: ${{ secrets.FANTASY_PERSISTENCE_TOKEN }}
+      WRANGLER_VERSION: "4.126.0"
+      WRANGLER_SEND_METRICS: "false"
+      WRANGLER_LOG_SANITIZE: "true"
+      WRANGLER_SEND_ERROR_REPORTS: "false"
+      FORCE_COLOR: "0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate dispatch envelope
+        env:
+          CANARY_MODE: ${{ inputs.mode }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          SHADOW_RUN_ID: ${{ inputs.shadow_run_id }}
+          EXPECTED_SYNC_RUN_ID: ${{ inputs.expected_sync_run_id }}
+        run: |
+          python - <<'PY'
+          import os
+
+          if os.environ.get("GITHUB_REF_NAME") != "streamlit-cloud-deploy":
+              raise SystemExit("Fantasy HQ canary must run from streamlit-cloud-deploy")
+
+          mode = os.environ.get("CANARY_MODE")
+          if mode not in {"PREVIEW_ONLY", "EXECUTE_ONE_WRITE"}:
+              raise SystemExit("Unsupported Fantasy HQ canary mode")
+
+          shadow_run_id = os.environ.get("SHADOW_RUN_ID", "")
+          if not shadow_run_id.isdigit() or int(shadow_run_id) <= 0:
+              raise SystemExit("shadow_run_id must be a positive GitHub workflow run ID")
+
+          for name in (
+              "CLOUDFLARE_API_TOKEN",
+              "CLOUDFLARE_ACCOUNT_ID",
+              "FANTASY_PERSISTENCE_TOKEN",
+          ):
+              value = os.environ.get(name, "")
+              if not value or value != value.strip():
+                  raise SystemExit(f"Required secret {name} is not configured")
+
+          if mode == "EXECUTE_ONE_WRITE":
+              if os.environ.get("CONFIRMATION") != "RUN_ONE_REAL_FANTASY_WRITE":
+                  raise SystemExit("Exact one-write confirmation is required")
+              expected = os.environ.get("EXPECTED_SYNC_RUN_ID", "")
+              if not expected or expected != expected.strip():
+                  raise SystemExit("EXECUTE_ONE_WRITE requires the reviewed sync_run_id")
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download exact shadow deployment evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: fantasy-hq-shadow-deployment-evidence
+          path: ${{ runner.temp }}/shadow-evidence
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.shadow_run_id }}
+
+      - name: Validate shadow deployment handoff
+        id: shadow
+        env:
+          SHADOW_RUN_ID: ${{ inputs.shadow_run_id }}
+        run: |
+          set -euo pipefail
+          EVIDENCE="$RUNNER_TEMP/shadow-evidence/fantasy-hq-shadow-deployment-evidence.json"
+          SUMMARY="$RUNNER_TEMP/shadow-summary.json"
+
+          python scripts/validate_fantasy_hq_shadow_evidence.py \
+            --evidence "$EVIDENCE" \
+            --expected-run-id "$SHADOW_RUN_ID" \
+            --expected-commit-sha "$GITHUB_SHA" \
+            > "$SUMMARY"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "shadow-summary.json").read_text()
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"worker_url={summary['worker_url']}\n")
+              handle.write(f"database_id={summary['database_id']}\n")
+              handle.write(f"version_id={summary['version_id']}\n")
+          PY
+
+      - name: Verify pinned Wrangler and Cloudflare authentication
+        run: |
+          test "$(npx --yes wrangler@$WRANGLER_VERSION --version | awk '{print $NF}')" = "$WRANGLER_VERSION"
+          npx --yes wrangler@$WRANGLER_VERSION whoami
+
+      - name: Re-verify remote D1 is still pristine
+        run: |
+          set -euo pipefail
+          CONFIG="workers/fantasy-hq/wrangler.generated.jsonc"
+          PROBE="$RUNNER_TEMP/fantasy-hq-pre-canary-d1-probe.json"
+
+          python scripts/render_fantasy_hq_wrangler.py \
+            --database-id "${{ steps.shadow.outputs.database_id }}"
+
+          SQL="SELECT \
+          (SELECT COUNT(*) FROM sqlite_schema WHERE type='table' AND name IN (\
+          'fantasy_league_families','fantasy_league_seasons','fantasy_state_snapshots',\
+          'fantasy_change_events','fantasy_sync_runs','football_entities',\
+          'football_external_ids','football_identity_review_events')) AS required_table_count, \
+          (SELECT COUNT(*) FROM fantasy_league_families) AS league_families, \
+          (SELECT COUNT(*) FROM fantasy_league_seasons) AS league_seasons, \
+          (SELECT COUNT(*) FROM fantasy_state_snapshots) AS state_snapshots, \
+          (SELECT COUNT(*) FROM fantasy_change_events) AS change_events, \
+          (SELECT COUNT(*) FROM fantasy_sync_runs) AS sync_runs"
+
+          npx --yes wrangler@$WRANGLER_VERSION d1 execute FANTASY_DB \
+            --remote --json --command "$SQL" --config "$CONFIG" > "$PROBE"
+          python scripts/verify_fantasy_hq_remote_d1.py --probe "$PROBE" \
+            > "$RUNNER_TEMP/pre-canary-d1-readiness.json"
+
+      - name: Re-verify remote Cron Triggers are empty
+        run: |
+          SCHEDULES="$RUNNER_TEMP/canary-cron-schedules.json"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/propwar-fantasy-hq/schedules" \
+            > "$SCHEDULES"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "canary-cron-schedules.json").read_text()
+          )
+          if payload.get("success") is not True:
+              raise SystemExit("Cloudflare Cron Trigger read was not successful")
+          result = payload.get("result")
+          if not isinstance(result, dict) or result.get("schedules") != []:
+              raise SystemExit("Fantasy HQ remote Cron Triggers are not empty")
+          PY
+
+      - name: Re-run authenticated read-only runtime handshake
+        env:
+          FANTASY_PERSISTENCE_URL: ${{ steps.shadow.outputs.worker_url }}/v1/fantasy/persistence
+        run: |
+          python scripts/check_fantasy_hq_runtime_handshake.py \
+            > "$RUNNER_TEMP/pre-canary-runtime-handshake.json"
+
+      - name: Build deterministic canary preview
+        id: preview
+        env:
+          FANTASY_CANARY_LEAGUE_SEASON_ID: ${{ inputs.league_season_id }}
+          FANTASY_CANARY_PLATFORM_LEAGUE_ID: ${{ inputs.platform_league_id }}
+          FANTASY_CANARY_SEASON: ${{ inputs.season }}
+          FANTASY_CANARY_LEAGUE_FAMILY_ID: ${{ inputs.league_family_id }}
+          FANTASY_CANARY_FAMILY_DISPLAY_NAME: ${{ inputs.family_display_name }}
+          FANTASY_CANARY_SEASON_DISPLAY_NAME: ${{ inputs.season_display_name }}
+          FANTASY_CANARY_REGISTRATION_CREATED_AT_MS: ${{ inputs.registration_created_at_ms }}
+          FANTASY_CANARY_AT_MS: ${{ inputs.canary_at_ms }}
+          FANTASY_CANARY_CURRENT_USER_ID: ${{ inputs.current_user_id }}
+        run: |
+          set -euo pipefail
+          PREVIEW="$RUNNER_TEMP/fantasy-hq-canary-preview.json"
+          python scripts/preview_fantasy_hq_single_league_canary.py > "$PREVIEW"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          preview = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "fantasy-hq-canary-preview.json").read_text()
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"sync_run_id={preview['sync_run_id']}\n")
+              handle.write(f"snapshot_id={preview['snapshot_id']}\n")
+              handle.write(f"batch_id={preview['batch_id']}\n")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("## Fantasy HQ one-league canary preview\n\n")
+              handle.write(f"- League season ID: {preview['league_season_id']}\n")
+              handle.write(f"- Sleeper league ID: {preview['platform_league_id']}\n")
+              handle.write(f"- Season: {preview['season']}\n")
+              handle.write(f"- Canary slot: {preview['canary_at_ms']}\n")
+              handle.write(f"- Sync run ID: {preview['sync_run_id']}\n")
+              handle.write(f"- Snapshot ID: {preview['snapshot_id']}\n")
+              handle.write("- Remote D1 pristine immediately before preview: yes\n")
+              handle.write("- Remote Cron Triggers: 0\n")
+              handle.write("- Runtime handshake: READY\n")
+              handle.write("- Real fantasy write performed by this preview: no\n")
+          PY
+
+      - name: Upload preview evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: fantasy-hq-single-league-canary-preview
+          path: ${{ runner.temp }}/fantasy-hq-canary-preview.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Verify reviewed execution identity
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' }}
+        env:
+          EXPECTED_SYNC_RUN_ID: ${{ inputs.expected_sync_run_id }}
+          ACTUAL_SYNC_RUN_ID: ${{ steps.preview.outputs.sync_run_id }}
+        run: test "$EXPECTED_SYNC_RUN_ID" = "$ACTUAL_SYNC_RUN_ID"
+
+      - name: Execute exactly one real canary write
+        id: execute_canary
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' }}
+        continue-on-error: true
+        env:
+          FANTASY_PERSISTENCE_URL: ${{ steps.shadow.outputs.worker_url }}/v1/fantasy/persistence
+          FANTASY_CANARY_CONFIRM: ${{ inputs.confirmation }}
+          FANTASY_CANARY_LEAGUE_SEASON_ID: ${{ inputs.league_season_id }}
+          FANTASY_CANARY_PLATFORM_LEAGUE_ID: ${{ inputs.platform_league_id }}
+          FANTASY_CANARY_SEASON: ${{ inputs.season }}
+          FANTASY_CANARY_LEAGUE_FAMILY_ID: ${{ inputs.league_family_id }}
+          FANTASY_CANARY_FAMILY_DISPLAY_NAME: ${{ inputs.family_display_name }}
+          FANTASY_CANARY_SEASON_DISPLAY_NAME: ${{ inputs.season_display_name }}
+          FANTASY_CANARY_REGISTRATION_CREATED_AT_MS: ${{ inputs.registration_created_at_ms }}
+          FANTASY_CANARY_AT_MS: ${{ inputs.canary_at_ms }}
+          FANTASY_CANARY_CURRENT_USER_ID: ${{ inputs.current_user_id }}
+        run: |
+          set +e
+          python scripts/run_fantasy_hq_single_league_canary.py \
+            > "$RUNNER_TEMP/fantasy-hq-canary-result.json" \
+            2> "$RUNNER_TEMP/fantasy-hq-canary-error.json"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            cat "$RUNNER_TEMP/fantasy-hq-canary-error.json" >&2
+            exit "$status"
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "fantasy-hq-canary-result.json").read_text()
+          )
+          if result.get("ready") is not True:
+              raise SystemExit("Canary result is not READY")
+          if result.get("mode") != "ACCEPTED":
+              raise SystemExit("First pristine canary must produce ACCEPTED")
+          if result.get("readback_verified") is not True:
+              raise SystemExit("Canary read-back verification did not pass")
+          PY
+
+      - name: Publish successful canary evidence
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' && steps.execute_canary.outcome == 'success' }}
+        env:
+          SHADOW_RUN_ID: ${{ inputs.shadow_run_id }}
+          SHADOW_VERSION_ID: ${{ steps.shadow.outputs.version_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          preview = json.loads((root / "fantasy-hq-canary-preview.json").read_text())
+          result = json.loads((root / "fantasy-hq-canary-result.json").read_text())
+          handshake = json.loads((root / "pre-canary-runtime-handshake.json").read_text())
+
+          evidence = {
+              "ready": True,
+              "execution_mode": "EXECUTE_ONE_WRITE",
+              "shadow_run_id": int(os.environ["SHADOW_RUN_ID"]),
+              "shadow_version_id": os.environ["SHADOW_VERSION_ID"],
+              "source_commit_sha": os.environ["GITHUB_SHA"],
+              "league_season_id": preview["league_season_id"],
+              "platform_league_id": preview["platform_league_id"],
+              "season": preview["season"],
+              "canary_at_ms": preview["canary_at_ms"],
+              "batch_id": result["batch_id"],
+              "sync_run_id": result["sync_run_id"],
+              "accepted_snapshot_id": result["accepted_snapshot_id"],
+              "content_fingerprint": result["content_fingerprint"],
+              "mode": result["mode"],
+              "readback_verified": result["readback_verified"],
+              "pre_write_handshake": handshake,
+              "cron_count": 0,
+              "real_fantasy_write_performed": True,
+              "recurring_schedule_enabled": False,
+          }
+          (root / "fantasy-hq-single-league-canary-evidence.json").write_text(
+              json.dumps(evidence, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n## Canary execution result\n\n")
+              handle.write("- One real canary write: VERIFIED\n")
+              handle.write("- Persisted read-back: VERIFIED\n")
+              handle.write(f"- Accepted snapshot: {result['accepted_snapshot_id']}\n")
+              handle.write(f"- Content fingerprint: {result['content_fingerprint']}\n")
+              handle.write("- Recurring schedule enabled: no\n")
+          PY
+
+      - name: Upload successful canary evidence
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' && steps.execute_canary.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fantasy-hq-single-league-canary-evidence
+          path: ${{ runner.temp }}/fantasy-hq-single-league-canary-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload sanitized canary failure evidence
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' && steps.execute_canary.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fantasy-hq-single-league-canary-failure
+          path: ${{ runner.temp }}/fantasy-hq-canary-error.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce canary execution result
+        if: ${{ inputs.mode == 'EXECUTE_ONE_WRITE' && steps.execute_canary.outcome == 'failure' }}
+        run: |
+          echo "Fantasy HQ canary failed. Do not retry automatically; inspect the sanitized failure evidence and recovery reads." >&2
+          exit 1
