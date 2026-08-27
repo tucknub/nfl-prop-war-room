@@ -19,6 +19,7 @@ if str(DASHBOARD) not in sys.path:
         "dashboard/Home.py",
         "dashboard/pages/04_Reports.py",
         "dashboard/pages/06_Methodology.py",
+        "dashboard/pages/11_Fantasy_HQ.py",
     ),
 )
 def test_three_report_public_pages_execute_without_exception(relative_path: str) -> None:
