@@ -16,15 +16,9 @@ from glitch_radar_coverage import actionable_coverage_summary  # noqa: E402
 from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
-from glitch_radar_props_feed import (  # noqa: E402
-    PROP_CREDITS_PER_SCAN,
-    analyze_props,
-    fetch_full_props,
-)
+from glitch_radar_props_feed import PROP_CREDITS_PER_SCAN  # noqa: E402
+from glitch_radar_props_cache import shared_prop_snapshot  # noqa: E402
 from glitch_radar_stale import coverage_quality, enrich_stale_alerts  # noqa: E402
-
-DEEP_CACHE_SECONDS = 10_800
-
 
 def _mapping(value) -> dict:
     try:
@@ -52,15 +46,6 @@ def _api_key() -> str:
         return str(st.secrets.get("PARLAY_API_KEY", "") or "").strip()
     except Exception:
         return ""
-
-
-@st.cache_data(ttl=DEEP_CACHE_SECONDS, show_spinner=False)
-def _deep_snapshot(_key: str) -> dict:
-    rows = fetch_full_props(_key)
-    result = analyze_props(rows)
-    result["rows"] = rows
-    result["fetched_at"] = datetime.now(timezone.utc).isoformat()
-    return result
 
 
 def _game(row: dict) -> str:
@@ -251,7 +236,7 @@ if not key:
 
 try:
     with st.spinner("Scanning the full current NFL player-prop board..."):
-        deep = _deep_snapshot(key)
+        deep = shared_prop_snapshot(key)
 except Exception as exc:
     st.error(f"Deep prop scan failed: {exc}")
     st.caption("The 10-minute no-key Glitch Radar remains available even if the deep feed is unavailable.")

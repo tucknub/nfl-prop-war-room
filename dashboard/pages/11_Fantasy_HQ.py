@@ -20,6 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import page_intro, section  # noqa: E402
+from glitch_radar_props_cache import shared_prop_snapshot  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
@@ -36,6 +37,9 @@ from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
 from src.fantasy.player_market import build_player_market_map  # noqa: E402
 from src.fantasy.player_intelligence import (  # noqa: E402
     build_player_intelligence_card,
+)
+from src.fantasy.market_fantasy import (  # noqa: E402
+    build_market_fantasy_baseline,
 )
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
@@ -2208,6 +2212,123 @@ def _render_sleeper() -> None:
                                 "Depth-chart metadata comes from Sleeper and is "
                                 "context, not a PropWar player-value grade."
                             )
+
+                            st.markdown("##### Market-Implied Fantasy Baseline")
+                            st.caption(
+                                "Consensus base prop lines translated through "
+                                "this Sleeper league's scoring settings. This "
+                                "is a sportsbook-market baseline, not a precise "
+                                "fantasy projection or rest-of-season value."
+                            )
+
+                            parlay_key = _secret_default("PARLAY_API_KEY")
+                            if not parlay_key:
+                                st.info(
+                                    "Market baseline is unavailable because "
+                                    "PARLAY_API_KEY is not configured."
+                                )
+                            else:
+                                try:
+                                    prop_snapshot = shared_prop_snapshot(
+                                        parlay_key
+                                    )
+                                    selected_player = (
+                                        market_catalog.get(market_player_id)
+                                        or {}
+                                    )
+                                    baseline = build_market_fantasy_baseline(
+                                        intelligence.player_name,
+                                        str(
+                                            selected_player.get("position")
+                                            or ""
+                                        ),
+                                        league.rules.scoring_settings,
+                                        prop_snapshot.get("rows", ()),
+                                    )
+                                except Exception as exc:
+                                    st.warning(
+                                        "Market-implied fantasy baseline could "
+                                        "not be built."
+                                    )
+                                    st.caption(str(exc))
+                                    baseline = None
+
+                                if baseline is None:
+                                    st.info(
+                                        "No usable current base prop market "
+                                        "bundle was found for this player."
+                                    )
+                                else:
+                                    baseline_a, baseline_b, baseline_c = (
+                                        st.columns(3)
+                                    )
+                                    baseline_a.metric(
+                                        "Market fantasy baseline",
+                                        f"{baseline.fantasy_points:.2f}",
+                                    )
+                                    baseline_b.metric(
+                                        "Coverage",
+                                        baseline.coverage_status,
+                                    )
+                                    baseline_c.metric(
+                                        "Components",
+                                        baseline.component_count,
+                                    )
+
+                                    st.caption(
+                                        baseline.event_label
+                                        + (
+                                            " · " + baseline.commence_time
+                                            if baseline.commence_time
+                                            else ""
+                                        )
+                                    )
+
+                                    st.dataframe(
+                                        pd.DataFrame(
+                                            [
+                                                {
+                                                    "Market": row.label,
+                                                    "Consensus": (
+                                                        f"{row.market_value:.1%}"
+                                                        if row.value_type
+                                                        == "DEVIGGED_PROBABILITY"
+                                                        else f"{row.market_value:.2f}"
+                                                    ),
+                                                    "Type": row.value_type,
+                                                    "Books": row.book_count,
+                                                    "Fantasy pts": round(
+                                                        row.fantasy_points,
+                                                        2,
+                                                    ),
+                                                }
+                                                for row in baseline.components
+                                            ]
+                                        ),
+                                        hide_index=True,
+                                        width="stretch",
+                                    )
+
+                                    if baseline.fallback_scoring_keys:
+                                        st.warning(
+                                            "Sleeper did not return usable "
+                                            "values for these scoring keys, so "
+                                            "standard fallback values were "
+                                            "used: "
+                                            + ", ".join(
+                                                baseline.fallback_scoring_keys
+                                            )
+                                        )
+
+                                    st.caption(
+                                        "Consensus uses non-alternate base "
+                                        "thresholds only. Yardage/reception/TD "
+                                        "lines are market medians/probabilities, "
+                                        "not statistical means. The same shared "
+                                        "3-hour prop snapshot powers Deep Prop "
+                                        "Radar and Fantasy HQ to avoid duplicate "
+                                        "ParlayAPI scans."
+                                    )
 
     with standings_tab:
         if pre_draft_mode:
