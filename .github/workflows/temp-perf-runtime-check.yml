@@ -1,0 +1,44 @@
+name: Fantasy HQ Perf Branch Runtime Check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-perf-runtime-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Direct imports
+        run: |
+          python - <<'PY'
+          import streamlit as st
+          print("streamlit", st.__version__)
+          from src.fantasy.free_agents import FANTASY_POSITIONS, build_live_free_agent_pool, filter_live_free_agents
+          print("imports ok")
+          PY
+      - name: Streamlit AppTest startup
+        run: |
+          python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+          at = AppTest.from_file("dashboard/pages/11_Fantasy_HQ.py")
+          at.run(timeout=45)
+          print("exceptions:", len(at.exception))
+          for exc in at.exception:
+              print(exc.value)
+          if at.exception:
+              raise SystemExit(1)
+          PY
