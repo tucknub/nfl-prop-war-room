@@ -47,6 +47,7 @@ from src.fantasy.roster_health import (  # noqa: E402
     analyze_roster_health,
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
+from src.fantasy.team_explorer import build_league_team_profile  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
 from src.fantasy.waiver_fit import build_roster_need_waiver_board  # noqa: E402
 from src.fantasy.yahoo import (  # noqa: E402
@@ -62,6 +63,8 @@ from src.fantasy.yahoo import (  # noqa: E402
 
 YAHOO_SESSION_KEY = "fantasy_hq_yahoo_tokens"
 YAHOO_CALLBACK_KEY = "fantasy_hq_yahoo_processed_code"
+SLEEPER_USERNAME_SESSION_KEY = "fantasy_hq_sleeper_username"
+SLEEPER_USERNAME_QUERY_KEY = "fh_sleeper"
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -303,16 +306,44 @@ def _points(roster) -> float:
     return whole + decimal
 
 
+def _remembered_sleeper_username() -> str:
+    session_value = str(
+        st.session_state.get(SLEEPER_USERNAME_SESSION_KEY) or ""
+    ).strip()
+    query_value = str(
+        st.query_params.get(SLEEPER_USERNAME_QUERY_KEY) or ""
+    ).strip()
+    secret_value = _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
+    return session_value or query_value or secret_value
+
+
+def _store_sleeper_username(username: str) -> None:
+    normalized = str(username or "").strip()
+    if not normalized:
+        return
+    st.session_state[SLEEPER_USERNAME_SESSION_KEY] = normalized
+    if str(st.query_params.get(SLEEPER_USERNAME_QUERY_KEY) or "").strip() != normalized:
+        st.query_params[SLEEPER_USERNAME_QUERY_KEY] = normalized
+
+
 def _render_sleeper() -> None:
-    default_username = _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
+    remembered_username = _remembered_sleeper_username()
     username = st.text_input(
         "Sleeper username",
-        value=default_username,
+        value=remembered_username,
         placeholder="Your Sleeper username",
-        help="Read-only. Your Sleeper password is never needed.",
+        help=(
+            "Read-only. Your Sleeper password is never needed. "
+            "Fantasy HQ remembers this username for the current app session "
+            "and in this page URL so a refresh does not make you type it again."
+        ),
+        key="fantasy_hq_sleeper_username_input",
     )
+    normalized_username = username.strip()
+    if normalized_username:
+        _store_sleeper_username(normalized_username)
 
-    if not username.strip():
+    if not normalized_username:
         st.info(
             "Enter your Sleeper username above once to load your current NFL leagues."
         )
@@ -340,7 +371,7 @@ def _render_sleeper() -> None:
 
     try:
         with st.spinner("Finding your Sleeper leagues..."):
-            sleeper_user = _resolve_sleeper_user(username.strip())
+            sleeper_user = _resolve_sleeper_user(normalized_username)
             nfl_state = _load_nfl_state()
             season = str(nfl_state.league_season or nfl_state.season)
             leagues = _load_sleeper_leagues(
@@ -360,6 +391,16 @@ def _render_sleeper() -> None:
         f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
         f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
     )
+
+    if st.button(
+        "Forget remembered Sleeper username",
+        key="fantasy_hq_forget_sleeper_username",
+    ):
+        st.session_state.pop(SLEEPER_USERNAME_SESSION_KEY, None)
+        st.session_state.pop("fantasy_hq_sleeper_username_input", None)
+        if SLEEPER_USERNAME_QUERY_KEY in st.query_params:
+            del st.query_params[SLEEPER_USERNAME_QUERY_KEY]
+        st.rerun()
 
     all_league_ids = tuple(
         str(row["league_id"])
@@ -575,6 +616,7 @@ def _render_sleeper() -> None:
         activity_tab,
         matchup_tab,
         opponent_tab,
+        team_explorer_tab,
         standings_tab,
         rules_tab,
         cross_tab,
@@ -587,6 +629,7 @@ def _render_sleeper() -> None:
             "League Activity",
             "Current matchup",
             "Opponent Scout",
+            "Team Explorer",
             "Standings",
             "League settings",
             "Cross-league",
@@ -1540,6 +1583,159 @@ def _render_sleeper() -> None:
                     st.caption(
                         "Opponent Scout reflects Sleeper roster, matchup, and "
                         "player-status facts only. It does not project the matchup."
+                    )
+
+    with team_explorer_tab:
+        st.markdown("#### League Team Explorer")
+        st.caption(
+            "Scout any manager in this Sleeper league, not only your current "
+            "weekly opponent. Shopping areas are roster-fit signals, not mind-reading."
+        )
+
+        if pre_draft_mode:
+            st.info(
+                "Pre-draft mode: Team Explorer will activate after Sleeper "
+                "populates the league's drafted rosters."
+            )
+        else:
+            manager_by_user = {
+                manager.platform_user_id: manager
+                for manager in league.managers
+            }
+            team_options = {}
+            for roster in league.rosters:
+                manager = manager_by_user.get(roster.platform_user_id or "")
+                label = (
+                    manager.team_name
+                    if manager and manager.team_name
+                    else manager.display_name
+                    if manager
+                    else f"Roster {roster.platform_roster_id}"
+                )
+                if roster.platform_roster_id == league.my_platform_roster_id:
+                    label = f"{label} · MY TEAM"
+                team_options[label] = roster.platform_roster_id
+
+            if not team_options:
+                st.info("No drafted team rosters are available yet.")
+            else:
+                selected_team_label = st.selectbox(
+                    "Search / select league team",
+                    tuple(sorted(team_options)),
+                    key="fantasy_hq_team_explorer_team",
+                )
+                selected_roster_id = team_options[selected_team_label]
+
+                try:
+                    team_catalog = all_catalog or _load_player_catalog()
+                    team_trends = _load_sleeper_trending_adds(48, 100)
+                    team_profile = build_league_team_profile(
+                        league,
+                        selected_roster_id,
+                        team_catalog,
+                        trends=team_trends,
+                    )
+                except Exception as exc:
+                    st.warning("Team Explorer could not build this roster profile.")
+                    st.caption(str(exc))
+                    team_profile = None
+
+                if team_profile is not None:
+                    team_a, team_b, team_c, team_d = st.columns(4)
+                    team_a.metric("Team", team_profile.team_name)
+                    team_b.metric("Record", team_profile.record)
+                    team_c.metric("Season PF", f"{team_profile.points_for:.2f}")
+                    team_d.metric("Rostered", team_profile.roster_size)
+
+                    depth_a, depth_b, depth_c = st.columns(3)
+                    depth_a.metric(
+                        "Starters filled",
+                        f"{team_profile.filled_starter_slots}/"
+                        f"{team_profile.starter_slots}",
+                    )
+                    depth_b.metric(
+                        "Serious statuses",
+                        team_profile.serious_status_count,
+                    )
+                    depth_c.metric(
+                        "Questionable",
+                        team_profile.questionable_status_count,
+                    )
+
+                    st.markdown("##### Likely shopping areas")
+                    if not team_profile.needs:
+                        st.success(
+                            "No obvious structural shopping area is showing "
+                            "from starter requirements, depth, or serious statuses."
+                        )
+                    else:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Pressure": row.level,
+                                        "Position": row.position,
+                                        "Why": row.reason,
+                                    }
+                                    for row in team_profile.needs
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                    st.markdown("##### Position depth")
+                    if team_profile.position_counts:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {"Position": position, "Rostered": count}
+                                    for position, count
+                                    in team_profile.position_counts.items()
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                    st.markdown("##### Available players that fit")
+                    st.caption(
+                        "These are players available in this league whose "
+                        "positions match that team's structural needs. Sleeper "
+                        "48-hour add activity is used only as a tie-break signal."
+                    )
+                    if not team_profile.targets:
+                        st.info(
+                            "No live available-player target list is available "
+                            "for this team's current structural needs."
+                        )
+                    else:
+                        st.dataframe(
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "Player": row.player_name,
+                                        "Pos": row.position,
+                                        "NFL": row.nfl_team,
+                                        "Status": row.status,
+                                        "Need pressure": row.need_level,
+                                        "Sleeper adds · 48h": (
+                                            row.trend_count
+                                            if row.trend_count
+                                            else "—"
+                                        ),
+                                    }
+                                    for row in team_profile.targets
+                                ]
+                            ),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                    st.caption(
+                        "Team Explorer does not claim another manager will make "
+                        "a specific move. It identifies the roster areas and "
+                        "available-player fits most worth monitoring."
                     )
 
     with standings_tab:
