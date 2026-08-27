@@ -279,6 +279,8 @@ def test_shadow_deploy_workflow_is_manual_only_and_fail_closed():
     text = WORKFLOW_PATH.read_text(encoding="utf-8")
 
     assert "workflow_dispatch:" in text
+    assert "\\${{" not in text
+    assert '"${args[@]}"' in text
     assert "\n  push:" not in text
     assert "\n  pull_request:" not in text
     assert "\n  schedule:" not in text
@@ -298,7 +300,7 @@ def test_shadow_deploy_workflow_is_manual_only_and_fail_closed():
     assert "d1 migrations apply FANTASY_DB" in text
     assert "--remote --config" in text
     assert "verify_fantasy_hq_remote_d1.py" in text
-    assert "deploy \\" in text
+    assert "npx --yes wrangler@$WRANGLER_VERSION deploy" in text
     assert "--dry-run --secrets-file" in text
     assert "WRANGLER_OUTPUT_FILE_PATH=" in text
     assert "parse_fantasy_hq_wrangler_output.py" in text
