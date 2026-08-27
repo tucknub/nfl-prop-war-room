@@ -21,6 +21,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
+from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
@@ -1354,6 +1355,116 @@ def _render_sleeper() -> None:
             scan_b.metric(
                 "My players free elsewhere",
                 len(actionable),
+            )
+
+            exposure = build_my_player_exposure(all_states)
+            st.markdown("##### My Player Exposure")
+            exposure_a, exposure_b, exposure_c, exposure_d = st.columns(4)
+            exposure_a.metric(
+                "Distinct players",
+                exposure.distinct_player_count,
+            )
+            exposure_b.metric(
+                "Multi-league players",
+                exposure.multi_league_player_count,
+            )
+            exposure_c.metric(
+                "Max leagues / player",
+                exposure.max_league_count,
+            )
+            exposure_d.metric(
+                "My roster slots",
+                exposure.total_roster_slots,
+            )
+
+            exposure_positions = tuple(
+                sorted(
+                    {
+                        str(
+                            (catalog.get(row.sleeper_player_id) or {}).get(
+                                "position"
+                            )
+                            or "—"
+                        ).upper()
+                        for row in exposure.players
+                    }
+                    - {"—"}
+                )
+            )
+            exposure_filter_a, exposure_filter_b = st.columns([1, 2])
+            with exposure_filter_a:
+                exposure_multi_only = st.checkbox(
+                    "Only players owned in 2+ leagues",
+                    value=False,
+                    key="fantasy_hq_exposure_multi_only",
+                )
+            with exposure_filter_b:
+                exposure_selected_positions = st.multiselect(
+                    "Exposure positions",
+                    exposure_positions,
+                    default=exposure_positions,
+                    key="fantasy_hq_exposure_positions",
+                )
+
+            exposure_rows = []
+            for exposure_row in exposure.players:
+                if exposure_multi_only and not exposure_row.multi_league:
+                    continue
+                player = catalog.get(exposure_row.sleeper_player_id) or {}
+                position = str(player.get("position") or "—").upper()
+                if (
+                    exposure_selected_positions
+                    and position not in exposure_selected_positions
+                ):
+                    continue
+                name = str(player.get("full_name") or "").strip()
+                if not name:
+                    first = str(player.get("first_name") or "").strip()
+                    last = str(player.get("last_name") or "").strip()
+                    name = (
+                        f"{first} {last}".strip()
+                        or exposure_row.sleeper_player_id
+                    )
+                exposure_rows.append(
+                    {
+                        "Player": name,
+                        "Pos": position,
+                        "NFL": str(player.get("team") or "FA"),
+                        "Leagues owned": exposure_row.league_count,
+                        "Where": " · ".join(
+                            f"{item.league_name} ({item.roster_slot})"
+                            for item in exposure_row.leagues
+                        ),
+                        "Starts": exposure_row.starter_count,
+                        "Bench": exposure_row.bench_count,
+                        "IR": exposure_row.reserve_count,
+                        "Taxi": exposure_row.taxi_count,
+                    }
+                )
+
+            exposure_rows.sort(
+                key=lambda row: (
+                    -int(row["Leagues owned"]),
+                    -int(row["Starts"]),
+                    str(row["Player"]).casefold(),
+                )
+            )
+            if exposure_rows:
+                st.dataframe(
+                    pd.DataFrame(exposure_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+            elif exposure.players:
+                st.info("No owned player matches the exposure filters.")
+            else:
+                st.info(
+                    "No drafted Sleeper roster exposure is available yet."
+                )
+
+            st.caption(
+                "Exposure is ownership only, not a recommendation to diversify "
+                "or concentrate. Pre-draft leagues add exposure after rosters populate."
             )
 
             st.markdown("##### My players available in another league")
