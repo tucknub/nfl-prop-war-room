@@ -1,0 +1,39 @@
+name: 2026 Role preseason rehearsal
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-2026-role-rehearsal.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run current 2026 feed without publishing
+        run: |
+          python scripts/run_current_role_research.py             --season 2026             --source-cache-dir /tmp/propwar-role-cache             --output-dir /tmp/propwar-role-output             --report-dir /tmp/propwar-role-reports             --refresh             --no-publish
+      - name: Assert preseason waits safely
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("/tmp/propwar-role-reports/role_research_attempt_2026.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          print(json.dumps(payload, indent=2))
+          assert payload["status"] == "WAITING_FOR_COMPLETED_WEEK", payload
+          assert payload["published_through_week"] is None, payload
+          assert payload["completed_games"] == 0, payload
+          PY
