@@ -23,6 +23,10 @@ from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
+from src.fantasy.lineup_check import (  # noqa: E402
+    NEEDS_ACTION as LINEUP_NEEDS_ACTION,
+    build_lineup_check,
+)
 from src.fantasy.free_agents import (  # noqa: E402
     FANTASY_POSITIONS,
     find_live_free_agents,
@@ -539,6 +543,7 @@ def _render_sleeper() -> None:
     (
         roster_tab,
         health_tab,
+        lineup_tab,
         waiver_tab,
         activity_tab,
         matchup_tab,
@@ -550,6 +555,7 @@ def _render_sleeper() -> None:
         [
             "My roster",
             "Roster Health",
+            "Lineup Check",
             "Waiver Watch",
             "League Activity",
             "Current matchup",
@@ -677,6 +683,132 @@ def _render_sleeper() -> None:
             "Roster Health uses league starter requirements and Sleeper's "
             "current roster/player status. It is not a player-ranking model."
         )
+
+    with lineup_tab:
+        st.markdown("#### Lineup Check")
+        st.caption(
+            "Checks your actual Sleeper starter slots for open spots, "
+            "player-status risk, and healthy bench players eligible for each slot."
+        )
+
+        current_week = int(nfl_state.week or nfl_state.display_week or 0)
+        lineup_matchup = None
+        lineup_matchup_error: str | None = None
+        if current_week >= 1 and my_roster is not None:
+            try:
+                current_matchups = _load_matchups(league_id, current_week)
+                lineup_matchup = next(
+                    (
+                        row
+                        for row in current_matchups
+                        if row.platform_roster_id
+                        == my_roster.platform_roster_id
+                    ),
+                    None,
+                )
+            except Exception as exc:
+                lineup_matchup_error = str(exc)
+
+        try:
+            lineup_catalog = all_catalog or _load_player_catalog()
+            lineup = build_lineup_check(
+                league,
+                lineup_catalog,
+                matchup=lineup_matchup,
+            )
+        except Exception as exc:
+            st.warning("Lineup Check could not be built.")
+            st.caption(str(exc))
+            lineup = None
+
+        if lineup is None:
+            st.info(
+                "Your Sleeper roster is not available yet. "
+                "Lineup Check will populate after the roster exists."
+            )
+        else:
+            lineup_a, lineup_b, lineup_c, lineup_d = st.columns(4)
+            lineup_a.metric(
+                "Starters filled",
+                f"{lineup.filled_starter_slots}/{lineup.starter_slots}",
+            )
+            lineup_b.metric("Needs action", lineup.needs_action_count)
+            lineup_c.metric("Watch", lineup.watch_count)
+            lineup_d.metric("Healthy bench", lineup.healthy_bench_count)
+
+            if lineup.needs_action:
+                st.error(
+                    "At least one starter slot is open, ineligible, "
+                    "or occupied by a player with a serious status."
+                )
+            elif lineup.needs_watch:
+                st.warning(
+                    "No forced lineup issue is showing, but at least one "
+                    "Questionable starter is worth monitoring."
+                )
+            elif lineup.starter_slots:
+                st.success(
+                    "No factual starter-slot or player-status issue is showing."
+                )
+            else:
+                st.info("This league has no active starter slots configured.")
+
+            lineup_rows = []
+            state_labels = {
+                LINEUP_NEEDS_ACTION: "ACTION",
+                WATCH: "WATCH",
+                READY: "READY",
+            }
+            for row in lineup.slots:
+                starter = row.starter
+                alternatives = tuple(row.eligible_alternatives)
+                alternative_labels = [
+                    f"{player.name} · {player.position} · {player.status}"
+                    for player in alternatives[:8]
+                ]
+                if len(alternatives) > 8:
+                    alternative_labels.append(
+                        f"+{len(alternatives) - 8} more"
+                    )
+                lineup_rows.append(
+                    {
+                        "Slot": row.slot,
+                        "Starter": starter.name if starter else "OPEN",
+                        "Pos": starter.position if starter else "—",
+                        "NFL": starter.nfl_team if starter else "—",
+                        "Status": starter.status if starter else "Open",
+                        "Check": state_labels.get(row.state, row.state),
+                        "Why": row.reason,
+                        "Eligible bench options": (
+                            " | ".join(alternative_labels) or "—"
+                        ),
+                    }
+                )
+
+            if lineup_rows:
+                st.dataframe(
+                    pd.DataFrame(lineup_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+
+            source = (
+                f"Week {current_week} matchup lineup"
+                if lineup.used_matchup_lineup and current_week >= 1
+                else "Current Sleeper roster starters"
+            )
+            st.caption(f"Lineup source: {source}.")
+            if lineup_matchup_error:
+                st.caption(
+                    "Current-week matchup data was unavailable, so Lineup "
+                    "Check fell back to the roster starter list."
+                )
+
+            st.caption(
+                "Eligible bench options are eligibility/status only, not "
+                "ranked start/sit recommendations. FLEX, WRRB Flex, Rec Flex, "
+                "Super Flex, and IDP Flex use Sleeper slot eligibility."
+            )
 
     with waiver_tab:
         st.markdown("#### Waiver Watch")
