@@ -169,6 +169,7 @@ def main() -> None:
                 st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="My Knockout Fantasy", icon=":material/bolt:", url_path="knockout"),
                 st.Page("pages/09_Glitch_Radar.py", title="My Glitch Radar", icon=":material/radar:", url_path="glitch-radar"),
                 st.Page("pages/10_Deep_Prop_Radar.py", title="My Deep Prop Radar", icon=":material/query_stats:", url_path="deep-prop-radar"),
+                st.Page("pages/11_Fantasy_HQ.py", title="Fantasy HQ", icon=":material/sports_esports:", url_path="fantasy-hq"),
             ],
             **pages,
         }
