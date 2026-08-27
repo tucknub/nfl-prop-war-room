@@ -146,3 +146,21 @@ def test_duplicate_provider_ownership_fails_closed():
 def test_blank_player_id_is_rejected():
     with pytest.raises(ValueError, match="required"):
         lookup_live_sleeper_player((), "")
+
+
+def test_fantasy_hq_exposes_cross_league_ownership_ui():
+    from pathlib import Path
+
+    page = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "11_Fantasy_HQ.py"
+    ).read_text(encoding="utf-8")
+
+    assert '"Cross-league"' in page
+    assert "My players available in another league" in page
+    assert "Look up any player" in page
+    assert "lookup_live_sleeper_player" in page
+    assert "my_players_available_elsewhere" in page
+    assert "Sleeper leagues scanned" in page
