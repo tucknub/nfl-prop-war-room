@@ -26,6 +26,7 @@ from src.fantasy.action_feed import build_weekly_action_feed  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
+from src.fantasy.league_selector import build_sleeper_league_options  # noqa: E402
 from src.fantasy.lineup_check import (  # noqa: E402
     NEEDS_ACTION as LINEUP_NEEDS_ACTION,
     build_lineup_check,
@@ -813,11 +814,9 @@ def _render_sleeper() -> None:
                 "Open Cross-league below for the exact players and leagues."
             )
 
-    league_options = {
-        f"{row.get('name') or 'Unnamed league'} · "
-        f"{row.get('total_rosters') or '?'} teams": str(row["league_id"])
-        for row in leagues
-    }
+    league_options = dict(
+        build_sleeper_league_options(leagues)
+    )
     selected_label = st.selectbox(
         "Sleeper league",
         tuple(league_options),
