@@ -181,3 +181,41 @@ def test_player_prop_context_summarizes_game_markets_books_and_prices():
     assert context.market_count == 2
     assert context.book_count == 3
     assert len(context.best_prices) == 2
+
+
+def test_player_prop_rows_accepts_full_team_name_for_exact_current_team():
+    rows = (
+        _row(
+            player="Josh Allen",
+            team="Buffalo Bills",
+            opponent="Baltimore Ravens",
+            book="DraftKings",
+        ),
+    )
+
+    matched = player_prop_rows(
+        rows,
+        player_name="Josh Allen",
+        nfl_team="BUF",
+    )
+
+    assert len(matched) == 1
+
+
+def test_player_prop_rows_uses_maintained_team_aliases():
+    rows = (
+        _row(
+            player="A Jaguars Player",
+            team="Jacksonville Jaguars",
+            opponent="Indianapolis Colts",
+            book="DraftKings",
+        ),
+    )
+
+    matched = player_prop_rows(
+        rows,
+        player_name="A Jaguars Player",
+        nfl_team="JAC",
+    )
+
+    assert len(matched) == 1
