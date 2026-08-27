@@ -77,6 +77,12 @@ _DRAFT_POSITION_LIMIT_KEYS = {
 
 
 @dataclass(frozen=True)
+class SleeperTrendingPlayer:
+    player_id: str
+    count: int
+
+
+@dataclass(frozen=True)
 class SleeperLeagueBundle:
     league: Mapping[str, Any]
     users: Sequence[Mapping[str, Any]]
@@ -165,6 +171,61 @@ class SleeperClient:
             for player_id, player in payload.items()
             if isinstance(player, Mapping)
         }
+
+    def fetch_trending_players(
+        self,
+        trend_type: str = "add",
+        *,
+        lookback_hours: int = 24,
+        limit: int = 50,
+    ) -> tuple[SleeperTrendingPlayer, ...]:
+        trend = str(trend_type or "").strip().casefold()
+        if trend not in {"add", "drop"}:
+            raise ValueError("trend_type must be add or drop")
+        if isinstance(lookback_hours, bool) or not isinstance(lookback_hours, int):
+            raise ValueError("lookback_hours must be a positive integer")
+        if lookback_hours < 1 or lookback_hours > 168:
+            raise ValueError("lookback_hours must be between 1 and 168")
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("limit must be a positive integer")
+        if limit < 1 or limit > 200:
+            raise ValueError("limit must be between 1 and 200")
+
+        response = self._client.get(
+            f"players/nfl/trending/{trend}",
+            params={
+                "lookback_hours": lookback_hours,
+                "limit": limit,
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, list):
+            raise ValueError("Sleeper returned malformed trending players")
+
+        rows: list[SleeperTrendingPlayer] = []
+        seen: set[str] = set()
+        for raw in payload:
+            if not isinstance(raw, Mapping):
+                continue
+            player_id = str(raw.get("player_id") or "").strip()
+            if not player_id or player_id in seen:
+                continue
+            try:
+                count = int(raw.get("count") or 0)
+            except (TypeError, ValueError):
+                continue
+            if count < 0:
+                continue
+            seen.add(player_id)
+            rows.append(
+                SleeperTrendingPlayer(
+                    player_id=player_id,
+                    count=count,
+                )
+            )
+        return tuple(rows)
+
 
     def fetch_league_bundle(self, league_id: str) -> SleeperLeagueBundle:
         league_id = _required_id(league_id, "league_id")

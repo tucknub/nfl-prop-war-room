@@ -259,3 +259,74 @@ def test_user_discovery_rejects_malformed_user_and_league_shapes():
             pass
         else:
             raise AssertionError("malformed Sleeper user must fail closed")
+
+
+def test_client_fetches_trending_players_with_expected_query_params():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(
+            (
+                request.url.path,
+                request.url.params.get("lookback_hours"),
+                request.url.params.get("limit"),
+            )
+        )
+        return httpx.Response(
+            200,
+            json=[
+                {"player_id": "p1", "count": 42},
+                {"player_id": "p2", "count": 17},
+                {"player_id": "p1", "count": 99},
+                {"player_id": "", "count": 5},
+            ],
+        )
+
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(handler),
+    )
+    client = SleeperClient(client=http)
+
+    rows = client.fetch_trending_players(
+        "add",
+        lookback_hours=48,
+        limit=100,
+    )
+
+    assert [(row.player_id, row.count) for row in rows] == [
+        ("p1", 42),
+        ("p2", 17),
+    ]
+    assert seen == [
+        ("/v1/players/nfl/trending/add", "48", "100"),
+    ]
+
+
+def test_client_rejects_invalid_trending_parameters():
+    http = httpx.Client(
+        base_url="https://api.sleeper.app/v1/",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(500)
+        ),
+    )
+    client = SleeperClient(client=http)
+
+    for args in (
+        ("move", 24, 50),
+        ("add", 0, 50),
+        ("add", 24, 0),
+        ("add", 169, 50),
+        ("add", 24, 201),
+    ):
+        trend_type, lookback_hours, limit = args
+        try:
+            client.fetch_trending_players(
+                trend_type,
+                lookback_hours=lookback_hours,
+                limit=limit,
+            )
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid trending parameters must fail before HTTP")
