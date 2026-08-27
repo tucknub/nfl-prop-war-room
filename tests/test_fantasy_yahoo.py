@@ -252,6 +252,7 @@ def test_yahoo_fantasy_client_discovers_teams_roster_and_league():
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append((request.url.path, request.url.params.get("format")))
+        assert request.headers["authorization"] == "Bearer access-token"
         payload = payloads.get(request.url.path)
         return httpx.Response(200 if payload is not None else 404, json=payload or {})
 
@@ -303,3 +304,32 @@ def test_yahoo_fantasy_client_rejects_non_fantasy_payload():
 
     with pytest.raises(YahooFantasyError, match="malformed"):
         client.fetch_user_nfl_teams()
+
+
+def test_yahoo_redirect_uri_requires_https():
+    with pytest.raises(YahooFantasyError, match="HTTPS"):
+        YahooOAuthConfig(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            redirect_uri="http://propwar.streamlit.app/fantasy-hq",
+        )
+
+
+def test_fantasy_hq_page_contains_current_yahoo_access_and_attribution():
+    from pathlib import Path
+
+    page = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "11_Fantasy_HQ.py"
+    ).read_text(encoding="utf-8")
+
+    assert "Apply for Yahoo Fantasy API" in page
+    assert "https://sports.yahoo.com/developer/access/" in page
+    assert "YAHOO_CLIENT_ID" in page
+    assert "YAHOO_CLIENT_SECRET" in page
+    assert "Connect Yahoo" in page
+    assert "Fantasy data provided by Yahoo Fantasy" in page
+    assert "Yahoo password" in page
+    assert "YAHOO_CLIENT_SECRET" not in page.split("st.caption(str(exc))", 1)[0].split("st.write", 1)[0]
