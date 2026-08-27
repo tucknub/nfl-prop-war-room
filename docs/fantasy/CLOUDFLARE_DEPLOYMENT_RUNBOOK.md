@@ -53,7 +53,7 @@ Before deployment, the workflow requires the migrated D1 target to contain the c
 
 A successful shadow-deployment workflow still reports `real_fantasy_write_performed=false`. It does **not** invoke #80's single-league canary, enable recurring scheduling, or authorize multi-league persistence. The first real league write remains a separate deliberate action after reviewing the shadow evidence.
 
-The workflow pins Wrangler `4.125.0` for reproducible first-deployment behavior. Upgrade that pin only in a reviewed change after checking current Cloudflare documentation and rerunning repository tests.
+The workflow pins Wrangler `4.126.0` for reproducible first-deployment behavior. Upgrade that pin only in a reviewed change after checking current Cloudflare documentation and rerunning repository tests.
 
 The local Wrangler procedure below remains the operator fallback when GitHub-hosted deployment credentials are intentionally not used.
 
