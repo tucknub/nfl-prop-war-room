@@ -32,6 +32,7 @@ from src.fantasy.free_agents import (  # noqa: E402
     find_live_free_agents,
 )
 from src.fantasy.opponent_scout import build_opponent_scout  # noqa: E402
+from src.fantasy.player_market import build_player_market_map  # noqa: E402
 from src.fantasy.live_ownership import (  # noqa: E402
     AVAILABLE,
     MINE,
@@ -256,6 +257,43 @@ def _handle_yahoo_callback(config: YahooOAuthConfig | None) -> None:
     except Exception as exc:
         st.error("Yahoo authorization could not be completed.")
         st.caption(str(exc))
+
+
+def _player_search_matches(
+    catalog: Mapping[str, Mapping[str, Any]],
+    query: str,
+    *,
+    limit: int = 30,
+) -> tuple[tuple[str, str], ...]:
+    normalized = str(query or "").strip().casefold()
+    if len(normalized) < 2:
+        return ()
+
+    rows: list[tuple[int, str, str, str]] = []
+    for raw_player_id, raw_player in catalog.items():
+        player_id = str(raw_player_id or "").strip()
+        if not player_id or not isinstance(raw_player, Mapping):
+            continue
+        if raw_player.get("active") is False:
+            continue
+
+        full_name = str(raw_player.get("full_name") or "").strip()
+        if not full_name:
+            first = str(raw_player.get("first_name") or "").strip()
+            last = str(raw_player.get("last_name") or "").strip()
+            full_name = f"{first} {last}".strip()
+        if not full_name or normalized not in full_name.casefold():
+            continue
+
+        position = str(raw_player.get("position") or "—").strip().upper() or "—"
+        nfl_team = str(raw_player.get("team") or "FA").strip().upper() or "FA"
+        name_key = full_name.casefold()
+        prefix_rank = 0 if name_key.startswith(normalized) else 1
+        label = f"{full_name} · {position} · {nfl_team}"
+        rows.append((prefix_rank, name_key, label, player_id))
+
+    rows.sort(key=lambda row: (row[0], row[1], row[3]))
+    return tuple((row[2], row[3]) for row in rows[:limit])
 
 
 def _sleeper_player_row(
@@ -1737,6 +1775,129 @@ def _render_sleeper() -> None:
                         "a specific move. It identifies the roster areas and "
                         "available-player fits most worth monitoring."
                     )
+
+                st.divider()
+                st.markdown("#### Player Market Map")
+                st.caption(
+                    "Search any fantasy player and see who owns him, whether he "
+                    "is available, and which league teams show the strongest "
+                    "structural roster-fit interest in his position."
+                )
+
+                market_query = st.text_input(
+                    "Player market search",
+                    placeholder="Type at least 2 letters of a player name",
+                    key="fantasy_hq_player_market_search",
+                ).strip()
+
+                market_catalog = all_catalog or _load_player_catalog()
+                market_matches = _player_search_matches(
+                    market_catalog,
+                    market_query,
+                )
+
+                if market_query and len(market_query) < 2:
+                    st.info("Type at least 2 letters to search the player market.")
+                elif market_query and not market_matches:
+                    st.info("No active Sleeper fantasy player matched that search.")
+                elif market_matches:
+                    market_options = {
+                        label: player_id
+                        for label, player_id in market_matches
+                    }
+                    market_label = st.selectbox(
+                        "Player",
+                        tuple(market_options),
+                        key="fantasy_hq_player_market_player",
+                    )
+                    market_player_id = market_options[market_label]
+
+                    try:
+                        market = build_player_market_map(
+                            league,
+                            market_player_id,
+                            market_catalog,
+                        )
+                    except Exception as exc:
+                        st.warning("Player Market Map could not be built.")
+                        st.caption(str(exc))
+                        market = None
+
+                    if market is not None:
+                        market_a, market_b, market_c, market_d = st.columns(4)
+                        market_a.metric("Player", market.player_name)
+                        market_b.metric(
+                            "League status",
+                            (
+                                "AVAILABLE"
+                                if market.available
+                                else "ROSTERED"
+                            ),
+                        )
+                        market_c.metric("High-fit teams", market.high_fit_count)
+                        market_d.metric(
+                            "Medium-fit teams",
+                            market.medium_fit_count,
+                        )
+
+                        if market.available:
+                            st.success(
+                                f"{market.player_name} is currently available "
+                                "in this Sleeper league."
+                            )
+                        else:
+                            st.info(
+                                "Current owner: "
+                                + str(market.owner_team or "Unknown")
+                            )
+
+                        st.markdown("##### Roster-fit interest")
+                        interest_labels = {
+                            "HIGH": "HIGH · strongest structural fit",
+                            "MEDIUM": "MEDIUM · plausible structural fit",
+                            "LOW": "LOW · no obvious structural need",
+                        }
+                        recommendation_labels = {
+                            "HIGH": "Likely interest · monitor closely",
+                            "MEDIUM": "Possible interest",
+                            "LOW": "Lower structural interest",
+                        }
+                        market_rows = []
+                        for row in market.team_fits:
+                            market_rows.append(
+                                {
+                                    "Team": row.team_name,
+                                    "Likely interest": (
+                                        "Current owner"
+                                        if row.owns_player
+                                        else recommendation_labels.get(
+                                            row.fit_level,
+                                            row.fit_level,
+                                        )
+                                    ),
+                                    "Fit": (
+                                        "OWNER"
+                                        if row.owns_player
+                                        else interest_labels.get(
+                                            row.fit_level,
+                                            row.fit_level,
+                                        )
+                                    ),
+                                    "Why": row.reason,
+                                }
+                            )
+                        st.dataframe(
+                            pd.DataFrame(market_rows),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
+                        st.caption(
+                            "This is a roster-fit recommendation, not a claim "
+                            "that another manager will definitely add or trade "
+                            "for the player. HIGH means that team's current "
+                            "structure shows the clearest positional pressure."
+                        )
 
     with standings_tab:
         if pre_draft_mode:
