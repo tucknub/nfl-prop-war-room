@@ -151,3 +151,23 @@ def test_peer_prices_match_exact_market_identity_and_user_books():
         ("Hard Rock Bet", 120),
     ]
     assert peer_price_gap_range(144, peers) == (18, 24)
+
+
+def test_glitch_radar_page_surfaces_temporal_state_and_keeps_pass_off_top_board():
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "pages"
+        / "09_Glitch_Radar.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'history_state_key = "glitch_radar_market_history_v1"' in source
+    assert 'st.markdown("### Since last scan")' in source
+    assert '**WHY NOW:**' in source
+    assert 'First detected:' in source
+    assert 'Last confirmed:' in source
+    assert 'ACTION: {action.action}' in source
+    assert 'if glitch_action(alert).action == PASS:' in source
+    assert 'if ev_action(row).action == PASS:' in source
