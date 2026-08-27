@@ -23,6 +23,7 @@ from research_ui import page_intro, section  # noqa: E402
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
+from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
 from src.fantasy.lineup_check import (  # noqa: E402
     NEEDS_ACTION as LINEUP_NEEDS_ACTION,
     build_lineup_check,
@@ -1636,6 +1637,107 @@ def _render_sleeper() -> None:
                 "populates the league's drafted rosters."
             )
         else:
+            team_catalog = all_catalog or _load_player_catalog()
+            try:
+                league_needs = build_league_needs_board(
+                    league,
+                    team_catalog,
+                )
+            except Exception as exc:
+                st.warning("League Needs Board could not be built.")
+                st.caption(str(exc))
+                league_needs = None
+
+            st.markdown("##### League Needs Board")
+            st.caption(
+                "One view of every team's structural pressure and depth above "
+                "starter demand. This is roster construction, not player-value grading."
+            )
+
+            if league_needs is not None:
+                needs_a, needs_b, needs_c = st.columns(3)
+                needs_a.metric("Teams", league_needs.team_count)
+                needs_b.metric(
+                    "Teams with HIGH need",
+                    league_needs.high_need_team_count,
+                )
+                needs_c.metric(
+                    "Two-way trade fits",
+                    league_needs.two_way_trade_fit_count,
+                )
+
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {
+                                "Team": (
+                                    row.team_name + " · MY TEAM"
+                                    if row.is_mine
+                                    else row.team_name
+                                ),
+                                "HIGH needs": (
+                                    " · ".join(row.high_needs) or "—"
+                                ),
+                                "MEDIUM needs": (
+                                    " · ".join(row.medium_needs) or "—"
+                                ),
+                                "Depth above starter demand": (
+                                    " · ".join(row.depth_positions) or "—"
+                                ),
+                                "Serious": row.serious_status_count,
+                                "Questionable": row.questionable_status_count,
+                            }
+                            for row in league_needs.rows
+                        ]
+                    ),
+                    hide_index=True,
+                    width="stretch",
+                )
+
+                st.markdown("##### Potential trade-fit teams")
+                if not league_needs.trade_fits:
+                    st.info(
+                        "No clear complementary roster-structure trade fit is "
+                        "showing right now."
+                    )
+                else:
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {
+                                    "Team": row.team_name,
+                                    "Fit": (
+                                        "Two-way fit"
+                                        if row.two_way
+                                        else "One-way fit"
+                                    ),
+                                    "They can help me at": (
+                                        " · ".join(row.they_can_help_me_at)
+                                        or "—"
+                                    ),
+                                    "I can help them at": (
+                                        " · ".join(row.i_can_help_them_at)
+                                        or "—"
+                                    ),
+                                    "Their needs": (
+                                        " · ".join(row.their_needs) or "—"
+                                    ),
+                                }
+                                for row in league_needs.trade_fits
+                            ]
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    st.caption(
+                        "Two-way fit means their conservative depth overlaps "
+                        "one of your detected needs and your conservative depth "
+                        "overlaps one of theirs. It does not account for player "
+                        "quality, keeper value, draft picks, or willingness to trade."
+                    )
+
+            st.divider()
+
             manager_by_user = {
                 manager.platform_user_id: manager
                 for manager in league.managers
@@ -1665,7 +1767,6 @@ def _render_sleeper() -> None:
                 selected_roster_id = team_options[selected_team_label]
 
                 try:
-                    team_catalog = all_catalog or _load_player_catalog()
                     team_trends = _load_sleeper_trending_adds(48, 100)
                     team_profile = build_league_team_profile(
                         league,
