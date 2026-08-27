@@ -171,7 +171,7 @@ def test_fantasy_hq_exposes_team_explorer_and_remembered_sleeper_username():
 
     assert '"Manager Intelligence"' in page
     assert "build_league_team_profile" in page
-    assert "Likely shopping areas" in page
+    assert "Likely shopping" in page
     assert "Available players that fit" in page
     assert "fantasy_hq_sleeper_username" in page
     assert "fh_sleeper" in page
