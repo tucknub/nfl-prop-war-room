@@ -7,38 +7,73 @@ from urllib.parse import urlencode
 import pandas as pd
 import streamlit as st
 
-from access_control import access_mode
-from glitch_radar_action import BET, PASS, WATCH, ev_action, glitch_action
-from glitch_radar_books import filter_actionable_alerts, filter_actionable_ev
-from glitch_radar_grouping import market_label
-from glitch_radar_live import build_snapshot
-from glitch_radar_present import (
-    expected_ev_pct,
-    fair_american_from_probability,
-    format_american,
-    game_name,
-    local_start_label,
-)
-from glitch_radar_props_cache import shared_prop_snapshot
-from propwar_today import (
-    FANTASY,
-    HIGH,
-    LOW,
-    MARGIN,
-    MARKET,
-    MEDIUM,
-    ROLE,
-    TodayAction,
-    rank_today_actions,
-)
-from research_data import (
-    ROLE_LABELS,
-    available_seasons,
-    available_weeks,
-    primary_rows,
-    team_window_summary,
-)
-from role_change import DROP, SURGE, build_team_role_change_table
+try:
+    from access_control import access_mode
+    from glitch_radar_action import BET, PASS, WATCH, ev_action, glitch_action
+    from glitch_radar_books import filter_actionable_alerts, filter_actionable_ev
+    from glitch_radar_grouping import market_label
+    from glitch_radar_live import build_snapshot
+    from glitch_radar_present import (
+        expected_ev_pct,
+        fair_american_from_probability,
+        format_american,
+        game_name,
+        local_start_label,
+    )
+    from glitch_radar_props_cache import shared_prop_snapshot
+    from propwar_today import (
+        FANTASY,
+        HIGH,
+        LOW,
+        MARGIN,
+        MARKET,
+        MEDIUM,
+        ROLE,
+        TodayAction,
+        rank_today_actions,
+    )
+    from research_data import (
+        ROLE_LABELS,
+        available_seasons,
+        available_weeks,
+        primary_rows,
+        team_window_summary,
+    )
+    from role_change import DROP, SURGE, build_team_role_change_table
+except ImportError:
+    from dashboard.access_control import access_mode
+    from dashboard.glitch_radar_action import BET, PASS, WATCH, ev_action, glitch_action
+    from dashboard.glitch_radar_books import filter_actionable_alerts, filter_actionable_ev
+    from dashboard.glitch_radar_grouping import market_label
+    from dashboard.glitch_radar_live import build_snapshot
+    from dashboard.glitch_radar_present import (
+        expected_ev_pct,
+        fair_american_from_probability,
+        format_american,
+        game_name,
+        local_start_label,
+    )
+    from dashboard.glitch_radar_props_cache import shared_prop_snapshot
+    from dashboard.propwar_today import (
+        FANTASY,
+        HIGH,
+        LOW,
+        MARGIN,
+        MARKET,
+        MEDIUM,
+        ROLE,
+        TodayAction,
+        rank_today_actions,
+    )
+    from dashboard.research_data import (
+        ROLE_LABELS,
+        available_seasons,
+        available_weeks,
+        primary_rows,
+        team_window_summary,
+    )
+    from dashboard.role_change import DROP, SURGE, build_team_role_change_table
+
 from src.fantasy.action_feed import build_weekly_action_feed
 from src.fantasy.sleeper import SleeperClient
 from src.margin import live_engine_v2 as margin_live
