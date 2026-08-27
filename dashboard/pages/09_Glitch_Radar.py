@@ -32,20 +32,30 @@ from glitch_radar_action import (  # noqa: E402
 )
 from glitch_radar_history import (  # noqa: E402
     BASELINE,
+    AGING,
     DISAPPEARED,
+    FRESH,
     IMPROVED,
     NEW,
     REAPPEARED,
+    STALE,
     UNCHANGED,
     WORSENED,
     MarketHistoryStore,
     build_market_observations,
     ev_opportunity_key,
     glitch_opportunity_key,
+    freshness_status,
     history_for_key,
     history_summary,
+    recent_history_changes,
     update_market_history,
 )
+from glitch_radar_history_private import (  # noqa: E402
+    PrivateMarketHistoryStore,
+    history_config_from_secrets,
+)
+from src.margin import state_store  # noqa: E402
 from glitch_radar_present import (  # noqa: E402
     event_phase_label,
     expected_ev_pct,
@@ -87,6 +97,20 @@ def _live_snapshot() -> dict:
 @st.cache_resource
 def _market_history_store() -> MarketHistoryStore:
     return MarketHistoryStore()
+
+
+@st.cache_resource
+def _durable_market_history_store() -> PrivateMarketHistoryStore | None:
+    try:
+        secrets = _mapping(st.secrets)
+    except Exception:
+        return None
+    config = history_config_from_secrets(secrets)
+    if config is None:
+        return None
+    if not state_store.owner_write_authorized(config):
+        return None
+    return PrivateMarketHistoryStore(config)
 
 
 def _pct(value: object, digits: int = 2) -> str:
@@ -189,15 +213,66 @@ def _history_price_line(record: dict | None) -> str:
     return status
 
 
+def _history_triplet_line(record: dict | None) -> str:
+    if not record:
+        return ""
+    opening = record.get("opening_price")
+    previous = record.get("previous_price")
+    current = record.get("current_price")
+    return (
+        f"Opening {format_american(opening)} · "
+        f"Previous {format_american(previous)} · "
+        f"Current {format_american(current)}"
+    )
+
+
 def _history_time_line(record: dict | None) -> str:
     if not record:
         return ""
     first_seen = record.get("first_seen")
     last_seen = record.get("last_seen")
+    freshness = freshness_status(last_seen)
     return (
         f"First detected: {local_start_label(first_seen)} · "
-        f"Last confirmed: {local_start_label(last_seen)}"
+        f"Last confirmed: {local_start_label(last_seen)} · "
+        f"Freshness: {freshness}"
     )
+
+
+def _movement_rows(
+    rows: list[dict],
+) -> list[dict[str, object]]:
+    display: list[dict[str, object]] = []
+    for row in rows:
+        event = str(row.get("event") or "").strip() or (
+            f"{row.get('away_team', '')} @ {row.get('home_team', '')}".strip(" @")
+        )
+        detail = " ".join(
+            part
+            for part in (
+                str(row.get("market") or "").strip(),
+                str(row.get("side") or "").strip(),
+                str(row.get("threshold"))
+                if row.get("threshold") is not None
+                else "",
+            )
+            if part
+        )
+        display.append(
+            {
+                "Status": str(row.get("status") or ""),
+                "Type": str(row.get("kind") or ""),
+                "Book": str(row.get("book") or ""),
+                "Event": event,
+                "Market": detail,
+                "Opening": format_american(row.get("opening_price")),
+                "Previous": format_american(row.get("previous_price")),
+                "Current": format_american(row.get("current_price")),
+                "First detected": local_start_label(row.get("first_seen")),
+                "Changed": local_start_label(row.get("changed_at")),
+            }
+        )
+    return display
 
 
 def _render_action(action) -> None:
@@ -247,6 +322,9 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
         movement_line = _history_price_line(history_record)
         if movement_line:
             st.markdown(f"**WHY NOW:** {movement_line}")
+        triplet_line = _history_triplet_line(history_record)
+        if triplet_line:
+            st.caption(triplet_line)
         time_line = _history_time_line(history_record)
         if time_line:
             st.caption(time_line)
@@ -290,8 +368,12 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
                         ("Sharp/fair anchor", anchor),
                         ("Action", action.action),
                         ("Movement", _history_price_line(history_record) or "No prior scan comparison"),
+                        ("Opening price", format_american(history_record.get("opening_price")) if history_record else "—"),
+                        ("Previous price", format_american(history_record.get("previous_price")) if history_record else "—"),
+                        ("Current tracked price", format_american(history_record.get("current_price")) if history_record else "—"),
                         ("First detected", local_start_label(history_record.get("first_seen")) if history_record else "—"),
                         ("Last confirmed", local_start_label(history_record.get("last_seen")) if history_record else "—"),
+                        ("Freshness", freshness_status(history_record.get("last_seen")) if history_record else "—"),
                     ]
                 )
 
@@ -345,6 +427,9 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
                 f"**Market gap:** {book} is currently **{gap_text} American-odds points better** "
                 "than my other visible books on this exact wager."
             )
+        triplet_line = _history_triplet_line(history_record)
+        if triplet_line:
+            st.caption(triplet_line)
         time_line = _history_time_line(history_record)
         if time_line:
             st.caption(time_line)
@@ -373,8 +458,12 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
                         ("Sign mismatch", "Yes" if sign_mismatch else "No"),
                         ("Action", action.action),
                         ("Movement", _history_price_line(history_record) or "No prior scan comparison"),
+                        ("Opening price", format_american(history_record.get("opening_price")) if history_record else "—"),
+                        ("Previous price", format_american(history_record.get("previous_price")) if history_record else "—"),
+                        ("Current tracked price", format_american(history_record.get("current_price")) if history_record else "—"),
                         ("First detected", local_start_label(history_record.get("first_seen")) if history_record else "—"),
                         ("Last confirmed", local_start_label(history_record.get("last_seen")) if history_record else "—"),
+                        ("Freshness", freshness_status(history_record.get("last_seen")) if history_record else "—"),
                         ("My peer-book prices", peer_text or "No exact matching peer quote at another configured book"),
                     ]
                 )
@@ -499,10 +588,27 @@ comparison_books = comparison_books_seen(books)
 missing_books = [book for book in USER_BOOKS if book not in my_books_seen]
 
 observations = build_market_observations(alerts, evs)
-market_history = _market_history_store().update(
-    observations,
-    fetched_at=str(snapshot.get("fetched_at") or ""),
-)
+history_backend = "In-memory fallback"
+history_warning = ""
+try:
+    durable_store = _durable_market_history_store()
+    if durable_store is not None:
+        market_history = durable_store.update(
+            observations,
+            fetched_at=str(snapshot.get("fetched_at") or ""),
+        )
+        history_backend = "Private durable history"
+    else:
+        market_history = _market_history_store().update(
+            observations,
+            fetched_at=str(snapshot.get("fetched_at") or ""),
+        )
+except Exception as exc:
+    history_warning = str(exc)
+    market_history = _market_history_store().update(
+        observations,
+        fetched_at=str(snapshot.get("fetched_at") or ""),
+    )
 
 for alert in alerts:
     alert["_history"] = history_for_key(
@@ -555,9 +661,38 @@ scan_b.metric("Improved", movement_summary["improved"])
 scan_c.metric("Worsened", movement_summary["worsened"])
 scan_d.metric("Disappeared", movement_summary["disappeared"])
 st.caption(
-    "Movement memory compares unique 10-minute/fresh scans across this running owner app, including browser refreshes/new tabs. "
-    "A Streamlit app reboot/deploy resets this in-memory history; durable cross-reboot market history is a later persistence step."
+    f"History backend: {history_backend} · unique 10-minute/fresh scans only · "
+    f"{int(market_history.get('scan_count') or 0)} scans tracked."
 )
+if history_warning:
+    st.warning(
+        "Durable market history could not be updated, so this run is using in-memory fallback."
+    )
+    with st.expander("History persistence warning"):
+        st.caption(history_warning)
+
+recent_changes = list(recent_history_changes(market_history, limit=50))
+current_scan = str(snapshot.get("fetched_at") or "")
+scan_changes = [
+    row
+    for row in recent_changes
+    if str(row.get("changed_at") or "") == current_scan
+]
+if scan_changes:
+    st.markdown("#### What moved now")
+    st.dataframe(
+        _movement_rows(scan_changes),
+        hide_index=True,
+        width="stretch",
+    )
+
+if recent_changes:
+    with st.expander("Recent movement history", expanded=False):
+        st.dataframe(
+            _movement_rows(recent_changes[:25]),
+            hide_index=True,
+            width="stretch",
+        )
 
 disappeared_rows = market_history.get("disappeared", []) or []
 if disappeared_rows:
@@ -571,7 +706,8 @@ if disappeared_rows:
             side = str(row.get("side") or "").strip()
             st.write(
                 f"**{kind} · {book} {format_american(row.get('current_price'))}** — "
-                f"{event} · {side or row.get('market', 'market')}"
+                f"{event} · {side or row.get('market', 'market')} · "
+                f"first seen {local_start_label(row.get('first_seen'))}"
             )
 
 _render_top_board(alerts, arbs, middles, evs)
