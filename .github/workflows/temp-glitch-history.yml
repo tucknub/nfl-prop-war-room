@@ -1,0 +1,51 @@
+name: Glitch Radar history validation
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-glitch-history.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile history and radar modules
+        run: |
+          python -m py_compile dashboard/glitch_radar_history.py
+          python -m py_compile dashboard/glitch_radar_history_private.py
+          python -m py_compile dashboard/pages/09_Glitch_Radar.py
+      - name: Run history and Glitch Radar regressions
+        run: |
+          pytest -q             tests/test_glitch_radar_history.py             tests/test_glitch_radar_books.py             tests/test_glitch_radar_grouping.py             tests/test_glitch_radar_present.py             tests/test_glitch_radar_why_now.py             tests/test_glitch_radar_stale.py             tests/test_glitch_radar_props.py             tests/test_margin_state_store.py
+      - name: Streamlit Glitch Radar startup
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          sys.path.insert(0, str(root / "dashboard"))
+          sys.path.insert(0, str(root))
+
+          at = AppTest.from_file("dashboard/pages/09_Glitch_Radar.py")
+          at.run(timeout=45)
+          if at.exception:
+              for exc in at.exception:
+                  print(exc.value)
+              raise SystemExit(1)
+          print("Glitch Radar startup ok")
+          PY
