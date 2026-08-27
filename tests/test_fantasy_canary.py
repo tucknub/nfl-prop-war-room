@@ -460,6 +460,10 @@ def test_public_package_exports_canary_contract():
     assert fantasy.FantasySingleLeagueCanaryError is FantasySingleLeagueCanaryError
     assert fantasy.FantasySingleLeagueCanaryResult is FantasySingleLeagueCanaryResult
     assert (
+        fantasy.preview_single_league_persistence_canary_from_env
+        is preview_single_league_persistence_canary_from_env
+    )
+    assert (
         fantasy.run_single_league_persistence_canary
         is run_single_league_persistence_canary
     )
