@@ -3090,7 +3090,7 @@ def _render_sleeper() -> None:
                 behavior_enabled = st.toggle(
                     "Load recent manager behavior",
                     value=False,
-                    key="fantasy_hq_manager_behavior_enabled",
+                    key=f"fantasy_hq_manager_behavior_enabled_{league_id}",
                     help="Loads up to the current and prior fantasy week only when requested.",
                 )
                 if not behavior_enabled:
