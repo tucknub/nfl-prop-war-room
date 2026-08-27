@@ -59,6 +59,7 @@ class SleeperPersistenceRunResult:
     current_snapshot_id: str | None = None
     events: tuple[FantasyChangeEvent, ...] = ()
     transaction_rounds: tuple[int, ...] = ()
+    current_content_fingerprint: str | None = None
     error_code: str | None = None
 
     @property
@@ -185,6 +186,7 @@ def run_sleeper_persistence_sync(
             current_snapshot_id=current.snapshot.snapshot_id,
             events=(),
             transaction_rounds=current.transaction_rounds,
+            current_content_fingerprint=current_fingerprint,
         )
 
     try:
@@ -226,6 +228,7 @@ def run_sleeper_persistence_sync(
         current_snapshot_id=current.snapshot.snapshot_id,
         events=events,
         transaction_rounds=current.transaction_rounds,
+        current_content_fingerprint=current_fingerprint,
     )
 
 

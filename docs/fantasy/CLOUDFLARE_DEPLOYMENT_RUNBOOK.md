@@ -184,6 +184,48 @@ If plan validation or the handshake fails, Sleeper must not be fetched and the p
 
 This entrypoint is a runtime library boundary only. It does **not** create a daemon, host a scheduler, configure a Cloudflare Cron Trigger, discover league configuration from secrets, or deploy anything remotely.
 
+### First single-league persistence canary
+
+The first intentional real write must use exactly one verified Sleeper league and the guarded operator command:
+
+```powershell
+python scripts/run_fantasy_hq_single_league_canary.py
+```
+
+The runtime environment must already contain the Worker settings from the handshake section plus all of these explicit canary values:
+
+- `FANTASY_CANARY_CONFIRM=RUN_ONE_REAL_FANTASY_WRITE`
+- `FANTASY_CANARY_LEAGUE_SEASON_ID`
+- `FANTASY_CANARY_PLATFORM_LEAGUE_ID`
+- `FANTASY_CANARY_SEASON`
+- `FANTASY_CANARY_LEAGUE_FAMILY_ID`
+- `FANTASY_CANARY_FAMILY_DISPLAY_NAME`
+- `FANTASY_CANARY_SEASON_DISPLAY_NAME`
+- `FANTASY_CANARY_REGISTRATION_CREATED_AT_MS`
+- `FANTASY_CANARY_AT_MS`
+- `FANTASY_CANARY_CURRENT_USER_ID`
+
+`FANTASY_CANARY_AT_MS` is an explicit logical slot; the command never substitutes the current clock. Reusing a slot that is already final is rejected. A new trial requires a newly reviewed timestamp.
+
+The canary execution order is:
+
+1. validate all canary and persistence configuration before provider network I/O;
+2. run the #78 read-only Worker/D1 handshake;
+3. require READY;
+4. fetch exactly one Sleeper league through the #79 gated runtime;
+5. perform the existing registration/sync persistence lifecycle;
+6. read back the exact sync-run ID and require `COMPLETED`;
+7. read back the latest accepted snapshot;
+8. strictly rehydrate the persisted normalized state;
+9. require league identity, accepted snapshot ID, and content fingerprint to match the live provider run;
+10. stop.
+
+A successful command returns sanitized JSON with `ready=true`, `readback_verified=true`, the canary mode, batch/sync/snapshot IDs, and the verified content fingerprint.
+
+**Do not automatically retry a failed canary.** If failure output contains `"write_may_have_committed":true`, the persistence operation may already be durable. Inspect the sync run and latest snapshot through authenticated recovery reads before choosing a fresh canary slot. A code rollback cannot undo an accepted D1 snapshot.
+
+Do not enable a recurring scheduler or expand to additional leagues merely because the write returned HTTP success. The canary is successful only after the immediate read-back verification passes.
+
 ## 11. Later secret rotation
 
 `wrangler secret put FANTASY_PERSISTENCE_TOKEN` is appropriate only when an immediate secret-version deployment is intended and understood. It must not be treated as a passive settings update. Coordinate the Worker secret and the trusted Python runtime secret so one side is not left using a stale token.
@@ -205,6 +247,10 @@ Stop instead of deploying if any of these occur:
 - the runtime deployment handshake does not return `ready=true`
 - the reserved runtime handshake probe sync-run ID exists
 - the handshake command output contains an endpoint, token, Worker message, or D1 record
+- the canary confirmation value is missing or differs from `RUN_ONE_REAL_FANTASY_WRITE`
+- canary identity values do not exactly match the intended real Sleeper league
+- the canary returns `write_may_have_committed=true` and recovery reads have not been inspected
+- canary sync or snapshot read-back does not exactly match the accepted content fingerprint
 
 A code rollback does not reverse a D1 migration. Database migrations therefore remain explicit, versioned, and separately audited.
 

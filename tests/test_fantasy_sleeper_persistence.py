@@ -366,6 +366,9 @@ def test_initial_baseline_registers_starts_reads_provider_and_accepts_snapshot()
     assert result.events == ()
     assert result.transaction_rounds == (4,)
     assert result.accepted_snapshot_id == "snapshot-new"
+    assert result.current_content_fingerprint == persistence_content_fingerprint(
+        FantasySnapshot("snapshot-new", _state(), (tx,))
+    )
     assert _kinds(transport) == [
         LEAGUE_SEASON_UPSERT,
         SYNC_START,
@@ -393,6 +396,7 @@ def test_identical_full_state_uses_no_change_and_reuses_previous_snapshot():
     assert result.previous_snapshot_id == "snapshot-old"
     assert result.current_snapshot_id == "snapshot-new"
     assert result.accepted_snapshot_id == "snapshot-old"
+    assert result.current_content_fingerprint == previous["content_fingerprint"]
     assert result.events == ()
     assert _kinds(transport)[-1] == SYNC_NO_CHANGE
     assert SYNC_SUCCESS not in _kinds(transport)

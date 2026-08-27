@@ -1,5 +1,15 @@
 """Fantasy League HQ provider-normalization, identity, sync, ownership, history, persistence, and change-detection foundation."""
 
+from .canary import (
+    FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION,
+    FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME,
+    FANTASY_SINGLE_LEAGUE_CANARY_VERSION,
+    FantasySingleLeagueCanaryConfig,
+    FantasySingleLeagueCanaryError,
+    FantasySingleLeagueCanaryResult,
+    run_single_league_persistence_canary,
+    run_single_league_persistence_canary_from_env,
+)
 from .catalog import (
     CATALOG_FORCED_REFRESH,
     CATALOG_HIT,
@@ -226,6 +236,9 @@ __all__ = [
     "FANTASY_PERSISTENCE_PROTOCOL_VERSION",
     "FANTASY_RUNTIME_HANDSHAKE_PROBE_SYNC_RUN_ID",
     "FANTASY_RUNTIME_HANDSHAKE_VERSION",
+    "FANTASY_SINGLE_LEAGUE_CANARY_CONFIRMATION",
+    "FANTASY_SINGLE_LEAGUE_CANARY_SCHEDULE_NAME",
+    "FANTASY_SINGLE_LEAGUE_CANARY_VERSION",
     "FaabTransfer",
     "FantasyChangeEvent",
     "FantasyIdentityAudit",
@@ -246,6 +259,9 @@ __all__ = [
     "FantasyScheduledRuntimeClient",
     "FantasyScheduledRuntimeGateError",
     "FantasyScheduledRuntimeResult",
+    "FantasySingleLeagueCanaryConfig",
+    "FantasySingleLeagueCanaryError",
+    "FantasySingleLeagueCanaryResult",
     "FantasySnapshot",
     "FantasySyncSession",
     "JAVASCRIPT_MAX_SAFE_INTEGER",
@@ -369,6 +385,8 @@ __all__ = [
     "run_handshake_gated_scheduled_sleeper_sync",
     "run_multi_sleeper_persistence_sync",
     "run_scheduled_sleeper_persistence_sync",
+    "run_single_league_persistence_canary",
+    "run_single_league_persistence_canary_from_env",
     "run_sleeper_scheduled_sync_plan",
     "run_sleeper_persistence_sync",
     "resolve_sleeper_player",
