@@ -459,6 +459,11 @@ def _fantasy_actions(
 ) -> tuple[tuple[TodayAction, ...], tuple[str, ...]]:
     if not username or not live_season or not parlay_key:
         return (), ()
+    if current_week < 1:
+        # Fantasy HQ can still be used for draft/preseason roster work, but its
+        # market-backed action feed should not promote preseason NFL prop context
+        # as regular-season fantasy evidence on the global homepage.
+        return (), ()
 
     user = _today_sleeper_user(username)
     leagues = _today_leagues(
@@ -716,6 +721,12 @@ def render_propwar_today_if_owner() -> None:
         for index, row in enumerate(ranked, start=1):
             with (left if index % 2 else right):
                 _render_action_card(index, row)
+
+    if username and current_week < 1:
+        st.caption(
+            "Fantasy actions are intentionally kept inside Fantasy HQ during preseason; "
+            "PropWar Today begins promoting market-backed fantasy moves in the regular season."
+        )
 
     if (
         live_season.isdigit()
