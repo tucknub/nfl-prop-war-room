@@ -2975,6 +2975,7 @@ def _render_sleeper() -> None:
                 else:
                     st.caption("No clear structural shopping area is showing.")
 
+                st.markdown("##### Available players that fit")
                 if manager_report.available_targets:
                     st.dataframe(
                         pd.DataFrame(
