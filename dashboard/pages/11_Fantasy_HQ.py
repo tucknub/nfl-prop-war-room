@@ -606,10 +606,25 @@ def _render_player_market_map(league: FantasyLeagueState, all_states: tuple[Fant
         "structural roster-fit interest in his position."
     )
 
-    market_query = st.text_input(
-        "Player market search",
-        placeholder="Type at least 2 letters of a player name",
-        key="fantasy_hq_player_market_search",
+    with st.form(
+        "fantasy_hq_player_market_search_form",
+        clear_on_submit=False,
+    ):
+        market_query_input = st.text_input(
+            "Player market search",
+            placeholder="Type at least 2 letters of a player name",
+            key="fantasy_hq_player_market_search",
+        ).strip()
+        market_search_submitted = st.form_submit_button(
+            "Search player market",
+            type="primary",
+        )
+
+    submitted_query_key = "fantasy_hq_player_market_submitted_query"
+    if market_search_submitted:
+        st.session_state[submitted_query_key] = market_query_input
+    market_query = str(
+        st.session_state.get(submitted_query_key) or ""
     ).strip()
 
     market_catalog = all_catalog or _load_player_catalog()
