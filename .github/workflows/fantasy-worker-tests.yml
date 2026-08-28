@@ -1,0 +1,32 @@
+name: Fantasy Worker Tests
+
+on:
+  pull_request:
+    branches:
+      - streamlit-cloud-deploy
+    paths:
+      - "workers/fantasy-hq/**"
+      - "migrations/**"
+      - "scripts/*fantasy_hq*.py"
+      - ".github/workflows/fantasy-hq-shadow-deploy.yml"
+      - ".github/workflows/fantasy-hq-single-league-canary.yml"
+      - ".github/workflows/fantasy-worker-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fantasy-worker-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  worker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Fantasy HQ Worker tests
+        run: node --test workers/fantasy-hq/*.test.mjs
