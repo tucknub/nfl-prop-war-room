@@ -514,9 +514,10 @@ with st.form("margin_pool_preview_form", clear_on_submit=False):
 
     validate_preview = st.form_submit_button(
         "Validate & preview field",
-        disabled=not bool(field_text.strip()),
     )
-if validate_preview:
+if validate_preview and not field_text.strip():
+    st.warning("Add or paste the opponent field CSV before validating.")
+elif validate_preview:
     try:
         raw_rows = _field_rows_from_csv_text(field_text)
         opponents = pool_state.normalize_opponents(raw_rows, int(state.get("completed_week", 0) or 0))
