@@ -839,119 +839,128 @@ _render_top_board(alerts, arbs, middles, evs)
 st.divider()
 
 glitch_tab, arb_tab, middle_tab, ev_tab, more_tab = st.tabs(
-    ["Glitches", "Arbs", "Middles", "+EV Prices", "More"]
+    ["Glitches", "Arbs", "Middles", "+EV Prices", "More"],
+    key="markets_primary_tabs",
+    on_change="rerun",
 )
 boost_tab = more_tab
 source_tab = more_tab
 
-with glitch_tab:
-    st.markdown("### Potential sportsbook errors")
-    st.caption("Same-market prices that materially disagree with peers at one of my sportsbooks.")
-    if not alerts:
-        st.success("No major same-market pricing anomaly is visible at one of my books in the current preview.")
-    for alert in alerts:
-        _render_glitch_card(alert)
-
-with arb_tab:
-    st.markdown("### Guaranteed-price opportunities")
-    st.caption("Only shown when every required leg is at a sportsbook I use.")
-    if not arbs:
-        st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
-    for row in sorted(
-        arbs,
-        key=lambda value: _arb_edge_pct(value) or 0.0,
-        reverse=True,
-    ):
-        _render_arb_card(row)
-
-with middle_tab:
-    st.markdown("### Middle windows")
-    st.caption("Different lines at my books that can create a range where both bets win.")
-    if not middles:
-        st.info("No middle using only my sportsbooks is in the current preview.")
-    for row in middles:
-        _render_middle_card(row)
-
-with ev_tab:
-    st.markdown("### Positive expected-value prices")
-    st.caption(
-        "These are ordinary market prices that look better than the feed's sharp-derived fair line. "
-        "They are not automatically sportsbook glitches."
-    )
-    if not evs:
-        st.info("No +EV price at one of my sportsbooks is in the current preview.")
-    for row in evs:
-        _render_ev_card(row)
-
-with boost_tab:
-    st.markdown("### Account-specific Boost Lab")
-    st.caption("Use this for a boost shown inside one of my sportsbook accounts that the public feed cannot see.")
-    sportsbook = st.selectbox("Sportsbook", USER_BOOKS, key="glitch_boost_book")
-    c1, c2 = st.columns(2)
-    original_odds = c1.number_input("Original American odds", value=300, step=5)
-    fair_odds = c2.number_input("Consensus/fair American odds", value=300, step=5)
-    c3, c4 = st.columns(2)
-    boost_pct = c3.number_input("Profit boost %", value=100.0, step=5.0)
-    stake = c4.number_input("Stake", value=20.0, min_value=0.0, step=1.0)
-    if st.button("Evaluate boost", type="primary"):
-        result = evaluate_profit_boost(
-            int(original_odds), int(fair_odds), float(boost_pct) / 100, float(stake)
+if glitch_tab.open:
+    with glitch_tab:
+        st.markdown("### Potential sportsbook errors")
+        st.caption("Same-market prices that materially disagree with peers at one of my sportsbooks.")
+        if not alerts:
+            st.success("No major same-market pricing anomaly is visible at one of my books in the current preview.")
+        for alert in alerts:
+            _render_glitch_card(alert)
+    
+if arb_tab.open:
+    with arb_tab:
+        st.markdown("### Guaranteed-price opportunities")
+        st.caption("Only shown when every required leg is at a sportsbook I use.")
+        if not arbs:
+            st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
+        for row in sorted(
+            arbs,
+            key=lambda value: _arb_edge_pct(value) or 0.0,
+            reverse=True,
+        ):
+            _render_arb_card(row)
+    
+if middle_tab.open:
+    with middle_tab:
+        st.markdown("### Middle windows")
+        st.caption("Different lines at my books that can create a range where both bets win.")
+        if not middles:
+            st.info("No middle using only my sportsbooks is in the current preview.")
+        for row in middles:
+            _render_middle_card(row)
+    
+if ev_tab.open:
+    with ev_tab:
+        st.markdown("### Positive expected-value prices")
+        st.caption(
+            "These are ordinary market prices that look better than the feed's sharp-derived fair line. "
+            "They are not automatically sportsbook glitches."
         )
-        ev_pct = float(result["ev_pct"]) * 100
-        with st.container(border=True):
-            st.markdown(f"#### {value_tier(ev_pct)} · {sportsbook}")
-            b1, b2, b3 = st.columns(3)
-            b1.metric("Boosted odds", format_american(result["boosted_odds"]))
-            b2.metric("Estimated EV", f"{ev_pct:+.1f}%")
-            b3.metric("Expected value", f"${result['expected_value_dollars']:.2f}")
-            st.write(
-                f"Original price **{format_american(original_odds)}** · fair line **{format_american(fair_odds)}** · "
-                f"profit boost **{boost_pct:.0f}%** · stake **${stake:.2f}**"
+        if not evs:
+            st.info("No +EV price at one of my sportsbooks is in the current preview.")
+        for row in evs:
+            _render_ev_card(row)
+    
+if boost_tab.open:
+    with boost_tab:
+        st.markdown("### Account-specific Boost Lab")
+        st.caption("Use this for a boost shown inside one of my sportsbook accounts that the public feed cannot see.")
+        sportsbook = st.selectbox("Sportsbook", USER_BOOKS, key="glitch_boost_book")
+        c1, c2 = st.columns(2)
+        original_odds = c1.number_input("Original American odds", value=300, step=5)
+        fair_odds = c2.number_input("Consensus/fair American odds", value=300, step=5)
+        c3, c4 = st.columns(2)
+        boost_pct = c3.number_input("Profit boost %", value=100.0, step=5.0)
+        stake = c4.number_input("Stake", value=20.0, min_value=0.0, step=1.0)
+        if st.button("Evaluate boost", type="primary"):
+            result = evaluate_profit_boost(
+                int(original_odds), int(fair_odds), float(boost_pct) / 100, float(stake)
             )
-            if ev_pct > 0:
-                st.success("The boost creates a positive estimated price edge versus the fair line you entered.")
+            ev_pct = float(result["ev_pct"]) * 100
+            with st.container(border=True):
+                st.markdown(f"#### {value_tier(ev_pct)} · {sportsbook}")
+                b1, b2, b3 = st.columns(3)
+                b1.metric("Boosted odds", format_american(result["boosted_odds"]))
+                b2.metric("Estimated EV", f"{ev_pct:+.1f}%")
+                b3.metric("Expected value", f"${result['expected_value_dollars']:.2f}")
+                st.write(
+                    f"Original price **{format_american(original_odds)}** · fair line **{format_american(fair_odds)}** · "
+                    f"profit boost **{boost_pct:.0f}%** · stake **${stake:.2f}**"
+                )
+                if ev_pct > 0:
+                    st.success("The boost creates a positive estimated price edge versus the fair line you entered.")
+                else:
+                    st.warning("The boost does not overcome the fair-price gap you entered.")
+                st.caption(
+                    "The result is only as good as the fair line entered. Always benchmark a boost against the current market, "
+                    "not its advertised pre-boost price."
+                )
+    
+if source_tab.open:
+    with source_tab:
+        st.divider()
+        st.markdown("### Sportsbook and feed coverage")
+        c1, c2 = st.columns(2)
+        with c1:
+            with st.container(border=True):
+                st.markdown("#### My actionable books")
+                for book in USER_BOOKS:
+                    status = "VISIBLE NOW" if book in my_books_seen else "NOT IN CURRENT PREVIEW"
+                    st.write(f"**{book}** — {status}")
+        with c2:
+            with st.container(border=True):
+                st.markdown("#### Comparison-only books")
+                if comparison_books:
+                    for book in comparison_books:
+                        st.write(book)
+                else:
+                    st.write("None returned in this preview.")
+                st.caption("These books can help establish fair value but are never presented as a place for me to bet.")
+    
+        _evidence_table(
+            [
+                ("Quotes scanned", len(quotes)),
+                ("My books visible", f"{len(my_books_seen)}/{len(USER_BOOKS)}"),
+                ("Last scan", local_start_label(snapshot.get("fetched_at"))),
+                ("Demo requests left this hour", snapshot.get("demo_remaining_hour", "—")),
+                ("Actionable books", ", ".join(USER_BOOKS)),
+                ("Comparison books visible", ", ".join(comparison_books) if comparison_books else "None"),
+            ]
+        )
+    
+        with st.expander("Feed diagnostics"):
+            diagnostics = _flat_rows(snapshot.get("command_center", {}), limit=40)
+            if diagnostics:
+                st.table(diagnostics)
             else:
-                st.warning("The boost does not overcome the fair-price gap you entered.")
-            st.caption(
-                "The result is only as good as the fair line entered. Always benchmark a boost against the current market, "
-                "not its advertised pre-boost price."
-            )
-
-with source_tab:
-    st.divider()
-    st.markdown("### Sportsbook and feed coverage")
-    c1, c2 = st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("#### My actionable books")
-            for book in USER_BOOKS:
-                status = "VISIBLE NOW" if book in my_books_seen else "NOT IN CURRENT PREVIEW"
-                st.write(f"**{book}** — {status}")
-    with c2:
-        with st.container(border=True):
-            st.markdown("#### Comparison-only books")
-            if comparison_books:
-                for book in comparison_books:
-                    st.write(book)
-            else:
-                st.write("None returned in this preview.")
-            st.caption("These books can help establish fair value but are never presented as a place for me to bet.")
-
-    _evidence_table(
-        [
-            ("Quotes scanned", len(quotes)),
-            ("My books visible", f"{len(my_books_seen)}/{len(USER_BOOKS)}"),
-            ("Last scan", local_start_label(snapshot.get("fetched_at"))),
-            ("Demo requests left this hour", snapshot.get("demo_remaining_hour", "—")),
-            ("Actionable books", ", ".join(USER_BOOKS)),
-            ("Comparison books visible", ", ".join(comparison_books) if comparison_books else "None"),
-        ]
-    )
-
-    with st.expander("Feed diagnostics"):
-        diagnostics = _flat_rows(snapshot.get("command_center", {}), limit=40)
-        if diagnostics:
-            st.table(diagnostics)
-        else:
-            st.write("No command-center diagnostic fields were returned.")
-        st.caption("Diagnostics are kept here for troubleshooting; the betting tabs above are the decision interface.")
+                st.write("No command-center diagnostic fields were returned.")
+            st.caption("Diagnostics are kept here for troubleshooting; the betting tabs above are the decision interface.")
+    
