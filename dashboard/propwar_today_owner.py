@@ -648,6 +648,22 @@ def _fantasy_actions(
     return tuple(actions), errors
 
 
+def _margin_missing_field_inputs(state: dict) -> tuple[str, ...]:
+    pool = state.get("pool") or {}
+    missing: list[str] = []
+    if not pool.get("size"):
+        missing.append("pool size")
+    if not pool.get("pick_deadline"):
+        missing.append("pick deadline")
+    if pool.get("picks_visible_before_deadline") is None:
+        missing.append("pick visibility")
+    if not pool.get("first_place_tie_rule"):
+        missing.append("tie rule")
+    if not (state.get("opponents") or []):
+        missing.append("opponent field")
+    return tuple(missing)
+
+
 def _margin_action() -> TodayAction | None:
     try:
         secrets = _mapping(st.secrets)
@@ -672,6 +688,9 @@ def _margin_action() -> TodayAction | None:
     )
     recommendation = str(pick["team"])
     week = int(state["current_week"])
+    missing_field_inputs = _margin_missing_field_inputs(state)
+    field_ready = not missing_field_inputs
+    confidence = "HIGH" if field_ready else "MEDIUM"
 
     if committed and committed != recommendation:
         priority = HIGH
@@ -689,7 +708,7 @@ def _margin_action() -> TodayAction | None:
         )
         score = 285.0
     else:
-        priority = HIGH
+        priority = HIGH if field_ready else MEDIUM
         action = f"PICK {recommendation}"
         why_prefix = (
             f"No team is recorded yet for Week {week}; the engine currently "
@@ -709,8 +728,15 @@ def _margin_action() -> TodayAction | None:
             f"expected margin {float(pick['calibrated_margin']):+.2f} · "
             f"loss {float(pick['p_loss']) * 100:.1f}% · "
             f"20+ {float(pick['p_win20']) * 100:.1f}%."
+            + (
+                " Provisional pool context — still missing "
+                + ", ".join(missing_field_inputs)
+                + "."
+                if missing_field_inputs
+                else ""
+            )
         ),
-        confidence="HIGH",
+        confidence=confidence,
         freshness=(
             "Margin engine · "
             + local_start_label(audit.get("snapshot_utc"))
