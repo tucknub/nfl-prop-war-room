@@ -109,12 +109,23 @@ def render_launch_home() -> None:
             "Core workspaces",
             "Four places define PropWar now. Everything else is supporting evidence or a specialized owner tool.",
         )
+        owner_secrets = _secrets_snapshot()
+        sleeper_username = (
+            str(st.session_state.get("fantasy_hq_sleeper_username") or "").strip()
+            or str(st.query_params.get("fh_sleeper") or "").strip()
+            or str(owner_secrets.get("FANTASY_HQ_SLEEPER_USERNAME") or "").strip()
+        )
+        sleeper_suffix = (
+            f"?fh_sleeper={quote(sleeper_username)}"
+            if sleeper_username
+            else ""
+        )
         quick_columns = st.columns(3)
         quick_cards = (
             (
                 "Players",
                 "Search one player and connect role change, live market context, fantasy ownership, and exposure.",
-                "/players",
+                f"/players{sleeper_suffix}",
             ),
             (
                 "Markets",
@@ -124,7 +135,7 @@ def render_launch_home() -> None:
             (
                 "Fantasy",
                 "Get lineup, waiver, trade, manager, and cross-league decisions from Fantasy HQ.",
-                "/fantasy-hq",
+                f"/fantasy-hq{sleeper_suffix}",
             ),
         )
         for column, (title, description, href) in zip(quick_columns, quick_cards):

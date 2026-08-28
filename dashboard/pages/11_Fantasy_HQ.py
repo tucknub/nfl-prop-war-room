@@ -1468,9 +1468,28 @@ def _render_sleeper() -> None:
     league_options = dict(
         build_sleeper_league_options(selector_leagues)
     )
+    league_labels = tuple(league_options)
+    saved_label = str(
+        st.session_state.get("fantasy_hq_sleeper_league") or ""
+    ).strip()
+    demo_ids = {
+        str(row.get("league_id") or "").strip()
+        for row in demo_leagues
+        if str(row.get("league_id") or "").strip()
+    }
+    if league_labels and (
+        (saved_label and saved_label not in league_options)
+        or (
+            priority_leagues
+            and saved_label in league_options
+            and league_options[saved_label] in demo_ids
+        )
+    ):
+        st.session_state["fantasy_hq_sleeper_league"] = league_labels[0]
+
     selected_label = st.selectbox(
         "Sleeper league",
-        tuple(league_options),
+        league_labels,
         key="fantasy_hq_sleeper_league",
     )
     league_id = league_options[selected_label]

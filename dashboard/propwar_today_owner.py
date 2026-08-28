@@ -16,7 +16,6 @@ try:
     from glitch_radar_present import (
         expected_ev_pct,
         event_phase_label,
-        event_phase_label,
         fair_american_from_probability,
         format_american,
         game_name,
@@ -50,6 +49,7 @@ except ImportError:
     from dashboard.glitch_radar_live import build_snapshot
     from dashboard.glitch_radar_present import (
         expected_ev_pct,
+        event_phase_label,
         fair_american_from_probability,
         format_american,
         game_name,
@@ -569,7 +569,12 @@ def _fantasy_actions(
                     if current_week >= 1
                     else "Sleeper live · preseason"
                 ),
-                href="/fantasy-hq",
+                href=(
+                    "/fantasy-hq?"
+                    + urlencode({"fh_sleeper": username})
+                    if username
+                    else "/fantasy-hq"
+                ),
                 score=float(row.score),
                 source="Fantasy HQ",
             )

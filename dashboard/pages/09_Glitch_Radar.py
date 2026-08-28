@@ -11,7 +11,7 @@ if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
 from access_control import access_mode  # noqa: E402
-from glitch_radar_live import build_snapshot, evaluate_profit_boost  # noqa: E402
+from glitch_radar_live import american_to_decimal, build_snapshot, evaluate_profit_boost  # noqa: E402
 from glitch_radar_books import (  # noqa: E402
     USER_BOOKS,
     comparison_books_seen,
@@ -529,6 +529,113 @@ def _render_generic_opportunity(row: dict, label: str) -> None:
                 st.write("No additional structured evidence was returned by the feed.")
 
 
+FEATURED_ARB_MIN_EDGE_PCT = 2.0
+
+
+def _arb_edge_pct(row: dict) -> float | None:
+    for key in ("profit_pct", "arb_pct", "edge_pct"):
+        if row.get(key) is not None:
+            try:
+                return float(row.get(key))
+            except (TypeError, ValueError):
+                pass
+    try:
+        implied_sum = float(row.get("implied_sum"))
+    except (TypeError, ValueError):
+        return None
+    return (1.0 - implied_sum) * 100.0
+
+
+def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
+    home = row.get("best_home", {}) or {}
+    away = row.get("best_away", {}) or {}
+    edge = _arb_edge_pct(row)
+    phase = event_phase_label(row.get("commence_time"))
+
+    with st.container(border=True):
+        st.markdown(f"#### ARBITRAGE · {game_name(row)}")
+        meta = []
+        if phase:
+            meta.append(phase)
+        if row.get("commence_time"):
+            meta.append(local_start_label(row.get("commence_time")))
+        if edge is not None:
+            meta.append(f"feed edge {edge:.2f}%")
+        if meta:
+            st.caption(" · ".join(meta))
+
+        st.markdown("**BET BOTH SIDES**")
+        left, right = st.columns(2)
+        with left:
+            st.markdown(
+                f"**{row.get('home_team') or 'Home'} · {home.get('book') or '—'}**"
+            )
+            st.write(format_american(home.get("price")))
+        with right:
+            st.markdown(
+                f"**{row.get('away_team') or 'Away'} · {away.get('book') or '—'}**"
+            )
+            st.write(format_american(away.get("price")))
+
+        try:
+            home_decimal = american_to_decimal(int(float(home.get("price"))))
+            away_decimal = american_to_decimal(int(float(away.get("price"))))
+            implied_sum = (1.0 / home_decimal) + (1.0 / away_decimal)
+            home_units = 100.0 / (implied_sum * home_decimal)
+            away_units = 100.0 / (implied_sum * away_decimal)
+            locked_roi = ((1.0 / implied_sum) - 1.0) * 100.0
+        except (TypeError, ValueError, ZeroDivisionError):
+            implied_sum = None
+            home_units = None
+            away_units = None
+            locked_roi = None
+
+        if (
+            home_units is not None
+            and away_units is not None
+            and locked_roi is not None
+        ):
+            st.caption(
+                f"100-unit equal-payout example: {home_units:.1f}u home + "
+                f"{away_units:.1f}u away · locked ROI ≈ {locked_roi:.2f}% "
+                "if both displayed prices are still available."
+            )
+
+        if edge is not None and edge < FEATURED_ARB_MIN_EDGE_PCT:
+            st.warning(
+                "THIN ARB — positive on the displayed prices, but below PropWar's "
+                f"{FEATURED_ARB_MIN_EDGE_PCT:.0f}% featured-opportunity threshold. "
+                "Recheck both books before acting."
+            )
+        else:
+            st.success(
+                "ARB — both displayed prices imply a combined probability below 100%. "
+                "Recheck both books immediately because either leg can move."
+            )
+
+        if show_evidence:
+            with st.expander("Arbitrage evidence"):
+                _evidence_table(
+                    [
+                        ("Game", game_name(row)),
+                        ("Start", local_start_label(row.get("commence_time"))),
+                        ("Home side", row.get("home_team")),
+                        ("Home book", home.get("book")),
+                        ("Home price", format_american(home.get("price"))),
+                        ("Away side", row.get("away_team")),
+                        ("Away book", away.get("book")),
+                        ("Away price", format_american(away.get("price"))),
+                        ("Feed edge", f"{edge:.3f}%" if edge is not None else "—"),
+                        (
+                            "Equal-payout ROI",
+                            f"{locked_roi:.3f}%"
+                            if locked_roi is not None
+                            else "—",
+                        ),
+                    ]
+                )
+
+
 def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict], evs: list[dict]) -> None:
     st.markdown("### Best opportunities now")
     st.caption(
@@ -545,10 +652,17 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
         _render_glitch_card(alert, show_evidence=False)
         shown += 1
 
-    for row in arbs:
+    for row in sorted(
+        arbs,
+        key=lambda value: _arb_edge_pct(value) or 0.0,
+        reverse=True,
+    ):
         if shown >= 3:
             break
-        _render_generic_opportunity(row, "Arbitrage")
+        edge = _arb_edge_pct(row)
+        if edge is None or edge < FEATURED_ARB_MIN_EDGE_PCT:
+            continue
+        _render_arb_card(row, show_evidence=False)
         shown += 1
 
     for row in middles:
@@ -740,8 +854,12 @@ with arb_tab:
     st.caption("Only shown when every required leg is at a sportsbook I use.")
     if not arbs:
         st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
-    for row in arbs:
-        _render_generic_opportunity(row, "Arbitrage")
+    for row in sorted(
+        arbs,
+        key=lambda value: _arb_edge_pct(value) or 0.0,
+        reverse=True,
+    ):
+        _render_arb_card(row)
 
 with middle_tab:
     st.markdown("### Middle windows")

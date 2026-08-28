@@ -60,6 +60,8 @@ def enrich_ev_markets(rows: Iterable[dict[str, Any]], quotes: Iterable[dict[str,
             match = matches[0]
             row["market"] = match.get("market")
             row["threshold"] = match.get("threshold")
+            if match.get("commence_time"):
+                row["commence_time"] = match.get("commence_time")
         elif side_name in {home, away}:
             # Current no-auth EV preview is overwhelmingly h2h. Only use this fallback
             # when the EV side is an exact team name, never for generic Over/Under sides.
