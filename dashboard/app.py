@@ -59,9 +59,9 @@ def inject_usability_styles() -> None:
           visibility:visible !important;
           opacity:1 !important;
         }
-        .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }
+        .pw-home-hero { max-width:900px; margin:.05rem 0 .55rem; }
         .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }
-        .pw-home-hero h1 { font-size:clamp(2.3rem,4vw,4.2rem)!important; font-weight:820; line-height:.98!important; margin:0 0 .6rem!important; padding:0!important; }
+        .pw-home-hero h1 { font-size:clamp(2.15rem,3.3vw,3.45rem)!important; font-weight:800; line-height:1!important; margin:0 0 .5rem!important; padding:0!important; }
         .pw-home-hero p { max-width:760px; color:var(--pw-muted); font-size:1.02rem; line-height:1.5; margin:0; }
         .pw-status-line { display:flex; align-items:flex-start; gap:.7rem; padding:.62rem .75rem; border:1px solid #cbd9ef; border-radius:8px; background:#f7faff; margin:.75rem 0 .9rem; }
         .pw-status-line strong { color:var(--pw-ink); font-size:.78rem; white-space:nowrap; }
