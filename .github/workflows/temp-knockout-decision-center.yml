@@ -1,0 +1,49 @@
+name: Knockout decision center validation
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-knockout-decision-center.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile Knockout surfaces
+        run: |
+          python -m py_compile src/knockout/engine.py
+          python -m py_compile dashboard/pages/08_Knockout_Fantasy_War_Room.py
+      - name: Run Knockout regressions
+        run: |
+          pytest -q             tests/test_knockout_fantasy.py             tests/test_knockout_decision_center_ui.py
+      - name: Streamlit Knockout startup
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          target = root / "dashboard" / "pages" / "08_Knockout_Fantasy_War_Room.py"
+          os.chdir("/tmp")
+          at = AppTest.from_file(str(target))
+          at.run(timeout=60)
+          if at.exception:
+              for exc in at.exception:
+                  print(exc.value)
+              raise SystemExit(1)
+          print("startup ok: 08_Knockout_Fantasy_War_Room.py")
+          PY
