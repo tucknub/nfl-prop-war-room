@@ -1,4 +1,5 @@
 name: Audit all More pages
+# rerun after support-page import hardening
 
 on:
   push:
