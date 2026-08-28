@@ -76,6 +76,7 @@ except ImportError:
     )
     from dashboard.role_change import DROP, SURGE, build_team_role_change_table
 
+from owner_preferences import remembered_sleeper_username
 from src.fantasy.action_feed import build_weekly_action_feed
 from src.fantasy.sleeper import SleeperClient
 from src.margin import live_engine_v2 as margin_live
@@ -109,10 +110,7 @@ def _secret(name: str) -> str:
 
 
 def _remembered_sleeper_username() -> str:
-    return (
-        str(st.session_state.get("fantasy_hq_sleeper_username") or "").strip()
-        or _secret("FANTASY_HQ_SLEEPER_USERNAME")
-    )
+    return remembered_sleeper_username()
 
 
 @st.cache_data(ttl=600, show_spinner=False, refresh_mode="background")
