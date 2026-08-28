@@ -110,3 +110,35 @@ def test_core_internal_deep_links_target_registered_routes() -> None:
 
     assert {"reports", "glitch-radar", "fantasy-hq", "margin"} <= registered
     assert normalized <= registered
+
+
+
+def test_owner_navigation_hides_deep_research_but_keeps_context_links() -> None:
+    app = _source("dashboard/app.py")
+    markets = _source("dashboard/pages/09_Glitch_Radar.py")
+    reports = _source("dashboard/pages/04_Reports.py")
+
+    owner_more = app[app.index('"More": [') :]
+    assert (
+        'title="Advanced Research", icon=":material/search:", '
+        'url_path="explorer", visibility="hidden"'
+    ) in owner_more
+    assert (
+        'title="Market Research", icon=":material/query_stats:", '
+        'url_path="deep-prop-radar", visibility="hidden"'
+    ) in owner_more
+    assert 'title="Margin"' in owner_more
+    assert 'title="Knockout"' in owner_more
+
+    assert "/deep-prop-radar" in markets
+    assert "/explorer" in reports
+
+
+def test_shared_large_selects_use_fuzzy_search_without_helper_clutter() -> None:
+    source = _source("dashboard/research_ui.py")
+
+    assert 'select_kwargs = {"key": key, "filter_mode": "fuzzy"}' in source
+    assert "Open the list and start typing to filter options." not in source
+    assert 'font-family:Inter,"Segoe UI",Arial,sans-serif' in source
+    assert ".block-container { max-width:1480px; padding-top:3rem;" in source
+    assert ".block-container { padding:1.85rem .72rem 6rem; }" in source

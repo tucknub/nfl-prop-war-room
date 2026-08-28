@@ -390,4 +390,5 @@ else:
     _render_table(selected_report, rows, season, end_week)
 
 methodology_expander(list(REPORT_METHODS[selected_report]))
+st.markdown("[Open Advanced Research →](/explorer)")
 source_footer(operational_status_text())

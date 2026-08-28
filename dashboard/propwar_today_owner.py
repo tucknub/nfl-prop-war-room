@@ -83,6 +83,7 @@ except ImportError:
 
 from src.fantasy.action_feed import build_weekly_action_feed
 from src.fantasy.sleeper import SleeperClient
+from src.fantasy.weekly_context import fetch_league_weekly_contexts
 from src.margin import live_engine_v2 as margin_live
 from src.margin import state_store
 
@@ -172,22 +173,6 @@ def _today_trending_adds():
         )
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
-def _today_matchups(league_id: str, week: int):
-    if week < 1:
-        return ()
-    with SleeperClient() as client:
-        return client.fetch_matchups(league_id, week)
-
-
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
-def _today_transactions(league_id: str, week: int):
-    if week < 1:
-        return ()
-    with SleeperClient() as client:
-        return client.fetch_transactions(league_id, week)
-
-
 @st.cache_data(ttl=5 * 60, show_spinner=False, refresh_mode="background")
 def _today_fantasy_feed(
     user_id: str,
@@ -204,53 +189,39 @@ def _today_fantasy_feed(
     transaction_map = {}
     errors: list[str] = []
 
-    for league in states:
+    active_leagues = {
+        league.platform_league_id: league
+        for league in states
         if (
-            league.status == "pre_draft"
-            or not league.ownership_ready
-            or not league.my_platform_roster_id
-        ):
-            continue
-
-        if current_week >= 1:
-            try:
-                matchups = _today_matchups(
-                    league.platform_league_id,
-                    current_week,
-                )
-                matchup_map[league.platform_league_id] = next(
-                    (
-                        row
-                        for row in matchups
-                        if row.platform_roster_id
-                        == league.my_platform_roster_id
-                    ),
-                    None,
-                )
-            except Exception as exc:
-                errors.append(
-                    f"{league.name or league.platform_league_id} matchup: {exc}"
-                )
-
-            transactions = []
-            for week in range(
-                max(1, current_week - 3),
-                current_week + 1,
-            ):
-                try:
-                    transactions.extend(
-                        _today_transactions(
-                            league.platform_league_id,
-                            week,
-                        )
-                    )
-                except Exception as exc:
-                    errors.append(
-                        f"{league.name or league.platform_league_id} "
-                        f"Week {week} transactions: {exc}"
-                    )
-            transaction_map[league.platform_league_id] = tuple(
-                transactions
+            league.status != "pre_draft"
+            and league.ownership_ready
+            and league.my_platform_roster_id
+        )
+    }
+    if current_week >= 1 and active_leagues:
+        contexts = fetch_league_weekly_contexts(
+            tuple(active_leagues),
+            current_week=current_week,
+            transaction_weeks=tuple(
+                range(max(1, current_week - 3), current_week + 1)
+            ),
+            max_workers=3,
+        )
+        for context in contexts:
+            league = active_leagues[context.league_id]
+            matchup_map[context.league_id] = next(
+                (
+                    row
+                    for row in context.matchups
+                    if row.platform_roster_id == league.my_platform_roster_id
+                ),
+                None,
+            )
+            transaction_map[context.league_id] = context.transactions
+            label = league.name or context.league_id
+            errors.extend(
+                f"{label} {error}"
+                for error in context.errors
             )
 
     feed = build_weekly_action_feed(
