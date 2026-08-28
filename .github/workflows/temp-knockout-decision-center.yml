@@ -1,5 +1,5 @@
 name: Knockout decision center validation
-# rerun after compact action labels
+# final rerun after precise low-risk wording
 
 on:
   push:
