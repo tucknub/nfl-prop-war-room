@@ -236,14 +236,17 @@ def test_players_page_exposes_owner_command_hook_without_polluting_public_role_s
         root / "dashboard" / "player_command_owner.py"
     ).read_text(encoding="utf-8")
 
-    assert 'page_intro("Player Role Profile"' in public_source
+    assert '"Player Role Profile"' in public_source
+    assert '"Player Command Center"' in public_source
+    assert "if owner_command_mode:" in public_source
+    assert "else:" in public_source
     assert "owner_player_command_available" in public_source
     assert "render_owner_player_command_center" in public_source
     assert "sportsbook" not in public_source.lower()
     assert "betting" not in public_source.lower()
     assert "odds" not in public_source.lower()
 
-    assert '"Player Command Center"' in owner_source
+    assert '"Live decision context"' in owner_source
     assert "resolve_propwar_player_to_sleeper" in owner_source
     assert "ROLE/LINE MISMATCH: NOT SCORED" in owner_source
     assert "build_player_intelligence_card" in owner_source
