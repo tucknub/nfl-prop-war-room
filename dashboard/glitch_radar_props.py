@@ -237,16 +237,25 @@ def detect_prop_price_outliers(
                 rel = abs(own_prob - consensus) / consensus if consensus else 0
                 own_profit = american_decimal(price) - 1
                 payout_ratio = own_profit / peer_profit_median if peer_profit_median > 0 else 1
-                sign_mismatch = (
+                raw_sign_mismatch = (
                     price > 0 and sum(other < 0 for _, other in priced if other != price) >= 2
                 ) or (
                     price < 0 and sum(other > 0 for _, other in priced if other != price) >= 2
                 )
+                absolute_prob_gap = abs(own_prob - consensus)
+                # American odds cross zero around even money. A small +/-
+                # crossing is ordinary market dispersion, not a pricing error.
+                sign_mismatch = raw_sign_mismatch and absolute_prob_gap >= 0.10
                 if rel >= relative_prob_threshold or payout_ratio >= payout_multiple_threshold or sign_mismatch:
                     alerts.append(
                         {
                             "type": "prop_price_outlier",
-                            "severity": "P0" if payout_ratio >= 2.5 or sign_mismatch else "P1",
+                            "severity": (
+                                "P0"
+                                if payout_ratio >= 2.5
+                                or (sign_mismatch and absolute_prob_gap >= 0.20)
+                                else "P1"
+                            ),
                             "book": row.get("book"),
                             "event_id": row.get("event_id"),
                             "away_team": row.get("away_team"),
@@ -260,6 +269,7 @@ def detect_prop_price_outliers(
                             "price": price,
                             "peer_median_implied_prob": consensus,
                             "relative_prob_deviation": rel,
+                            "absolute_prob_gap_points": absolute_prob_gap * 100,
                             "profit_multiple_vs_peers": payout_ratio,
                             "sign_mismatch": sign_mismatch,
                             "actionable": is_user_book(row.get("book")),
