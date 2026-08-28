@@ -4252,6 +4252,7 @@ def _render_yahoo(
 page_intro(
     "Fantasy",
     "What should I do with my teams? Sleeper is the supported live provider.",
+    show_data_status=False,
 )
 
 st.caption(
