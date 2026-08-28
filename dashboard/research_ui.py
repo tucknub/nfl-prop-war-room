@@ -357,7 +357,8 @@ def searchable_selectbox(
     """Render one consistent, visible search affordance for large option lists."""
     select_kwargs = {
         "key": key,
-        "help": "Open the list and start typing to filter options.",
+        "filter_mode": "fuzzy",
+        "help": "Start typing to filter options.",
     }
     if format_func is not None:
         select_kwargs["format_func"] = format_func
