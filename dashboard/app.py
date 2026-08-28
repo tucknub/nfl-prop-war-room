@@ -223,7 +223,7 @@ def main() -> None:
         st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
         st.Page("pages/02_Players.py", title="Players", icon=":material/person_search:", url_path="players"),
         st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
-        st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer", visibility="hidden"),
+        st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
         st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
     ]
     pages: dict[str, list] = {"Role Intelligence": role_pages}
@@ -240,7 +240,7 @@ def main() -> None:
                 st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
                 st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
                 st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
-                st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
+                st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer", visibility="hidden"),
                 st.Page("pages/10_Deep_Prop_Radar.py", title="Market Research", icon=":material/query_stats:", url_path="deep-prop-radar", visibility="hidden"),
                 st.Page("pages/07_Margin_War_Room.py", title="Margin", icon=":material/trophy:", url_path="margin"),
                 st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="Knockout", icon=":material/bolt:", url_path="knockout"),
