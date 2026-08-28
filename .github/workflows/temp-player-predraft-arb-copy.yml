@@ -1,4 +1,5 @@
 name: Player predraft and arb copy validation
+# rerun after formatting-safe ROI assertion
 
 on:
   push:
