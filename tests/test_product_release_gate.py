@@ -52,6 +52,14 @@ def test_product_gate_runs_live_proving_and_product_contracts() -> None:
         "tests/test_live_proving_round*.py",
         "tests/test_glitch_radar_*.py",
         "tests/test_fantasy_*.py",
+        "tests/test_knockout_fantasy.py",
+        "tests/test_margin_championship.py",
+        "tests/test_margin_pool_state.py",
+        "tests/test_margin_state_store.py",
+        "tests/test_role_change_detector.py",
+        "tests/test_role_research.py",
+        "tests/test_role_validation.py",
+        "tests/test_weekly_role_report.py",
     )
     for pattern in required:
         assert pattern in workflow
