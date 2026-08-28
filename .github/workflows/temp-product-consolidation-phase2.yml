@@ -1,5 +1,5 @@
 name: PropWar consolidation phase 2
-# final rerun after consolidated Fantasy contract updates
+# final rerun after Players production-path hardening
 
 on:
   push:
