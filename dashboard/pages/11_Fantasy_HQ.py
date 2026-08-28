@@ -32,7 +32,10 @@ from src.fantasy.action_feed import build_weekly_action_feed  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
-from src.fantasy.league_selector import build_sleeper_league_options  # noqa: E402
+from src.fantasy.league_selector import (  # noqa: E402
+    build_sleeper_league_options,
+    choose_sleeper_league_label,
+)
 from src.fantasy.manager_intelligence import (  # noqa: E402
     build_manager_intelligence,
     build_manager_recent_behavior,
@@ -1469,25 +1472,21 @@ def _render_sleeper() -> None:
         if str(row.get("league_id") or "").strip()
     }
 
-    current_selector_label = str(
-        st.session_state.get(FANTASY_LEAGUE_SELECTOR_KEY) or ""
-    ).strip()
-    if current_selector_label not in league_options:
-        legacy_label = str(
+    initial_label = choose_sleeper_league_label(
+        league_options,
+        demo_league_ids=demo_ids,
+        current_label=str(
+            st.session_state.get(FANTASY_LEAGUE_SELECTOR_KEY) or ""
+        ),
+        legacy_label=str(
             st.session_state.get(LEGACY_FANTASY_LEAGUE_SELECTOR_KEY) or ""
-        ).strip()
-        if (
-            legacy_label in league_options
-            and (
-                not priority_leagues
-                or league_options[legacy_label] not in demo_ids
-            )
-        ):
-            initial_label = legacy_label
-        else:
-            initial_label = league_labels[0] if league_labels else ""
-        if initial_label:
-            st.session_state[FANTASY_LEAGUE_SELECTOR_KEY] = initial_label
+        ),
+        prefer_real=bool(priority_leagues),
+    )
+    if initial_label and str(
+        st.session_state.get(FANTASY_LEAGUE_SELECTOR_KEY) or ""
+    ).strip() not in league_options:
+        st.session_state[FANTASY_LEAGUE_SELECTOR_KEY] = initial_label
 
     selected_label = st.selectbox(
         "Sleeper league",
