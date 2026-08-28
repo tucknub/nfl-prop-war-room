@@ -211,7 +211,7 @@ def test_predraft_decision_summary_is_actionable_without_fake_probability() -> N
     decision = engine.knockout_decision_summary(state)
 
     assert decision["phase"] == "PRE_DRAFT"
-    assert decision["next_action"] == "DRAFT A STARTABLE 14-PLAYER ROSTER"
+    assert decision["next_action"] == "DRAFT ROSTER"
     assert decision["roster_risk"]["level"] == "NOT SCORED"
     assert decision["faab"]["posture"] == "HOLD"
     assert decision["faab"]["pct_remaining"] == pytest.approx(1.0)
@@ -230,7 +230,7 @@ def test_active_roster_depth_and_structural_risk_are_state_based() -> None:
     assert depth["counts"]["TE"] == 2
     assert depth["starter_gaps"] == []
     assert risk["level"] == "LOW"
-    assert decision["next_action"] == "HOLD / SHOP FOR CLEAR UPGRADES"
+    assert decision["next_action"] == "HOLD / SHOP"
 
 
 def test_missing_starter_coverage_escalates_roster_and_faab_posture() -> None:
