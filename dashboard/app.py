@@ -59,9 +59,9 @@ def inject_usability_styles() -> None:
           visibility:visible !important;
           opacity:1 !important;
         }
-        .pw-home-hero { max-width:920px; margin:.15rem 0 .65rem; }
+        .pw-home-hero { max-width:900px; margin:.05rem 0 .55rem; }
         .pw-home-hero>span { display:block; color:var(--pw-blue); font-size:.72rem; font-weight:800; letter-spacing:.075em; margin-bottom:.45rem; }
-        .pw-home-hero h1 { font-size:clamp(2.3rem,4vw,4.2rem)!important; font-weight:820; line-height:.98!important; margin:0 0 .6rem!important; padding:0!important; }
+        .pw-home-hero h1 { font-size:clamp(2.15rem,3.3vw,3.45rem)!important; font-weight:800; line-height:1!important; margin:0 0 .5rem!important; padding:0!important; }
         .pw-home-hero p { max-width:760px; color:var(--pw-muted); font-size:1.02rem; line-height:1.5; margin:0; }
         .pw-status-line { display:flex; align-items:flex-start; gap:.7rem; padding:.62rem .75rem; border:1px solid #cbd9ef; border-radius:8px; background:#f7faff; margin:.75rem 0 .9rem; }
         .pw-status-line strong { color:var(--pw-ink); font-size:.78rem; white-space:nowrap; }
@@ -106,45 +106,13 @@ def render_launch_home() -> None:
         )
         render_propwar_today_if_owner()
 
-        section(
-            "Core workspaces",
-            "Four places define PropWar now. Everything else is supporting evidence or a specialized owner tool.",
-        )
-        sleeper_username = remembered_sleeper_username()
-        sleeper_suffix = (
-            f"?fh_sleeper={quote(sleeper_username)}"
-            if sleeper_username
-            else ""
-        )
-        quick_columns = st.columns(3)
-        quick_cards = (
-            (
-                "Players",
-                "Search one player and connect role change, live market context, fantasy ownership, and exposure.",
-                f"/players{sleeper_suffix}",
-            ),
-            (
-                "Markets",
-                "See the strongest current pricing anomalies, movement, line shopping, and market structure.",
-                "/glitch-radar",
-            ),
-            (
-                "Fantasy",
-                "Get lineup, waiver, trade, manager, and cross-league decisions from Fantasy HQ.",
-                f"/fantasy-hq{sleeper_suffix}",
-            ),
-        )
-        for column, (title, description, href) in zip(quick_columns, quick_cards):
-            with column:
-                with st.container(border=True):
-                    st.markdown(f"### {title}")
-                    st.write(description)
-                    st.markdown(
-                        f'<a class="pw-primary-link" href="{href}">Open {title}</a>',
-                        unsafe_allow_html=True,
-                    )
+        # Hydrate the remembered Sleeper identity for navigation/session continuity
+        # without restoring the removed duplicate workspace cards.
+        remembered_sleeper_username()
+
         st.caption(
-            "Supporting team/game reports, advanced research, Margin, Knockout, and deeper market diagnostics live under More."
+            "Use the top navigation for Players, Markets, and Fantasy. "
+            "Supporting research, Margin, and Knockout live under More."
         )
         return
 
