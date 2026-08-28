@@ -4241,7 +4241,11 @@ def _render_yahoo(
         ),
     )
 
-    roster_tab, settings_tab = st.tabs(["My roster", "League"])
+    roster_tab, settings_tab = st.tabs(
+        ["My roster", "League"],
+        key="fantasy_yahoo_tabs",
+        on_change="rerun",
+    )
     if roster_tab.open:
         with roster_tab:
             if not roster:
@@ -4282,25 +4286,26 @@ def _render_yahoo(
         "(https://football.fantasysports.yahoo.com/)"
     )
 
-    with settings_tab:
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    ("Platform", "Yahoo"),
-                    ("League", league.name),
-                    ("Season", league.season or "—"),
-                    ("Teams", league.num_teams or "—"),
-                    ("Current week", league.current_week or "—"),
-                    ("Scoring type", league.scoring_type or "—"),
-                    ("Draft status", league.draft_status or "—"),
-                ],
-                columns=["Setting", "Value"],
-            ),
-            hide_index=True,
-            width="stretch",
-        )
-
-
+    if settings_tab.open:
+        with settings_tab:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        ("Platform", "Yahoo"),
+                        ("League", league.name),
+                        ("Season", league.season or "—"),
+                        ("Teams", league.num_teams or "—"),
+                        ("Current week", league.current_week or "—"),
+                        ("Scoring type", league.scoring_type or "—"),
+                        ("Draft status", league.draft_status or "—"),
+                    ],
+                    columns=["Setting", "Value"],
+                ),
+                hide_index=True,
+                width="stretch",
+            )
+    
+    
 page_intro(
     "Fantasy",
     "What should I do with my teams? Sleeper is the supported live provider.",
