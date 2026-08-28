@@ -1,4 +1,7 @@
-from src.fantasy.league_selector import build_sleeper_league_options
+from src.fantasy.league_selector import (
+    build_sleeper_league_options,
+    choose_sleeper_league_label,
+)
 
 
 def test_unique_league_labels_stay_compact():
@@ -96,3 +99,53 @@ def test_blank_league_ids_are_ignored():
     assert options == (
         ("Good · 8 teams", "333333333333333333"),
     )
+
+
+def test_selector_migrates_legacy_demo_choice_to_first_real_league():
+    options = {
+        "Franchise Football League · 10 teams": "real-1",
+        "Papa Johns · 12 teams": "real-2",
+        "TEST LEAGUE · 10 teams": "demo-1",
+    }
+
+    selected = choose_sleeper_league_label(
+        options,
+        demo_league_ids={"demo-1"},
+        current_label="",
+        legacy_label="TEST LEAGUE · 10 teams",
+        prefer_real=True,
+    )
+
+    assert selected == "Franchise Football League · 10 teams"
+
+
+def test_selector_respects_intentional_current_demo_choice_after_migration():
+    options = {
+        "Franchise Football League · 10 teams": "real-1",
+        "TEST LEAGUE · 10 teams": "demo-1",
+    }
+
+    selected = choose_sleeper_league_label(
+        options,
+        demo_league_ids={"demo-1"},
+        current_label="TEST LEAGUE · 10 teams",
+        legacy_label="Franchise Football League · 10 teams",
+        prefer_real=True,
+    )
+
+    assert selected == "TEST LEAGUE · 10 teams"
+
+
+def test_selector_can_fall_back_to_demo_when_no_real_league_exists():
+    options = {
+        "TEST LEAGUE · 10 teams": "demo-1",
+    }
+
+    selected = choose_sleeper_league_label(
+        options,
+        demo_league_ids={"demo-1"},
+        legacy_label="TEST LEAGUE · 10 teams",
+        prefer_real=False,
+    )
+
+    assert selected == "TEST LEAGUE · 10 teams"
