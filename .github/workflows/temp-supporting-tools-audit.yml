@@ -1,4 +1,5 @@
 name: Supporting tools audit
+# targeted rerun without already-proven core market wildcard
 
 on:
   push:
