@@ -53,7 +53,8 @@ def test_native_top_navigation_and_hosted_chrome_cleanup_are_present() -> None:
     assert '[data-testid="stToolbar"]' in source
     assert "#viewerBadge_link" in source
     assert 'st.navigation(pages, position="top").run()' in source
-    assert '"My Tools"' in source
+    assert '"PropWar"' in source
+    assert '"More"' in source
     assert '"Role Intelligence"' in source
     assert "with st.sidebar" not in source
     assert ".pw-home-hero" in source
