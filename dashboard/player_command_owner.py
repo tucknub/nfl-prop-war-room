@@ -19,7 +19,10 @@ from src.fantasy.identity import (
     load_ffverse_player_ids,
     resolve_propwar_player_to_sleeper,
 )
-from src.fantasy.league_selector import build_sleeper_league_options
+from src.fantasy.league_selector import (
+    build_sleeper_league_options,
+    choose_sleeper_league_label,
+)
 from src.fantasy.player_intelligence import build_player_intelligence_card
 from src.fantasy.sleeper import SleeperClient
 
@@ -385,23 +388,22 @@ def render_owner_player_command_center(
                 selector_key = (
                     f"player_command_league_v2_{propwar_player_id}"
                 )
-                saved_selector_label = str(
-                    st.session_state.get(selector_key) or ""
-                ).strip()
-                if saved_selector_label not in league_options:
-                    preferred_label = str(
+                initial_label = choose_sleeper_league_label(
+                    league_options,
+                    demo_league_ids=demo_ids,
+                    current_label=str(
+                        st.session_state.get(selector_key) or ""
+                    ),
+                    legacy_label=str(
                         st.session_state.get("fantasy_hq_sleeper_league") or ""
-                    ).strip()
-                    if (
-                        preferred_label in league_options
-                        and (
-                            not real_states
-                            or league_options[preferred_label] not in demo_ids
-                        )
-                    ):
-                        initial_label = preferred_label
-                    else:
-                        initial_label = labels[0]
+                    ),
+                    prefer_real=bool(real_states),
+                )
+                if (
+                    initial_label
+                    and str(st.session_state.get(selector_key) or "").strip()
+                    not in league_options
+                ):
                     st.session_state[selector_key] = initial_label
 
                 selected_label = st.selectbox(
