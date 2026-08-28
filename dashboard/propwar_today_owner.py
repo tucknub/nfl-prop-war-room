@@ -16,7 +16,6 @@ try:
     from glitch_radar_present import (
         expected_ev_pct,
         event_phase_label,
-        event_phase_label,
         fair_american_from_probability,
         format_american,
         game_name,
