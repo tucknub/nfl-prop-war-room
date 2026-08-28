@@ -121,23 +121,23 @@ note(
 
 with st.expander("League rules", expanded=False):
     st.caption("Knockout Fantasy is modeled independently from the Margin Pool.")
-rules = pd.DataFrame(
-    [
-        ("Teams", league["teams"]),
-        ("Scoring", "Full PPR"),
-        ("Roster", f"{league['roster_size']} players"),
-        ("Starters", "QB · 2 RB · 2 WR · TE · FLEX · K · D/ST"),
-        ("FAAB", f"${league['faab_start']} continuous budget"),
-        ("Trades", "Not allowed"),
-        ("Elimination", "Lowest weekly fantasy score"),
-        ("Eliminated roster", "Entire roster released to waivers"),
-        ("Elimination weeks", "Weeks 1-17"),
-    ],
-    columns=["Rule", "Setting"],
-)
-st.dataframe(rules, hide_index=True, width="stretch")
+    rules = pd.DataFrame(
+        [
+            ("Teams", league["teams"]),
+            ("Scoring", "Full PPR"),
+            ("Roster", f"{league['roster_size']} players"),
+            ("Starters", "QB · 2 RB · 2 WR · TE · FLEX · K · D/ST"),
+            ("FAAB", f"${league['faab_start']} continuous budget"),
+            ("Trades", "Not allowed"),
+            ("Elimination", "Lowest weekly fantasy score"),
+            ("Eliminated roster", "Entire roster released to waivers"),
+            ("Elimination weeks", "Weeks 1-17"),
+        ],
+        columns=["Rule", "Setting"],
+    )
+    st.dataframe(rules, hide_index=True, width="stretch")
 
-section("Current strategy", "The objective is survival first; the optimal risk posture changes as the field shrinks.")
+section("Phase strategy", "The objective is survival first; the optimal risk posture changes as the field shrinks.")
 for priority in engine.strategy_priorities(state):
     st.markdown(f"- {priority}")
 
