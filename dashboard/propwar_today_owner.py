@@ -568,7 +568,12 @@ def _fantasy_actions(
                     if current_week >= 1
                     else "Sleeper live · preseason"
                 ),
-                href="/fantasy-hq",
+                href=(
+                    "/fantasy-hq?"
+                    + urlencode({"fh_sleeper": username})
+                    if username
+                    else "/fantasy-hq"
+                ),
                 score=float(row.score),
                 source="Fantasy HQ",
             )
