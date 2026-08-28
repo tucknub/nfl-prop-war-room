@@ -1,7 +1,18 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+
+PAGE_DIR = Path(__file__).resolve().parent
+DASHBOARD_DIR = PAGE_DIR.parent
+REPO_ROOT = DASHBOARD_DIR.parent
+if str(DASHBOARD_DIR) not in sys.path:
+    sys.path.insert(0, str(DASHBOARD_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from research_data import (
     ROLE_LABELS,
