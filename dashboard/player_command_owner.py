@@ -126,8 +126,8 @@ def render_owner_player_command_center(
     role_change,
 ) -> None:
     section(
-        "Player Command Center",
-        "Owner-only live sportsbook + Sleeper context for this same exact player identity.",
+        "Live decision context",
+        "Owner-only sportsbook + Sleeper context for this same exact player identity.",
     )
 
     try:
