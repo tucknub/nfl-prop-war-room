@@ -460,3 +460,16 @@ def test_report_snap_identity_is_the_publication_gate() -> None:
     coverage.loc[:, "report_snap_identity_coverage"] = 0.98
     checks = {item["check"]: item for item in validate_current_role_build(replace(build, source_coverage=coverage))}
     assert not checks["report_snap_identity_coverage"]["passed"]
+
+
+def test_current_role_workflow_matches_production_runtime_and_has_midweek_retry() -> None:
+    workflow = (
+        Path(__file__).resolve().parents[1]
+        / ".github"
+        / "workflows"
+        / "role-research-operations.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'python-version: "3.14"' in workflow
+    assert 'python-version: "3.12"' not in workflow
+    assert '- cron: "30 13 * 9-12,1 2-4"' in workflow
