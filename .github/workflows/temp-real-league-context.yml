@@ -1,4 +1,5 @@
 name: Real league context validation
+# rerun after current Players intro contract
 
 on:
   push:
