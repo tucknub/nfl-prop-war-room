@@ -27,7 +27,7 @@ from glitch_radar_action import (  # noqa: E402
     WATCH,
     ev_action,
     glitch_action,
-    peer_price_gap_range,
+    peer_implied_probability_gap_range,
     peer_prices_for_alert,
 )
 from glitch_radar_history import (  # noqa: E402
@@ -403,7 +403,7 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
         for row in peer_prices
         if isinstance(row, dict)
     )
-    peer_gap = peer_price_gap_range(quote.get("odds_american"), peer_prices)
+    peer_gap = peer_implied_probability_gap_range(quote.get("odds_american"), peer_prices)
     action = glitch_action(alert)
 
     with st.container(border=True):
@@ -422,9 +422,13 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
             st.caption(f"My other visible books: {peer_text}")
         if peer_gap is not None:
             low, high = peer_gap
-            gap_text = f"{low}" if low == high else f"{low}–{high}"
+            gap_text = (
+                f"{low:.1f} pp"
+                if abs(low - high) < 0.05
+                else f"{low:.1f}–{high:.1f} pp"
+            )
             st.markdown(
-                f"**Market gap:** {book} is currently **{gap_text} American-odds points better** "
+                f"**Market gap:** {book} is currently **{gap_text} lower implied probability** "
                 "than my other visible books on this exact wager."
             )
         triplet_line = _history_triplet_line(history_record)
@@ -436,7 +440,10 @@ def _render_glitch_card(alert: dict, *, show_evidence: bool = True) -> None:
         _render_action(action)
 
         if sign_mismatch:
-            st.error("Sign inversion detected: this book is on the opposite side of zero from multiple peers.")
+            st.error(
+                "Meaningful sign mismatch: this price crosses even money and is also "
+                "at least 10 implied-probability points away from peer consensus."
+            )
         else:
             st.warning("This price is materially different from the same market at peer books.")
         st.caption("Potential sportsbook pricing anomaly. Settlement/obvious-error void risk is not yet scored by this preview.")
