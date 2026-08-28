@@ -50,17 +50,21 @@ def test_fantasy_selector_migrates_saved_demo_choice_to_real_league() -> None:
     assert 'st.session_state["fantasy_hq_sleeper_league"] = league_labels[0]' in source
 
 
-def test_player_command_consumes_standard_sleeper_query_parameter() -> None:
+def test_player_command_uses_central_durable_sleeper_preference() -> None:
     source = _source("dashboard/player_command_owner.py")
+    owner_preferences = _source("dashboard/owner_preferences.py")
 
-    assert 'st.query_params.get("fh_sleeper")' in source
-    assert 'st.session_state["fantasy_hq_sleeper_username"] = query_value' in source
+    assert "from owner_preferences import remembered_sleeper_username" in source
+    assert "return remembered_sleeper_username()" in source
+    assert 'st.query_params.get(SLEEPER_USERNAME_QUERY_KEY)' in owner_preferences
+    assert "private_sleeper_username()" in owner_preferences
 
 
 def test_home_and_today_preserve_sleeper_context_in_deep_links() -> None:
     home = _source("dashboard/app.py")
     today = _source("dashboard/propwar_today_owner.py")
 
+    assert "remembered_sleeper_username()" in home
     assert 'sleeper_suffix = (' in home
     assert 'f"/players{sleeper_suffix}"' in home
     assert 'f"/fantasy-hq{sleeper_suffix}"' in home
