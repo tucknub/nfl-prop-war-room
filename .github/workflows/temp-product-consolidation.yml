@@ -1,4 +1,5 @@
 name: PropWar consolidation phase 1
+# rerun after formatting-safe product assertions
 
 on:
   push:
