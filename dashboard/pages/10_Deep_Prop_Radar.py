@@ -86,7 +86,10 @@ def _render_price_glitch(row: dict) -> None:
         p1.metric("Flagged price", price)
         p2.metric("Peer payout multiple", f"{float(row.get('profit_multiple_vs_peers') or 0):.2f}×")
         if row.get("sign_mismatch"):
-            st.error("Opposite side of zero from multiple same-market peers — possible sign/price inversion.")
+            st.error(
+                "Meaningful sign mismatch: this price crosses even money and is also "
+                "at least 10 implied-probability points away from peer consensus."
+            )
         else:
             deviation = float(row.get("relative_prob_deviation") or 0) * 100
             st.warning(f"Same player, market and line differ materially from peers ({deviation:.1f}% relative probability deviation).")
