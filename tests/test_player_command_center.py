@@ -246,7 +246,7 @@ def test_players_page_exposes_owner_command_hook_without_polluting_public_role_s
     assert "betting" not in public_source.lower()
     assert "odds" not in public_source.lower()
 
-    assert '"Player Command Center"' in owner_source
+    assert '"Live decision context"' in owner_source
     assert "resolve_propwar_player_to_sleeper" in owner_source
     assert "ROLE/LINE MISMATCH: NOT SCORED" in owner_source
     assert "build_player_intelligence_card" in owner_source
