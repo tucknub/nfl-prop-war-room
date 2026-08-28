@@ -146,16 +146,14 @@ def _today_leagues(user_id: str, season: str) -> tuple[dict, ...]:
 @st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
 def _today_all_states(user_id: str, league_ids: tuple[str, ...]):
     with SleeperClient() as client:
-        return tuple(
-            client.fetch_normalized_league(
-                league_id,
-                current_user_id=user_id,
-            )
-            for league_id in league_ids
+        return client.fetch_normalized_leagues(
+            league_ids,
+            current_user_id=user_id,
+            max_workers=3,
         )
 
 
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, refresh_mode="background")
 def _today_player_catalog() -> dict:
     with SleeperClient() as client:
         return {
