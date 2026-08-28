@@ -1,4 +1,37 @@
-# nfl_prop_projection_engine_v1
+# PropWar
+
+PropWar is an NFL decision-intelligence product.
+
+**Core promise:** tell the owner what changed, what the market may have missed, and what action deserves attention.
+
+The current product is organized around four owner workspaces:
+
+- **Today** — the few current actions that deserve attention.
+- **Players** — role change + live market + fantasy context for one exact player identity.
+- **Markets** — Glitch Radar, movement/history, line shopping, and supporting market diagnostics.
+- **Fantasy** — lineup, waiver, trade, manager, and cross-league decisions through Fantasy HQ.
+
+Supporting Role Intelligence pages (Teams, Reports, Games, Advanced Research, Methodology), specialized owner tools (Margin and Knockout), and historical research systems remain in the repository but are not separate primary products.
+
+See **[PRODUCT.md](PRODUCT.md)** for the authoritative product definition, finish criteria, feature-freeze rules, and hosting strategy.
+
+## Product status
+
+PropWar is a **private beta**.
+
+A large amount of engineering is built, but the current priority is stability, speed, current-season data, consolidation, and proving the four core workflows during the 2026 NFL season—not adding more standalone features.
+
+## Current deployment
+
+The product remains on Streamlit during the stabilization/proving phase. The intended later architecture is a Cloudflare product shell with the validated Python analytics engines preserved behind an API/container boundary rather than rewritten solely for hosting.
+
+---
+
+# Legacy research-engine documentation
+
+The sections below document the historical projection/research framework that preceded the current PropWar product. They remain relevant for auditability and model history, but they are **not the current product definition**.
+
+## nfl_prop_projection_engine_v1
 
 V1A/V1B builds a leakage-safe Receptions projection engine from nflverse/nflreadpy data.
 
@@ -8,7 +41,7 @@ The V1 formula is:
 projected_team_pass_attempts x projected_player_target_share x projected_catch_rate = projected_receptions
 ```
 
-Only Receptions are implemented in this version. TD, rushing yards, receiving yards, QB rushing, and passing yards are intentionally out of scope until Receptions are proven.
+Only Receptions are implemented in this legacy V1 description. Later repository work expanded far beyond this original scope.
 
 ## Install
 
