@@ -391,3 +391,4 @@ else:
 
 methodology_expander(list(REPORT_METHODS[selected_report]))
 source_footer(operational_status_text())
+\nst.markdown("[Open Advanced Research →](/explorer)")\n
