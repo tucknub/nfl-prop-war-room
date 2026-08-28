@@ -194,19 +194,31 @@ def detect_price_outliers(quotes: list[Quote], min_books: int = 3) -> list[dict[
             peer_profit = median(peer_profits) if peer_profits else 0
             own_profit = american_to_decimal(quote.odds_american) - 1
             payout_ratio = own_profit / peer_profit if peer_profit > 0 else 1
-            sign_mismatch = (
+            raw_sign_mismatch = (
                 quote.odds_american > 0 and sum(q.odds_american < 0 for q in group) >= 2
             ) or (
                 quote.odds_american < 0 and sum(q.odds_american > 0 for q in group) >= 2
             )
+            absolute_prob_gap = abs(own_probability - consensus)
+            # American odds cross zero around an even-money market. A +101 quote
+            # beside -105 peers is normal market dispersion, not a pricing error.
+            # Sign mismatch only becomes meaningful when the implied-probability
+            # gap is large enough to matter.
+            sign_mismatch = raw_sign_mismatch and absolute_prob_gap >= 0.10
             if relative_deviation >= 0.40 or payout_ratio >= 1.75 or sign_mismatch:
                 alerts.append(
                     {
                         "type": "price_outlier",
-                        "severity": "P0" if payout_ratio >= 3 or sign_mismatch else "P1",
+                        "severity": (
+                            "P0"
+                            if payout_ratio >= 3
+                            or (sign_mismatch and absolute_prob_gap >= 0.20)
+                            else "P1"
+                        ),
                         "quote": _pack_quote(quote),
                         "consensus_implied_prob": consensus,
                         "relative_prob_deviation": relative_deviation,
+                        "absolute_prob_gap_points": absolute_prob_gap * 100,
                         "profit_multiple_vs_peers": payout_ratio,
                         "sign_mismatch": sign_mismatch,
                     }
