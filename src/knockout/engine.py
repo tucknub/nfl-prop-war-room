@@ -255,7 +255,7 @@ def structural_roster_risk(state: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "level": "LOW",
-        "reason": "Every required starter is covered with at least some bench cushion.",
+        "reason": "No required starter gap or broad skill-position depth warning is present.",
     }
 
 
