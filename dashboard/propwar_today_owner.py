@@ -395,25 +395,65 @@ def _event_time_for_market_row(snapshot: dict, row: dict) -> object:
     if direct:
         return direct
 
-    away = str(row.get("away_team") or "").strip()
-    home = str(row.get("home_team") or "").strip()
-    if not away or not home:
+    quotes = tuple(
+        quote
+        for quote in (snapshot.get("quotes", ()) or ())
+        if isinstance(quote, dict) and quote.get("commence_time")
+    )
+    if not quotes:
         return None
 
-    expected_event = f"{away} @ {home}".strip().casefold()
-    for quote in snapshot.get("quotes", ()) or ():
-        if not isinstance(quote, dict):
-            continue
+    away = str(row.get("away_team") or "").strip()
+    home = str(row.get("home_team") or "").strip()
+    if away and home:
+        expected_event = f"{away} @ {home}".strip().casefold()
+        for quote in quotes:
+            event = str(quote.get("event") or "").strip().casefold()
+            if event == expected_event:
+                return quote.get("commence_time")
+
+    # Some EV payloads have arrived without a usable away/home pair even though
+    # the same market exists in the live odds payload. Recover the event by the
+    # actionable quote itself: book + market + price + team selection.
+    selection = str(
+        row.get("selection") or row.get("side") or ""
+    ).strip().casefold()
+    book = str(row.get("book") or "").strip().casefold()
+    market = str(row.get("market") or "moneyline").strip().casefold()
+    try:
+        price = int(float(row.get("price")))
+    except (TypeError, ValueError):
+        price = None
+
+    candidate_times: list[object] = []
+    for quote in quotes:
+        quote_book = str(quote.get("book") or "").strip().casefold()
+        quote_market = str(quote.get("market") or "").strip().casefold()
         event = str(quote.get("event") or "").strip().casefold()
-        if event != expected_event:
+        try:
+            quote_price = int(float(quote.get("odds_american")))
+        except (TypeError, ValueError):
+            quote_price = None
+
+        if book and quote_book != book:
             continue
-        commence_time = quote.get("commence_time")
-        if commence_time:
-            return commence_time
-    return None
+        if market and quote_market and quote_market != market:
+            continue
+        if price is not None and quote_price != price:
+            continue
+        if selection and selection not in event:
+            continue
+        candidate_times.append(quote.get("commence_time"))
+
+    unique_times = tuple(dict.fromkeys(candidate_times))
+    return unique_times[0] if len(unique_times) == 1 else None
 
 
-def _market_actions(snapshot: dict) -> tuple[TodayAction, ...]:
+def _market_actions(
+    snapshot: dict,
+    *,
+    force_preseason: bool = False,
+) -> tuple[TodayAction, ...]:
     actions: list[TodayAction] = []
     fetched = local_start_label(snapshot.get("fetched_at"))
 
@@ -483,7 +523,7 @@ def _market_actions(snapshot: dict) -> tuple[TodayAction, ...]:
         ev = expected_ev_pct(row.get("price"), fair_prob)
         market_event_time = _event_time_for_market_row(snapshot, row)
         phase = event_phase_label(market_event_time)
-        is_preseason = phase == "PRESEASON"
+        is_preseason = force_preseason or phase == "PRESEASON"
         score = (
             410.0 + max(float(ev or 0.0), 0.0) * 3.0
             if radar.action == BET
@@ -681,11 +721,11 @@ def _margin_action() -> TodayAction | None:
     )
 
 
-def _live_context() -> tuple[str, int]:
+def _live_context() -> tuple[str, int, str]:
     try:
         state = _today_nfl_state()
     except Exception:
-        return "", 0
+        return "", 0, ""
     season = str(
         getattr(state, "league_season", None)
         or getattr(state, "season", None)
@@ -703,7 +743,7 @@ def _live_context() -> tuple[str, int]:
         if season_type in {"regular", "reg"} and 1 <= leg <= 18
         else 0
     )
-    return season, week
+    return season, week, season_type
 
 
 def _render_action_card(rank: int, row: TodayAction) -> None:
@@ -742,11 +782,15 @@ def render_propwar_today_if_owner() -> None:
     actions: list[TodayAction] = []
     errors: list[str] = []
 
-    live_season, current_week = _live_context()
+    live_season, current_week, season_type = _live_context()
+    live_preseason = season_type.startswith("pre")
 
     try:
         actions.extend(
-            _market_actions(_today_market_snapshot())
+            _market_actions(
+                _today_market_snapshot(),
+                force_preseason=live_preseason,
+            )
         )
     except Exception as exc:
         errors.append(f"Market radar: {exc}")
