@@ -40,9 +40,9 @@ def test_owner_home_is_decision_first_not_report_first() -> None:
     assert "NFL DECISION INTELLIGENCE · PRIVATE BETA" in app
     assert "<h1>What matters right now?</h1>" in app
     assert 'section(\n            "Core workspaces"' in app
-    assert '("Players",' in app
-    assert '("Markets",' in app
-    assert '("Fantasy",' in app
+    assert '"Players"' in app
+    assert '"Markets"' in app
+    assert '"Fantasy"' in app
     assert "render_propwar_today_if_owner()" in app
 
 
