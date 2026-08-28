@@ -1,0 +1,66 @@
+name: Supporting tools audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-supporting-tools-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile supporting pages
+        run: |
+          python -m py_compile dashboard/pages/07_Margin_War_Room.py
+          python -m py_compile dashboard/pages/08_Knockout_Fantasy_War_Room.py
+          python -m py_compile dashboard/pages/01_Teams.py
+          python -m py_compile dashboard/pages/03_Games.py
+          python -m py_compile dashboard/pages/04_Reports.py
+          python -m py_compile dashboard/pages/05_Explorer.py
+          python -m py_compile dashboard/pages/06_Methodology.py
+          python -m py_compile dashboard/pages/10_Deep_Prop_Radar.py
+      - name: Run supporting tool regressions
+        run: |
+          pytest -q             tests/test_knockout_fantasy.py             tests/test_margin_championship.py             tests/test_margin_pool_state.py             tests/test_margin_state_store.py             tests/test_three_report_app_smoke.py             tests/test_three_report_launch.py             tests/test_weekly_role_report.py             tests/test_glitch_radar_*.py
+      - name: Streamlit supporting-page startup
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          targets = [
+              root / "dashboard" / "pages" / "07_Margin_War_Room.py",
+              root / "dashboard" / "pages" / "08_Knockout_Fantasy_War_Room.py",
+              root / "dashboard" / "pages" / "01_Teams.py",
+              root / "dashboard" / "pages" / "03_Games.py",
+              root / "dashboard" / "pages" / "04_Reports.py",
+              root / "dashboard" / "pages" / "05_Explorer.py",
+              root / "dashboard" / "pages" / "06_Methodology.py",
+              root / "dashboard" / "pages" / "10_Deep_Prop_Radar.py",
+          ]
+          os.chdir("/tmp")
+          for target in targets:
+              at = AppTest.from_file(str(target))
+              at.run(timeout=60)
+              if at.exception:
+                  print(f"FAILED: {target}")
+                  for exc in at.exception:
+                      print(exc.value)
+                  raise SystemExit(1)
+              print(f"startup ok: {target.name}")
+          PY
