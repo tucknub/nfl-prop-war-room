@@ -19,7 +19,7 @@ from research_ui import inject_styles, section  # noqa: E402
 from research_data import operational_status_text  # noqa: E402
 from public_copy import role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
-from propwar_today_owner import render_propwar_today_if_owner  # noqa: E402
+from propwar_today_runtime import render_propwar_today_if_owner  # noqa: E402
 from owner_preferences import remembered_sleeper_username  # noqa: E402
 
 

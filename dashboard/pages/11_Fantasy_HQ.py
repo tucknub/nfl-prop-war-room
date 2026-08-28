@@ -32,7 +32,7 @@ from src.fantasy.action_feed import build_weekly_action_feed  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
 from src.fantasy.league_activity import build_league_activity  # noqa: E402
 from src.fantasy.league_needs import build_league_needs_board  # noqa: E402
-from src.fantasy.league_selector import (  # noqa: E402
+from league_selector_compat import (  # noqa: E402
     build_sleeper_league_options,
     choose_sleeper_league_label,
 )

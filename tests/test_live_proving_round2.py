@@ -43,11 +43,13 @@ def test_august_ev_row_is_medium_priority_on_today() -> None:
 def test_fantasy_selector_migrates_saved_demo_choice_to_real_league() -> None:
     source = _source("dashboard/pages/11_Fantasy_HQ.py")
 
-    assert 'saved_label = str(' in source
+    assert 'FANTASY_LEAGUE_SELECTOR_KEY = "fantasy_hq_sleeper_league_v2"' in source
+    assert 'LEGACY_FANTASY_LEAGUE_SELECTOR_KEY = "fantasy_hq_sleeper_league"' in source
     assert 'demo_ids = {' in source
     assert 'priority_leagues' in source
-    assert 'league_options[saved_label] in demo_ids' in source
-    assert 'st.session_state["fantasy_hq_sleeper_league"] = league_labels[0]' in source
+    assert 'choose_sleeper_league_label(' in source
+    assert 'prefer_real=bool(priority_leagues)' in source
+    assert 'st.session_state[LEGACY_FANTASY_LEAGUE_SELECTOR_KEY] = selected_label' in source
 
 
 def test_player_command_uses_central_durable_sleeper_preference() -> None:

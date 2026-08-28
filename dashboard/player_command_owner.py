@@ -19,10 +19,16 @@ from src.fantasy.identity import (
     load_ffverse_player_ids,
     resolve_propwar_player_to_sleeper,
 )
-from src.fantasy.league_selector import (
-    build_sleeper_league_options,
-    choose_sleeper_league_label,
-)
+try:
+    from league_selector_compat import (
+        build_sleeper_league_options,
+        choose_sleeper_league_label,
+    )
+except ImportError:
+    from dashboard.league_selector_compat import (
+        build_sleeper_league_options,
+        choose_sleeper_league_label,
+    )
 from src.fantasy.player_intelligence import build_player_intelligence_card
 from src.fantasy.sleeper import SleeperClient
 
