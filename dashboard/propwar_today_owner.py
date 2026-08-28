@@ -49,6 +49,7 @@ except ImportError:
     from dashboard.glitch_radar_live import build_snapshot
     from dashboard.glitch_radar_present import (
         expected_ev_pct,
+        event_phase_label,
         fair_american_from_probability,
         format_american,
         game_name,
