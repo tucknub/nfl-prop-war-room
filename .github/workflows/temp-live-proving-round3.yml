@@ -1,5 +1,5 @@
 name: Live proving round 3
-# rerun after dashboard package import fallback
+# final rerun after centralized preference test update
 
 on:
   push:
