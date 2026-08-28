@@ -20,11 +20,13 @@ def test_enrich_ev_moneyline_from_live_quote():
             "participant": "",
             "threshold": None,
             "odds_american": 144,
+            "commence_time": "2026-08-29T00:00:00.000Z",
         }
     ]
     result = enrich_ev_markets(ev, quotes)
     assert result[0]["market"] == "moneyline"
     assert result[0]["threshold"] is None
+    assert result[0]["commence_time"] == "2026-08-29T00:00:00.000Z"
 
 
 def test_enrich_does_not_force_generic_over_under_to_moneyline():
