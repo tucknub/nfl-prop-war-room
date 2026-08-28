@@ -75,7 +75,7 @@ def _command_ffverse_ids() -> pd.DataFrame:
     return load_ffverse_player_ids()
 
 
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, refresh_mode="background")
 def _command_player_catalog() -> dict:
     with SleeperClient() as client:
         return {
@@ -111,12 +111,10 @@ def _command_all_league_states(
     league_ids: tuple[str, ...],
 ):
     with SleeperClient() as client:
-        return tuple(
-            client.fetch_normalized_league(
-                league_id,
-                current_user_id=user_id,
-            )
-            for league_id in league_ids
+        return client.fetch_normalized_leagues(
+            league_ids,
+            current_user_id=user_id,
+            max_workers=3,
         )
 
 
@@ -132,6 +130,7 @@ def _player_name_from_sleeper(player: dict, fallback: str) -> str:
     )
 
 
+@st.fragment(parallel=True)
 def render_owner_player_command_center(
     *,
     propwar_player_id: str,
