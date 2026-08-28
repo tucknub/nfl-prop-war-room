@@ -963,6 +963,4 @@ if source_tab.open:
             else:
                 st.write("No command-center diagnostic fields were returned.")
             st.caption("Diagnostics are kept here for troubleshooting; the betting tabs above are the decision interface.")
-
-        st.markdown("[Open deeper Market Research →](/deep-prop-radar)")
-    
+    \nst.markdown("[Open deeper Market Research →](/deep-prop-radar)")\n
