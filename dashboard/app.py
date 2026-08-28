@@ -8,8 +8,11 @@ import streamlit as st
 
 
 DASHBOARD_DIR = Path(__file__).resolve().parent
+REPO_ROOT = DASHBOARD_DIR.parent
 if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from access_control import access_mode  # noqa: E402
 from research_ui import inject_styles, section  # noqa: E402
