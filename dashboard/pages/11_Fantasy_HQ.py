@@ -84,6 +84,7 @@ from src.fantasy.roster_health import (  # noqa: E402
     analyze_roster_health,
 )
 from src.fantasy.sleeper import SleeperClient  # noqa: E402
+from src.fantasy.weekly_context import fetch_league_weekly_contexts  # noqa: E402
 from src.fantasy.team_explorer import build_league_team_profile  # noqa: E402
 from src.fantasy.trade_candidates import build_trade_candidate_board  # noqa: E402
 from src.fantasy.waiver_watch import build_sleeper_waiver_watch  # noqa: E402
@@ -270,53 +271,39 @@ def _load_weekly_action_feed(
     transaction_map = {}
     data_errors = []
 
-    for league in states:
+    active_leagues = {
+        league.platform_league_id: league
+        for league in states
         if (
-            league.status == "pre_draft"
-            or not league.ownership_ready
-            or not league.my_platform_roster_id
-        ):
-            continue
-
-        if current_week >= 1:
-            try:
-                matchups = _load_matchups(
-                    league.platform_league_id,
-                    current_week,
-                )
-                matchup_map[league.platform_league_id] = next(
-                    (
-                        row
-                        for row in matchups
-                        if row.platform_roster_id
-                        == league.my_platform_roster_id
-                    ),
-                    None,
-                )
-            except Exception as exc:
-                data_errors.append(
-                    f"{league.name or league.platform_league_id} matchup: {exc}"
-                )
-
-            transactions = []
-            for week in range(
-                max(1, current_week - 3),
-                current_week + 1,
-            ):
-                try:
-                    transactions.extend(
-                        _load_transactions(
-                            league.platform_league_id,
-                            week,
-                        )
-                    )
-                except Exception as exc:
-                    data_errors.append(
-                        f"{league.name or league.platform_league_id} "
-                        f"Week {week} transactions: {exc}"
-                    )
-            transaction_map[league.platform_league_id] = tuple(
-                transactions
+            league.status != "pre_draft"
+            and league.ownership_ready
+            and league.my_platform_roster_id
+        )
+    }
+    if current_week >= 1 and active_leagues:
+        contexts = fetch_league_weekly_contexts(
+            tuple(active_leagues),
+            current_week=current_week,
+            transaction_weeks=tuple(
+                range(max(1, current_week - 3), current_week + 1)
+            ),
+            max_workers=3,
+        )
+        for context in contexts:
+            league = active_leagues[context.league_id]
+            matchup_map[context.league_id] = next(
+                (
+                    row
+                    for row in context.matchups
+                    if row.platform_roster_id == league.my_platform_roster_id
+                ),
+                None,
+            )
+            transaction_map[context.league_id] = context.transactions
+            label = league.name or context.league_id
+            data_errors.extend(
+                f"{label} {error}"
+                for error in context.errors
             )
 
     feed = build_weekly_action_feed(
