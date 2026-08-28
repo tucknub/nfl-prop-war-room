@@ -714,9 +714,11 @@ _render_top_board(alerts, arbs, middles, evs)
 
 st.divider()
 
-glitch_tab, arb_tab, middle_tab, ev_tab, boost_tab, source_tab = st.tabs(
-    ["Glitches", "Arbs", "Middles", "+EV Prices", "Boost Lab", "Coverage"]
+glitch_tab, arb_tab, middle_tab, ev_tab, more_tab = st.tabs(
+    ["Glitches", "Arbs", "Middles", "+EV Prices", "More"]
 )
+boost_tab = more_tab
+source_tab = more_tab
 
 with glitch_tab:
     st.markdown("### Potential sportsbook errors")
@@ -788,6 +790,7 @@ with boost_tab:
             )
 
 with source_tab:
+    st.divider()
     st.markdown("### Sportsbook and feed coverage")
     c1, c2 = st.columns(2)
     with c1:
