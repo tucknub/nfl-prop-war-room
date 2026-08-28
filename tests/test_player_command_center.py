@@ -278,3 +278,23 @@ def test_command_ignores_same_name_signal_from_different_event():
     )
 
     assert action.action == NO_EDGE
+
+
+def test_owner_player_live_context_is_parallel_and_bounded() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    owner = (
+        root / "dashboard" / "player_command_owner.py"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "@st.fragment(parallel=True)\n"
+        "def render_owner_player_command_center("
+    ) in owner
+    assert "client.fetch_normalized_leagues(" in owner
+    assert "max_workers=3" in owner
+    assert (
+        "@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, "
+        'refresh_mode="background")\ndef _command_player_catalog()'
+    ) in owner
