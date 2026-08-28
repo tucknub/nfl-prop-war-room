@@ -26,3 +26,13 @@ def test_owner_home_uses_dashboard_scale_hero() -> None:
     source = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
 
     assert "clamp(2.15rem,3.3vw,3.45rem)" in source
+
+
+def test_fantasy_decision_feed_is_top_three_card_first() -> None:
+    source = (
+        ROOT / "dashboard" / "pages" / "11_Fantasy_HQ.py"
+    ).read_text(encoding="utf-8")
+
+    assert "weekly_feed.actions[:3]" in source
+    assert 'with st.container(border=True):' in source
+    assert 'f"All ranked actions · {len(feed_rows)}"' in source
