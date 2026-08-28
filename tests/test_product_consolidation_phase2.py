@@ -47,27 +47,16 @@ def test_markets_has_four_decision_tabs_plus_one_secondary_tab() -> None:
 def test_fantasy_has_seven_decision_tabs_not_eleven_feature_tabs() -> None:
     source = _source("dashboard/pages/11_Fantasy_HQ.py")
 
-    for label in (
-        "Team",
-        "Start / Sit",
-        "Waivers",
-        "Matchup",
-        "Trades",
-        "League",
-        "Across leagues",
-    ):
-        assert f'"{label}"' in source
-
-    assert '"Roster Health",' not in source
-    assert '"Lineup Check",' not in source
-    assert '"Waiver Watch",' not in source
-    assert '"League Activity",' not in source
-    assert '"Current matchup",' not in source
-    assert '"Opponent Scout",' not in source
-    assert '"Manager Intelligence",' not in source
-    assert '"Standings",' not in source
-    assert '"League settings",' not in source
-    assert '"Cross-league",' not in source
+    expected = """[
+            "Team",
+            "Start / Sit",
+            "Waivers",
+            "Matchup",
+            "Trades",
+            "League",
+            "Across leagues",
+        ]"""
+    assert expected in source
 
     assert "roster_tab = team_tab" in source
     assert "health_tab = team_tab" in source
@@ -76,7 +65,6 @@ def test_fantasy_has_seven_decision_tabs_not_eleven_feature_tabs() -> None:
     assert "activity_tab = league_tab" in source
     assert "standings_tab = league_tab" in source
     assert "rules_tab = league_tab" in source
-
 
 def test_fantasy_keeps_one_primary_priority_system() -> None:
     source = _source("dashboard/pages/11_Fantasy_HQ.py")
