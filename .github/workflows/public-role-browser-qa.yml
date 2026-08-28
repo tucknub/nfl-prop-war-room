@@ -1,0 +1,95 @@
+name: Public Role Browser QA
+
+on:
+  pull_request:
+    branches:
+      - streamlit-cloud-deploy
+    paths:
+      - "dashboard/app.py"
+      - "dashboard/Home.py"
+      - "dashboard/public_copy.py"
+      - "dashboard/home_page.py"
+      - "dashboard/research_ui.py"
+      - "dashboard/pages/01_Teams.py"
+      - "dashboard/pages/02_Players.py"
+      - "dashboard/pages/03_Games.py"
+      - "dashboard/pages/04_Reports.py"
+      - "dashboard/pages/05_Explorer.py"
+      - "dashboard/pages/06_Methodology.py"
+      - "dashboard/role_change.py"
+      - "dashboard/role_*.py"
+      - "src/role/**"
+      - "outputs/role_research/**"
+      - "scripts/run_three_report_launch_browser_qa.py"
+      - "scripts/run_control_state_browser_qa.py"
+      - "tests/test_three_report_app_smoke.py"
+      - "tests/test_three_report_launch.py"
+      - "tests/test_public_role_research_language.py"
+      - "tests/test_current_role_dashboard_status.py"
+      - "requirements.txt"
+      - ".github/workflows/public-role-browser-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-role-browser-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up production Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest playwright
+
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Compile public-role surfaces
+        run: |
+          python -m compileall -q dashboard src scripts tests
+
+      - name: Run public-role contracts
+        run: |
+          pytest -q tests/test_three_report_app_smoke.py tests/test_three_report_launch.py tests/test_public_role_research_language.py tests/test_current_role_dashboard_status.py
+
+      - name: Start Streamlit
+        run: |
+          mkdir -p outputs/three_report_browser_qa
+          nohup streamlit run dashboard/Home.py             --server.headless true             --server.address 127.0.0.1             --server.port 8514             > outputs/three_report_browser_qa/streamlit.log 2>&1 &
+          echo $! > outputs/three_report_browser_qa/streamlit.pid
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8514/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat outputs/three_report_browser_qa/streamlit.log
+          exit 1
+
+      - name: Run mobile and desktop browser QA
+        run: python scripts/run_three_report_launch_browser_qa.py
+
+      - name: Upload browser QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-role-browser-qa
+          path: outputs/three_report_browser_qa
+          if-no-files-found: warn
+          retention-days: 3
