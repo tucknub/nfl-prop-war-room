@@ -15,7 +15,7 @@ def test_product_gate_matches_production_runtime_and_all_visible_pages() -> None
     assert 'python-version: "3.12"' not in workflow
 
     expected = (
-        "dashboard/app.py",
+        'root / "dashboard" / "app.py"',
         "01_Teams.py",
         "02_Players.py",
         "03_Games.py",
