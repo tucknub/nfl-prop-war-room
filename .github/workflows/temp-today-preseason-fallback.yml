@@ -1,4 +1,5 @@
 name: Today preseason fallback hotfix
+# rerun after dynamic Fantasy-link assertion
 
 on:
   push:
