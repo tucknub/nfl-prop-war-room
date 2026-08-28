@@ -99,6 +99,8 @@ from src.fantasy.yahoo import (  # noqa: E402
 YAHOO_SESSION_KEY = "fantasy_hq_yahoo_tokens"
 YAHOO_CALLBACK_KEY = "fantasy_hq_yahoo_processed_code"
 DEMO_LEAGUE_NAMES = {"test league", "mock league", "demo league"}
+FANTASY_LEAGUE_SELECTOR_KEY = "fantasy_hq_sleeper_league_v2"
+LEGACY_FANTASY_LEAGUE_SELECTOR_KEY = "fantasy_hq_sleeper_league"
 
 
 def _is_demo_league(row: Mapping[str, Any]) -> bool:
@@ -1461,29 +1463,38 @@ def _render_sleeper() -> None:
         build_sleeper_league_options(selector_leagues)
     )
     league_labels = tuple(league_options)
-    saved_label = str(
-        st.session_state.get("fantasy_hq_sleeper_league") or ""
-    ).strip()
     demo_ids = {
         str(row.get("league_id") or "").strip()
         for row in demo_leagues
         if str(row.get("league_id") or "").strip()
     }
-    if league_labels and (
-        (saved_label and saved_label not in league_options)
-        or (
-            priority_leagues
-            and saved_label in league_options
-            and league_options[saved_label] in demo_ids
-        )
-    ):
-        st.session_state["fantasy_hq_sleeper_league"] = league_labels[0]
+
+    current_selector_label = str(
+        st.session_state.get(FANTASY_LEAGUE_SELECTOR_KEY) or ""
+    ).strip()
+    if current_selector_label not in league_options:
+        legacy_label = str(
+            st.session_state.get(LEGACY_FANTASY_LEAGUE_SELECTOR_KEY) or ""
+        ).strip()
+        if (
+            legacy_label in league_options
+            and (
+                not priority_leagues
+                or league_options[legacy_label] not in demo_ids
+            )
+        ):
+            initial_label = legacy_label
+        else:
+            initial_label = league_labels[0] if league_labels else ""
+        if initial_label:
+            st.session_state[FANTASY_LEAGUE_SELECTOR_KEY] = initial_label
 
     selected_label = st.selectbox(
         "Sleeper league",
         league_labels,
-        key="fantasy_hq_sleeper_league",
+        key=FANTASY_LEAGUE_SELECTOR_KEY,
     )
+    st.session_state[LEGACY_FANTASY_LEAGUE_SELECTOR_KEY] = selected_label
     league_id = league_options[selected_label]
 
     league = next(
