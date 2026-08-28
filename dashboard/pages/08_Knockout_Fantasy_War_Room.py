@@ -217,9 +217,12 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
         can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
         record_transaction = st.form_submit_button(
             "Record waiver transaction",
-            disabled=not can_record_transaction,
         )
-    if record_transaction:
+    if record_transaction and not can_record_transaction:
+        st.warning(
+            "Enter the added player and NFL team, then confirm the final transaction."
+        )
+    elif record_transaction:
         try:
             updated = engine.record_waiver_transaction(
                 state,
@@ -247,9 +250,10 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
         complete_week = st.form_submit_button(
             f"Complete Week {int(state['current_week'])}",
             type="primary",
-            disabled=not can_record,
         )
-    if complete_week:
+    if complete_week and not can_record:
+        st.warning("Enter the eliminated team and confirm the result is final.")
+    elif complete_week:
         updated = engine.record_week_state(
             state,
             user_score=float(user_score),
