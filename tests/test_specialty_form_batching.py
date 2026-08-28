@@ -24,7 +24,9 @@ def test_knockout_mutation_workflows_batch_widget_edits() -> None:
 
     assert 'with st.form("knockout_waiver_transaction_form", clear_on_submit=False):' in source
     assert 'record_transaction = st.form_submit_button(' in source
+    assert '"Record waiver transaction",\n        disabled=' not in source
     assert 'if record_transaction and not can_record_transaction:' in source
     assert 'with st.form("knockout_week_result_form", clear_on_submit=False):' in source
     assert 'complete_week = st.form_submit_button(' in source
+    assert 'key="knockout_complete_week"' not in source
     assert 'if complete_week and not can_record:' in source
