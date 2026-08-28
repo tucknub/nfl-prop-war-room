@@ -48,7 +48,7 @@ def inject_styles() -> None:
         [data-testid="stSidebarNav"] a { border-radius:0; min-height:2.65rem; border-left:3px solid transparent; }
         [data-testid="stSidebarNav"] a[aria-current="page"] { background:rgba(255,255,255,.08); border-left-color:var(--pw-blue); }
         [data-testid="stSidebarNav"] a:hover { background:rgba(255,255,255,.06); }
-        .block-container { max-width:1480px; padding-top:4.25rem; padding-bottom:6rem; }
+        .block-container { max-width:1480px; padding-top:3rem; padding-bottom:5rem; }
         h1,h2,h3 { font-family:Inter,"Segoe UI",Arial,sans-serif; color:var(--pw-ink)!important; letter-spacing:-.028em; }
         .pw-intro h1 { font-size:clamp(2.05rem,3.1vw,3.35rem)!important; font-weight:800; line-height:1.02!important; margin:0 0 .3rem!important; padding:0!important; }
         h2 { font-size:1.4rem; font-weight:760; margin-top:1.3rem; }
@@ -159,7 +159,7 @@ def inject_styles() -> None:
         [data-testid="stSegmentedControl"] button { min-height:2.45rem; font-size:.8rem; }
         [data-testid="stVegaLiteChart"] { overflow:hidden; }
         @media (max-width:900px) {
-          .block-container { padding:4.1rem .8rem 6rem; }
+          .block-container { padding:3rem .8rem 5rem; }
           .pw-intro h1 { font-size:2rem!important; line-height:1.04!important; }
           .pw-intro { display:block; margin-bottom:.45rem; padding-bottom:.5rem; }
           .pw-intro p { font-size:.86rem; line-height:1.38; max-width:38rem; }
@@ -180,7 +180,7 @@ def inject_styles() -> None:
         }
         @media (max-width:520px) {
           [data-testid="stHeader"] { height:2.35rem; }
-          .block-container { padding:2.55rem .72rem 7rem; }
+          .block-container { padding:1.85rem .72rem 6rem; }
           .pw-intro h1 { font-size:1.82rem!important; line-height:1.06!important; max-width:100%; }
           .pw-intro p { font-size:.82rem; margin-top:.12rem; }
           .pw-mobile-only { display:block; }
