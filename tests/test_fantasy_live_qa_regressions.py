@@ -94,3 +94,19 @@ def test_background_refresh_is_limited_to_heavy_pure_fantasy_caches():
             isinstance(child, ast.Name) and child.id == "st"
             for child in body_nodes
         )
+
+
+
+def test_action_feed_uses_shared_bounded_weekly_context_loader():
+    source = _page_source()
+
+    assert "fetch_league_weekly_contexts(" in source
+    assert "transaction_weeks=tuple(" in source
+    assert "max_workers=3" in source
+
+    start = source.index("def _load_weekly_action_feed(")
+    end = source.index("\ndef _secret_default(", start)
+    feed_source = source[start:end]
+
+    assert "_load_matchups(" not in feed_source
+    assert "_load_transactions(" not in feed_source
