@@ -49,7 +49,7 @@ def inject_styles() -> None:
         [data-testid="stSidebarNav"] a[aria-current="page"] { background:rgba(255,255,255,.08); border-left-color:var(--pw-blue); }
         [data-testid="stSidebarNav"] a:hover { background:rgba(255,255,255,.06); }
         .block-container { max-width:1480px; padding-top:4.25rem; padding-bottom:6rem; }
-        h1,h2,h3 { font-family:"Arial Narrow","Segoe UI",Arial,sans-serif; color:var(--pw-ink)!important; letter-spacing:-.03em; }
+        h1,h2,h3 { font-family:Inter,"Segoe UI",Arial,sans-serif; color:var(--pw-ink)!important; letter-spacing:-.028em; }
         .pw-intro h1 { font-size:clamp(2.05rem,3.1vw,3.35rem)!important; font-weight:800; line-height:1.02!important; margin:0 0 .3rem!important; padding:0!important; }
         h2 { font-size:1.4rem; font-weight:760; margin-top:1.3rem; }
         h3 { font-size:1rem; font-weight:750; letter-spacing:-.01em; }
@@ -344,14 +344,12 @@ def searchable_selectbox(
     kwargs=None,
 ):
     """Render one consistent, visible search affordance for large option lists."""
-    select_kwargs = {"key": key}
+    select_kwargs = {"key": key, "filter_mode": "fuzzy"}
     if format_func is not None:
         select_kwargs["format_func"] = format_func
     if on_change is not None:
         select_kwargs.update({"on_change": on_change, "args": args, "kwargs": kwargs})
-    value = st.selectbox(label, options, **select_kwargs)
-    st.caption("Open the list and start typing to filter options.")
-    return value
+    return st.selectbox(label, options, **select_kwargs)
 
 
 def player_href(player_id: object, season: int, role_family: str) -> str:
