@@ -35,7 +35,7 @@ def test_arb_copy_distinguishes_implied_sum_edge_from_roi() -> None:
     source = _source("dashboard/pages/09_Glitch_Radar.py")
 
     assert 'meta.append(f"implied-sum edge {edge:.2f}%")' in source
-    assert '"locked ROI ≈ {locked_roi:.2f}%"' in source
+    assert "locked ROI ≈ {locked_roi:.2f}%" in source
     assert '"Feed edge"' not in source
     assert "feed edge" not in source.lower()
 
