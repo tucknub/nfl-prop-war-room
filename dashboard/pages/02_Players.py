@@ -29,7 +29,16 @@ def _whole(value: object) -> int:
 
 
 enable_browser_history_sync()
-page_intro("Player Role Profile", "What role does this player currently have, and how has it changed?")
+if owner_player_command_available():
+    page_intro(
+        "Player Command Center",
+        "What changed with this player, what context matters now, and what evidence should I inspect next?",
+    )
+else:
+    page_intro(
+        "Player Role Profile",
+        "What role does this player currently have, and how has it changed?",
+    )
 summary_slot = st.empty()
 seasons = available_seasons()
 season_state = initialize_query_control("players", "season", "players_season", seasons, parser=parse_int)
