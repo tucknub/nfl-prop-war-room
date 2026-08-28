@@ -111,13 +111,13 @@ def _is_demo_league(row: Mapping[str, Any]) -> bool:
     return name in DEMO_LEAGUE_NAMES
 
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False, refresh_mode="background")
 def _resolve_sleeper_user(username_or_id: str) -> dict[str, Any]:
     with SleeperClient() as client:
         return dict(client.fetch_user(username_or_id))
 
 
-@st.cache_data(ttl=120, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
 def _load_sleeper_leagues(user_id: str, season: str) -> tuple[dict[str, Any], ...]:
     with SleeperClient() as client:
         return tuple(
@@ -182,7 +182,7 @@ def _load_player_catalog() -> dict[str, dict[str, Any]]:
         }
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
 def _load_nfl_state():
     with SleeperClient() as client:
         return client.fetch_nfl_state()
@@ -1114,97 +1114,14 @@ def _render_cross_league_player_lookup(catalog: Mapping[str, Mapping[str, Any]],
 
 
 
-def _render_sleeper() -> None:
-    remembered_username = _remembered_sleeper_username()
-    username = st.text_input(
-        "Sleeper username",
-        value=remembered_username,
-        placeholder="Your Sleeper username",
-        help=(
-            "Read-only. Your Sleeper password is never needed. "
-            "Fantasy HQ remembers this username for the current app session "
-            "and in this page URL so a refresh does not make you type it again."
-        ),
-        key="fantasy_hq_sleeper_username_input",
-    )
-    normalized_username = username.strip()
-    if normalized_username:
-        _store_sleeper_username(normalized_username)
 
-    if not normalized_username:
-        st.info(
-            "Enter your Sleeper username above once to load your current NFL leagues."
-        )
-        st.markdown("### What unlocks immediately")
-        preview_rows = [
-            ("All-Leagues Action Center", "See every Sleeper league and which ones need attention."),
-            ("Roster Health", "Open starters, depth gaps, and injury/status problems."),
-            ("Lineup Check", "Slot-aware checks for FLEX, Superflex, WR/RB, WR/TE, IDP, and more."),
-            ("Waiver Watch", "Trending available players plus search across the full live free-agent pool."),
-            ("Roster Need Matches", "Match lineup needs to players who can legally fill those slots."),
-            ("Opponent Scout", "Inspect the actual weekly opponent, roster, injuries, and matchup state."),
-            ("League Activity", "Recent adds, drops, waivers, FAAB, trades, and pick movement."),
-            ("Cross-League + Exposure", "See MY ROSTER / OWNED / AVAILABLE across leagues and repeated player exposure."),
-        ]
-        st.dataframe(
-            pd.DataFrame(preview_rows, columns=["Fantasy HQ tool", "What it does"]),
-            hide_index=True,
-            width="stretch",
-        )
-        st.caption(
-            "Nothing above requires Yahoo or the Cloudflare persistence work. "
-            "Sleeper loads live after you enter your username."
-        )
-        return
-
-    try:
-        with st.spinner("Finding your Sleeper leagues..."):
-            sleeper_user = _resolve_sleeper_user(normalized_username)
-            nfl_state = _load_nfl_state()
-            season = str(nfl_state.league_season or nfl_state.season)
-            leagues = _load_sleeper_leagues(
-                str(sleeper_user["user_id"]),
-                season,
-            )
-    except Exception as exc:
-        st.error("Fantasy HQ could not load your Sleeper account.")
-        st.caption(str(exc))
-        return
-
-    if not leagues:
-        st.warning(f"No Sleeper NFL leagues were found for {season}.")
-        return
-
-    demo_leagues = tuple(row for row in leagues if _is_demo_league(row))
-    priority_leagues = tuple(row for row in leagues if not _is_demo_league(row))
-    scan_leagues = priority_leagues or tuple(leagues)
-
-    account_caption = (
-        f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
-        f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
-    )
-    if demo_leagues and priority_leagues:
-        account_caption += (
-            f" · {len(demo_leagues)} test/demo league"
-            f"{'s' if len(demo_leagues) != 1 else ''} excluded from priorities"
-        )
-    st.caption(account_caption)
-
-    if st.button(
-        "Forget remembered Sleeper username",
-        key="fantasy_hq_forget_sleeper_username",
-    ):
-        st.session_state.pop(SLEEPER_USERNAME_SESSION_KEY, None)
-        st.session_state.pop("fantasy_hq_sleeper_username_input", None)
-        if SLEEPER_USERNAME_QUERY_KEY in st.query_params:
-            del st.query_params[SLEEPER_USERNAME_QUERY_KEY]
-        st.rerun()
-
-    all_league_ids = tuple(
-        str(row["league_id"])
-        for row in scan_leagues
-        if str(row.get("league_id") or "").strip()
-    )
+@st.fragment(parallel=True)
+def _render_all_league_decision_center(
+    user_id: str,
+    all_league_ids: tuple[str, ...],
+    feed_week: int,
+    feed_parlay_key: str,
+) -> None:
     all_states = ()
     all_catalog: dict[str, dict[str, Any]] = {}
     action_center = None
@@ -1213,7 +1130,7 @@ def _render_sleeper() -> None:
     try:
         with st.spinner("Building your all-leagues snapshot..."):
             all_states = _load_all_sleeper_states(
-                str(sleeper_user["user_id"]),
+                user_id,
                 all_league_ids,
             )
             all_catalog = _load_player_catalog()
@@ -1234,9 +1151,6 @@ def _render_sleeper() -> None:
     weekly_feed = None
     weekly_feed_error = None
     weekly_feed_data_errors = ()
-    feed_parlay_key = _secret_default("PARLAY_API_KEY")
-    feed_week = _fantasy_regular_week(nfl_state)
-
     if not all_states or not all_catalog:
         st.info(
             "The ranked action feed needs the all-leagues Sleeper snapshot "
@@ -1254,7 +1168,7 @@ def _render_sleeper() -> None:
             ):
                 weekly_feed, weekly_feed_data_errors = (
                     _load_weekly_action_feed(
-                        str(sleeper_user["user_id"]),
+                        user_id,
                         all_league_ids,
                         feed_week,
                         feed_parlay_key,
@@ -1461,6 +1375,108 @@ def _render_sleeper() -> None:
                     "Open Cross-league below for the exact players and leagues."
                 )
 
+
+
+def _render_sleeper() -> None:
+    remembered_username = _remembered_sleeper_username()
+    username = st.text_input(
+        "Sleeper username",
+        value=remembered_username,
+        placeholder="Your Sleeper username",
+        help=(
+            "Read-only. Your Sleeper password is never needed. "
+            "Fantasy HQ remembers this username for the current app session "
+            "and in this page URL so a refresh does not make you type it again."
+        ),
+        key="fantasy_hq_sleeper_username_input",
+    )
+    normalized_username = username.strip()
+    if normalized_username:
+        _store_sleeper_username(normalized_username)
+
+    if not normalized_username:
+        st.info(
+            "Enter your Sleeper username above once to load your current NFL leagues."
+        )
+        st.markdown("### What unlocks immediately")
+        preview_rows = [
+            ("All-Leagues Action Center", "See every Sleeper league and which ones need attention."),
+            ("Roster Health", "Open starters, depth gaps, and injury/status problems."),
+            ("Lineup Check", "Slot-aware checks for FLEX, Superflex, WR/RB, WR/TE, IDP, and more."),
+            ("Waiver Watch", "Trending available players plus search across the full live free-agent pool."),
+            ("Roster Need Matches", "Match lineup needs to players who can legally fill those slots."),
+            ("Opponent Scout", "Inspect the actual weekly opponent, roster, injuries, and matchup state."),
+            ("League Activity", "Recent adds, drops, waivers, FAAB, trades, and pick movement."),
+            ("Cross-League + Exposure", "See MY ROSTER / OWNED / AVAILABLE across leagues and repeated player exposure."),
+        ]
+        st.dataframe(
+            pd.DataFrame(preview_rows, columns=["Fantasy HQ tool", "What it does"]),
+            hide_index=True,
+            width="stretch",
+        )
+        st.caption(
+            "Nothing above requires Yahoo or the Cloudflare persistence work. "
+            "Sleeper loads live after you enter your username."
+        )
+        return
+
+    try:
+        with st.spinner("Finding your Sleeper leagues..."):
+            sleeper_user = _resolve_sleeper_user(normalized_username)
+            nfl_state = _load_nfl_state()
+            season = str(nfl_state.league_season or nfl_state.season)
+            leagues = _load_sleeper_leagues(
+                str(sleeper_user["user_id"]),
+                season,
+            )
+    except Exception as exc:
+        st.error("Fantasy HQ could not load your Sleeper account.")
+        st.caption(str(exc))
+        return
+
+    if not leagues:
+        st.warning(f"No Sleeper NFL leagues were found for {season}.")
+        return
+
+    demo_leagues = tuple(row for row in leagues if _is_demo_league(row))
+    priority_leagues = tuple(row for row in leagues if not _is_demo_league(row))
+    scan_leagues = priority_leagues or tuple(leagues)
+
+    account_caption = (
+        f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
+        f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
+    )
+    if demo_leagues and priority_leagues:
+        account_caption += (
+            f" · {len(demo_leagues)} test/demo league"
+            f"{'s' if len(demo_leagues) != 1 else ''} excluded from priorities"
+        )
+    st.caption(account_caption)
+
+    if st.button(
+        "Forget remembered Sleeper username",
+        key="fantasy_hq_forget_sleeper_username",
+    ):
+        st.session_state.pop(SLEEPER_USERNAME_SESSION_KEY, None)
+        st.session_state.pop("fantasy_hq_sleeper_username_input", None)
+        if SLEEPER_USERNAME_QUERY_KEY in st.query_params:
+            del st.query_params[SLEEPER_USERNAME_QUERY_KEY]
+        st.rerun()
+
+    all_league_ids = tuple(
+        str(row["league_id"])
+        for row in scan_leagues
+        if str(row.get("league_id") or "").strip()
+    )
+    feed_parlay_key = _secret_default("PARLAY_API_KEY")
+    feed_week = _fantasy_regular_week(nfl_state)
+    _render_all_league_decision_center(
+        str(sleeper_user["user_id"]),
+        all_league_ids,
+        feed_week,
+        feed_parlay_key,
+    )
+
     selector_leagues = (*priority_leagues, *demo_leagues) if priority_leagues else tuple(leagues)
     league_options = dict(
         build_sleeper_league_options(selector_leagues)
@@ -1496,25 +1512,16 @@ def _render_sleeper() -> None:
     st.session_state[LEGACY_FANTASY_LEAGUE_SELECTOR_KEY] = selected_label
     league_id = league_options[selected_label]
 
-    league = next(
-        (
-            state
-            for state in all_states
-            if state.platform_league_id == league_id
-        ),
-        None,
-    )
-    if league is None:
-        try:
-            with st.spinner("Loading league and roster..."):
-                league = _load_sleeper_league(
-                    league_id,
-                    str(sleeper_user["user_id"]),
-                )
-        except Exception as exc:
-            st.error("Fantasy HQ could not load this Sleeper league.")
-            st.caption(str(exc))
-            return
+    try:
+        with st.spinner("Loading league and roster..."):
+            league = _load_sleeper_league(
+                league_id,
+                str(sleeper_user["user_id"]),
+            )
+    except Exception as exc:
+        st.error("Fantasy HQ could not load this Sleeper league.")
+        st.caption(str(exc))
+        return
 
     my_roster = next(
         (
@@ -1598,6 +1605,42 @@ def _render_sleeper() -> None:
     team_explorer_tab = trade_tab
     standings_tab = league_tab
     rules_tab = league_tab
+
+    all_states = ()
+    all_catalog: dict[str, dict[str, Any]] = {}
+    needs_catalog = any(
+        bool(tab.open)
+        for tab in (
+            lineup_tab,
+            waiver_tab,
+            matchup_tab,
+            trade_tab,
+            league_tab,
+            cross_tab,
+        )
+    )
+    needs_all_states = any(
+        bool(tab.open)
+        for tab in (
+            waiver_tab,
+            trade_tab,
+            cross_tab,
+        )
+    )
+
+    if needs_catalog:
+        try:
+            all_catalog = _load_player_catalog()
+        except Exception:
+            all_catalog = {}
+    if needs_all_states:
+        try:
+            all_states = _load_all_sleeper_states(
+                str(sleeper_user["user_id"]),
+                all_league_ids,
+            )
+        except Exception:
+            all_states = ()
 
     if roster_tab.open:
         with roster_tab:
