@@ -432,17 +432,40 @@ def render_owner_player_command_center(
                     and selected_league.platform_league_id not in demo_ids
                     else (selected_league,)
                 )
-                try:
-                    card = build_player_intelligence_card(
-                        selected_league,
-                        card_states,
-                        reverse.sleeper_id,
-                        catalog,
+                if not selected_league.ownership_ready:
+                    ready_states = tuple(
+                        league for league in card_states if league.ownership_ready
                     )
-                except Exception as exc:
-                    st.warning("Fantasy player intelligence could not be built.")
-                    st.caption(str(exc))
+                    fan_a, fan_b, fan_c, fan_d = st.columns(4)
+                    fan_a.metric("This league", "Pre-draft")
+                    fan_b.metric("Current owner", "Not available yet")
+                    fan_c.metric("Current slot", "—")
+                    fan_d.metric(
+                        "Ownership-ready leagues",
+                        f"{len(ready_states)}/{len(card_states)}",
+                    )
+                    st.info(
+                        f"**FANTASY ACTION: WAIT FOR DRAFT** · {selected_league.name} "
+                        "has not published roster ownership yet. PropWar will not "
+                        "label this player available, owned, or tradeable until "
+                        "Sleeper ownership is ready."
+                    )
+                    st.caption(
+                        "This is an expected pre-draft state, not a Fantasy data error."
+                    )
                     card = None
+                else:
+                    try:
+                        card = build_player_intelligence_card(
+                            selected_league,
+                            card_states,
+                            reverse.sleeper_id,
+                            catalog,
+                        )
+                    except Exception as exc:
+                        st.warning("Fantasy player intelligence could not be built.")
+                        st.caption(str(exc))
+                        card = None
 
                 if card is not None:
                     fan_a, fan_b, fan_c, fan_d = st.columns(4)
