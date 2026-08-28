@@ -1343,7 +1343,7 @@ def _render_sleeper() -> None:
                         st.caption(error)
 
     with st.expander("All-league health & coverage", expanded=False):
-            st.markdown("#### All-league status")
+        st.markdown("#### All-league status")
         if action_center is None:
             st.warning(
                 "The all-leagues snapshot could not be completed. "
