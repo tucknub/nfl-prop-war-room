@@ -9,6 +9,7 @@ from glitch_radar_props_cache import shared_prop_snapshot
 from player_command_center import build_player_prop_context
 from research_data import ROLE_LABELS
 from research_ui import section
+from owner_preferences import remembered_sleeper_username
 from src.fantasy.identity import (
     MATCHED,
     load_ffverse_player_ids,
@@ -46,15 +47,7 @@ def _secret_default(key: str) -> str:
 
 
 def _remembered_sleeper_username() -> str:
-    query_value = str(st.query_params.get("fh_sleeper") or "").strip()
-    if query_value:
-        st.session_state["fantasy_hq_sleeper_username"] = query_value
-        return query_value
-
-    return (
-        str(st.session_state.get("fantasy_hq_sleeper_username") or "").strip()
-        or _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
-    )
+    return remembered_sleeper_username()
 
 
 @st.cache_data(ttl=24 * 60 * 60, show_spinner=False)
