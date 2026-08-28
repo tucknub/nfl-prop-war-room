@@ -185,7 +185,8 @@ def test_manager_intelligence_is_explicitly_exposed_in_fantasy_hq():
         / "11_Fantasy_HQ.py"
     ).read_text(encoding="utf-8")
 
-    assert '"Manager Intelligence"' in page
+    assert '"Trades"' in page
+    assert 'st.markdown("#### Manager Intelligence")' in page
     assert "build_manager_intelligence" in page
     assert "Players they could reasonably move" in page
     assert "My players that fit them" in page
