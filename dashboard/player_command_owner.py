@@ -46,6 +46,11 @@ def _secret_default(key: str) -> str:
 
 
 def _remembered_sleeper_username() -> str:
+    query_value = str(st.query_params.get("fh_sleeper") or "").strip()
+    if query_value:
+        st.session_state["fantasy_hq_sleeper_username"] = query_value
+        return query_value
+
     return (
         str(st.session_state.get("fantasy_hq_sleeper_username") or "").strip()
         or _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
