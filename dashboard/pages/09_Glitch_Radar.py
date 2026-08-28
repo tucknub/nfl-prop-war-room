@@ -564,8 +564,8 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
 
 _require_owner()
 
-st.markdown("## My Glitch Radar")
-st.caption("NFL sportsbook opportunity scanner · my five books only for actionable bets · cached 10 minutes")
+st.markdown("## Markets")
+st.caption("Glitch Radar is the primary live market engine · my configured books · movement, price anomalies, line shopping, and current opportunities · cached 10 minutes")
 
 with st.spinner("Checking current NFL market data..."):
     snapshot = _live_snapshot()
