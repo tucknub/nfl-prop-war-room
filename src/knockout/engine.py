@@ -303,8 +303,8 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
     alive = active_team_count(state)
 
     if current_phase == "PRE_DRAFT":
-        next_action = "DRAFT A STARTABLE 14-PLAYER ROSTER"
-        why = "No roster is recorded yet, so player-level survival decisions are not safe."
+        next_action = "DRAFT ROSTER"
+        why = "No roster is recorded yet. Draft a startable 14-player roster before player-level survival decisions are scored."
     elif current_phase == "ELIMINATED":
         next_action = "SEASON COMPLETE"
         why = "Your team has been eliminated."
@@ -330,7 +330,7 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
             next_action = "REVIEW THIN DEPTH"
             why = risk["reason"]
         else:
-            next_action = "HOLD / SHOP FOR CLEAR UPGRADES"
+            next_action = "HOLD / SHOP"
             why = "The roster is structurally startable; avoid forcing moves that do not improve a starter or fragile depth."
 
     return {
