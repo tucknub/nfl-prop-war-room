@@ -284,7 +284,7 @@ if coverage_truth.get("coverage_limited"):
     )
 
 if st.button("Force new deep scan (uses 3 credits)", type="primary"):
-    _deep_snapshot.clear()
+    shared_prop_snapshot.clear()
     st.rerun()
 
 st.markdown("### Highest-priority deep signals")
@@ -322,91 +322,101 @@ elif near_misses:
 
 st.divider()
 price_tab, shop_tab, watch_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = st.tabs(
-    ["Prop Glitches", "Line Shopping", "Near Misses", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"]
+    ["Prop Glitches", "Line Shopping", "Near Misses", "Line Gaps", "Ladder Errors", "Stale Lines", "Coverage"],
+    key="deep_prop_radar_tabs",
+    on_change="rerun",
 )
 
-with price_tab:
-    st.markdown("### Exact same player / market / line price anomalies")
-    st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are actionable here.")
-    if not price_outliers:
-        st.info("No actionable exact-line prop price outlier was found in the returned coverage.")
-    for row in price_outliers:
-        _render_price_glitch(row)
-
-with shop_tab:
-    st.markdown("### Cross-book line shopping")
-    st.caption("Same event/player/market, different thresholds. An easier OVER line or higher UNDER line is shown only when its price is within 3 implied-probability points of the comparison price. DFS pick'em pricing is excluded.")
-    if not line_shop:
-        st.info("No easier-threshold line-shopping opportunity was found in the returned coverage.")
-    for row in line_shop:
-        _render_line_shop(row)
-
-with watch_tab:
-    st.markdown("### Near-miss same-line anomalies")
-    st.caption("Largest exact event/player/market/line price differences below the true glitch threshold. DFS pick'em midpoint pricing is excluded from these comparisons.")
-    if not near_misses:
-        st.info("No non-identical exact same-line sportsbook price comparison is available in the returned coverage.")
-    for row in near_misses:
-        _render_near_miss(row)
-
-with gap_tab:
-    st.markdown("### Cross-book prop line discrepancies")
-    st.caption("Materially different thresholds between sportsbooks I use. These are middle/line-shopping candidates, not automatic arbs.")
-    if not line_gaps:
-        st.info("No material line gap was found in the returned coverage.")
-    for row in line_gaps:
-        _render_line_gap(row)
-
-with ladder_tab:
-    st.markdown("### Impossible / inverted alternate ladders")
-    st.caption("A harder OVER threshold should never be priced materially more likely than an easier OVER threshold at the same book.")
-    if not ladder_violations:
-        st.info("No ladder monotonicity violation is visible in the returned coverage.")
-    for row in ladder_violations:
-        _render_ladder(row)
-
-with stale_tab:
-    st.markdown("### Stale-line price watches")
-    st.caption("One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. DFS-only freshness is context, not an actionable price comparison.")
-    if not stale_props:
-        st.info("No user-book prop in the returned coverage has both a stale price and a fresh comparable sportsbook/exchange price peer.")
-    for row in stale_props:
-        _render_stale(row)
-
-with coverage_tab:
-    st.markdown("### My sportsbook prop coverage")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Configured books visible", f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5")
-    c2.metric("My-book rows", f"{int(coverage_truth.get('user_book_total_rows') or 0):,}")
-    c3.metric("Dominant book share", f"{float(coverage_truth.get('dominant_user_book_share') or 0) * 100:.1f}%")
-
-    counts = coverage_truth.get("user_counts", {}) or {}
-    for book in USER_BOOKS:
-        count = int(counts.get(book, 0) or 0)
-        status = f"{count:,} rows" if count else "not visible in this scan"
-        st.write(f"**{book}** — {status}")
-
-    st.divider()
-    st.markdown("#### All feed sources in this scan")
-    st.caption("Raw normalized row counts show exactly which sources make up the deep snapshot. A configured book missing here is absent from the returned feed, not hidden by the dashboard.")
-    source_counts = coverage_truth.get("source_counts", {}) or {}
-    if source_counts:
-        for book, count in source_counts.items():
-            tag = " · MY BOOK" if book in USER_BOOKS else ""
-            st.write(f"**{book}** — {int(count):,} rows{tag}")
-    else:
-        st.write("No source rows returned.")
-
-    st.divider()
-    st.markdown("#### Player identity audit")
-    q1, q2, q3 = st.columns(3)
-    q1.metric("Cross-book players", f"{quality.get('cross_book_players', 0):,}")
-    q2.metric("Cross-book player-games", f"{quality.get('cross_book_player_events', 0):,}")
-    q3.metric("Raw player labels", f"{quality.get('raw_player_labels', 0):,}")
-    st.caption("Cross-book player identities are the useful headline for comparison work. Raw player labels remain a feed-quality diagnostic.")
-
-    st.divider()
-    st.markdown("#### Market families detected")
-    markets = coverage.get("markets", []) or []
-    st.write(", ".join(str(market).replace("_", " ") for market in markets) if markets else "None returned.")
-    st.caption("Reference books may establish comparison context, but only the configured five sportsbooks are treated as actionable books.")
+if price_tab.open:
+    with price_tab:
+        st.markdown("### Exact same player / market / line price anomalies")
+        st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are actionable here.")
+        if not price_outliers:
+            st.info("No actionable exact-line prop price outlier was found in the returned coverage.")
+        for row in price_outliers:
+            _render_price_glitch(row)
+    
+if shop_tab.open:
+    with shop_tab:
+        st.markdown("### Cross-book line shopping")
+        st.caption("Same event/player/market, different thresholds. An easier OVER line or higher UNDER line is shown only when its price is within 3 implied-probability points of the comparison price. DFS pick'em pricing is excluded.")
+        if not line_shop:
+            st.info("No easier-threshold line-shopping opportunity was found in the returned coverage.")
+        for row in line_shop:
+            _render_line_shop(row)
+    
+if watch_tab.open:
+    with watch_tab:
+        st.markdown("### Near-miss same-line anomalies")
+        st.caption("Largest exact event/player/market/line price differences below the true glitch threshold. DFS pick'em midpoint pricing is excluded from these comparisons.")
+        if not near_misses:
+            st.info("No non-identical exact same-line sportsbook price comparison is available in the returned coverage.")
+        for row in near_misses:
+            _render_near_miss(row)
+    
+if gap_tab.open:
+    with gap_tab:
+        st.markdown("### Cross-book prop line discrepancies")
+        st.caption("Materially different thresholds between sportsbooks I use. These are middle/line-shopping candidates, not automatic arbs.")
+        if not line_gaps:
+            st.info("No material line gap was found in the returned coverage.")
+        for row in line_gaps:
+            _render_line_gap(row)
+    
+if ladder_tab.open:
+    with ladder_tab:
+        st.markdown("### Impossible / inverted alternate ladders")
+        st.caption("A harder OVER threshold should never be priced materially more likely than an easier OVER threshold at the same book.")
+        if not ladder_violations:
+            st.info("No ladder monotonicity violation is visible in the returned coverage.")
+        for row in ladder_violations:
+            _render_ladder(row)
+    
+if stale_tab.open:
+    with stale_tab:
+        st.markdown("### Stale-line price watches")
+        st.caption("One of my books is at least 10 minutes old while an exact same-line sportsbook/exchange peer is 3 minutes old or fresher. DFS-only freshness is context, not an actionable price comparison.")
+        if not stale_props:
+            st.info("No user-book prop in the returned coverage has both a stale price and a fresh comparable sportsbook/exchange price peer.")
+        for row in stale_props:
+            _render_stale(row)
+    
+if coverage_tab.open:
+    with coverage_tab:
+        st.markdown("### My sportsbook prop coverage")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Configured books visible", f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5")
+        c2.metric("My-book rows", f"{int(coverage_truth.get('user_book_total_rows') or 0):,}")
+        c3.metric("Dominant book share", f"{float(coverage_truth.get('dominant_user_book_share') or 0) * 100:.1f}%")
+    
+        counts = coverage_truth.get("user_counts", {}) or {}
+        for book in USER_BOOKS:
+            count = int(counts.get(book, 0) or 0)
+            status = f"{count:,} rows" if count else "not visible in this scan"
+            st.write(f"**{book}** — {status}")
+    
+        st.divider()
+        st.markdown("#### All feed sources in this scan")
+        st.caption("Raw normalized row counts show exactly which sources make up the deep snapshot. A configured book missing here is absent from the returned feed, not hidden by the dashboard.")
+        source_counts = coverage_truth.get("source_counts", {}) or {}
+        if source_counts:
+            for book, count in source_counts.items():
+                tag = " · MY BOOK" if book in USER_BOOKS else ""
+                st.write(f"**{book}** — {int(count):,} rows{tag}")
+        else:
+            st.write("No source rows returned.")
+    
+        st.divider()
+        st.markdown("#### Player identity audit")
+        q1, q2, q3 = st.columns(3)
+        q1.metric("Cross-book players", f"{quality.get('cross_book_players', 0):,}")
+        q2.metric("Cross-book player-games", f"{quality.get('cross_book_player_events', 0):,}")
+        q3.metric("Raw player labels", f"{quality.get('raw_player_labels', 0):,}")
+        st.caption("Cross-book player identities are the useful headline for comparison work. Raw player labels remain a feed-quality diagnostic.")
+    
+        st.divider()
+        st.markdown("#### Market families detected")
+        markets = coverage.get("markets", []) or []
+        st.write(", ".join(str(market).replace("_", " ") for market in markets) if markets else "None returned.")
+        st.caption("Reference books may establish comparison context, but only the configured five sportsbooks are treated as actionable books.")
+    
