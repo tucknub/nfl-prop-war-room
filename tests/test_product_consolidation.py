@@ -27,11 +27,12 @@ def test_owner_navigation_is_collapsed_to_four_core_workspaces() -> None:
         "Games",
         "Advanced Research",
         "Market Research",
-        "Margin War Room",
-        "Knockout Fantasy",
         "Methodology",
     ):
         assert f'title="{title}"' in app
+
+    assert 'title="Margin"' in app
+    assert 'title="Knockout"' in app
 
 
 def test_owner_home_is_decision_first_not_report_first() -> None:
