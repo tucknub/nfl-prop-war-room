@@ -82,17 +82,45 @@ st.caption(
     f"{active_teams} teams alive · ${int(state.get('faab_remaining', 0))} FAAB · private authoritative state loaded"
 )
 
-cols = st.columns(4)
-cols[0].metric("Phase", current_phase.replace("_", " ").title())
-cols[1].metric("Teams alive", active_teams)
-cols[2].metric("FAAB", f"${int(state.get('faab_remaining', 0))}")
-cols[3].metric("Roster", f"{len(state.get('roster') or [])}/{int(league['roster_size'])}")
+decision = engine.knockout_decision_summary(state)
+risk = decision["roster_risk"]
+faab_posture = decision["faab"]
+
+section(
+    "What Should I Do?",
+    "Decision-first Knockout guidance from the authoritative league state. Structural signals only; no fake survival probability or optimal bid.",
+)
+decision_cols = st.columns(4)
+decision_cols[0].metric("Next action", decision["next_action"])
+decision_cols[1].metric("Roster risk", risk["level"])
+decision_cols[2].metric("FAAB posture", faab_posture["posture"])
+decision_cols[3].metric("Teams alive", decision["teams_alive"])
+st.info(f"**WHY:** {decision['why']}")
+st.caption(
+    f"FAAB remaining: ${faab_posture['remaining']} / ${faab_posture['start']} "
+    f"({faab_posture['pct_remaining']:.0%}) · {faab_posture['reason']}"
+)
+
+if current_phase != "PRE_DRAFT" and state.get("roster"):
+    depth = engine.roster_depth(state)
+    depth_cols = st.columns(4)
+    depth_cols[0].metric("QB", depth["counts"]["QB"])
+    depth_cols[1].metric("RB", depth["counts"]["RB"])
+    depth_cols[2].metric("WR", depth["counts"]["WR"])
+    depth_cols[3].metric("TE", depth["counts"]["TE"])
+    if depth["starter_gaps"]:
+        st.error("Missing starter coverage: " + ", ".join(depth["starter_gaps"]))
+    elif depth["thin_positions"]:
+        st.warning("Thin structural depth: " + ", ".join(depth["thin_positions"]))
+    else:
+        st.success("Required starter coverage has bench cushion.")
 
 note(
     "NO TRADES is a hard rule in this engine. Roster improvement after the draft comes from waivers/FAAB and the player pool released by eliminated teams."
 )
 
-section("League rules", "Knockout Fantasy is modeled independently from the Margin Pool.")
+with st.expander("League rules", expanded=False):
+    st.caption("Knockout Fantasy is modeled independently from the Margin Pool.")
 rules = pd.DataFrame(
     [
         ("Teams", league["teams"]),
