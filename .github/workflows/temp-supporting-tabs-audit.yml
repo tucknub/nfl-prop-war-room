@@ -1,0 +1,69 @@
+name: Supporting tabs audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-supporting-tabs-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile supporting pages
+        run: |
+          python -m py_compile dashboard/pages/01_Teams.py
+          python -m py_compile dashboard/pages/03_Games.py
+          python -m py_compile dashboard/pages/04_Reports.py
+          python -m py_compile dashboard/pages/05_Explorer.py
+          python -m py_compile dashboard/pages/06_Methodology.py
+          python -m py_compile dashboard/pages/07_Margin_War_Room.py
+          python -m py_compile dashboard/pages/08_Knockout_Fantasy_War_Room.py
+          python -m py_compile dashboard/pages/10_Deep_Prop_Radar.py
+          python -m py_compile src/knockout/engine.py
+          python -m py_compile src/knockout/state_store.py
+      - name: Run supporting-feature regressions
+        run: |
+          pytest -q             tests/test_knockout_fantasy.py             tests/test_margin_championship.py             tests/test_margin_pool_state.py             tests/test_margin_state_store.py             tests/test_public_role_research_language.py             tests/test_role_change_detector.py             tests/test_role_research.py             tests/test_role_validation.py             tests/test_weekly_role_report.py             tests/test_glitch_radar_props.py             tests/test_glitch_radar_props_feed.py
+      - name: Streamlit supporting-page startup
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          targets = [
+              "01_Teams.py",
+              "03_Games.py",
+              "04_Reports.py",
+              "05_Explorer.py",
+              "06_Methodology.py",
+              "07_Margin_War_Room.py",
+              "08_Knockout_Fantasy_War_Room.py",
+              "10_Deep_Prop_Radar.py",
+          ]
+          os.chdir("/tmp")
+          for name in targets:
+              target = root / "dashboard" / "pages" / name
+              at = AppTest.from_file(str(target))
+              at.run(timeout=60)
+              if at.exception:
+                  print(f"FAILED: {name}")
+                  for exc in at.exception:
+                      print(exc.value)
+                  raise SystemExit(1)
+              print(f"startup ok: {name}")
+          PY
