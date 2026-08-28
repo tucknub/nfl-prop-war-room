@@ -390,6 +390,29 @@ def _today_margin_audit(state_text: str) -> dict:
     )
 
 
+def _event_time_for_market_row(snapshot: dict, row: dict) -> object:
+    direct = row.get("commence_time")
+    if direct:
+        return direct
+
+    away = str(row.get("away_team") or "").strip()
+    home = str(row.get("home_team") or "").strip()
+    if not away or not home:
+        return None
+
+    expected_event = f"{away} @ {home}".strip().casefold()
+    for quote in snapshot.get("quotes", ()) or ():
+        if not isinstance(quote, dict):
+            continue
+        event = str(quote.get("event") or "").strip().casefold()
+        if event != expected_event:
+            continue
+        commence_time = quote.get("commence_time")
+        if commence_time:
+            return commence_time
+    return None
+
+
 def _market_actions(snapshot: dict) -> tuple[TodayAction, ...]:
     actions: list[TodayAction] = []
     fetched = local_start_label(snapshot.get("fetched_at"))
@@ -458,7 +481,8 @@ def _market_actions(snapshot: dict) -> tuple[TodayAction, ...]:
         fair_prob = row.get("fair_prob_pct")
         fair = fair_american_from_probability(fair_prob)
         ev = expected_ev_pct(row.get("price"), fair_prob)
-        phase = event_phase_label(row.get("commence_time"))
+        market_event_time = _event_time_for_market_row(snapshot, row)
+        phase = event_phase_label(market_event_time)
         is_preseason = phase == "PRESEASON"
         score = (
             410.0 + max(float(ev or 0.0), 0.0) * 3.0
