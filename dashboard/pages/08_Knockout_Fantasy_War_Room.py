@@ -258,7 +258,106 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
         st.success("Weekly Knockout state updated.")
         st.rerun()
 
-section("Season history", "Private ledger of eliminations, weekly scores, and waiver/FAAB moves.")
+latest_elimination = None
+if state.get("eliminations"):
+    latest_elimination = max(
+        state["eliminations"],
+        key=lambda row: int(row.get("week", 0)),
+    )
+
+if latest_elimination is not None:
+    release_week = int(latest_elimination.get("week", 0))
+    release_team = str(latest_elimination.get("team") or "").strip()
+    released_entry = next(
+        (
+            row
+            for row in state.get("released_rosters") or []
+            if int(row.get("week", -1)) == release_week
+        ),
+        None,
+    )
+
+    section(
+        "Eliminated roster → waivers",
+        "Capture the actual released roster once the elimination is official, then evaluate structural fit against your roster.",
+    )
+    if released_entry is None:
+        st.warning(
+            f"Week {release_week}: {release_team} was eliminated, but the released "
+            "14-player roster has not been loaded yet."
+        )
+        release_upload = st.file_uploader(
+            "Released roster CSV",
+            type=["csv"],
+            key=f"knockout_release_upload_{release_week}",
+        )
+        release_paste = st.text_area(
+            "Or paste released roster CSV",
+            placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
+            height=150,
+            key=f"knockout_release_paste_{release_week}",
+        )
+        release_text = ""
+        if release_upload is not None:
+            release_text = release_upload.getvalue().decode("utf-8-sig")
+        elif release_paste.strip():
+            release_text = release_paste
+
+        if release_text:
+            try:
+                parsed_release = _parse_roster_csv(release_text)
+                normalized_release = engine.validate_roster(
+                    parsed_release,
+                    roster_size=int(league["roster_size"]),
+                )
+                st.success(
+                    f"Released roster validates: {len(normalized_release)} players from {release_team}."
+                )
+                st.dataframe(
+                    pd.DataFrame(normalized_release),
+                    hide_index=True,
+                    width="stretch",
+                )
+                confirm_release = st.checkbox(
+                    f"I confirm this is {release_team}'s full released roster.",
+                    key=f"knockout_confirm_release_{release_week}",
+                )
+                if st.button(
+                    f"Save Week {release_week} released roster",
+                    type="primary",
+                    disabled=not confirm_release,
+                    key=f"knockout_save_release_{release_week}",
+                ):
+                    updated = engine.record_released_roster(
+                        state,
+                        week=release_week,
+                        team=release_team,
+                        players=normalized_release,
+                    )
+                    _persist_transition(
+                        config,
+                        state,
+                        updated,
+                        f"Record Knockout Week {release_week} released roster",
+                    )
+                    st.success("Released roster saved to private Knockout state.")
+                    st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+    else:
+        st.success(
+            f"Week {release_week} released roster loaded: {release_team}."
+        )
+        fits = engine.released_roster_fit(state, released_entry)
+        if fits:
+            st.markdown("**Roster-fit screen**")
+            st.dataframe(pd.DataFrame(fits), hide_index=True, width="stretch")
+            st.caption(
+                "Fit is structural only. It identifies positional need; it does not "
+                "rank player quality, project weekly points, or recommend a FAAB bid."
+            )
+
+section("Season history", "Private ledger of eliminations, weekly scores, released rosters, and waiver/FAAB moves.")
 if state.get("weekly_results"):
     results = pd.DataFrame(state["weekly_results"])
     eliminations = pd.DataFrame(state.get("eliminations") or [])
@@ -272,5 +371,6 @@ if state.get("faab_transactions"):
     st.dataframe(pd.DataFrame(state["faab_transactions"]), hide_index=True, width="stretch")
 
 st.caption(
-    "V1 is the league-state foundation. It intentionally does not claim a weekly survival probability or optimal FAAB bid until projection, opponent-field, and waiver-candidate evidence are loaded and validated."
+    "Knockout Decision Center uses authoritative league state, roster structure, field size, FAAB state, and recorded released rosters. "
+    "It intentionally does not claim a weekly survival probability, player-quality ranking, or optimal FAAB bid until projection and opponent-field evidence are validated."
 )
