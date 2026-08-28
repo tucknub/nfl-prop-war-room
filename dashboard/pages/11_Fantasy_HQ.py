@@ -1342,110 +1342,111 @@ def _render_sleeper() -> None:
                     for error in combined_feed_errors:
                         st.caption(error)
 
-    st.markdown("### All-Leagues Action Center")
-    if action_center is None:
-        st.warning(
-            "The all-leagues snapshot could not be completed. "
-            "Individual Sleeper leagues are still available below."
-        )
-        if all_scan_error:
-            st.caption(all_scan_error)
-    else:
-        action_a, action_b, action_c, action_d = st.columns(4)
-        action_a.metric("Sleeper leagues", action_center.league_count)
-        action_b.metric(
-            "Drafted",
-            f"{action_center.drafted_count}/{action_center.league_count}",
-        )
-        action_c.metric(
-            "Watch / action leagues",
-            len(action_center.action_leagues),
-        )
-        action_d.metric(
-            "Cross-league opportunities",
-            action_center.opportunity_count,
-        )
+    with st.expander("All-league health & coverage", expanded=False):
+        st.markdown("#### All-league status")
+        if action_center is None:
+            st.warning(
+                "The all-leagues snapshot could not be completed. "
+                "Individual Sleeper leagues are still available below."
+            )
+            if all_scan_error:
+                st.caption(all_scan_error)
+        else:
+            action_a, action_b, action_c, action_d = st.columns(4)
+            action_a.metric("Sleeper leagues", action_center.league_count)
+            action_b.metric(
+                "Drafted",
+                f"{action_center.drafted_count}/{action_center.league_count}",
+            )
+            action_c.metric(
+                "Watch / action leagues",
+                len(action_center.action_leagues),
+            )
+            action_d.metric(
+                "Cross-league opportunities",
+                action_center.opportunity_count,
+            )
 
-        status_labels = {
-            READY: "Ready",
-            WATCH: "Watch",
-            NEEDS_ATTENTION: "Needs attention",
-            PRE_DRAFT: "Pre-draft",
-        }
-        league_rows = [
-            {
-                "League": row.league_name,
-                "Status": status_labels.get(
-                    row.status,
-                    row.status.replace("_", " ").title(),
-                ),
-                "Rostered": row.health.roster_size,
-                "Starters": (
-                    f"{row.health.filled_starter_slots}/"
-                    f"{row.health.starter_slots}"
-                ),
-                "Open starters": row.health.open_starter_slots,
-                "Critical": row.health.critical_count,
-                "Warnings": row.health.warning_count,
+            status_labels = {
+                READY: "Ready",
+                WATCH: "Watch",
+                NEEDS_ATTENTION: "Needs attention",
+                PRE_DRAFT: "Pre-draft",
             }
-            for row in action_center.leagues
-        ]
-        st.dataframe(
-            pd.DataFrame(league_rows),
-            hide_index=True,
-            width="stretch",
-        )
-
-        if action_center.action_leagues:
-            st.markdown("#### What needs your attention")
-            alert_rows = []
-            for row in action_center.action_leagues:
-                issues = row.top_issues
-                if not issues:
-                    alert_rows.append(
-                        {
-                            "League": row.league_name,
-                            "Level": "WATCH",
-                            "Alert": "Review this roster.",
-                        }
-                    )
-                    continue
-                for issue in issues:
-                    alert_rows.append(
-                        {
-                            "League": row.league_name,
-                            "Level": issue.severity,
-                            "Alert": issue.message,
-                        }
-                    )
+            league_rows = [
+                {
+                    "League": row.league_name,
+                    "Status": status_labels.get(
+                        row.status,
+                        row.status.replace("_", " ").title(),
+                    ),
+                    "Rostered": row.health.roster_size,
+                    "Starters": (
+                        f"{row.health.filled_starter_slots}/"
+                        f"{row.health.starter_slots}"
+                    ),
+                    "Open starters": row.health.open_starter_slots,
+                    "Critical": row.health.critical_count,
+                    "Warnings": row.health.warning_count,
+                }
+                for row in action_center.leagues
+            ]
             st.dataframe(
-                pd.DataFrame(alert_rows),
+                pd.DataFrame(league_rows),
                 hide_index=True,
                 width="stretch",
             )
-        elif action_center.drafted_count:
-            st.success(
-                "No drafted Sleeper league currently has a factual "
-                "roster-health alert."
-            )
 
-        if action_center.pre_draft_count:
-            st.caption(
-                f"{action_center.pre_draft_count} Sleeper league"
-                f"{'s are' if action_center.pre_draft_count != 1 else ' is'} "
-                "still pre-draft; roster health will populate automatically "
-                "after Sleeper updates the roster."
-            )
+            if action_center.action_leagues:
+                st.markdown("#### What needs your attention")
+                alert_rows = []
+                for row in action_center.action_leagues:
+                    issues = row.top_issues
+                    if not issues:
+                        alert_rows.append(
+                            {
+                                "League": row.league_name,
+                                "Level": "WATCH",
+                                "Alert": "Review this roster.",
+                            }
+                        )
+                        continue
+                    for issue in issues:
+                        alert_rows.append(
+                            {
+                                "League": row.league_name,
+                                "Level": issue.severity,
+                                "Alert": issue.message,
+                            }
+                        )
+                st.dataframe(
+                    pd.DataFrame(alert_rows),
+                    hide_index=True,
+                    width="stretch",
+                )
+            elif action_center.drafted_count:
+                st.success(
+                    "No drafted Sleeper league currently has a factual "
+                    "roster-health alert."
+                )
 
-        if action_center.opportunity_count:
-            st.info(
-                f"{action_center.opportunity_count} player"
-                f"{'s' if action_center.opportunity_count != 1 else ''} "
-                "on one of your Sleeper rosters "
-                f"{'are' if action_center.opportunity_count != 1 else 'is'} "
-                "currently available in another Sleeper league. "
-                "Open Cross-league below for the exact players and leagues."
-            )
+            if action_center.pre_draft_count:
+                st.caption(
+                    f"{action_center.pre_draft_count} Sleeper league"
+                    f"{'s are' if action_center.pre_draft_count != 1 else ' is'} "
+                    "still pre-draft; roster health will populate automatically "
+                    "after Sleeper updates the roster."
+                )
+
+            if action_center.opportunity_count:
+                st.info(
+                    f"{action_center.opportunity_count} player"
+                    f"{'s' if action_center.opportunity_count != 1 else ''} "
+                    "on one of your Sleeper rosters "
+                    f"{'are' if action_center.opportunity_count != 1 else 'is'} "
+                    "currently available in another Sleeper league. "
+                    "Open Cross-league below for the exact players and leagues."
+                )
 
     league_options = dict(
         build_sleeper_league_options(leagues)
@@ -1532,32 +1533,31 @@ def _render_sleeper() -> None:
     )
 
     (
-        roster_tab,
-        health_tab,
+        team_tab,
         lineup_tab,
         waiver_tab,
-        activity_tab,
         matchup_tab,
-        opponent_tab,
-        team_explorer_tab,
-        standings_tab,
-        rules_tab,
+        trade_tab,
+        league_tab,
         cross_tab,
     ) = st.tabs(
         [
-            "My roster",
-            "Roster Health",
-            "Lineup Check",
-            "Waiver Watch",
-            "League Activity",
-            "Current matchup",
-            "Opponent Scout",
-            "Manager Intelligence",
-            "Standings",
-            "League settings",
-            "Cross-league",
+            "Team",
+            "Start / Sit",
+            "Waivers",
+            "Matchup",
+            "Trades",
+            "League",
+            "Across leagues",
         ]
     )
+    roster_tab = team_tab
+    health_tab = team_tab
+    activity_tab = league_tab
+    opponent_tab = matchup_tab
+    team_explorer_tab = trade_tab
+    standings_tab = league_tab
+    rules_tab = league_tab
 
     with roster_tab:
         if not my_roster or not my_roster.players:
@@ -4250,13 +4250,13 @@ def _render_yahoo(
 
 
 page_intro(
-    "Fantasy HQ",
-    "Your live Sleeper fantasy command center. Yahoo is optional and can wait.",
+    "Fantasy",
+    "What should I do with my teams? Sleeper is the supported live provider.",
 )
 
 st.caption(
-    "Owner tool · live read-only Sleeper data · "
-    "the site-wide historical research badge above is separate from Fantasy HQ freshness"
+    "Fantasy HQ engine · live read-only Sleeper data · "
+    "the site-wide historical role-data badge is separate from Fantasy freshness"
 )
 
 yahoo_config = _yahoo_config()
@@ -4269,31 +4269,18 @@ except Exception as exc:
     st.warning("Yahoo authorization needs to be refreshed.")
     st.caption(str(exc))
 
-source_a, source_b = st.columns(2)
-with source_a:
-    with st.container(border=True):
-        st.markdown("### Sleeper")
-        st.success("Live")
-        st.caption("Public read-only API · username discovery")
-with source_b:
-    with st.container(border=True):
-        st.markdown("### Yahoo")
-        if yahoo_access_token:
-            st.success("Connected")
-            st.caption("Optional provider · already authorized")
-        else:
-            st.info("Optional · parked")
-            st.caption("Not required to use Fantasy HQ or your Sleeper tools")
-
-sleeper_tab, yahoo_tab = st.tabs(["Sleeper leagues", "Yahoo leagues"])
-with sleeper_tab:
-    _render_sleeper()
-with yahoo_tab:
-    _render_yahoo(yahoo_config, yahoo_access_token)
+_render_sleeper()
 
 st.divider()
+with st.expander("Optional Yahoo · parked", expanded=False):
+    if yahoo_access_token:
+        st.success("Yahoo connected.")
+        st.caption("Optional provider · not part of the core Fantasy workflow.")
+    else:
+        st.info("Yahoo is optional and not required for Fantasy.")
+    _render_yahoo(yahoo_config, yahoo_access_token)
+
 st.caption(
-    "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
-    "roster health, lineup checks, waiver tools, opponent scouting, league activity, "
-    "standings/settings, cross-league ownership, and player exposure."
+    "Core Fantasy workflow: priorities first, then Team, Start / Sit, Waivers, Matchup, Trades, "
+    "League, and Across leagues."
 )

@@ -158,7 +158,7 @@ def test_fantasy_hq_exposes_cross_league_ownership_ui():
         / "11_Fantasy_HQ.py"
     ).read_text(encoding="utf-8")
 
-    assert '"Cross-league"' in page
+    assert '"Across leagues"' in page
     assert "My players available in another league" in page
     assert "Look up any player" in page
     assert "lookup_live_sleeper_player" in page

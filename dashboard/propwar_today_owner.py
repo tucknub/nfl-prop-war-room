@@ -684,12 +684,11 @@ def render_propwar_today_if_owner() -> None:
     if not _owner_mode():
         return
 
-    st.markdown("## PropWar Today")
-    st.markdown("### What Should I Do?")
+    st.markdown("## What Should I Do?")
     st.caption(
-        "The highest-value actions PropWar already knows about, ranked across "
-        "markets, fantasy, role changes, and Margin. Evidence first; deep-link "
-        "to the tool that produced each action."
+        "The few current actions PropWar believes deserve attention across "
+        "markets, fantasy, role changes, and Margin. Every card shows the action, "
+        "why it surfaced, confidence, freshness, and the source evidence."
     )
 
     actions: list[TodayAction] = []
