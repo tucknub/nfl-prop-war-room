@@ -1,5 +1,5 @@
 name: PropWar consolidation phase 2
-# rerun after Fantasy expander indentation fix
+# final rerun after consolidated Fantasy contract updates
 
 on:
   push:
