@@ -21,6 +21,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import page_intro, section  # noqa: E402
 from glitch_radar_props_cache import shared_prop_snapshot  # noqa: E402
+from owner_preferences import (  # noqa: E402
+    SLEEPER_USERNAME_QUERY_KEY,
+    SLEEPER_USERNAME_SESSION_KEY,
+    remembered_sleeper_username,
+    store_sleeper_username,
+)
 from src.fantasy.action_center import build_fantasy_action_center  # noqa: E402
 from src.fantasy.action_feed import build_weekly_action_feed  # noqa: E402
 from src.fantasy.exposure import build_my_player_exposure  # noqa: E402
@@ -92,8 +98,6 @@ from src.fantasy.yahoo import (  # noqa: E402
 
 YAHOO_SESSION_KEY = "fantasy_hq_yahoo_tokens"
 YAHOO_CALLBACK_KEY = "fantasy_hq_yahoo_processed_code"
-SLEEPER_USERNAME_SESSION_KEY = "fantasy_hq_sleeper_username"
-SLEEPER_USERNAME_QUERY_KEY = "fh_sleeper"
 DEMO_LEAGUE_NAMES = {"test league", "mock league", "demo league"}
 
 
@@ -516,23 +520,11 @@ def _points(roster) -> float:
 
 
 def _remembered_sleeper_username() -> str:
-    session_value = str(
-        st.session_state.get(SLEEPER_USERNAME_SESSION_KEY) or ""
-    ).strip()
-    query_value = str(
-        st.query_params.get(SLEEPER_USERNAME_QUERY_KEY) or ""
-    ).strip()
-    secret_value = _secret_default("FANTASY_HQ_SLEEPER_USERNAME")
-    return session_value or query_value or secret_value
+    return remembered_sleeper_username()
 
 
 def _store_sleeper_username(username: str) -> None:
-    normalized = str(username or "").strip()
-    if not normalized:
-        return
-    st.session_state[SLEEPER_USERNAME_SESSION_KEY] = normalized
-    if str(st.query_params.get(SLEEPER_USERNAME_QUERY_KEY) or "").strip() != normalized:
-        st.query_params[SLEEPER_USERNAME_QUERY_KEY] = normalized
+    store_sleeper_username(username)
 
 
 @st.fragment

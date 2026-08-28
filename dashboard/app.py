@@ -20,6 +20,7 @@ from research_data import operational_status_text  # noqa: E402
 from public_copy import role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
 from propwar_today_owner import render_propwar_today_if_owner  # noqa: E402
+from owner_preferences import remembered_sleeper_username  # noqa: E402
 
 
 REPORT_CARDS = (
@@ -109,12 +110,7 @@ def render_launch_home() -> None:
             "Core workspaces",
             "Four places define PropWar now. Everything else is supporting evidence or a specialized owner tool.",
         )
-        owner_secrets = _secrets_snapshot()
-        sleeper_username = (
-            str(st.session_state.get("fantasy_hq_sleeper_username") or "").strip()
-            or str(st.query_params.get("fh_sleeper") or "").strip()
-            or str(owner_secrets.get("FANTASY_HQ_SLEEPER_USERNAME") or "").strip()
-        )
+        sleeper_username = remembered_sleeper_username()
         sleeper_suffix = (
             f"?fh_sleeper={quote(sleeper_username)}"
             if sleeper_username

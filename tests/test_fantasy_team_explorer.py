@@ -174,5 +174,14 @@ def test_fantasy_hq_exposes_team_explorer_and_remembered_sleeper_username():
     assert "build_league_team_profile" in page
     assert "Likely shopping" in page
     assert "Available players that fit" in page
-    assert "fantasy_hq_sleeper_username" in page
-    assert "fh_sleeper" in page
+    assert "remembered_sleeper_username" in page
+    assert "store_sleeper_username" in page
+
+    owner_preferences = (
+        Path(__file__).resolve().parents[1]
+        / "dashboard"
+        / "owner_preferences.py"
+    ).read_text(encoding="utf-8")
+    assert 'SLEEPER_USERNAME_SESSION_KEY = "fantasy_hq_sleeper_username"' in owner_preferences
+    assert 'SLEEPER_USERNAME_QUERY_KEY = "fh_sleeper"' in owner_preferences
+    assert "private_sleeper_username()" in owner_preferences
