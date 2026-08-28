@@ -19,9 +19,6 @@ def enrich_ev_markets(rows: Iterable[dict[str, Any]], quotes: Iterable[dict[str,
         if not isinstance(raw, dict):
             continue
         row = dict(raw)
-        if row.get("market"):
-            enriched.append(row)
-            continue
 
         away, home = _event_teams(row)
         event = f"{away} @ {home}".strip(" @")
@@ -58,11 +55,13 @@ def enrich_ev_markets(rows: Iterable[dict[str, Any]], quotes: Iterable[dict[str,
 
         if len(matches) == 1:
             match = matches[0]
-            row["market"] = match.get("market")
-            row["threshold"] = match.get("threshold")
-            if match.get("commence_time"):
+            if not row.get("market"):
+                row["market"] = match.get("market")
+            if row.get("threshold") is None:
+                row["threshold"] = match.get("threshold")
+            if not row.get("commence_time") and match.get("commence_time"):
                 row["commence_time"] = match.get("commence_time")
-        elif side_name in {home, away}:
+        elif not row.get("market") and side_name in {home, away}:
             # Current no-auth EV preview is overwhelmingly h2h. Only use this fallback
             # when the EV side is an exact team name, never for generic Over/Under sides.
             row["market"] = "moneyline"
