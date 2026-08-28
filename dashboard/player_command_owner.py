@@ -9,7 +9,11 @@ from glitch_radar_props_cache import shared_prop_snapshot
 from player_command_center import build_player_prop_context
 from research_data import ROLE_LABELS
 from research_ui import section
-from owner_preferences import remembered_sleeper_username
+try:
+    from owner_preferences import remembered_sleeper_username
+except ImportError:
+    from dashboard.owner_preferences import remembered_sleeper_username
+
 from src.fantasy.identity import (
     MATCHED,
     load_ffverse_player_ids,
