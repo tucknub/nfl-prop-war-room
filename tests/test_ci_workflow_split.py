@@ -33,7 +33,8 @@ def test_fantasy_worker_tests_are_isolated_from_streamlit_browser_qa() -> None:
     assert "name: Fantasy Worker Tests" in workflow
     assert "node --test workers/fantasy-hq/*.test.mjs" in workflow
     assert "playwright" not in workflow.lower()
-    assert "streamlit" not in workflow.lower()
+    assert "streamlit run" not in workflow.lower()
+    assert "actions/setup-python" not in workflow
     assert 'workers/fantasy-hq/**' in workflow
 
 
