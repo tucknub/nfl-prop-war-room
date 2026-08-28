@@ -1532,32 +1532,31 @@ def _render_sleeper() -> None:
     )
 
     (
-        roster_tab,
-        health_tab,
+        team_tab,
         lineup_tab,
         waiver_tab,
-        activity_tab,
         matchup_tab,
-        opponent_tab,
-        team_explorer_tab,
-        standings_tab,
-        rules_tab,
+        trade_tab,
+        league_tab,
         cross_tab,
     ) = st.tabs(
         [
-            "My roster",
-            "Roster Health",
-            "Lineup Check",
-            "Waiver Watch",
-            "League Activity",
-            "Current matchup",
-            "Opponent Scout",
-            "Manager Intelligence",
-            "Standings",
-            "League settings",
-            "Cross-league",
+            "Team",
+            "Start / Sit",
+            "Waivers",
+            "Matchup",
+            "Trades",
+            "League",
+            "Across leagues",
         ]
     )
+    roster_tab = team_tab
+    health_tab = team_tab
+    activity_tab = league_tab
+    opponent_tab = matchup_tab
+    team_explorer_tab = trade_tab
+    standings_tab = league_tab
+    rules_tab = league_tab
 
     with roster_tab:
         if not my_roster or not my_roster.players:
@@ -4250,13 +4249,13 @@ def _render_yahoo(
 
 
 page_intro(
-    "Fantasy HQ",
-    "Your live Sleeper fantasy command center. Yahoo is optional and can wait.",
+    "Fantasy",
+    "What should I do with my teams? Sleeper is the supported live provider.",
 )
 
 st.caption(
-    "Owner tool · live read-only Sleeper data · "
-    "the site-wide historical research badge above is separate from Fantasy HQ freshness"
+    "Fantasy HQ engine · live read-only Sleeper data · "
+    "the site-wide historical role-data badge is separate from Fantasy freshness"
 )
 
 yahoo_config = _yahoo_config()
@@ -4269,31 +4268,18 @@ except Exception as exc:
     st.warning("Yahoo authorization needs to be refreshed.")
     st.caption(str(exc))
 
-source_a, source_b = st.columns(2)
-with source_a:
-    with st.container(border=True):
-        st.markdown("### Sleeper")
-        st.success("Live")
-        st.caption("Public read-only API · username discovery")
-with source_b:
-    with st.container(border=True):
-        st.markdown("### Yahoo")
-        if yahoo_access_token:
-            st.success("Connected")
-            st.caption("Optional provider · already authorized")
-        else:
-            st.info("Optional · parked")
-            st.caption("Not required to use Fantasy HQ or your Sleeper tools")
-
-sleeper_tab, yahoo_tab = st.tabs(["Sleeper leagues", "Yahoo leagues"])
-with sleeper_tab:
-    _render_sleeper()
-with yahoo_tab:
-    _render_yahoo(yahoo_config, yahoo_access_token)
+_render_sleeper()
 
 st.divider()
+with st.expander("Optional Yahoo · parked", expanded=False):
+    if yahoo_access_token:
+        st.success("Yahoo connected.")
+        st.caption("Optional provider · not part of the core Fantasy workflow.")
+    else:
+        st.info("Yahoo is optional and not required for Fantasy.")
+    _render_yahoo(yahoo_config, yahoo_access_token)
+
 st.caption(
-    "Fantasy HQ currently includes live Sleeper league discovery, all-leagues action center, "
-    "roster health, lineup checks, waiver tools, opponent scouting, league activity, "
-    "standings/settings, cross-league ownership, and player exposure."
+    "Core Fantasy workflow: priorities first, then Team, Start / Sit, Waivers, Matchup, Trades, "
+    "League, and Across leagues."
 )
