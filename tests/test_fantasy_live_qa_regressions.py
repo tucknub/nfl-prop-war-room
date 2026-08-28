@@ -38,14 +38,22 @@ def test_action_center_watch_metric_matches_watch_rows():
     assert "len(action_center.action_leagues)" in source
 
 
-def test_fantasy_hq_parallelizes_all_leagues_and_reuses_selected_state():
+def test_fantasy_hq_parallelizes_global_scan_without_blocking_selected_league():
     source = _page_source()
 
     assert "client.fetch_normalized_leagues(" in source
     assert "max_workers=3" in source
-    assert "for state in all_states" in source
-    assert "if league is None:" in source
-    assert 'with st.spinner("Loading league and roster..."):' in source
+    assert "@st.fragment(parallel=True)" in source
+    assert "def _render_all_league_decision_center(" in source
+
+    render_source = source[source.index("def _render_sleeper()") :]
+    selector = render_source.index("selector_leagues =")
+    tabs = render_source.index('key="fantasy_primary_tabs"')
+    selected_league_shell = render_source[selector:tabs]
+
+    assert "_load_sleeper_league(" in selected_league_shell
+    assert "for state in all_states" not in selected_league_shell
+    assert 'with st.spinner("Loading league and roster..."):' in selected_league_shell
 
 
 def test_background_refresh_is_limited_to_heavy_pure_fantasy_caches():
