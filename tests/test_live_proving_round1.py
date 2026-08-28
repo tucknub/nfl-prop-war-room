@@ -55,7 +55,9 @@ def test_today_downgrades_preseason_ev_from_high_priority() -> None:
     source = _source("dashboard/propwar_today_owner.py")
 
     assert "event_phase_label" in source
-    assert 'is_preseason = phase == "PRESEASON"' in source
+    assert 'is_preseason = force_preseason or phase == "PRESEASON"' in source
+    assert 'live_preseason = season_type.startswith("pre")' in source
+    assert "force_preseason=live_preseason" in source
     assert "MEDIUM\n                    if is_preseason" in source
     assert "PRESEASON · " in source
 
