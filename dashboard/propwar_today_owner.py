@@ -173,22 +173,6 @@ def _today_trending_adds():
         )
 
 
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
-def _today_matchups(league_id: str, week: int):
-    if week < 1:
-        return ()
-    with SleeperClient() as client:
-        return client.fetch_matchups(league_id, week)
-
-
-@st.cache_data(ttl=60, show_spinner=False, refresh_mode="background")
-def _today_transactions(league_id: str, week: int):
-    if week < 1:
-        return ()
-    with SleeperClient() as client:
-        return client.fetch_transactions(league_id, week)
-
-
 @st.cache_data(ttl=5 * 60, show_spinner=False, refresh_mode="background")
 def _today_fantasy_feed(
     user_id: str,
