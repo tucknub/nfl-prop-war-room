@@ -186,6 +186,14 @@ After the four core workflows are proven, move the product experience to Cloudfl
 
 The migration should be incremental. Do not rewrite validated role/fantasy/market engines merely to change hosting.
 
+## Live-season proving
+
+The product has moved from feature-building into proving mode.
+
+See **[LIVE_PROVING_PLAN.md](LIVE_PROVING_PLAN.md)** for the weekly operating loop, issue severity rules, private-beta exit criteria, and the trigger for a later Cloudflare migration.
+
+See **[PRODUCT_STATUS.md](PRODUCT_STATUS.md)** for the current surface-by-surface product status.
+
 ## Success criterion
 
 Opening PropWar should no longer feel like entering a toolbox.

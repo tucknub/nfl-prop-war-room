@@ -15,6 +15,8 @@ Supporting Role Intelligence pages (Teams, Reports, Games, Advanced Research, Me
 
 See **[PRODUCT.md](PRODUCT.md)** for the authoritative product definition, finish criteria, feature-freeze rules, and hosting strategy.
 
+See **[LIVE_PROVING_PLAN.md](LIVE_PROVING_PLAN.md)** for the current live-season operating plan and **[PRODUCT_STATUS.md](PRODUCT_STATUS.md)** for the honest surface-by-surface status.
+
 ## Product status
 
 PropWar is a **private beta**.
