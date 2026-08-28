@@ -24,6 +24,13 @@ from src.fantasy.player_intelligence import build_player_intelligence_card
 from src.fantasy.sleeper import SleeperClient
 
 
+DEMO_LEAGUE_NAMES = {"test league", "mock league", "demo league"}
+
+
+def _is_demo_league(row: dict) -> bool:
+    return str(row.get("name") or "").strip().casefold() in DEMO_LEAGUE_NAMES
+
+
 def _mapping(value) -> dict:
     try:
         return dict(value.to_dict()) if hasattr(value, "to_dict") else dict(value)
@@ -332,13 +339,34 @@ def render_owner_player_command_center(
                     str(sleeper_user["user_id"]),
                     fantasy_season,
                 )
+                real_leagues = tuple(
+                    row for row in raw_leagues if not _is_demo_league(row)
+                )
+                demo_leagues = tuple(
+                    row for row in raw_leagues if _is_demo_league(row)
+                )
+                ordered_leagues = (
+                    (*real_leagues, *demo_leagues)
+                    if real_leagues
+                    else tuple(raw_leagues)
+                )
                 league_options = dict(
-                    build_sleeper_league_options(raw_leagues)
+                    build_sleeper_league_options(ordered_leagues)
                 )
                 league_ids = tuple(league_options.values())
                 all_states = _command_all_league_states(
                     str(sleeper_user["user_id"]),
                     league_ids,
+                )
+                real_league_ids = {
+                    str(row.get("league_id") or "").strip()
+                    for row in real_leagues
+                    if str(row.get("league_id") or "").strip()
+                }
+                real_states = tuple(
+                    state
+                    for state in all_states
+                    if state.platform_league_id in real_league_ids
                 )
             except Exception as exc:
                 st.warning("Fantasy ownership context could not be loaded.")
@@ -347,20 +375,39 @@ def render_owner_player_command_center(
                 league_options = {}
 
             if all_states and league_options:
-                preferred_label = str(
-                    st.session_state.get("fantasy_hq_sleeper_league") or ""
-                ).strip()
                 labels = tuple(league_options)
-                default_index = (
-                    labels.index(preferred_label)
-                    if preferred_label in labels
-                    else 0
+                demo_ids = {
+                    str(row.get("league_id") or "").strip()
+                    for row in raw_leagues
+                    if _is_demo_league(row)
+                    and str(row.get("league_id") or "").strip()
+                }
+                selector_key = (
+                    f"player_command_league_v2_{propwar_player_id}"
                 )
+                saved_selector_label = str(
+                    st.session_state.get(selector_key) or ""
+                ).strip()
+                if saved_selector_label not in league_options:
+                    preferred_label = str(
+                        st.session_state.get("fantasy_hq_sleeper_league") or ""
+                    ).strip()
+                    if (
+                        preferred_label in league_options
+                        and (
+                            not real_states
+                            or league_options[preferred_label] not in demo_ids
+                        )
+                    ):
+                        initial_label = preferred_label
+                    else:
+                        initial_label = labels[0]
+                    st.session_state[selector_key] = initial_label
+
                 selected_label = st.selectbox(
                     "Fantasy league context",
                     labels,
-                    index=default_index,
-                    key=f"player_command_league_{propwar_player_id}",
+                    key=selector_key,
                 )
                 selected_id = league_options[selected_label]
                 selected_league = next(
@@ -371,10 +418,16 @@ def render_owner_player_command_center(
                     ),
                     all_states[0],
                 )
+                card_states = (
+                    real_states
+                    if real_states
+                    and selected_league.platform_league_id not in demo_ids
+                    else (selected_league,)
+                )
                 try:
                     card = build_player_intelligence_card(
                         selected_league,
-                        all_states,
+                        card_states,
                         reverse.sleeper_id,
                         catalog,
                     )
@@ -387,13 +440,16 @@ def render_owner_player_command_center(
                     fan_a, fan_b, fan_c, fan_d = st.columns(4)
                     status_label = card.selected_league_status.replace("_", " ").title()
                     fan_a.metric("This league", status_label)
+                    owner_label = card.selected_league_owner or (
+                        "Available"
+                        if card.is_available_here
+                        else "Other roster"
+                        if card.selected_league_status == "OTHER"
+                        else "—"
+                    )
                     fan_b.metric(
                         "Current owner",
-                        card.selected_league_owner or (
-                            "Available"
-                            if card.is_available_here
-                            else "—"
-                        ),
+                        owner_label,
                     )
                     fan_c.metric(
                         "Current slot",
@@ -401,7 +457,7 @@ def render_owner_player_command_center(
                     )
                     fan_d.metric(
                         "My exposure",
-                        f"{card.my_league_count}/{len(all_states)} leagues",
+                        f"{card.my_league_count}/{len(card_states)} leagues",
                     )
 
                     if card.selected_league_status == "MINE":
@@ -414,7 +470,7 @@ def render_owner_player_command_center(
                         )
                     elif card.selected_league_status == "OTHER":
                         st.info(
-                            f"**FANTASY ACTION:** OWNED · {card.selected_league_owner or 'another manager'} has this player. "
+                            f"**FANTASY ACTION:** OWNED · {card.selected_league_owner or 'another roster'} has this player. "
                             "Use Manager Intelligence for roster-fit trade context."
                         )
                     else:
@@ -424,7 +480,9 @@ def render_owner_player_command_center(
                         {
                             "League": row.league_name,
                             "Status": row.status.replace("_", " ").title(),
-                            "Owner": row.owner_name or "—",
+                            "Owner": row.owner_name or (
+                                "Other roster" if row.status == "OTHER" else "—"
+                            ),
                             "Slot": row.roster_slot or "—",
                         }
                         for row in card.ownership
