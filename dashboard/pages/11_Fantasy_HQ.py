@@ -94,6 +94,12 @@ YAHOO_SESSION_KEY = "fantasy_hq_yahoo_tokens"
 YAHOO_CALLBACK_KEY = "fantasy_hq_yahoo_processed_code"
 SLEEPER_USERNAME_SESSION_KEY = "fantasy_hq_sleeper_username"
 SLEEPER_USERNAME_QUERY_KEY = "fh_sleeper"
+DEMO_LEAGUE_NAMES = {"test league", "mock league", "demo league"}
+
+
+def _is_demo_league(row: Mapping[str, Any]) -> bool:
+    name = str(row.get("name") or "").strip().casefold()
+    return name in DEMO_LEAGUE_NAMES
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -1172,10 +1178,20 @@ def _render_sleeper() -> None:
         st.warning(f"No Sleeper NFL leagues were found for {season}.")
         return
 
-    st.caption(
+    demo_leagues = tuple(row for row in leagues if _is_demo_league(row))
+    priority_leagues = tuple(row for row in leagues if not _is_demo_league(row))
+    scan_leagues = priority_leagues or tuple(leagues)
+
+    account_caption = (
         f"{sleeper_user.get('display_name') or sleeper_user.get('username') or username} · "
         f"{len(leagues)} league{'s' if len(leagues) != 1 else ''} · {season}"
     )
+    if demo_leagues and priority_leagues:
+        account_caption += (
+            f" · {len(demo_leagues)} test/demo league"
+            f"{'s' if len(demo_leagues) != 1 else ''} excluded from priorities"
+        )
+    st.caption(account_caption)
 
     if st.button(
         "Forget remembered Sleeper username",
@@ -1189,7 +1205,7 @@ def _render_sleeper() -> None:
 
     all_league_ids = tuple(
         str(row["league_id"])
-        for row in leagues
+        for row in scan_leagues
         if str(row.get("league_id") or "").strip()
     )
     all_states = ()
@@ -1448,8 +1464,9 @@ def _render_sleeper() -> None:
                     "Open Cross-league below for the exact players and leagues."
                 )
 
+    selector_leagues = (*priority_leagues, *demo_leagues) if priority_leagues else tuple(leagues)
     league_options = dict(
-        build_sleeper_league_options(leagues)
+        build_sleeper_league_options(selector_leagues)
     )
     selected_label = st.selectbox(
         "Sleeper league",
@@ -4252,6 +4269,7 @@ def _render_yahoo(
 page_intro(
     "Fantasy",
     "What should I do with my teams? Sleeper is the supported live provider.",
+    show_data_status=False,
 )
 
 st.caption(

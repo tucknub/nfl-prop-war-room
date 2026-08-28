@@ -15,6 +15,8 @@ try:
     from glitch_radar_live import build_snapshot
     from glitch_radar_present import (
         expected_ev_pct,
+        event_phase_label,
+        event_phase_label,
         fair_american_from_probability,
         format_american,
         game_name,
@@ -454,27 +456,42 @@ def _market_actions(snapshot: dict) -> tuple[TodayAction, ...]:
         fair_prob = row.get("fair_prob_pct")
         fair = fair_american_from_probability(fair_prob)
         ev = expected_ev_pct(row.get("price"), fair_prob)
+        phase = event_phase_label(row.get("commence_time"))
+        is_preseason = phase == "PRESEASON"
         score = (
             410.0 + max(float(ev or 0.0), 0.0) * 3.0
             if radar.action == BET
             else 250.0 + max(float(ev or 0.0), 0.0)
         )
+        if is_preseason:
+            score = min(score, 245.0 + max(float(ev or 0.0), 0.0))
         actions.append(
             TodayAction(
                 category=MARKET,
-                priority=HIGH if radar.action == BET else MEDIUM,
+                priority=(
+                    MEDIUM
+                    if is_preseason
+                    else HIGH if radar.action == BET else MEDIUM
+                ),
                 title=(
                     f"{selection} {display_market} · "
                     f"{book} {price}"
                 ),
                 action=radar.action,
                 why=(
+                    f"{'PRESEASON · ' if is_preseason else ''}"
                     f"Fair line {format_american(fair)} · "
                     f"estimated EV {float(ev):+.1f}% · {radar.reason}"
                     if ev is not None
-                    else radar.reason
+                    else (
+                        f"{'PRESEASON · ' if is_preseason else ''}{radar.reason}"
+                    )
                 ),
-                confidence="HIGH" if radar.action == BET else "MEDIUM",
+                confidence=(
+                    "MEDIUM"
+                    if is_preseason
+                    else "HIGH" if radar.action == BET else "MEDIUM"
+                ),
                 freshness=f"Glitch Radar · {fetched}",
                 href="/glitch-radar",
                 score=score,
@@ -751,10 +768,12 @@ def render_propwar_today_if_owner() -> None:
             "Open the individual tools for diagnostics and coverage."
         )
     else:
-        left, right = st.columns(2)
-        for index, row in enumerate(ranked, start=1):
-            with (left if index % 2 else right):
-                _render_action_card(index, row)
+        for row_start in range(0, len(ranked), 2):
+            row_columns = st.columns(2)
+            for offset, row in enumerate(ranked[row_start : row_start + 2]):
+                rank = row_start + offset + 1
+                with row_columns[offset]:
+                    _render_action_card(rank, row)
 
     if username and current_week < 1:
         st.caption(

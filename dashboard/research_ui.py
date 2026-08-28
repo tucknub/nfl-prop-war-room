@@ -222,11 +222,22 @@ def sidebar_brand() -> None:
         )
 
 
-def page_intro(title: str, description: str, latest_season: int = 2025) -> None:
+def page_intro(
+    title: str,
+    description: str,
+    latest_season: int = 2025,
+    *,
+    show_data_status: bool = True,
+) -> None:
     data_status = validated_data_status_label() or f"Latest completed season: {latest_season}"
+    status_html = (
+        f'<div class="pw-season-note">{escape(data_status)}</div>'
+        if show_data_status
+        else ""
+    )
     st.markdown(
         f'<div class="pw-intro"><div><h1>{escape(title)}</h1><p>{escape(description)}</p></div>'
-        f'<div class="pw-season-note">{escape(data_status)}</div></div>',
+        f'{status_html}</div>',
         unsafe_allow_html=True,
     )
 

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import pytest
+
 from dashboard.glitch_radar_action import (
     BET,
     PASS,
     WATCH,
     ev_action,
     glitch_action,
+    peer_implied_probability_gap_range,
     peer_price_gap_range,
     peer_prices_for_alert,
 )
+from dashboard.glitch_radar_live import Quote, detect_price_outliers
 from dashboard.glitch_radar_history import (
     BASELINE,
     DISAPPEARED,
@@ -151,7 +155,11 @@ def test_peer_prices_match_exact_market_identity_and_user_books():
         ("FanDuel", 124),
         ("Hard Rock Bet", 120),
     ]
-    assert peer_price_gap_range(144, peers) == (18, 24)
+    gap = peer_implied_probability_gap_range(144, peers)
+    assert gap is not None
+    assert gap[0] == pytest.approx(3.27, abs=0.05)
+    assert gap[1] == pytest.approx(4.48, abs=0.05)
+    assert peer_price_gap_range(144, peers) == gap
 
 
 def test_glitch_radar_page_surfaces_temporal_state_and_keeps_pass_off_top_board():
@@ -174,6 +182,32 @@ def test_glitch_radar_page_surfaces_temporal_state_and_keeps_pass_off_top_board(
     assert 'if glitch_action(alert).action == PASS:' in source
     assert 'if ev_action(row).action == PASS:' in source
 
+
+
+def test_near_even_sign_crossing_is_not_a_glitch_by_itself():
+    quotes = [
+        Quote("DraftKings", "A @ B", "moneyline", side="home", odds_american=101),
+        Quote("Hard Rock Bet", "A @ B", "moneyline", side="home", odds_american=100),
+        Quote("Caesars", "A @ B", "moneyline", side="home", odds_american=-105),
+        Quote("FanDuel", "A @ B", "moneyline", side="home", odds_american=-108),
+    ]
+
+    assert detect_price_outliers(quotes) == []
+
+
+def test_large_sign_crossing_can_still_trigger_a_real_outlier():
+    quotes = [
+        Quote("DraftKings", "A @ B", "moneyline", side="home", odds_american=300),
+        Quote("Hard Rock Bet", "A @ B", "moneyline", side="home", odds_american=-180),
+        Quote("Caesars", "A @ B", "moneyline", side="home", odds_american=-200),
+        Quote("FanDuel", "A @ B", "moneyline", side="home", odds_american=-190),
+    ]
+
+    alerts = detect_price_outliers(quotes)
+    dk = next(row for row in alerts if row["quote"]["book"] == "DraftKings")
+    assert dk["sign_mismatch"] is True
+    assert dk["absolute_prob_gap_points"] >= 20
+    assert dk["severity"] == "P0"
 
 def test_process_store_preserves_history_across_calls():
     store = MarketHistoryStore()

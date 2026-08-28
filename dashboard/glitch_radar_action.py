@@ -131,27 +131,37 @@ def peer_prices_for_alert(
     return tuple(rows)
 
 
-def peer_price_gap_range(
+def peer_implied_probability_gap_range(
     flagged_price: object,
     peers: Iterable[Mapping[str, Any]],
-) -> tuple[int, int] | None:
+) -> tuple[float, float] | None:
     try:
         flagged = int(float(flagged_price))
-    except (TypeError, ValueError):
+        flagged_prob = implied_probability(flagged)
+    except (TypeError, ValueError, ZeroDivisionError):
         return None
 
-    gaps: list[int] = []
+    gaps: list[float] = []
     for row in peers:
         try:
             peer = int(float(row.get("price")))
-        except (TypeError, ValueError):
+            peer_prob = implied_probability(peer)
+        except (TypeError, ValueError, ZeroDivisionError):
             continue
-        gap = flagged - peer
-        if gap > 0:
-            gaps.append(gap)
+        gap_points = (peer_prob - flagged_prob) * 100
+        if gap_points > 0:
+            gaps.append(gap_points)
     if not gaps:
         return None
     return min(gaps), max(gaps)
+
+
+def peer_price_gap_range(
+    flagged_price: object,
+    peers: Iterable[Mapping[str, Any]],
+) -> tuple[float, float] | None:
+    """Backward-compatible alias for the bettor-favorable implied-probability gap."""
+    return peer_implied_probability_gap_range(flagged_price, peers)
 
 
 __all__ = [
@@ -161,6 +171,7 @@ __all__ = [
     "RadarAction",
     "ev_action",
     "glitch_action",
+    "peer_implied_probability_gap_range",
     "peer_price_gap_range",
     "peer_prices_for_alert",
 ]
