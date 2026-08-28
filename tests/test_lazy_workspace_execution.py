@@ -50,3 +50,20 @@ def test_markets_primary_tabs_use_lazy_execution() -> None:
         "source_tab",
     ):
         assert f"if {tab_name}.open:" in source
+
+
+def test_fantasy_global_intelligence_does_not_block_league_shell() -> None:
+    source = _source("dashboard/pages/11_Fantasy_HQ.py")
+
+    assert "@st.fragment(parallel=True)\ndef _render_all_league_decision_center(" in source
+    assert "_render_all_league_decision_center(" in source
+    assert "needs_catalog = any(" in source
+    assert "needs_all_states = any(" in source
+
+    render_source = source[source.index("def _render_sleeper()") :]
+    selector = render_source.index("selector_leagues =")
+    tabs = render_source.index('key="fantasy_primary_tabs"')
+    before_tabs = render_source[selector:tabs]
+
+    assert "_load_sleeper_league(" in before_tabs
+    assert "for state in all_states" not in before_tabs
