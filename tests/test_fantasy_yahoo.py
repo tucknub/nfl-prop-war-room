@@ -44,7 +44,8 @@ def test_yahoo_oauth_state_round_trip_and_expiry():
 def test_yahoo_oauth_state_rejects_tampering():
     state = build_yahoo_oauth_state(CLIENT_SECRET, now_seconds=1_000)
     encoded, signature = state.split(".", 1)
-    tampered = encoded + "." + ("x" + signature[1:])
+    replacement = "y" if signature.startswith("x") else "x"
+    tampered = encoded + "." + (replacement + signature[1:])
 
     with pytest.raises(YahooFantasyError, match="signature"):
         validate_yahoo_oauth_state(
