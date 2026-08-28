@@ -1232,11 +1232,50 @@ def _render_all_league_decision_center(
                         }
                     )
 
-                st.dataframe(
-                    pd.DataFrame(feed_rows),
-                    hide_index=True,
-                    width="stretch",
-                )
+                for rank, row in enumerate(
+                    weekly_feed.actions[:3],
+                    start=1,
+                ):
+                    with st.container(border=True):
+                        header_a, header_b = st.columns([4, 1])
+                        with header_a:
+                            st.markdown(
+                                f"**#{rank} · {row.action} · {row.title}**"
+                            )
+                            st.caption(
+                                f"{row.league_name} · "
+                                f"{row.action_type.title()}"
+                            )
+                        with header_b:
+                            st.caption(
+                                f"{row.priority} · {row.confidence}"
+                            )
+
+                        action_bits = []
+                        if row.impact_points is not None:
+                            action_bits.append(
+                                f"Impact {row.impact_points:+.2f} pts"
+                            )
+                        if row.faab_range:
+                            faab_text = f"FAAB {row.faab_range}"
+                            if row.faab_target:
+                                faab_text += f" · target {row.faab_target}"
+                            action_bits.append(faab_text)
+                        if action_bits:
+                            st.caption(" · ".join(action_bits))
+                        st.write(row.detail)
+
+                if len(feed_rows) > 3:
+                    with st.expander(
+                        f"All ranked actions · {len(feed_rows)}",
+                        expanded=False,
+                    ):
+                        st.dataframe(
+                            pd.DataFrame(feed_rows),
+                            hide_index=True,
+                            width="stretch",
+                        )
+
                 st.caption(
                     "Priority is global across leagues: lineup fixes first, "
                     "then meaningful waiver/FAAB upgrades, then mutual trade "
