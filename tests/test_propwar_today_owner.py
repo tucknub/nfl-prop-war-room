@@ -129,5 +129,6 @@ def test_owner_home_hooks_propwar_today_without_market_copy_in_public_app():
     assert 'st.markdown("## What Should I Do?")' in owner
     assert "rank_today_actions(actions, limit=6)" in owner
     assert 'href="/glitch-radar"' in owner
-    assert 'href="/fantasy-hq"' in owner
+    assert '"/fantasy-hq?"' in owner
+    assert 'urlencode({"fh_sleeper": username})' in owner
     assert 'href="/margin"' in owner
