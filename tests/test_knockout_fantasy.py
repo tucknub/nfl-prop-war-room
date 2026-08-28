@@ -196,3 +196,142 @@ def test_knockout_storage_reuses_private_repo_but_has_separate_path() -> None:
     assert config["repo"] == "tucknub/propwar-private-state"
     assert config["path"] == "knockout/live_state_2026.json"
     assert config["auth_mode"] == "OIDC_OWNER"
+
+
+
+def released_roster() -> list[dict[str, str]]:
+    return [
+        {"player": f"Released {index + 1}", "position": row["position"], "nfl_team": row["nfl_team"]}
+        for index, row in enumerate(roster())
+    ]
+
+
+def test_predraft_decision_summary_is_actionable_without_fake_probability() -> None:
+    state = base_state()
+    decision = engine.knockout_decision_summary(state)
+
+    assert decision["phase"] == "PRE_DRAFT"
+    assert decision["next_action"] == "DRAFT ROSTER"
+    assert decision["roster_risk"]["level"] == "NOT SCORED"
+    assert decision["faab"]["posture"] == "HOLD"
+    assert decision["faab"]["pct_remaining"] == pytest.approx(1.0)
+
+
+def test_active_roster_depth_and_structural_risk_are_state_based() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+
+    depth = engine.roster_depth(active)
+    risk = engine.structural_roster_risk(active)
+    decision = engine.knockout_decision_summary(active)
+
+    assert depth["counts"]["QB"] == 2
+    assert depth["counts"]["RB"] == 4
+    assert depth["counts"]["WR"] == 4
+    assert depth["counts"]["TE"] == 2
+    assert depth["starter_gaps"] == []
+    assert risk["level"] == "LOW"
+    assert decision["next_action"] == "HOLD / SHOP"
+
+
+def test_missing_starter_coverage_escalates_roster_and_faab_posture() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    broken = engine.record_waiver_transaction(
+        active,
+        amount=0,
+        add_player={"player": "WR Extra", "position": "WR", "nfl_team": "SEA"},
+        drop_player="K One",
+    )
+
+    risk = engine.structural_roster_risk(broken)
+    posture = engine.faab_posture(broken)
+    decision = engine.knockout_decision_summary(broken)
+
+    assert risk["level"] == "HIGH"
+    assert "K" in risk["reason"]
+    assert posture["posture"] == "URGENT"
+    assert decision["next_action"] == "FIX STARTER COVERAGE"
+
+
+def test_week_completion_promotes_released_roster_as_next_action() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    after_week = engine.record_week_state(
+        active,
+        user_score=131.8,
+        eliminated_team="Team 18",
+        user_eliminated=False,
+    )
+
+    decision = engine.knockout_decision_summary(after_week)
+
+    assert decision["next_action"] == "LOAD ELIMINATED ROSTER"
+    assert "waiver" in decision["why"].casefold()
+
+
+def test_released_roster_must_match_elimination_and_is_recorded_once() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    after_week = engine.record_week_state(
+        active,
+        user_score=131.8,
+        eliminated_team="Team 18",
+        user_eliminated=False,
+    )
+
+    with pytest.raises(ValueError, match="recorded weekly elimination"):
+        engine.record_released_roster(
+            after_week,
+            week=1,
+            team="Wrong Team",
+            players=released_roster(),
+        )
+
+    updated = engine.record_released_roster(
+        after_week,
+        week=1,
+        team="Team 18",
+        players=released_roster(),
+    )
+    assert len(updated["released_rosters"]) == 1
+    assert updated["released_rosters"][0]["team"] == "Team 18"
+    assert engine.validate_state(updated) is updated
+
+    with pytest.raises(ValueError, match="already recorded"):
+        engine.record_released_roster(
+            updated,
+            week=1,
+            team="Team 18",
+            players=released_roster(),
+        )
+
+
+def test_released_roster_fit_is_structural_not_player_ranking() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    after_week = engine.record_week_state(
+        active,
+        user_score=131.8,
+        eliminated_team="Team 18",
+        user_eliminated=False,
+    )
+    updated = engine.record_released_roster(
+        after_week,
+        week=1,
+        team="Team 18",
+        players=released_roster(),
+    )
+
+    fits = engine.released_roster_fit(updated, updated["released_rosters"][0])
+
+    assert len(fits) == 14
+    assert {row["fit"] for row in fits} <= {"URGENT", "HIGH", "MEDIUM", "DEPTH", "LOW"}
+    assert all("projection" not in row["why"].casefold() for row in fits)
+    assert fits[0]["fit"] in {"MEDIUM", "DEPTH", "LOW"}
+
+
+def test_endgame_faab_posture_becomes_aggressive_without_bid_claim() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    active["current_week"] = 12
+
+    posture = engine.faab_posture(active)
+
+    assert engine.phase(active) == "ENDGAME"
+    assert posture["posture"] == "AGGRESSIVE"
+    assert "bid" not in posture["reason"].casefold()

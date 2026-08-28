@@ -7,6 +7,7 @@ from typing import Any, Iterable
 VALID_POSITIONS = {"QB", "RB", "WR", "TE", "K", "DST"}
 FLEX_POSITIONS = {"RB", "WR", "TE"}
 REQUIRED_STARTERS = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1, "DST": 1}
+FIT_PRIORITY = {"URGENT": 0, "HIGH": 1, "MEDIUM": 2, "DEPTH": 3, "LOW": 4}
 
 
 def canonical_position(value: object) -> str:
@@ -100,6 +101,28 @@ def validate_state(state: dict[str, Any]) -> dict[str, Any]:
     eliminations = list(state.get("eliminations") or [])
     if len(eliminations) > 17:
         raise ValueError("there can be at most 17 eliminated teams")
+
+    released_rosters = list(state.get("released_rosters") or [])
+    seen_release_weeks: set[int] = set()
+    elimination_keys = {
+        (
+            int(row.get("week", -1)),
+            str(row.get("team") or "").strip().casefold(),
+        )
+        for row in eliminations
+    }
+    for released in released_rosters:
+        release_week = int(released.get("week", -1))
+        release_team = str(released.get("team") or "").strip()
+        if release_week in seen_release_weeks:
+            raise ValueError(f"duplicate released roster for Week {release_week}")
+        if (release_week, release_team.casefold()) not in elimination_keys:
+            raise ValueError("released roster does not match a recorded elimination")
+        validate_roster(
+            released.get("players") or [],
+            roster_size=int(league.get("roster_size", 14)),
+        )
+        seen_release_weeks.add(release_week)
     return state
 
 
@@ -155,6 +178,260 @@ def strategy_priorities(state: dict[str, Any]) -> list[str]:
             f"Current FAAB remaining: ${faab}.",
         ]
     return ["Season state is final; no further survival decisions are required."]
+
+
+def roster_depth(state: dict[str, Any]) -> dict[str, Any]:
+    roster = list(state.get("roster") or [])
+    counts = {
+        pos: sum(canonical_position(row.get("position")) == pos for row in roster)
+        for pos in VALID_POSITIONS
+    }
+    required = dict(REQUIRED_STARTERS)
+    cushions = {
+        pos: counts[pos] - required[pos]
+        for pos in REQUIRED_STARTERS
+    }
+    flex_count = sum(counts[pos] for pos in FLEX_POSITIONS)
+    flex_cushion = flex_count - 6
+
+    starter_gaps = [
+        pos
+        for pos, needed in required.items()
+        if counts[pos] < needed
+    ]
+    thin_positions = [
+        pos
+        for pos, needed in required.items()
+        if counts[pos] == needed
+    ]
+    if flex_cushion <= 0 and not any(pos in starter_gaps for pos in FLEX_POSITIONS):
+        thin_positions.append("FLEX")
+
+    return {
+        "counts": counts,
+        "required": required,
+        "cushions": cushions,
+        "flex_count": flex_count,
+        "flex_cushion": flex_cushion,
+        "starter_gaps": starter_gaps,
+        "thin_positions": list(dict.fromkeys(thin_positions)),
+    }
+
+
+def structural_roster_risk(state: dict[str, Any]) -> dict[str, Any]:
+    current_phase = phase(state)
+    if current_phase == "PRE_DRAFT":
+        return {
+            "level": "NOT SCORED",
+            "reason": "Roster risk begins after the draft roster is recorded.",
+        }
+    if current_phase in {"ELIMINATED", "CHAMPION"}:
+        return {
+            "level": "FINAL",
+            "reason": "The Knockout season state is final.",
+        }
+
+    depth = roster_depth(state)
+    if depth["starter_gaps"]:
+        return {
+            "level": "HIGH",
+            "reason": (
+                "Required starter coverage is missing at "
+                + ", ".join(depth["starter_gaps"])
+                + "."
+            ),
+        }
+
+    thin = list(depth["thin_positions"])
+    if len(thin) >= 3 or depth["flex_cushion"] <= 0:
+        return {
+            "level": "MEDIUM",
+            "reason": (
+                "The lineup is startable, but depth is thin at "
+                + ", ".join(thin or ["FLEX"])
+                + "."
+            ),
+        }
+
+    return {
+        "level": "LOW",
+        "reason": "No required starter gap or broad skill-position depth warning is present.",
+    }
+
+
+def faab_posture(state: dict[str, Any]) -> dict[str, Any]:
+    league = state.get("league") or {}
+    start = max(1, int(league.get("faab_start", 1000)))
+    remaining = int(state.get("faab_remaining", start))
+    pct_remaining = remaining / start
+    current_phase = phase(state)
+    risk = structural_roster_risk(state)
+
+    if current_phase == "PRE_DRAFT":
+        posture = "HOLD"
+        reason = "Do not spend FAAB before the draft roster exists."
+    elif current_phase in {"ELIMINATED", "CHAMPION"}:
+        posture = "FINAL"
+        reason = "No further FAAB decisions are required."
+    elif risk["level"] == "HIGH":
+        posture = "URGENT"
+        reason = "Starter coverage is incomplete; roster repair takes priority over budget preservation."
+    elif current_phase == "ENDGAME":
+        posture = "AGGRESSIVE"
+        reason = "The field is small; direct starting-lineup upgrades matter more than preserving budget."
+    elif current_phase == "MIDSEASON":
+        posture = "ACTIVE"
+        reason = "Use FAAB on players who immediately improve a starter or repair thin depth."
+    else:
+        posture = "SELECTIVE"
+        reason = "Preserve flexibility early and spend when a move materially improves weekly survival structure."
+
+    return {
+        "posture": posture,
+        "remaining": remaining,
+        "start": start,
+        "pct_remaining": pct_remaining,
+        "reason": reason,
+    }
+
+
+def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
+    current_phase = phase(state)
+    risk = structural_roster_risk(state)
+    faab = faab_posture(state)
+    readiness = draft_readiness(state)
+    alive = active_team_count(state)
+
+    if current_phase == "PRE_DRAFT":
+        next_action = "DRAFT ROSTER"
+        why = "No roster is recorded yet. Draft a startable 14-player roster before player-level survival decisions are scored."
+    elif current_phase == "ELIMINATED":
+        next_action = "SEASON COMPLETE"
+        why = "Your team has been eliminated."
+    elif current_phase == "CHAMPION":
+        next_action = "SEASON COMPLETE"
+        why = "The state is marked champion."
+    elif not readiness["ready"]:
+        next_action = "FIX STARTER COVERAGE"
+        why = "; ".join(readiness["lineup_errors"]) or "The current roster cannot fill every required starter slot."
+    else:
+        latest_elimination = max(
+            (int(row.get("week", 0)) for row in state.get("eliminations") or []),
+            default=0,
+        )
+        released_weeks = {
+            int(row.get("week", 0))
+            for row in state.get("released_rosters") or []
+        }
+        if latest_elimination and latest_elimination not in released_weeks:
+            next_action = "LOAD ELIMINATED ROSTER"
+            why = "The latest eliminated team's players should be reviewed before the next waiver cycle."
+        elif risk["level"] == "MEDIUM":
+            next_action = "REVIEW THIN DEPTH"
+            why = risk["reason"]
+        else:
+            next_action = "HOLD / SHOP"
+            why = "The roster is structurally startable; avoid forcing moves that do not improve a starter or fragile depth."
+
+    return {
+        "phase": current_phase,
+        "teams_alive": alive,
+        "roster_risk": risk,
+        "faab": faab,
+        "next_action": next_action,
+        "why": why,
+    }
+
+
+def _candidate_fit_level(state: dict[str, Any], position: str) -> tuple[str, str]:
+    pos = canonical_position(position)
+    depth = roster_depth(state)
+    counts = depth["counts"]
+    required = depth["required"]
+
+    if pos in required and counts[pos] < required[pos]:
+        return "URGENT", f"{pos} has an unfilled required starter slot."
+
+    if pos in FLEX_POSITIONS:
+        if counts[pos] <= required[pos]:
+            return "HIGH", f"{pos} depth is at the starter minimum."
+        if depth["flex_cushion"] <= 1:
+            return "HIGH", "RB/WR/TE depth has little cushion beyond the FLEX requirement."
+        return "DEPTH", f"{pos} is currently covered; candidate would be a depth option."
+
+    if pos == "QB":
+        if counts[pos] <= 1:
+            return "MEDIUM", "Only one QB is rostered; candidate adds injury/bye coverage."
+        return "DEPTH", "QB starter coverage is already backed up."
+
+    if pos in {"K", "DST"}:
+        if counts[pos] < 1:
+            return "URGENT", f"{pos} starter coverage is missing."
+        return "LOW", f"{pos} is already covered; quality evidence is required before spending a bench spot."
+
+    return "DEPTH", "Candidate fit is structural only."
+
+
+def released_roster_fit(state: dict[str, Any], released: dict[str, Any]) -> list[dict[str, Any]]:
+    players = list(released.get("players") or [])
+    rows: list[dict[str, Any]] = []
+    for player in players:
+        level, reason = _candidate_fit_level(state, str(player.get("position") or ""))
+        rows.append(
+            {
+                "player": str(player.get("player") or "").strip(),
+                "position": canonical_position(player.get("position")),
+                "nfl_team": str(player.get("nfl_team") or "").strip().upper(),
+                "fit": level,
+                "why": reason,
+            }
+        )
+    rows.sort(key=lambda row: (FIT_PRIORITY.get(str(row["fit"]), 99), row["position"], row["player"].casefold()))
+    return rows
+
+
+def record_released_roster(
+    state: dict[str, Any],
+    *,
+    week: int,
+    team: str,
+    players: Iterable[dict[str, Any]],
+) -> dict[str, Any]:
+    validate_state(state)
+    week = int(week)
+    team_name = str(team or "").strip()
+    if not team_name:
+        raise ValueError("eliminated team name is required")
+
+    elimination_matches = [
+        row
+        for row in state.get("eliminations") or []
+        if int(row.get("week", -1)) == week
+        and str(row.get("team") or "").strip().casefold() == team_name.casefold()
+    ]
+    if len(elimination_matches) != 1:
+        raise ValueError("released roster must match a recorded weekly elimination")
+
+    if any(
+        int(row.get("week", -1)) == week
+        for row in state.get("released_rosters") or []
+    ):
+        raise ValueError(f"released roster for Week {week} is already recorded")
+
+    league = state.get("league") or {}
+    normalized = validate_roster(
+        players,
+        roster_size=int(league.get("roster_size", 14)),
+    )
+    updated = deepcopy(state)
+    updated.setdefault("released_rosters", []).append(
+        {
+            "week": week,
+            "team": team_name,
+            "players": normalized,
+        }
+    )
+    return updated
 
 
 def draft_readiness(state: dict[str, Any]) -> dict[str, Any]:

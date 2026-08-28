@@ -19,7 +19,7 @@ Statuses should be updated from real usage during the 2026 season.
 | Market Research / Deep Prop Radar | SUPPORT | USABLE ADVANCED | More | Feeds Markets diagnostics; eventually fold more directly into Markets |
 | Methodology | SUPPORT | DOCUMENTATION | More | Accurate explanation of current public role methodology |
 | Margin War Room | PERSONAL | USABLE / SPECIALIZED | More | Reliable for the owner's live Margin pool |
-| Knockout Fantasy | PERSONAL | BETA / SPECIALIZED | More | Proved during the actual elimination league |
+| Knockout Fantasy | PERSONAL | STRUCTURAL DECISION CENTER / PROVING | More | Decision-first state/roster/FAAB/released-roster workflow is built; prove it after the Sep. 3 draft and during live eliminations before adding survival probabilities or optimal-bid claims |
 | Admin Research | INTERNAL | HIDE | No | Never normal product navigation |
 | Historical projection/model labs | INTERNAL / LEGACY | ARCHIVE / R&D | No | Kept for auditability/research, not presented as current product |
 
