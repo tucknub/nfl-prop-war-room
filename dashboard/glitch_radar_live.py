@@ -26,6 +26,7 @@ class Quote:
     threshold: float | None = None
     odds_american: int = 0
     timestamp: str = ""
+    commence_time: str = ""
 
     def identity(self) -> tuple:
         return (
@@ -114,6 +115,7 @@ def parse_odds(payload: Any) -> list[Quote]:
     for event in _events(payload):
         home = str(event.get("home_team") or "")
         away = str(event.get("away_team") or "")
+        commence_time = str(event.get("commence_time") or "")
         event_name = f"{away} @ {home}".strip(" @")
         for book in event.get("bookmakers", []) or []:
             book_name = str(book.get("title") or book.get("key") or "Unknown")
@@ -158,6 +160,7 @@ def parse_odds(payload: Any) -> list[Quote]:
                             threshold=threshold,
                             odds_american=price,
                             timestamp=stamp,
+                            commence_time=commence_time,
                         )
                     )
     return quotes
@@ -173,6 +176,7 @@ def _pack_quote(quote: Quote) -> dict[str, Any]:
         "threshold": quote.threshold,
         "odds_american": quote.odds_american,
         "timestamp": quote.timestamp,
+        "commence_time": quote.commence_time,
     }
 
 
