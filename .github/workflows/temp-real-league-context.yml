@@ -1,0 +1,55 @@
+name: Real league context validation
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temp-real-league-context.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile Fantasy context surfaces
+        run: |
+          python -m py_compile src/fantasy/league_selector.py
+          python -m py_compile dashboard/pages/11_Fantasy_HQ.py
+          python -m py_compile dashboard/player_command_owner.py
+      - name: Run fantasy and player-command regressions
+        run: |
+          pytest -q             tests/test_fantasy_*.py             tests/test_player_command_center.py             tests/test_live_proving_round4.py
+      - name: Streamlit Players and Fantasy startup
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          targets = [
+              root / "dashboard" / "pages" / "02_Players.py",
+              root / "dashboard" / "pages" / "11_Fantasy_HQ.py",
+          ]
+          os.chdir("/tmp")
+          for target in targets:
+              at = AppTest.from_file(str(target))
+              at.run(timeout=60)
+              if at.exception:
+                  print(f"FAILED: {target}")
+                  for exc in at.exception:
+                      print(exc.value)
+                  raise SystemExit(1)
+              print(f"startup ok: {target.name}")
+          PY
