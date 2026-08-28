@@ -220,8 +220,8 @@ def _render_stale(row: dict) -> None:
 
 _require_owner()
 
-st.markdown("## My Deep Prop Radar")
-st.caption("NFL player-prop glitch scanner · TDs, yardage, receptions and alternate ladders · 3-hour cache")
+st.markdown("## Market Research")
+st.caption("Advanced supporting diagnostics behind Markets · player props, line gaps, alternate ladders, stale prices, and near misses · 3-hour cache")
 
 key = _api_key()
 if not key:
