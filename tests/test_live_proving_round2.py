@@ -67,11 +67,10 @@ def test_home_and_today_preserve_sleeper_context_in_deep_links() -> None:
     today = _source("dashboard/propwar_today_owner.py")
 
     assert "remembered_sleeper_username()" in home
-    assert 'sleeper_suffix = (' in home
-    assert 'f"/players{sleeper_suffix}"' in home
-    assert 'f"/fantasy-hq{sleeper_suffix}"' in home
+    assert '"Core workspaces"' not in home
 
     assert 'urlencode({"fh_sleeper": username})' in today
+    assert '"/fantasy-hq?"' in today
 
 
 def test_arbitrage_is_action_first_and_thin_arbs_are_not_featured() -> None:
