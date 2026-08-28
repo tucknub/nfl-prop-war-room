@@ -456,66 +456,66 @@ note(
 )
 
 pool = state.get("pool") or {}
-meta_a, meta_b, meta_c = st.columns(3)
-with meta_a:
-    preview_pool_name = st.text_input("Pool name", value=str(pool.get("name") or ""), key="margin_preview_pool_name")
-    preview_pool_size = st.number_input(
-        "Entrants (0 = infer from rows)",
-        min_value=0,
-        step=1,
-        value=int(pool.get("size") or 0),
-        key="margin_preview_pool_size",
-    )
-with meta_b:
-    tie_options = ["Unknown", "split", "shared"]
-    preview_tie_rule = st.selectbox(
-        "First-place tie rule",
-        tie_options,
-        index=_current_select_index(tie_options, pool.get("first_place_tie_rule")),
-        key="margin_preview_tie_rule",
-    )
-    visibility_options = ["Unknown", "hidden", "visible"]
-    current_visibility = pool.get("picks_visible_before_deadline")
-    visibility_default = "visible" if current_visibility is True else "hidden" if current_visibility is False else "Unknown"
-    preview_visibility = st.selectbox(
-        "Picks before deadline",
-        visibility_options,
-        index=_current_select_index(visibility_options, visibility_default),
-        key="margin_preview_visibility",
-    )
-with meta_c:
-    preview_deadline = st.text_input(
-        "Pick deadline",
-        value=str(pool.get("pick_deadline") or ""),
-        placeholder="e.g. Sunday 12:55 PM ET",
-        key="margin_preview_deadline",
-    )
-    st.text_input(
-        "Payout structure",
-        value=str(pool.get("payout_structure") or "winner_take_all"),
-        disabled=True,
-        key="margin_preview_payout",
-    )
+with st.form("margin_pool_preview_form", clear_on_submit=False):
+    meta_a, meta_b, meta_c = st.columns(3)
+    with meta_a:
+        preview_pool_name = st.text_input("Pool name", value=str(pool.get("name") or ""), key="margin_preview_pool_name")
+        preview_pool_size = st.number_input(
+            "Entrants (0 = infer from rows)",
+            min_value=0,
+            step=1,
+            value=int(pool.get("size") or 0),
+            key="margin_preview_pool_size",
+        )
+    with meta_b:
+        tie_options = ["Unknown", "split", "shared"]
+        preview_tie_rule = st.selectbox(
+            "First-place tie rule",
+            tie_options,
+            index=_current_select_index(tie_options, pool.get("first_place_tie_rule")),
+            key="margin_preview_tie_rule",
+        )
+        visibility_options = ["Unknown", "hidden", "visible"]
+        current_visibility = pool.get("picks_visible_before_deadline")
+        visibility_default = "visible" if current_visibility is True else "hidden" if current_visibility is False else "Unknown"
+        preview_visibility = st.selectbox(
+            "Picks before deadline",
+            visibility_options,
+            index=_current_select_index(visibility_options, visibility_default),
+            key="margin_preview_visibility",
+        )
+    with meta_c:
+        preview_deadline = st.text_input(
+            "Pick deadline",
+            value=str(pool.get("pick_deadline") or ""),
+            placeholder="e.g. Sunday 12:55 PM ET",
+            key="margin_preview_deadline",
+        )
+        st.text_input(
+            "Payout structure",
+            value=str(pool.get("payout_structure") or "winner_take_all"),
+            disabled=True,
+            key="margin_preview_payout",
+        )
 
-uploaded_field = st.file_uploader(
-    "Opponent field CSV",
-    type=["csv"],
-    help="Required columns: id, name, cumulative_score, used_teams",
-    key="margin_preview_upload",
-)
-pasted_field = st.text_area(
-    "Or paste the same CSV",
-    height=120,
-    placeholder="id,name,cumulative_score,used_teams\nopp-1,Team A,42,KC|BUF",
-    key="margin_preview_paste",
-)
-field_text = uploaded_field.getvalue().decode("utf-8-sig") if uploaded_field is not None else pasted_field
+    uploaded_field = st.file_uploader(
+        "Opponent field CSV",
+        type=["csv"],
+        help="Required columns: id, name, cumulative_score, used_teams",
+        key="margin_preview_upload",
+    )
+    pasted_field = st.text_area(
+        "Or paste the same CSV",
+        height=120,
+        placeholder="id,name,cumulative_score,used_teams\nopp-1,Team A,42,KC|BUF",
+        key="margin_preview_paste",
+    )
+    field_text = uploaded_field.getvalue().decode("utf-8-sig") if uploaded_field is not None else pasted_field
 
-validate_preview = st.button(
-    "Validate & preview field",
-    disabled=not bool(field_text.strip()),
-    key="margin_preview_validate",
-)
+    validate_preview = st.form_submit_button(
+        "Validate & preview field",
+        disabled=not bool(field_text.strip()),
+    )
 if validate_preview:
     try:
         raw_rows = _field_rows_from_csv_text(field_text)
