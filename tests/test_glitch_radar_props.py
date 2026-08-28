@@ -55,6 +55,38 @@ def test_prop_price_outlier_flags_user_book_against_same_line_peers():
     assert dk[0]["severity"] in {"P0", "P1"}
 
 
+def test_prop_price_outlier_ignores_near_even_sign_crossing():
+    rows = [
+        normalize_prop_row(_row("DraftKings", over=101, under=-121)),
+        normalize_prop_row(_row("Hard Rock", over=100, under=-120)),
+        normalize_prop_row(_row("Caesars", over=-105, under=-115)),
+        normalize_prop_row(_row("FanDuel", over=-108, under=-112)),
+    ]
+
+    alerts = detect_prop_price_outliers(rows)
+
+    assert not [row for row in alerts if row["side"] == "over"]
+
+
+def test_prop_price_outlier_keeps_extreme_sign_mismatch():
+    rows = [
+        normalize_prop_row(_row("DraftKings", over=300, under=-500)),
+        normalize_prop_row(_row("FanDuel", over=-180, under=150)),
+        normalize_prop_row(_row("Caesars", over=-200, under=165)),
+        normalize_prop_row(_row("Hard Rock", over=-190, under=160)),
+    ]
+
+    alerts = detect_prop_price_outliers(rows)
+    dk = next(
+        row for row in alerts
+        if row["book"] == "DraftKings" and row["side"] == "over"
+    )
+
+    assert dk["sign_mismatch"] is True
+    assert dk["absolute_prob_gap_points"] >= 20
+    assert dk["severity"] == "P0"
+
+
 def test_line_gap_requires_two_of_my_books_and_material_threshold():
     rows = [
         normalize_prop_row(_row("DraftKings", line=49.5)),
