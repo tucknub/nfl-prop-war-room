@@ -87,6 +87,60 @@ def inject_usability_styles() -> None:
 
 
 def render_launch_home() -> None:
+    mode = access_mode(_secrets_snapshot(), _user_snapshot())
+    if mode == "OWNER":
+        st.markdown(
+            """
+            <section class="pw-home-hero">
+              <span>PROP WAR · NFL DECISION INTELLIGENCE · PRIVATE BETA</span>
+              <h1>What matters right now?</h1>
+              <p>PropWar combines player role changes, live market structure, fantasy decisions, and specialized league tools into one owner workflow.</p>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="pw-status-line"><strong>Role data</strong><span>{operational_status_text()}</span></div>',
+            unsafe_allow_html=True,
+        )
+        render_propwar_today_if_owner()
+
+        section(
+            "Core workspaces",
+            "Four places define PropWar now. Everything else is supporting evidence or a specialized owner tool.",
+        )
+        quick_columns = st.columns(3)
+        quick_cards = (
+            (
+                "Players",
+                "Search one player and connect role change, live market context, fantasy ownership, and exposure.",
+                "/players",
+            ),
+            (
+                "Markets",
+                "See the strongest current pricing anomalies, movement, line shopping, and market structure.",
+                "/glitch-radar",
+            ),
+            (
+                "Fantasy",
+                "Get lineup, waiver, trade, manager, and cross-league decisions from Fantasy HQ.",
+                "/fantasy-hq",
+            ),
+        )
+        for column, (title, description, href) in zip(quick_columns, quick_cards):
+            with column:
+                with st.container(border=True):
+                    st.markdown(f"### {title}")
+                    st.write(description)
+                    st.markdown(
+                        f'<a class="pw-primary-link" href="{href}">Open {title}</a>',
+                        unsafe_allow_html=True,
+                    )
+        st.caption(
+            "Supporting team/game reports, advanced research, Margin, Knockout, and deeper market diagnostics live under More."
+        )
+        return
+
     copy = role_home_copy()
     st.markdown(
         f"""
@@ -102,8 +156,6 @@ def render_launch_home() -> None:
         f'<div class="pw-status-line"><strong>Data status</strong><span>{operational_status_text()}</span></div>',
         unsafe_allow_html=True,
     )
-
-    render_propwar_today_if_owner()
 
     section("Choose a report", "Each report answers one documented role question without market or outcome claims.")
     report_columns = st.columns(3)
@@ -146,7 +198,7 @@ def _render_owner_auth(mode: str, user: dict) -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title="PropWar: NFL Role Intelligence",
+        page_title="PropWar",
         page_icon="PW",
         layout="wide",
         initial_sidebar_state="collapsed",
@@ -171,14 +223,22 @@ def main() -> None:
 
     if mode == "OWNER":
         pages = {
-            "My Tools": [
-                st.Page("pages/07_Margin_War_Room.py", title="My Margin War Room", icon=":material/trophy:", url_path="margin"),
-                st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="My Knockout Fantasy", icon=":material/bolt:", url_path="knockout"),
-                st.Page("pages/09_Glitch_Radar.py", title="My Glitch Radar", icon=":material/radar:", url_path="glitch-radar"),
-                st.Page("pages/10_Deep_Prop_Radar.py", title="My Deep Prop Radar", icon=":material/query_stats:", url_path="deep-prop-radar"),
-                st.Page("pages/11_Fantasy_HQ.py", title="Fantasy HQ", icon=":material/sports_esports:", url_path="fantasy-hq"),
+            "PropWar": [
+                st.Page(render_launch_home, title="Today", icon=":material/home:", url_path="", default=True),
+                st.Page("pages/02_Players.py", title="Players", icon=":material/person_search:", url_path="players"),
+                st.Page("pages/09_Glitch_Radar.py", title="Markets", icon=":material/radar:", url_path="glitch-radar"),
+                st.Page("pages/11_Fantasy_HQ.py", title="Fantasy", icon=":material/sports_esports:", url_path="fantasy-hq"),
             ],
-            **pages,
+            "More": [
+                st.Page("pages/01_Teams.py", title="Teams", icon=":material/groups:", url_path="teams"),
+                st.Page("pages/04_Reports.py", title="Reports", icon=":material/bar_chart:", url_path="reports"),
+                st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
+                st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer"),
+                st.Page("pages/10_Deep_Prop_Radar.py", title="Market Research", icon=":material/query_stats:", url_path="deep-prop-radar"),
+                st.Page("pages/07_Margin_War_Room.py", title="Margin War Room", icon=":material/trophy:", url_path="margin"),
+                st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="Knockout Fantasy", icon=":material/bolt:", url_path="knockout"),
+                st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
+            ],
         }
 
     _render_owner_auth(mode, user)
