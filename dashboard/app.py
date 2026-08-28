@@ -20,6 +20,7 @@ from research_data import operational_status_text  # noqa: E402
 from public_copy import role_home_copy  # noqa: E402
 from home_page import render_home  # noqa: E402
 from propwar_today_runtime import render_propwar_today_if_owner  # noqa: E402
+from owner_preferences import remembered_sleeper_username  # noqa: E402
 
 
 REPORT_CARDS = (
@@ -104,6 +105,10 @@ def render_launch_home() -> None:
             unsafe_allow_html=True,
         )
         render_propwar_today_if_owner()
+
+        # Hydrate the remembered Sleeper identity for navigation/session continuity
+        # without restoring the removed duplicate workspace cards.
+        remembered_sleeper_username()
 
         st.caption(
             "Use the top navigation for Players, Markets, and Fantasy. "
