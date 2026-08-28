@@ -76,7 +76,11 @@ except ImportError:
     )
     from dashboard.role_change import DROP, SURGE, build_team_role_change_table
 
-from owner_preferences import remembered_sleeper_username
+try:
+    from owner_preferences import remembered_sleeper_username
+except ImportError:
+    from dashboard.owner_preferences import remembered_sleeper_username
+
 from src.fantasy.action_feed import build_weekly_action_feed
 from src.fantasy.sleeper import SleeperClient
 from src.margin import live_engine_v2 as margin_live
