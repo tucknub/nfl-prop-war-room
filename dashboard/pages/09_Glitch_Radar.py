@@ -533,17 +533,20 @@ FEATURED_ARB_MIN_EDGE_PCT = 2.0
 
 
 def _arb_edge_pct(row: dict) -> float | None:
+    try:
+        implied_sum = float(row.get("implied_sum"))
+    except (TypeError, ValueError):
+        implied_sum = None
+    if implied_sum is not None:
+        return (1.0 - implied_sum) * 100.0
+
     for key in ("profit_pct", "arb_pct", "edge_pct"):
         if row.get(key) is not None:
             try:
                 return float(row.get(key))
             except (TypeError, ValueError):
                 pass
-    try:
-        implied_sum = float(row.get("implied_sum"))
-    except (TypeError, ValueError):
-        return None
-    return (1.0 - implied_sum) * 100.0
+    return None
 
 
 def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
@@ -560,7 +563,7 @@ def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
         if row.get("commence_time"):
             meta.append(local_start_label(row.get("commence_time")))
         if edge is not None:
-            meta.append(f"feed edge {edge:.2f}%")
+            meta.append(f"implied-sum edge {edge:.2f}%")
         if meta:
             st.caption(" · ".join(meta))
 
@@ -625,7 +628,7 @@ def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
                         ("Away side", row.get("away_team")),
                         ("Away book", away.get("book")),
                         ("Away price", format_american(away.get("price"))),
-                        ("Feed edge", f"{edge:.3f}%" if edge is not None else "—"),
+                        ("Implied-sum edge", f"{edge:.3f}%" if edge is not None else "—"),
                         (
                             "Equal-payout ROI",
                             f"{locked_roi:.3f}%"
