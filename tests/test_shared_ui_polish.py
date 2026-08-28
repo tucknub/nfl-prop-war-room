@@ -18,7 +18,8 @@ def test_shared_ui_uses_compact_dashboard_visual_system() -> None:
 def test_search_guidance_is_help_not_repeated_caption() -> None:
     source = (ROOT / "dashboard" / "research_ui.py").read_text(encoding="utf-8")
 
-    assert '"help": "Open the list and start typing to filter options."' in source
+    assert '"filter_mode": "fuzzy"' in source
+    assert '"help": "Start typing to filter options."' in source
     assert 'st.caption("Open the list and start typing to filter options.")' not in source
 
 
