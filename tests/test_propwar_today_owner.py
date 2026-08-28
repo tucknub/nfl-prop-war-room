@@ -132,3 +132,19 @@ def test_owner_home_hooks_propwar_today_without_market_copy_in_public_app():
     assert '"/fantasy-hq?"' in owner
     assert 'urlencode({"fh_sleeper": username})' in owner
     assert 'href="/margin"' in owner
+
+
+def test_today_uses_bounded_parallel_sleeper_loading_and_background_catalog() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    owner = (root / "dashboard" / "propwar_today_owner.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "client.fetch_normalized_leagues(" in owner
+    assert "max_workers=3" in owner
+    assert (
+        "@st.cache_data(ttl=6 * 60 * 60, show_spinner=False, "
+        'refresh_mode="background")\ndef _today_player_catalog()'
+    ) in owner
