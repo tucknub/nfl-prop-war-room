@@ -1,4 +1,5 @@
 name: Deploy-safe Fantasy and preseason hotfix
+# rerun after refreshed live-proving contracts
 
 on:
   push:
