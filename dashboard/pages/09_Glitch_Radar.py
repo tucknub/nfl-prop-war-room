@@ -689,7 +689,7 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
 _require_owner()
 
 st.markdown("## Markets")
-st.caption("Glitch Radar is the primary live market engine · my configured books · movement, price anomalies, line shopping, and current opportunities · cached 10 minutes")
+st.caption("Glitch Radar is the primary current-market engine · my configured books · pregame actionable signals only · movement, price anomalies, line shopping, and current opportunities · cached 10 minutes")
 
 with st.spinner("Checking current NFL market data..."):
     snapshot = _live_snapshot()
@@ -700,6 +700,7 @@ raw_middles = snapshot.get("middles", []) or []
 raw_evs = snapshot.get("ev", []) or []
 quotes = snapshot.get("quotes", []) or []
 books = snapshot.get("books", []) or []
+in_play_quotes_excluded = int(snapshot.get("in_play_quotes_excluded") or 0)
 
 alerts = filter_actionable_alerts(raw_alerts)
 arbs = filter_actionable_two_leg(raw_arbs)
@@ -759,7 +760,8 @@ m4.metric("Value plays", len(evs))
 status_col, refresh_col = st.columns([4, 1])
 with status_col:
     st.caption(
-        f"{len(quotes)} quotes scanned · {len(my_books_seen)}/{len(USER_BOOKS)} of my books visible · "
+        f"{len(quotes)} quotes scanned · {in_play_quotes_excluded} in-progress quotes excluded · "
+        f"{len(my_books_seen)}/{len(USER_BOOKS)} of my books visible · "
         f"last scan {local_start_label(snapshot.get('fetched_at'))} · demo requests left: {snapshot.get('demo_remaining_hour', '—')}"
     )
     if missing_books:
