@@ -3,17 +3,28 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
-try:
-    import propwar_today_owner as _owner_module
-except ImportError:
-    from dashboard import propwar_today_owner as _owner_module
-
-
+_owner_module = None
 _loaded_mtime_ns = 0
+
+
+def _import_owner_module():
+    try:
+        return importlib.import_module("propwar_today_owner")
+    except ImportError:
+        return importlib.import_module("dashboard.propwar_today_owner")
 
 
 def _current_module():
     global _owner_module, _loaded_mtime_ns
+
+    if _owner_module is None:
+        _owner_module = _import_owner_module()
+        module_path = Path(str(getattr(_owner_module, "__file__", "") or ""))
+        try:
+            _loaded_mtime_ns = module_path.stat().st_mtime_ns
+        except OSError:
+            _loaded_mtime_ns = 0
+        return _owner_module
 
     module_path = Path(str(getattr(_owner_module, "__file__", "") or ""))
     try:
