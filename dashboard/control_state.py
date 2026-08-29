@@ -108,7 +108,10 @@ def enable_browser_history_sync() -> None:
           catch (_) { host = window.parent; }
           if (host.__propwarHistorySyncInstalled) return;
           host.__propwarHistorySyncInstalled = true;
-          host.addEventListener("popstate", () => host.setTimeout(() => host.location.reload(), 0));
+          host.addEventListener("popstate", () => {
+            const target = host.location.href;
+            host.setTimeout(() => host.location.replace(target), 75);
+          });
         })();
         </script>
         """,
