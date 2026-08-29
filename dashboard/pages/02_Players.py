@@ -21,6 +21,7 @@ from player_command_owner import (
     owner_player_command_available,
     render_owner_player_command_center,
 )
+from chart_utils import dataframe_inline_records
 
 from research_data import (
     ROLE_LABELS, available_seasons, load_production_data, load_situational_data,
@@ -235,7 +236,8 @@ with detail_context:
     if chart_data["Week"].nunique() < 2:
         st.info("Fewer than two qualifying weekly points are available; no trend line is shown.")
     else:
-        chart = alt.Chart(chart_data).mark_line(point=alt.OverlayMarkDef(size=48), strokeWidth=2.2).encode(
+        chart_source = alt.Data(values=dataframe_inline_records(chart_data))
+        chart = alt.Chart(chart_source).mark_line(point=alt.OverlayMarkDef(size=48), strokeWidth=2.2).encode(
             x=alt.X("Week:Q", scale=alt.Scale(domain=[1, 18]), axis=alt.Axis(values=nfl_week_axis_values(), tickMinStep=1, title="NFL week")),
             y=y, color=alt.Color("Series:N", legend=alt.Legend(orient="top", title=None)),
             tooltip=[alt.Tooltip("Week:Q", format=".0f"), "Series:N", alt.Tooltip("value:Q", format=".1%" if chart_mode == "Share" else ".0f"), alt.Tooltip("Raw:Q", format=".0f"), alt.Tooltip("Denominator:Q", format=".0f")],
