@@ -109,6 +109,59 @@ def _events(payload: Any) -> list[dict]:
     return []
 
 
+def _parse_utc_datetime(value: object) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def is_pregame(commence_time: object, *, now: datetime | None = None) -> bool:
+    """Return False once a parseable scheduled start time has arrived.
+
+    Glitch Radar does not have per-book quote timestamps or synchronized in-game
+    state, so post-kickoff cross-book comparisons are not safe actionable signals.
+    Missing/unparseable start times are retained rather than silently dropping data.
+    """
+    start = _parse_utc_datetime(commence_time)
+    if start is None:
+        return True
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    else:
+        current = current.astimezone(timezone.utc)
+    return current < start
+
+
+def _row_commence_time(row: dict[str, Any]) -> object:
+    if row.get("commence_time"):
+        return row.get("commence_time")
+    for key in ("event", "game"):
+        nested = row.get(key)
+        if isinstance(nested, dict) and nested.get("commence_time"):
+            return nested.get("commence_time")
+    return ""
+
+
+def filter_pregame_opportunities(
+    rows: list[dict[str, Any]],
+    *,
+    now: datetime | None = None,
+) -> list[dict[str, Any]]:
+    return [
+        dict(row)
+        for row in rows
+        if isinstance(row, dict) and is_pregame(_row_commence_time(row), now=now)
+    ]
+
+
 def parse_odds(payload: Any) -> list[Quote]:
     stamp = datetime.now(timezone.utc).isoformat()
     quotes: list[Quote] = []
@@ -180,9 +233,16 @@ def _pack_quote(quote: Quote) -> dict[str, Any]:
     }
 
 
-def detect_price_outliers(quotes: list[Quote], min_books: int = 3) -> list[dict[str, Any]]:
+def detect_price_outliers(
+    quotes: list[Quote],
+    min_books: int = 3,
+    *,
+    now: datetime | None = None,
+) -> list[dict[str, Any]]:
     groups: dict[tuple, list[Quote]] = {}
     for quote in quotes:
+        if not is_pregame(quote.commence_time, now=now):
+            continue
         groups.setdefault(quote.identity(), []).append(quote)
 
     alerts: list[dict[str, Any]] = []
@@ -252,21 +312,31 @@ def build_snapshot() -> dict[str, Any]:
     if err:
         errors.append(err)
 
+    now = datetime.now(timezone.utc)
     quotes = parse_odds(odds or {})
     packed_quotes = [_pack_quote(q) for q in quotes]
-    alerts = detect_price_outliers(quotes)
+    in_play_quotes_excluded = sum(
+        1 for quote in quotes if not is_pregame(quote.commence_time, now=now)
+    )
+    alerts = detect_price_outliers(quotes, now=now)
     books = sorted({q.book for q in quotes})
-    ev_rows = enrich_ev_markets(_opportunities(ev), packed_quotes)
+    arb_rows = filter_pregame_opportunities(_opportunities(arbitrage), now=now)
+    middle_rows = filter_pregame_opportunities(_opportunities(middles), now=now)
+    ev_rows = filter_pregame_opportunities(
+        enrich_ev_markets(_opportunities(ev), packed_quotes),
+        now=now,
+    )
 
     return {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "quotes": packed_quotes,
         "alerts": alerts,
-        "arbs": _opportunities(arbitrage),
-        "middles": _opportunities(middles),
+        "arbs": arb_rows,
+        "middles": middle_rows,
         "ev": ev_rows,
         "books": books,
         "command_center": command_center or {},
         "demo_remaining_hour": odds.get("demo_remaining_hour") if isinstance(odds, dict) else None,
+        "in_play_quotes_excluded": in_play_quotes_excluded,
         "errors": errors,
     }
