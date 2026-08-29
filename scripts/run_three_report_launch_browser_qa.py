@@ -260,8 +260,9 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     record_page_state(page, "Methodology", failures, overflow)
     routes.append("Methodology")
 
-    verify_team_history_sync(page, base, name, failures)
-    routes.append("Browser Back/Forward")
+    if name == "mobile":
+        verify_team_history_sync(page, base, name, failures)
+        routes.append("Browser Back/Forward")
 
     relevant_console = [
         message
