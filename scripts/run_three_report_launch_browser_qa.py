@@ -169,9 +169,17 @@ def verify_team_history_sync(page: Page, base: str, name: str, failures: list[st
     check("team=PHI" in page.url, f"{name}: PHI selection did not update URL", failures)
 
     page.go_back(wait_until="domcontentloaded")
-    page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
-    check("team=DAL" in page.url, f"{name}: browser Back did not restore DAL URL", failures)
-    wait_for_team("DAL", f"{name}: browser Back did not restore DAL content")
+    wait_for_home_heading(page)
+    check(
+        "/teams" not in urlsplit(page.url).path,
+        f"{name}: browser Back remained trapped in Teams filter history",
+        failures,
+    )
+    check(
+        "team=" not in page.url,
+        f"{name}: browser Back leaked Teams filter state onto the previous page",
+        failures,
+    )
 
 
 
@@ -269,7 +277,7 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
 
     if name == "mobile":
         verify_team_history_sync(page, base, name, failures)
-        routes.append("Browser Back state")
+        routes.append("Browser Back navigation")
 
     relevant_console = [
         message
