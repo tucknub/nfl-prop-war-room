@@ -46,13 +46,15 @@ jobs:
 
       - name: Run product contracts and live-proving regressions
         run: |
-          pytest -q tests/test_product_release_gate.py tests/test_ci_workflow_split.py tests/test_shared_ui_polish.py tests/test_deep_prop_radar_ui.py tests/test_specialty_form_batching.py tests/test_lazy_workspace_execution.py tests/test_product_consolidation.py tests/test_product_consolidation_phase2.py tests/test_dashboard_app_import_path.py tests/test_public_role_research_language.py tests/test_propwar_today.py tests/test_propwar_today_owner.py tests/test_player_command_center.py tests/test_live_proving_round*.py tests/test_glitch_radar_*.py tests/test_fantasy_*.py tests/test_knockout_fantasy.py tests/test_knockout_decision_center_ui.py tests/test_margin_championship.py tests/test_margin_pool_state.py tests/test_margin_state_store.py tests/test_role_change_detector.py tests/test_role_research.py tests/test_role_validation.py tests/test_weekly_role_report.py
+          pytest -q tests/test_product_release_gate.py tests/test_ci_workflow_split.py tests/test_product_performance_observability.py tests/test_shared_ui_polish.py tests/test_deep_prop_radar_ui.py tests/test_specialty_form_batching.py tests/test_lazy_workspace_execution.py tests/test_product_consolidation.py tests/test_product_consolidation_phase2.py tests/test_dashboard_app_import_path.py tests/test_public_role_research_language.py tests/test_propwar_today.py tests/test_propwar_today_owner.py tests/test_player_command_center.py tests/test_live_proving_round*.py tests/test_glitch_radar_*.py tests/test_fantasy_*.py tests/test_knockout_fantasy.py tests/test_knockout_decision_center_ui.py tests/test_margin_championship.py tests/test_margin_pool_state.py tests/test_margin_state_store.py tests/test_role_change_detector.py tests/test_role_research.py tests/test_role_validation.py tests/test_weekly_role_report.py
 
       - name: Start every visible Streamlit page from production-like cwd
         run: |
           python - <<'PY'
+          import json
           import os
           from pathlib import Path
+          import time
 
           from streamlit.testing.v1 import AppTest
 
@@ -74,9 +76,19 @@ jobs:
 
           os.chdir("/tmp")
           failures = []
+          timings = []
           for target in targets:
+              started = time.perf_counter()
               at = AppTest.from_file(str(target))
               at.run(timeout=60)
+              elapsed = time.perf_counter() - started
+              timings.append(
+                  {
+                      "page": target.name,
+                      "seconds": round(elapsed, 3),
+                      "ok": not bool(at.exception),
+                  }
+              )
               if at.exception:
                   failures.append(
                       (
@@ -88,7 +100,30 @@ jobs:
                   for exc in at.exception:
                       print(exc.value)
               else:
-                  print(f"startup ok: {target.name}")
+                  print(f"startup ok: {target.name} · {elapsed:.3f}s")
+
+          timing_path = Path("/tmp/propwar-startup-timings.json")
+          timing_path.write_text(
+              json.dumps(
+                  sorted(
+                      timings,
+                      key=lambda row: row["seconds"],
+                      reverse=True,
+                  ),
+                  indent=2,
+              ),
+              encoding="utf-8",
+          )
+          print("Slowest visible page startups:")
+          for row in sorted(
+              timings,
+              key=lambda value: value["seconds"],
+              reverse=True,
+          ):
+              print(
+                  f'  {row["page"]}: {row["seconds"]:.3f}s '
+                  f'({"ok" if row["ok"] else "failed"})'
+              )
 
           if failures:
               raise SystemExit(
@@ -96,3 +131,12 @@ jobs:
                   + ", ".join(name for name, _ in failures)
               )
           PY
+
+      - name: Upload startup timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: propwar-startup-timings
+          path: /tmp/propwar-startup-timings.json
+          if-no-files-found: warn
+
