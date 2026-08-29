@@ -139,6 +139,41 @@ def validate_player_href(href: str | None) -> bool:
     )
 
 
+def verify_team_history_sync(page: Page, base: str, name: str, failures: list[str]) -> None:
+    navigate(page, base, "teams", "Team Role Breakdown")
+
+    def select_team(team: str) -> None:
+        box = page.get_by_role("combobox", name="Search or select team").first
+        if box.count() == 0 or not box.is_visible():
+            page.get_by_text("Change filters", exact=True).click()
+            page.wait_for_timeout(250)
+            box = page.get_by_role("combobox", name="Search or select team").first
+        box.click()
+        box.fill(team)
+        box.press("Enter")
+        page.wait_for_timeout(1800)
+
+    select_team("DAL")
+    check("team=DAL" in page.url, f"{name}: DAL selection did not update URL", failures)
+    check("DAL · 2025" in body(page), f"{name}: DAL selection did not render DAL content", failures)
+
+    select_team("PHI")
+    check("team=PHI" in page.url, f"{name}: PHI selection did not update URL", failures)
+    check("PHI · 2025" in body(page), f"{name}: PHI selection did not render PHI content", failures)
+
+    page.go_back(wait_until="domcontentloaded")
+    page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
+    page.wait_for_timeout(1800)
+    check("team=DAL" in page.url, f"{name}: browser Back did not restore DAL URL", failures)
+    check("DAL · 2025" in body(page), f"{name}: browser Back did not restore DAL content", failures)
+
+    page.go_forward(wait_until="domcontentloaded")
+    page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
+    page.wait_for_timeout(1800)
+    check("team=PHI" in page.url, f"{name}: browser Forward did not restore PHI URL", failures)
+    check("PHI · 2025" in body(page), f"{name}: browser Forward did not restore PHI content", failures)
+
+
 def record_page_state(page: Page, label: str, failures: list[str], overflow: list[str]) -> None:
     text = body(page)
     if any(marker in text for marker in ("Traceback", "Exception", "This app has encountered an error")):
@@ -230,6 +265,10 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     page.screenshot(path=str(SHOTS / f"{name}_methodology.png"), full_page=True)
     record_page_state(page, "Methodology", failures, overflow)
     routes.append("Methodology")
+
+    if name == "mobile":
+        verify_team_history_sync(page, base, name, failures)
+        routes.append("Browser Back/Forward")
 
     relevant_console = [
         message
