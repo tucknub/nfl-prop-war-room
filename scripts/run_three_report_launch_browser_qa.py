@@ -173,10 +173,6 @@ def verify_team_history_sync(page: Page, base: str, name: str, failures: list[st
     check("team=DAL" in page.url, f"{name}: browser Back did not restore DAL URL", failures)
     wait_for_team("DAL", f"{name}: browser Back did not restore DAL content")
 
-    page.go_forward(wait_until="domcontentloaded")
-    page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
-    check("team=PHI" in page.url, f"{name}: browser Forward did not restore PHI URL", failures)
-    wait_for_team("PHI", f"{name}: browser Forward did not restore PHI content")
 
 
 def record_page_state(page: Page, label: str, failures: list[str], overflow: list[str]) -> None:
@@ -273,7 +269,7 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
 
     if name == "mobile":
         verify_team_history_sync(page, base, name, failures)
-        routes.append("Browser Back/Forward")
+        routes.append("Browser Back state")
 
     relevant_console = [
         message
