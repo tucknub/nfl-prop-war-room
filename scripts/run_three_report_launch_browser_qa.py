@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import traceback
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -142,6 +143,14 @@ def validate_player_href(href: str | None) -> bool:
 def verify_team_history_sync(page: Page, base: str, name: str, failures: list[str]) -> None:
     navigate(page, base, "teams", "Team Role Breakdown")
 
+    def wait_for_team(team: str, failure: str) -> None:
+        try:
+            page.get_by_text(
+                re.compile(rf"^{re.escape(team)} · 2025 ·")
+            ).first.wait_for(timeout=15000)
+        except Exception:
+            check(False, failure, failures)
+
     def select_team(team: str) -> None:
         box = page.get_by_role("combobox", name="Search or select team").first
         if box.count() == 0 or not box.is_visible():
@@ -151,27 +160,23 @@ def verify_team_history_sync(page: Page, base: str, name: str, failures: list[st
         box.click()
         box.fill(team)
         box.press("Enter")
-        page.wait_for_timeout(1800)
+        wait_for_team(team, f"{name}: {team} selection did not render {team} content")
 
     select_team("DAL")
     check("team=DAL" in page.url, f"{name}: DAL selection did not update URL", failures)
-    check("DAL · 2025" in body(page), f"{name}: DAL selection did not render DAL content", failures)
 
     select_team("PHI")
     check("team=PHI" in page.url, f"{name}: PHI selection did not update URL", failures)
-    check("PHI · 2025" in body(page), f"{name}: PHI selection did not render PHI content", failures)
 
     page.go_back(wait_until="domcontentloaded")
     page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
-    page.wait_for_timeout(1800)
     check("team=DAL" in page.url, f"{name}: browser Back did not restore DAL URL", failures)
-    check("DAL · 2025" in body(page), f"{name}: browser Back did not restore DAL content", failures)
+    wait_for_team("DAL", f"{name}: browser Back did not restore DAL content")
 
     page.go_forward(wait_until="domcontentloaded")
     page.get_by_role("heading", name="Team Role Breakdown", exact=True).wait_for(timeout=90000)
-    page.wait_for_timeout(1800)
     check("team=PHI" in page.url, f"{name}: browser Forward did not restore PHI URL", failures)
-    check("PHI · 2025" in body(page), f"{name}: browser Forward did not restore PHI content", failures)
+    wait_for_team("PHI", f"{name}: browser Forward did not restore PHI content")
 
 
 def record_page_state(page: Page, label: str, failures: list[str], overflow: list[str]) -> None:
