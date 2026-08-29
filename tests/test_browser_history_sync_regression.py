@@ -11,8 +11,9 @@ def test_history_sync_keeps_popstate_reload_contract() -> None:
         ROOT / "dashboard" / "control_state.py"
     ).read_text(encoding="utf-8")
 
-    assert "__propwarHistorySyncInstalled" in source
-    assert 'addEventListener("popstate"' in source
+    assert "__propwarHistorySyncHandler" in source
+    assert 'removeEventListener("popstate"' in source
+    assert 'addEventListener("popstate", handler)' in source
     assert "const target = host.location.href;" in source
     assert "host.location.replace(target)" in source
 
