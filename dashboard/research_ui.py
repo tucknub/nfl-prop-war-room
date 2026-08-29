@@ -353,6 +353,7 @@ def searchable_selectbox(
     on_change=None,
     args=None,
     kwargs=None,
+    bind=None,
 ):
     """Render one consistent, visible search affordance for large option lists."""
     select_kwargs = {
@@ -364,6 +365,8 @@ def searchable_selectbox(
         select_kwargs["format_func"] = format_func
     if on_change is not None:
         select_kwargs.update({"on_change": on_change, "args": args, "kwargs": kwargs})
+    if bind is not None:
+        select_kwargs["bind"] = bind
     return st.selectbox(label, options, **select_kwargs)
 
 
