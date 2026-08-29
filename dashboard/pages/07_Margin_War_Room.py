@@ -245,8 +245,7 @@ if committed_pick:
         "Make sure the same team is submitted on the official Margin Pool site."
     )
 
-    final_col, action_col = st.columns([2, 1])
-    with final_col:
+    with st.form("margin_week_completion_form", clear_on_submit=False):
         final_margin = st.number_input(
             "Final point differential",
             step=1.0,
@@ -254,17 +253,19 @@ if committed_pick:
             help="Example: team wins 27-20 = +7; loses 17-24 = -7.",
             key="margin_final_margin",
         )
-    with action_col:
-        st.write("")
-        st.write("")
-        complete_week = st.button(
+        confirm_final_margin = st.checkbox(
+            f"I confirm this is the official final margin for {committed_pick} in Week {state['current_week']}.",
+            key="margin_final_margin_confirm",
+        )
+        complete_week = st.form_submit_button(
             f"Complete Week {state['current_week']}",
             type="primary",
             disabled=not authorized,
             width="stretch",
-            key="margin_complete_week",
         )
-    if complete_week:
+    if complete_week and not confirm_final_margin:
+        st.warning("Confirm the official final margin before completing the week.")
+    elif complete_week:
         try:
             updated_state = state_store.complete_week_state(state, final_margin)
             commit_sha = _persist_transition(
@@ -588,6 +589,37 @@ if preview_state_text:
             mime="application/json",
             key="margin_preview_download",
         )
+        with st.form("margin_pool_preview_persist_form", clear_on_submit=False):
+            confirm_pool_field = st.checkbox(
+                "I confirm the pool standings, scores, and burned-team inventories match the official Margin Pool.",
+                key="margin_preview_persist_confirm",
+            )
+            save_validated_field = st.form_submit_button(
+                "Save validated field to Margin state",
+                type="primary",
+                disabled=not authorized,
+                width="stretch",
+            )
+
+        if save_validated_field and not confirm_pool_field:
+            st.warning("Confirm the validated field matches the official Margin Pool before saving.")
+        elif save_validated_field:
+            try:
+                preview_base_state = json.loads(st.session_state["margin_pool_preview_base_state"])
+                commit_sha = _persist_transition(
+                    state_config,
+                    preview_base_state,
+                    preview_state,
+                    f"Save validated Margin pool field for Week {state['current_week']}",
+                )
+                _calculate_snapshot.clear()
+                st.session_state.pop("margin_pool_preview_state", None)
+                st.session_state.pop("margin_pool_preview_base_state", None)
+                st.success(f"Validated field saved to private Margin state ({commit_sha[:8]}).")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Validated field was not saved: {exc}")
+
         if st.button("Clear field preview", key="margin_preview_clear"):
             st.session_state.pop("margin_pool_preview_state", None)
             st.session_state.pop("margin_pool_preview_base_state", None)

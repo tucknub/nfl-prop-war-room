@@ -129,6 +129,18 @@ def test_negative_margin_is_preserved() -> None:
     assert updated["weekly_results"][0]["actual_margin"] == -6.0
 
 
+def test_zero_margin_is_preserved_as_a_valid_completed_week() -> None:
+    committed = state_store.commit_pick_state(base_state(), audit(), "LAC")
+    updated = state_store.complete_week_state(committed, 0)
+    assert updated["completed_week"] == 1
+    assert updated["current_week"] == 2
+    assert updated["used_teams"] == ["LAC"]
+    assert updated["cumulative_score"] == 0.0
+    assert updated["weekly_results"][0]["actual_margin"] == 0.0
+    assert updated["current_decision"]["status"] == "NEEDS_REFRESH"
+    assert updated["current_decision"]["committed_pick"] is None
+
+
 def test_completion_requires_committed_pick() -> None:
     with pytest.raises(ValueError, match="must be committed"):
         state_store.complete_week_state(base_state(), 7)
