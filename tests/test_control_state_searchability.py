@@ -42,14 +42,9 @@ def test_browser_url_change_can_restore_dal_after_phi() -> None:
     assert (back_navigation.value, back_navigation.source) == ("DAL", "query")
     state_source = (ROOT / "dashboard" / "control_state.py").read_text(encoding="utf-8")
     assert 'addEventListener("popstate"' in state_source
-    for filename in ["home_page.py", "02_Players.py", "03_Games.py"]:
+    for filename in ["home_page.py", "01_Teams.py", "02_Players.py", "03_Games.py"]:
         path = next(path for path in PUBLIC_FILES if path.name == filename)
         assert "enable_browser_history_sync()" in path.read_text(encoding="utf-8")
-
-    teams = next(path for path in PUBLIC_FILES if path.name == "01_Teams.py").read_text(encoding="utf-8")
-    assert "enable_browser_history_sync()" not in teams
-    assert 'key="team"' in teams
-    assert 'bind="query-params"' in teams
 
 
 def test_second_control_rerun_does_not_revert_first_control() -> None:
@@ -75,6 +70,7 @@ def test_invalid_query_is_explicit_and_recoverable() -> None:
 def test_deep_link_pages_update_query_params_from_widget_callbacks() -> None:
     expected = {
         "home_page.py": [("season", "home_season"), ("week", "home_week")],
+        "01_Teams.py": [("season", "teams_season"), ("team", "teams_team"), ("family", "teams_family")],
         "02_Players.py": [("season", "players_season"), ("player", "players_player"), ("family", "players_family")],
         "03_Games.py": [("season", "games_season"), ("week", "games_week"), ("game", "games_game")],
     }
@@ -86,13 +82,6 @@ def test_deep_link_pages_update_query_params_from_widget_callbacks() -> None:
         for query_key, widget_key in pairs:
             assert f'("{query_key}", "{widget_key}")' in source
 
-    teams = next(path for path in PUBLIC_FILES if path.name == "01_Teams.py").read_text(encoding="utf-8")
-    assert "initialize_query_control" not in teams
-    assert "update_query_from_widget" not in teams
-    for key in ("season", "team", "family"):
-        assert f'key="{key}"' in teams
-    assert teams.count('bind="query-params"') == 3
-
 
 def test_search_affordances_are_visible_and_consistent() -> None:
     ui = (ROOT / "dashboard" / "research_ui.py").read_text(encoding="utf-8")
@@ -100,7 +89,7 @@ def test_search_affordances_are_visible_and_consistent() -> None:
     players = (ROOT / "dashboard" / "pages" / "02_Players.py").read_text(encoding="utf-8")
     games = (ROOT / "dashboard" / "pages" / "03_Games.py").read_text(encoding="utf-8")
     explorer = (ROOT / "dashboard" / "pages" / "05_Explorer.py").read_text(encoding="utf-8")
-    assert "Start typing to filter options." in ui
+    assert "Open the list and start typing to filter options." in ui
     assert "Search or select team" in teams
     assert "Search or select player" in players
     assert "Search or select game" in games
@@ -149,3 +138,20 @@ def test_multi_team_labels_still_use_week_eighteen_team() -> None:
         "00-0038555": "PHI",
     }
     assert labels.loc[list(expected), "team"].to_dict() == expected
+
+
+def test_initialize_query_control_reconciles_browser_history_before_widget_recreation() -> None:
+    source = (ROOT / "dashboard" / "control_state.py").read_text(encoding="utf-8")
+
+    assert "browser_query_reconciliation = (" in source
+    assert 'decision.source == "query"' in source
+    assert "session_value != decision.value" in source
+    assert "if browser_query_reconciliation:" in source
+    assert "st.rerun()" in source
+
+
+def test_widget_query_sync_does_not_require_browser_reconciliation() -> None:
+    synced = resolve_control_state(
+        ["DAL", "PHI"], "PHI", "PHI", query_present=True, query_changed=True
+    )
+    assert (synced.value, synced.source) == ("PHI", "query")
