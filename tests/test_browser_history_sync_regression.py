@@ -13,7 +13,8 @@ def test_history_sync_keeps_popstate_reload_contract() -> None:
 
     assert "__propwarHistorySyncInstalled" in source
     assert 'addEventListener("popstate"' in source
-    assert "location.reload()" in source
+    assert "const target = host.location.href;" in source
+    assert "host.location.replace(target)" in source
 
 
 def test_browser_qa_exercises_back_and_forward_rendered_state() -> None:
