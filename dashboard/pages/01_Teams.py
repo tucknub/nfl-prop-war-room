@@ -24,7 +24,7 @@ from research_ui import (
     responsive_table, role_noun, searchable_selectbox, section, selection_summary,
     source_footer, update_query_from_widget,
 )
-from supporting_evidence import home_evidence_message, role_leader, situational_leader
+from supporting_evidence import home_evidence_message, role_leader
 from role_change import build_team_role_change_table
 
 
