@@ -19,84 +19,47 @@ from research_data import (
     situational_team_summary, team_window_summary,
 )
 from research_ui import (
-    methodology_expander, note, numeric_percent_sort, page_intro, parse_int,
-    query_value, ratio_text, responsive_table, role_noun, searchable_selectbox,
-    section, selection_summary, source_footer,
+    enable_browser_history_sync, initialize_query_control, methodology_expander,
+    note, numeric_percent_sort, page_intro, parse_int, query_value, ratio_text,
+    responsive_table, role_noun, searchable_selectbox, section, selection_summary,
+    source_footer, update_query_from_widget,
 )
 from supporting_evidence import home_evidence_message, role_leader
 from role_change import build_team_role_change_table
 
 
+enable_browser_history_sync()
 page_intro("Team Role Breakdown", "Who currently controls each offensive role on this team?")
 summary_slot = st.empty()
 
 seasons = available_seasons()
-requested_season_text = query_value("season")
-requested_season = parse_int(requested_season_text) if requested_season_text else None
-if requested_season_text and requested_season not in seasons:
-    st.warning("The requested season was not found.")
-    st.stop()
-
-
-def _clear_week_query() -> None:
-    st.query_params.pop("week", None)
-
+season_state = initialize_query_control("teams", "season", "teams_season", seasons, parser=parse_int)
+season = int(season_state.value)
+season_rows = primary_rows()
+season_rows = season_rows[season_rows["season"].eq(season)]
+teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
+team_state = initialize_query_control("teams", "team", "teams_team", teams)
+family_state = initialize_query_control("teams", "family", "teams_family", list(ROLE_LABELS), default="rb_carry_share")
 
 with st.expander("Change filters"):
     controls = st.columns(5)
     with controls[0]:
-        season = st.selectbox(
-            "Season",
-            seasons,
-            key="season",
-            bind="query-params",
-            on_change=_clear_week_query,
-        )
-
-    season = int(season)
-    season_rows = primary_rows()
-    season_rows = season_rows[season_rows["season"].eq(season)]
-    teams = sorted(season_rows["team"].dropna().astype(str).unique().tolist())
-
-    requested_team = query_value("team")
-    if requested_team and requested_team not in teams:
-        st.warning("Team not found. Search for and select a valid team.")
-        st.stop()
-
-    requested_family = query_value("family")
-    if requested_family and requested_family not in ROLE_LABELS:
-        st.warning("The requested role family was not found.")
-        st.stop()
-
+        season = st.selectbox("Season", seasons, key="teams_season", on_change=update_query_from_widget, args=("season", "teams_season"), kwargs={"clear_query": ("week",)})
     with controls[1]:
-        team = searchable_selectbox(
-            "Search or select team",
-            teams,
-            key="team",
-            bind="query-params",
-        )
+        team = searchable_selectbox("Search or select team", teams, key="teams_team", on_change=update_query_from_widget, args=("team", "teams_team"))
     with controls[2]:
-        window_label = st.selectbox(
-            "Window",
-            ["Season", "Last 8", "Last 4", "Last 2"],
-            index=2,
-            key="teams_window",
-        )
+        window_label = st.selectbox("Window", ["Season", "Last 8", "Last 4", "Last 2"], index=2, key="teams_window")
     with controls[3]:
-        context = st.selectbox(
-            "Context",
-            ["All plays", "Normal game"],
-            index=1,
-            key="teams_context",
-        )
+        context = st.selectbox("Context", ["All plays", "Normal game"], index=1, key="teams_context")
     with controls[4]:
-        role_family = st.selectbox(
-            "Role family",
-            list(ROLE_LABELS),
-            format_func=ROLE_LABELS.get,
-            key="family",
-            bind="query-params",
-        )
+        role_family = st.selectbox("Role family", list(ROLE_LABELS), format_func=ROLE_LABELS.get, key="teams_family", on_change=update_query_from_widget, args=("family", "teams_family"))
+
+if season_state.invalid_query or team_state.invalid_query or family_state.invalid_query:
+    # query_params initialize deep links; invalid values remain explicit and recoverable.
+    if season_state.invalid_query: st.warning("The requested season was not found.")
+    if team_state.invalid_query: st.warning("Team not found. Search for and select a valid team.")
+    if family_state.invalid_query: st.warning("The requested role family was not found.")
+    st.stop()
 
 window = "Season" if window_label == "Season" else int(window_label.split()[-1])
 week_text = query_value("week")
