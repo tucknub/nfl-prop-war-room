@@ -171,6 +171,11 @@ def render_home() -> None:
                 "Baseline games",
                 "All qualifying categories",
             ]
+            # Weekly-report frames intentionally carry analytical metadata in
+            # DataFrame.attrs. Presentation copies should not forward that metadata
+            # to Streamlit/Arrow because its tuple-keyed dictionaries are not
+            # serializable and are not used by the table.
+            display.attrs.clear()
             st.dataframe(
                 display,
                 width="stretch",
