@@ -106,12 +106,17 @@ def enable_browser_history_sync() -> None:
           let host;
           try { host = window.top; void host.location.href; }
           catch (_) { host = window.parent; }
-          if (host.__propwarHistorySyncInstalled) return;
-          host.__propwarHistorySyncInstalled = true;
-          host.addEventListener("popstate", () => {
+          if (host.__propwarHistorySyncHandler) {
+            try {
+              host.removeEventListener("popstate", host.__propwarHistorySyncHandler);
+            } catch (_) {}
+          }
+          const handler = () => {
             const target = host.location.href;
             host.setTimeout(() => host.location.replace(target), 75);
-          });
+          };
+          host.__propwarHistorySyncHandler = handler;
+          host.addEventListener("popstate", handler);
         })();
         </script>
         """,
