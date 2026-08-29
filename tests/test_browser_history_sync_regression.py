@@ -27,4 +27,5 @@ def test_browser_qa_exercises_back_and_forward_rendered_state() -> None:
     assert 'select_team("DAL")' in source
     assert 'select_team("PHI")' in source
     assert "page.go_back(" in source
-    assert "browser Back did not restore DAL content" in source
+    assert "browser Back remained trapped in Teams filter history" in source
+    assert "browser Back leaked Teams filter state onto the previous page" in source
