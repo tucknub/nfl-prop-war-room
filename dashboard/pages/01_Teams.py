@@ -24,16 +24,8 @@ from research_ui import (
     responsive_table, role_noun, searchable_selectbox, section, selection_summary,
     source_footer, update_query_from_widget,
 )
-from supporting_evidence import home_evidence_message, role_leader, situational_leader
+from supporting_evidence import home_evidence_message, role_leader
 from role_change import build_team_role_change_table
-
-
-def _combined_family_summary(season: int, team: str, family: str, end_week: int, window: int | str, context: str) -> pd.DataFrame:
-    result = team_window_summary(season, team, family, end_week, window, context)
-    situation = situational_team_summary(season, team, family, end_week, window, context) if season >= 2023 else pd.DataFrame()
-    if not result.empty and not situation.empty:
-        result = result.merge(situation, on=["player_id", "player_name", "position"], how="left")
-    return result
 
 
 enable_browser_history_sync()
@@ -79,7 +71,14 @@ if requested_week is not None and requested_week not in weeks:
 end_week = requested_week if requested_week is not None else max(weeks)
 
 family_summaries = {
-    family: _combined_family_summary(season, team, family, end_week, window, context)
+    family: team_window_summary(
+        season,
+        team,
+        family,
+        end_week,
+        window,
+        context,
+    )
     for family in ROLE_LABELS
 }
 summary = family_summaries[role_family]
@@ -101,14 +100,9 @@ all_targets = pd.concat(target_parts, ignore_index=True) if target_parts else pd
 leader_specs = [
     ("Backfield", role_leader(family_summaries["rb_carry_share"], label="Carry leader")),
     ("Backfield", role_leader(family_summaries["rb_opportunity_share"], label="RB opportunity leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "passing_down", "Passing-down leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "red_zone", "Red-zone leader")),
-    ("Backfield", situational_leader(family_summaries["rb_opportunity_share"], "inside_5", "Inside-five leader")),
     ("Receiving", role_leader(family_summaries["wr_target_share"], label="WR target-share leader")),
     ("Receiving", role_leader(family_summaries["te_target_share"], label="TE target-share leader")),
     ("Receiving", role_leader(all_targets, label="Overall target leader") if not all_targets.empty else None),
-    ("Receiving", situational_leader(all_targets, "red_zone", "Red-zone target leader") if not all_targets.empty else None),
-    ("Receiving", situational_leader(all_targets, "end_zone", "End-zone target leader") if not all_targets.empty else None),
 ]
 leader_rows, leader_cards = [], []
 for group, leader in leader_specs:
@@ -122,7 +116,7 @@ for group, leader in leader_specs:
         "href": f"/players?player={leader['player_id']}&season={season}&week={end_week}",
     })
 
-section("Role hierarchy at a glance", "Backfield and receiving leaders for the selected window.")
+section("Role hierarchy at a glance", "Core backfield and receiving ownership leaders for the selected window.")
 if leader_rows:
     responsive_table(pd.DataFrame(leader_rows), leader_cards, key="teams_leaders", height=410, percent_columns=["Share"], label="View complete leader table")
 else:
@@ -212,8 +206,27 @@ if season < 2023 and view_mode != "Role ownership":
     note("Situational views are available from 2023 onward for published seasons.", amber=True)
     view_mode = "Role ownership"
 
+view_summary = summary
+if view_mode != "Role ownership":
+    situation = situational_team_summary(
+        season,
+        team,
+        role_family,
+        end_week,
+        window,
+        context,
+    )
+    if situation.empty:
+        view_summary = summary.iloc[0:0].copy()
+    else:
+        view_summary = summary.merge(
+            situation,
+            on=["player_id", "player_name", "position"],
+            how="left",
+        )
+
 section(view_mode, f"Complete {ROLE_LABELS[role_family].lower()} hierarchy.")
-if summary.empty:
+if view_summary.empty:
     st.info("No team rows match the selected filters.")
 else:
     contexts = {
@@ -221,7 +234,7 @@ else:
         "Scoring area": [("red_zone", "Red zone"), ("inside_10", "Inside 10"), ("inside_5", "Inside five"), ("end_zone", "End-zone targets")],
     }
     cards, rows_out = [], []
-    for rank, (_, row) in enumerate(summary.iterrows(), start=1):
+    for rank, (_, row) in enumerate(view_summary.iterrows(), start=1):
         if view_mode == "Role ownership":
             metrics = [("Ownership", ratio_text(row["raw_opportunities"], row["team_denominator"], role_noun(role_family)), context), ("Prior comparison", f"{row['change'] * 100:+.1f} pp" if pd.notna(row["change"]) else "—", f"{window_label} versus prior window"), ("Sample", f"{int(row['sample_games'])} games", "Qualifying games")]
             rows_out.append({"Rank": rank, "Player": row["player_name"], "Position": row["position"], "Raw": row["raw_opportunities"], "Denominator": row["team_denominator"], "Share": row["share"] * 100, "Change": row["change"] * 100 if pd.notna(row["change"]) else pd.NA})
