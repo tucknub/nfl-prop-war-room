@@ -111,6 +111,6 @@ def enable_browser_history_sync() -> None:
         })();
         </script>
         """,
-        height=0,
+        height=1,
         tab_index=-1,
     )
