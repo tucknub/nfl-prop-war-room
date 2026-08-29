@@ -6,19 +6,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_history_sync_keeps_popstate_reload_contract() -> None:
+def test_teams_uses_native_query_binding_for_filter_url_state() -> None:
     source = (
-        ROOT / "dashboard" / "control_state.py"
+        ROOT / "dashboard" / "pages" / "01_Teams.py"
     ).read_text(encoding="utf-8")
 
-    assert "__propwarHistorySyncHandler" in source
-    assert 'removeEventListener("popstate"' in source
-    assert 'addEventListener("popstate", handler)' in source
-    assert "const target = host.location.href;" in source
-    assert "host.location.replace(target)" in source
+    assert "enable_browser_history_sync()" not in source
+    assert source.count('bind="query-params"') == 3
 
 
-def test_browser_qa_exercises_back_and_forward_rendered_state() -> None:
+def test_browser_qa_keeps_bound_filters_out_of_back_history() -> None:
     source = (
         ROOT / "scripts" / "run_three_report_launch_browser_qa.py"
     ).read_text(encoding="utf-8")
