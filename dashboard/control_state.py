@@ -60,19 +60,37 @@ def initialize_query_control(
     present = raw != ""
     requested = parser(raw) if present and parser else (raw if present else None)
     marker_key = f"_pw_query_seen::{page}::{query_key}"
-    previous = st.session_state.get(marker_key, object())
+    unseen = object()
+    previous = st.session_state.get(marker_key, unseen)
     changed = previous != raw
+    session_value = st.session_state.get(widget_key)
     decision = resolve_control_state(
         available,
         requested,
-        st.session_state.get(widget_key),
+        session_value,
         default=default,
         query_present=present,
         query_changed=changed,
     )
     st.session_state[marker_key] = raw
-    if decision.value is not None and st.session_state.get(widget_key) != decision.value:
+
+    browser_query_reconciliation = (
+        previous is not unseen
+        and changed
+        and decision.source == "query"
+        and decision.value is not None
+        and session_value != decision.value
+    )
+    if decision.value is not None and session_value != decision.value:
         st.session_state[widget_key] = decision.value
+
+    # A browser Back/Forward event can restore the URL while Streamlit still has
+    # the prior frontend widget value. Re-run once before recreating that widget
+    # so the URL-authoritative value becomes the new frontend state. Normal widget
+    # callbacks already have matching session/query values and do not take this path.
+    if browser_query_reconciliation:
+        st.rerun()
+
     return decision
 
 
