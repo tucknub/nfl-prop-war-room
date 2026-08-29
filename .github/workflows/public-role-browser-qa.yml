@@ -10,6 +10,7 @@ on:
       - "dashboard/public_copy.py"
       - "dashboard/home_page.py"
       - "dashboard/research_ui.py"
+      - "dashboard/control_state.py"
       - "dashboard/pages/01_Teams.py"
       - "dashboard/pages/02_Players.py"
       - "dashboard/pages/03_Games.py"
@@ -25,7 +26,8 @@ on:
       - "tests/test_three_report_app_smoke.py"
       - "tests/test_three_report_launch.py"
       - "tests/test_public_role_research_language.py"
-      - "tests/test_current_role_dashboard_status.py"
+      - "tests/test_current_role_dashboard_status.py             tests/test_browser_history_sync_regression.py"
+      - "tests/test_browser_history_sync_regression.py"
       - "requirements.txt"
       - ".github/workflows/public-role-browser-qa.yml"
   workflow_dispatch:
