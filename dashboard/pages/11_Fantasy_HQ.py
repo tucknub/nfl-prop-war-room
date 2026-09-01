@@ -2649,7 +2649,7 @@ def _render_sleeper() -> None:
                 _render_available_player_search(
                     str(sleeper_user["user_id"]),
                     league_id,
-                    all_league_ids,
+                    context_league_ids,
                 )
     
     if activity_tab.open:
