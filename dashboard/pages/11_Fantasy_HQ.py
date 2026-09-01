@@ -1489,16 +1489,21 @@ def _render_sleeper() -> None:
             del st.query_params[SLEEPER_USERNAME_QUERY_KEY]
         st.rerun()
 
-    all_league_ids = tuple(
+    priority_league_ids = tuple(
         str(row["league_id"])
         for row in scan_leagues
+        if str(row.get("league_id") or "").strip()
+    )
+    account_league_ids = tuple(
+        str(row["league_id"])
+        for row in leagues
         if str(row.get("league_id") or "").strip()
     )
     feed_parlay_key = _secret_default("PARLAY_API_KEY")
     feed_week = _fantasy_regular_week(nfl_state)
     _render_all_league_decision_center(
         str(sleeper_user["user_id"]),
-        all_league_ids,
+        priority_league_ids,
         feed_week,
         feed_parlay_key,
     )
@@ -1537,6 +1542,7 @@ def _render_sleeper() -> None:
     )
     st.session_state[LEGACY_FANTASY_LEAGUE_SELECTOR_KEY] = selected_label
     league_id = league_options[selected_label]
+    selected_is_demo = league_id in demo_ids
 
     try:
         with st.spinner("Loading league and roster..."):
@@ -1633,6 +1639,7 @@ def _render_sleeper() -> None:
     rules_tab = league_tab
 
     all_states = ()
+    all_states_error: str | None = None
     all_catalog: dict[str, dict[str, Any]] = {}
     needs_catalog = any(
         bool(tab.open)
@@ -1659,13 +1666,19 @@ def _render_sleeper() -> None:
             all_catalog = _load_player_catalog()
         except Exception:
             all_catalog = {}
+    context_league_ids = (
+        account_league_ids
+        if cross_tab.open or selected_is_demo
+        else priority_league_ids
+    )
     if needs_all_states:
         try:
             all_states = _load_all_sleeper_states(
                 str(sleeper_user["user_id"]),
-                all_league_ids,
+                context_league_ids,
             )
-        except Exception:
+        except Exception as exc:
+            all_states_error = str(exc)
             all_states = ()
 
     if roster_tab.open:
@@ -1788,6 +1801,8 @@ def _render_sleeper() -> None:
                 "current roster/player status. It is not a player-ranking model."
             )
     
+    lineup = None
+
     if lineup_tab.open:
         with lineup_tab:
             st.markdown("#### Lineup Check")
@@ -2080,22 +2095,50 @@ def _render_sleeper() -> None:
                     "there is a real roster pool to evaluate."
                 )
             else:
+                if lineup is None:
+                    waiver_week = _fantasy_regular_week(nfl_state)
+                    waiver_matchup = None
+                    if waiver_week >= 1 and my_roster is not None:
+                        try:
+                            waiver_matchups = _load_matchups(
+                                league_id,
+                                waiver_week,
+                            )
+                            waiver_matchup = next(
+                                (
+                                    row
+                                    for row in waiver_matchups
+                                    if row.platform_roster_id
+                                    == my_roster.platform_roster_id
+                                ),
+                                None,
+                            )
+                        except Exception:
+                            waiver_matchup = None
+                    try:
+                        lineup = build_lineup_check(
+                            league,
+                            all_catalog or _load_player_catalog(),
+                            matchup=waiver_matchup,
+                        )
+                    except Exception as exc:
+                        st.warning(
+                            "Lineup context for waiver tools could not be built."
+                        )
+                        st.caption(str(exc))
+                        lineup = None
+
                 lookback_hours = st.selectbox(
                     "Trending window",
                     (24, 48, 72),
                     format_func=lambda hours: f"Last {hours} hours",
                     key="fantasy_hq_waiver_lookback",
                 )
-                all_league_ids = tuple(
-                    str(row["league_id"])
-                    for row in leagues
-                    if str(row.get("league_id") or "").strip()
-                )
                 try:
                     with st.spinner("Building live Waiver Watch..."):
                         waiver_states = _load_all_sleeper_states(
                             str(sleeper_user["user_id"]),
-                            all_league_ids,
+                            context_league_ids,
                         )
                         waiver_catalog = _load_player_catalog()
                         trending_adds = _load_sleeper_trending_adds(
@@ -4029,12 +4072,17 @@ def _render_sleeper() -> None:
                 "Live roster ownership across every Sleeper NFL league found for "
                 "this account. Draft results will appear here as Sleeper rosters update."
             )
+            if demo_leagues:
+                st.caption(
+                    "Test/demo leagues are included in this ownership view but remain "
+                    "excluded from What Should I Do? priorities."
+                )
     
             catalog = all_catalog
             if not all_states:
                 st.warning("Cross-league ownership could not be loaded.")
-                if all_scan_error:
-                    st.caption(all_scan_error)
+                if all_states_error:
+                    st.caption(all_states_error)
     
             if all_states:
                 scan_a, scan_b = st.columns(2)
