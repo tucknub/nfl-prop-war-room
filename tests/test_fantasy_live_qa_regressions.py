@@ -110,3 +110,44 @@ def test_action_feed_uses_shared_bounded_weekly_context_loader():
 
     assert "_load_matchups(" not in feed_source
     assert "_load_transactions(" not in feed_source
+
+
+def test_waivers_builds_lineup_context_without_start_sit_rendering_first():
+    source = _page_source()
+    render_source = source[source.index("def _render_sleeper()") :]
+
+    assert render_source.index("lineup = None") < render_source.index(
+        "if lineup_tab.open:"
+    )
+
+    waiver_start = render_source.index("if waiver_tab.open:")
+    waiver_end = render_source.index("if matchup_tab.open:", waiver_start)
+    waiver_source = render_source[waiver_start:waiver_end]
+
+    assert "lineup = build_lineup_check(" in waiver_source
+    assert waiver_source.index("lineup = build_lineup_check(") < waiver_source.index(
+        'st.markdown("##### Roster Need Matches")'
+    )
+
+
+def test_priority_and_account_ownership_league_sets_stay_separate():
+    source = _page_source()
+    render_source = source[source.index("def _render_sleeper()") :]
+
+    assert "priority_league_ids = tuple(" in render_source
+    assert "account_league_ids = tuple(" in render_source
+    assert "selected_is_demo = league_id in demo_ids" in render_source
+    assert (
+        "if cross_tab.open or selected_is_demo\n"
+        "        else priority_league_ids"
+    ) in render_source
+
+    action_start = render_source.index("_render_all_league_decision_center(")
+    action_source = render_source[action_start : action_start + 400]
+    assert "priority_league_ids" in action_source
+    assert "account_league_ids" not in action_source
+
+    assert (
+        "Test/demo leagues are included in this ownership view but remain "
+        "excluded from What Should I Do? priorities."
+    ) in render_source
