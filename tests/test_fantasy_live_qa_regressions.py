@@ -147,7 +147,5 @@ def test_priority_and_account_ownership_league_sets_stay_separate():
     assert "priority_league_ids" in action_source
     assert "account_league_ids" not in action_source
 
-    assert (
-        "Test/demo leagues are included in this ownership view but remain "
-        "excluded from What Should I Do? priorities."
-    ) in render_source
+    assert "Test/demo leagues are included in this ownership view" in render_source
+    assert "excluded from What Should I Do? priorities." in render_source
