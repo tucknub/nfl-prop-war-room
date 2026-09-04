@@ -89,7 +89,7 @@ def _require_owner() -> None:
         st.stop()
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False)
 def _live_snapshot() -> dict:
     return build_snapshot()
 
@@ -689,7 +689,7 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
 _require_owner()
 
 st.markdown("## Markets")
-st.caption("Glitch Radar is the primary live market engine · my configured books · pregame actionable signals only · movement, price anomalies, line shopping, and current opportunities · cached 10 minutes")
+st.caption("ParlayAPI market preview · my configured books · pregame comparison signals only · cached 2 minutes · every displayed price must be verified in the sportsbook before use")
 
 with st.spinner("Checking current NFL market data..."):
     snapshot = _live_snapshot()
@@ -755,7 +755,7 @@ m1, m2, m3, m4 = st.columns(4)
 m1.metric("Glitch watches", len(alerts))
 m2.metric("Arbs", len(arbs))
 m3.metric("Middles", len(middles))
-m4.metric("Value plays", len(evs))
+m4.metric("EV candidates", len(evs))
 
 status_col, refresh_col = st.columns([4, 1])
 with status_col:
@@ -787,7 +787,7 @@ scan_b.metric("Improved", movement_summary["improved"])
 scan_c.metric("Worsened", movement_summary["worsened"])
 scan_d.metric("Disappeared", movement_summary["disappeared"])
 st.caption(
-    f"History backend: {history_backend} · unique 10-minute/fresh scans only · "
+    f"History backend: {history_backend} · unique 2-minute preview scans only · "
     f"{int(market_history.get('scan_count') or 0)} scans tracked."
 )
 if history_warning:
@@ -850,8 +850,8 @@ source_tab = more_tab
 
 if glitch_tab.open:
     with glitch_tab:
-        st.markdown("### Potential sportsbook errors")
-        st.caption("Same-market prices that materially disagree with peers at one of my sportsbooks.")
+        st.markdown("### Price anomalies to verify")
+        st.caption("Same-market prices that materially disagree with peers. These are verification candidates, not confirmed sportsbook errors.")
         if not alerts:
             st.success("No major same-market pricing anomaly is visible at one of my books in the current preview.")
         for alert in alerts:
@@ -859,8 +859,8 @@ if glitch_tab.open:
     
 if arb_tab.open:
     with arb_tab:
-        st.markdown("### Guaranteed-price opportunities")
-        st.caption("Only shown when every required leg is at a sportsbook I use.")
+        st.markdown("### Arbitrage candidates to verify")
+        st.caption("Only shown when every required leg is at a sportsbook I use. Recheck both legs in-book before treating the displayed prices as executable.")
         if not arbs:
             st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
         for row in sorted(
@@ -881,10 +881,10 @@ if middle_tab.open:
     
 if ev_tab.open:
     with ev_tab:
-        st.markdown("### Positive expected-value prices")
+        st.markdown("### Feed-derived +EV candidates")
         st.caption(
-            "These are ordinary market prices that look better than the feed's sharp-derived fair line. "
-            "They are not automatically sportsbook glitches."
+            "These are prices that look better than ParlayAPI's sharp-derived fair estimate. "
+            "The fair value is provider-derived, not a proprietary PropWar projection, and the exact book price must be verified."
         )
         if not evs:
             st.info("No +EV price at one of my sportsbooks is in the current preview.")
@@ -949,6 +949,7 @@ if source_tab.open:
     
         _evidence_table(
             [
+                ("Provider", "ParlayAPI preview feed"),
                 ("Quotes scanned", len(quotes)),
                 ("My books visible", f"{len(my_books_seen)}/{len(USER_BOOKS)}"),
                 ("Last scan", local_start_label(snapshot.get("fetched_at"))),
@@ -964,6 +965,6 @@ if source_tab.open:
                 st.table(diagnostics)
             else:
                 st.write("No command-center diagnostic fields were returned.")
-            st.caption("Diagnostics are kept here for troubleshooting; the betting tabs above are the decision interface.")
+            st.caption("Diagnostics are kept here for troubleshooting. Market tabs are research and verification surfaces, not execution sources.")
     
 st.markdown("[Open deeper Market Research →](/deep-prop-radar)")
