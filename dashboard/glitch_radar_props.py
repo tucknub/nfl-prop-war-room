@@ -151,7 +151,7 @@ def normalize_props(payload: Any) -> list[dict[str, Any]]:
     return [normalize_prop_row(row) for row in rows if isinstance(row, dict)]
 
 
-def fetch_full_props(api_key: str, *, max_age_sec: int = 1800) -> list[dict[str, Any]]:
+def fetch_full_props(api_key: str, *, max_age_sec: int = 120) -> list[dict[str, Any]]:
     """Fetch all current NFL props in one 3-credit call.
 
     The request intentionally does not limit bookmakers because peer/reference books improve
