@@ -349,6 +349,7 @@ def test_fantasy_hq_exposes_market_assisted_trade_analyzer():
     assert "Market-Assisted Trade Analyzer" in page
     assert "analyze_market_trade" in page
     assert "Analyze trade" in page
-    assert "My lineup impact" in page
-    assert "Partner lineup impact" in page
-    assert "Partner fit" in page
+    assert "My baseline delta" in page
+    assert "Partner baseline delta" in page
+    assert "Current-week partner fit" in page
+    assert "not an accept/decline trade verdict" in page
