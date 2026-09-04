@@ -286,7 +286,7 @@ def _render_action(action) -> None:
 
 
 def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
-    selection = str(row.get("selection") or row.get("side") or "Bet").strip()
+    selection = str(row.get("selection") or row.get("side") or "Selection").strip()
     display_market = str(row.get("display_market") or market_label(row)).strip()
     bet_name = f"{selection} {display_market}".strip()
     book = str(row.get("book") or "Sportsbook").strip()
@@ -356,7 +356,7 @@ def _render_ev_card(row: dict, *, show_evidence: bool = True) -> None:
                         ("Game", game_name(row)),
                         ("Phase", phase or "Not labeled by current preview"),
                         ("Start", local_start_label(row.get("commence_time"))),
-                        ("Bet", bet_name),
+                        ("Selection", bet_name),
                         ("Sportsbook", book),
                         ("Current price", price),
                         ("Alternate prices", alternate_text or "None at another configured book"),
@@ -567,7 +567,7 @@ def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
         if meta:
             st.caption(" · ".join(meta))
 
-        st.markdown("**BET BOTH SIDES**")
+        st.markdown("**VERIFY BOTH LEGS**")
         left, right = st.columns(2)
         with left:
             st.markdown(
@@ -683,7 +683,7 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
         shown += 1
 
     if shown == 0:
-        st.info("Nothing actionable is showing in the current preview scan.")
+        st.info("Nothing requiring verification is showing in the current preview scan.")
 
 
 _require_owner()
