@@ -21,7 +21,7 @@ from launch_contract import (
     REPORT_METHODS,
     REPORT_ORDER,
 )
-from research_data import (
+from research_data_compat import (
     available_seasons,
     available_weeks,
     league_window_summary,
