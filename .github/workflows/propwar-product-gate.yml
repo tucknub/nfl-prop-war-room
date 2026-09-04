@@ -31,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: propwar-product-gate-${{ github.event.pull_request.number || github.ref }}
+  group: propwar-product-gate-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
