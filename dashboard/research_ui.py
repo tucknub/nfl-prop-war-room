@@ -17,11 +17,22 @@ from control_state import (
     resolve_control_state,
     update_query_from_widget,
 )
-from research_data import percent, pp
 from supporting_evidence import validated_data_status_label
 
 
 PUBLIC_SOURCE_NOTE = "Regular-season role and opportunity data; current-season weeks appear only after validation."
+
+
+def percent(value: object) -> str:
+    """Format a decimal share without depending on research_data import state."""
+    number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    return "—" if pd.isna(number) else f"{float(number):.1%}"
+
+
+def pp(value: object) -> str:
+    """Format a decimal difference as percentage points."""
+    number = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    return "—" if pd.isna(number) else f"{float(number) * 100:+.1f} pp"
 
 
 def configure_page(title: str) -> None:
