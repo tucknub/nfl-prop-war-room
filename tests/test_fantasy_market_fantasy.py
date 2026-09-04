@@ -291,5 +291,6 @@ def test_deep_prop_radar_and_fantasy_hq_share_prop_snapshot():
 
     assert "shared_prop_snapshot" in deep
     assert "shared_prop_snapshot" in fantasy
-    assert "PROP_SNAPSHOT_CACHE_SECONDS = 10_800" in cache
+    assert "PROP_SNAPSHOT_CACHE_SECONDS = 120" in cache
+    assert "PROP_MAX_QUOTE_AGE_SECONDS = 120" in cache
     assert "def _deep_snapshot" not in deep
