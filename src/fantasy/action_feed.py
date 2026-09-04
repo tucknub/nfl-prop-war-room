@@ -5,11 +5,9 @@ from typing import Any, Iterable, Mapping
 
 from .lineup_check import NEEDS_ACTION, build_lineup_check
 from .market_start_sit import FILL, SWAP, build_market_start_sit_board
-from .market_trade import ACCEPT, GOOD_FOR_BOTH, analyze_market_trade
 from .market_waivers import HIGH, LOW, MEDIUM, build_market_ranked_waivers
 from .models import FantasyLeagueState, LeagueTransaction, MatchupTeam
 from .sleeper import SleeperTrendingPlayer
-from .trade_candidates import build_trade_candidate_board
 
 
 PRIORITY_HIGH = "HIGH"
@@ -308,83 +306,7 @@ def _league_actions(
             )
         )
 
-    trade_action = _best_trade_action(
-        league,
-        player_catalog,
-        prop_rows,
-    )
-    if trade_action is not None:
-        rows.append(trade_action)
-
     return rows
-
-
-def _best_trade_action(
-    league: FantasyLeagueState,
-    player_catalog: Mapping[str, Mapping[str, Any]],
-    prop_rows: tuple[Mapping[str, Any], ...],
-) -> WeeklyActionItem | None:
-    board = build_trade_candidate_board(
-        league,
-        player_catalog,
-        per_side_limit=4,
-    )
-    best = None
-
-    for match in board.matches[:3]:
-        if not match.two_way:
-            continue
-        my_candidates = match.my_players_they_could_target[:2]
-        their_candidates = match.players_i_could_target[:2]
-        for mine in my_candidates:
-            for theirs in their_candidates:
-                try:
-                    analysis = analyze_market_trade(
-                        league,
-                        player_catalog,
-                        prop_rows,
-                        partner_roster_id=match.partner_roster_id,
-                        give_player_ids=(mine.sleeper_player_id,),
-                        receive_player_ids=(theirs.sleeper_player_id,),
-                    )
-                except Exception:
-                    continue
-                if (
-                    analysis.verdict != ACCEPT
-                    or analysis.partner_fit != GOOD_FOR_BOTH
-                    or analysis.decision_edge is None
-                ):
-                    continue
-                if best is None or analysis.decision_edge > best.decision_edge:
-                    best = analysis
-
-    if best is None:
-        return None
-
-    receive = best.receive_players[0]
-    give = best.give_players[0]
-    impact = float(best.my_team.lineup_delta)
-    return _item(
-        league,
-        priority=(
-            PRIORITY_HIGH if impact >= 3.0 else PRIORITY_MEDIUM
-        ),
-        action_type=TRADE,
-        title=f"Trade {give.name} for {receive.name}",
-        action=(
-            f"Explore this with {best.partner_team.team_name}; "
-            "the model sees a good outcome for both rosters."
-        ),
-        detail=best.reason,
-        impact_points=impact,
-        confidence=best.confidence,
-        player_ids=(
-            give.sleeper_player_id,
-            receive.sleeper_player_id,
-        ),
-        partner_roster_id=best.partner_team.roster_id,
-        bonus=6.0,
-    )
 
 
 def waiver_candidate_visible_in_feed(candidate: Any) -> bool:
