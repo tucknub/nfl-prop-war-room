@@ -97,7 +97,7 @@ For players actually researched that week, ask:
 
 ### Markets
 
-For surfaced BET/WATCH/CHECK/SHOP opportunities, record:
+For surfaced VERIFY/WATCH/CHECK/SHOP opportunities, record:
 
 - current price
 - opening/previous price
@@ -105,7 +105,9 @@ For surfaced BET/WATCH/CHECK/SHOP opportunities, record:
 - whether the same wager remained available
 - whether the signal was a good-side or bad-side anomaly
 - whether settlement/market-definition differences explained the gap
-- whether the action label was useful
+- whether the verification/action label was useful
+- whether the exact line and price still existed inside the sportsbook at verification time
+- whether provider quote age and sportsbook display agreed
 
 False positives matter more than raw alert count.
 
@@ -115,12 +117,12 @@ During normal weekly use, record whether PropWar helped with:
 
 - lineup decisions
 - waivers
-- FAAB
+- factual FAAB budget and completed winning-bid context
 - matchup review
-- trade/manager fit
+- trade/manager fit, with current-week market baselines kept separate from rest-of-season value
 - cross-league ownership/exposure
 
-For each recommendation, ask:
+For each surfaced decision-support item, ask:
 
 - Did it save time?
 - Did it surface something I would have missed?
