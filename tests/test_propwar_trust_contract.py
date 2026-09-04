@@ -93,3 +93,5 @@ def test_knockout_refuses_unvalidated_probability_and_bid_claims() -> None:
 
     assert "no fake survival probability or optimal bid" in knockout
     assert "does not claim a weekly survival probability" in knockout
+
+# Second validation trigger after updating legacy contracts.
