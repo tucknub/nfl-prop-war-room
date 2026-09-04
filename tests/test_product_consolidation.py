@@ -57,9 +57,11 @@ def test_markets_and_market_research_have_product_level_headings() -> None:
     ).read_text(encoding="utf-8")
 
     assert 'st.markdown("## Markets")' in markets
-    assert "Glitch Radar is the primary live market engine" in markets
+    assert "ParlayAPI market preview" in markets
+    assert "every displayed price must be verified in the sportsbook" in markets
     assert 'st.markdown("## Market Research")' in research
-    assert "Advanced supporting diagnostics behind Markets" in research
+    assert "Advanced market research" in research
+    assert "quotes 120 seconds old or newer" in research
 
 
 def test_repository_has_one_authoritative_product_definition() -> None:
