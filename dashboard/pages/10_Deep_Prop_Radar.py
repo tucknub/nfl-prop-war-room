@@ -242,7 +242,7 @@ try:
         deep = shared_prop_snapshot(key)
 except Exception as exc:
     st.error(f"Deep prop scan failed: {exc}")
-    st.caption("The 10-minute no-key Glitch Radar remains available even if the deep feed is unavailable.")
+    st.caption("The 2-minute no-key market preview remains available even if the deep feed is unavailable.")
     st.stop()
 
 coverage = deep.get("coverage", {}) or {}
@@ -331,7 +331,7 @@ price_tab, shop_tab, watch_tab, gap_tab, ladder_tab, stale_tab, coverage_tab = s
 if price_tab.open:
     with price_tab:
         st.markdown("### Exact same player / market / line price anomalies")
-        st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are actionable here.")
+        st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are promoted for verification here.")
         if not price_outliers:
             st.info("No actionable exact-line prop price outlier was found in the returned coverage.")
         for row in price_outliers:
