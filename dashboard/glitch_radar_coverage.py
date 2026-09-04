@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import Any, Iterable
 
 try:
@@ -52,4 +52,58 @@ def actionable_coverage_summary(rows: Iterable[dict[str, Any]]) -> dict[str, Any
     }
 
 
-__all__ = ["actionable_coverage_summary", "source_row_counts"]
+__all__ = ["actionable_coverage_summary", "comparison_coverage_summary", "source_row_counts"]
+
+
+
+def comparison_coverage_summary(rows: Iterable[dict[str, Any]]) -> dict[str, int]:
+    """Count actual cross-book comparison opportunities in the returned prop board."""
+    family_books: dict[tuple, set[str]] = defaultdict(set)
+    exact_books: dict[tuple, set[str]] = defaultdict(set)
+    owner_family_books: dict[tuple, set[str]] = defaultdict(set)
+    owner_exact_books: dict[tuple, set[str]] = defaultdict(set)
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        player = " ".join(str(row.get("player") or "").strip().split()).casefold()
+        market = " ".join(str(row.get("market") or "").strip().split()).casefold()
+        if not player or not market:
+            continue
+        try:
+            line = float(row.get("line"))
+        except (TypeError, ValueError):
+            line = None
+
+        event_id = str(row.get("event_id") or "").strip()
+        if event_id:
+            event = ("id", event_id)
+        else:
+            event = (
+                "sig",
+                str(row.get("commence_time") or "").strip(),
+                str(row.get("away_team") or "").strip().casefold(),
+                str(row.get("home_team") or "").strip().casefold(),
+            )
+
+        book = canonical_book(row.get("book"))
+        if not book:
+            continue
+
+        family = (event, player, market)
+        family_books[family].add(book)
+        if book in USER_BOOKS:
+            owner_family_books[family].add(book)
+
+        if line is not None:
+            exact = (event, player, market, line)
+            exact_books[exact].add(book)
+            if book in USER_BOOKS:
+                owner_exact_books[exact].add(book)
+
+    return {
+        "cross_book_family_groups": sum(1 for books in family_books.values() if len(books) >= 2),
+        "cross_book_exact_line_groups": sum(1 for books in exact_books.values() if len(books) >= 2),
+        "owner_cross_book_family_groups": sum(1 for books in owner_family_books.values() if len(books) >= 2),
+        "owner_cross_book_exact_line_groups": sum(1 for books in owner_exact_books.values() if len(books) >= 2),
+    }
