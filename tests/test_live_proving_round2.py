@@ -77,7 +77,7 @@ def test_arbitrage_is_action_first_and_thin_arbs_are_not_featured() -> None:
     source = _source("dashboard/pages/09_Glitch_Radar.py")
 
     assert "FEATURED_ARB_MIN_EDGE_PCT = 2.0" in source
-    assert 'st.markdown("**BET BOTH SIDES**")' in source
+    assert 'st.markdown("**VERIFY BOTH LEGS**")' in source
     assert "100-unit equal-payout example" in source
     assert "locked ROI" in source
     assert "THIN ARB" in source
