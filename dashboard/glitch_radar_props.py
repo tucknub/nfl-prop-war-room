@@ -162,7 +162,7 @@ def fetch_full_props(api_key: str, *, max_age_sec: int = 120) -> list[dict[str, 
         raise ValueError("ParlayAPI key is required for deep prop scans")
     response = httpx.get(
         f"{BASE}/v1/sports/{SPORT}/props",
-        params={"limit": 10000, "maxAgeSec": int(max_age_sec)},
+        params={"limit": 10000},
         headers={"X-API-Key": key, "User-Agent": "PropWar-Glitch-Radar/2.0"},
         timeout=35.0,
         follow_redirects=True,
@@ -173,8 +173,21 @@ def fetch_full_props(api_key: str, *, max_age_sec: int = 120) -> list[dict[str, 
         raise RuntimeError("ParlayAPI free credits are exhausted for this billing month")
     if response.status_code == 429:
         raise RuntimeError("ParlayAPI rate limit reached")
+    if 500 <= response.status_code <= 599:
+        raise RuntimeError(
+            f"ParlayAPI player-prop feed is temporarily unavailable (HTTP {response.status_code}). "
+            "PropWar did not use stale or undated quotes."
+        )
     response.raise_for_status()
-    return normalize_props(response.json())
+    rows = normalize_props(response.json())
+    fresh_rows = []
+    for row in rows:
+        age_seconds = _as_float(row.get("age_seconds"))
+        if age_seconds is None:
+            continue
+        if 0 <= age_seconds <= float(max_age_sec):
+            fresh_rows.append(row)
+    return fresh_rows
 
 
 def _event_key(row: dict[str, Any]) -> str:
