@@ -19,10 +19,11 @@ def test_deep_prop_radar_uses_lazy_diagnostic_tabs() -> None:
         "watch_tab",
         "gap_tab",
         "ladder_tab",
-        "stale_tab",
         "coverage_tab",
     ):
         assert f"if {tab_name}.open:" in source
+    assert "Stale Lines" not in source
+    assert "stale_tab" not in source
 
 
 def test_deep_prop_force_refresh_clears_real_shared_cache() -> None:
