@@ -164,7 +164,7 @@ with st.container(border=True):
 
     st.markdown(
         f"**Usage trend:** {role_change.trend}  ·  "
-        f"**Confidence:** {role_change.confidence}"
+        f"**Sample strength:** {role_change.confidence}"
     )
     if role_change.evidence:
         st.caption(" · ".join(role_change.evidence))
