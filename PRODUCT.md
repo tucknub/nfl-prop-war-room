@@ -20,7 +20,7 @@ Default owner goal:
 
 - show a few actions, not dozens of tables
 - explain why each surfaced
-- show confidence/freshness
+- show evidence strength/source freshness
 - deep-link to the tool that produced the evidence
 - omit a source when its data is stale, missing, preseason-inappropriate, or otherwise unsafe
 
@@ -35,8 +35,8 @@ It combines, when safely identity-linked:
 - canonical Role Intelligence
 - Role Change Detector
 - current team/context
-- live market context
-- best visible configured-book prices
+- fresh market research context when source-age requirements are satisfied
+- fresh snapshot prices from configured books, with in-book verification required
 - fantasy ownership
 - selected-league status
 - cross-league exposure
@@ -53,9 +53,9 @@ The primary surface is Glitch Radar. Deep Prop Radar is supporting market resear
 
 Markets includes:
 
-- best current opportunities
-- Glitches
-- +EV context
+- highest-priority verification queue
+- price anomalies to verify
+- provider-derived +EV context
 - line shopping
 - movement/history
 - alternate-ladder diagnostics
@@ -76,15 +76,17 @@ It includes:
 - ranked action center
 - lineup decisions
 - waivers
-- FAAB
+- factual FAAB budget and completed-bid context
 - roster health
 - matchup/opponent context
 - Manager Intelligence
-- trade-fit evidence
+- structural trade-fit evidence and current-week market-baseline context, not automatic season-long ACCEPT/DECLINE advice
 - player ownership/availability
 - cross-league exposure
 
 Sleeper is the supported live provider. Yahoo/ESPN expansion is not a core priority until the existing workflow is proven during the season.
+
+All owner-facing numeric claims must follow **[docs/propwar/TRUST_CONTRACT.md](docs/propwar/TRUST_CONTRACT.md)**. Facts, derived calculations, model estimates, and provider signals must remain explicitly distinguishable.
 
 ## Supporting surfaces
 
