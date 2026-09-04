@@ -129,7 +129,7 @@ state_text = json.dumps(state, sort_keys=True)
 
 refresh_col, status_col = st.columns([1, 3])
 with refresh_col:
-    if st.button("Refresh live markets", type="primary", width="stretch"):
+    if st.button("Refresh nflverse spread snapshot", type="primary", width="stretch"):
         _calculate_snapshot.clear()
         st.rerun()
 with status_col:
@@ -196,11 +196,16 @@ section("Current recommendation", "Refresh near the pool deadline, then record t
 hero_top = st.columns(3)
 hero_top[0].metric("RECOMMENDED", str(pick["team"]))
 hero_top[1].metric("Opponent", str(pick["opponent"]))
-hero_top[2].metric("Current spread", _signed(pick["current_spread"]))
+hero_top[2].metric("nflverse spread", _signed(pick["current_spread"]))
 hero_bottom = st.columns(3)
-hero_bottom[0].metric("Expected margin", _signed(pick["calibrated_margin"]))
-hero_bottom[1].metric("Loss probability", _pct(pick["p_loss"]))
-hero_bottom[2].metric("20+ probability", _pct(pick["p_win20"]))
+hero_bottom[0].metric("Model mean margin", _signed(pick["calibrated_margin"]))
+hero_bottom[1].metric("Historical loss-rate est.", _pct(pick["p_loss"]))
+hero_bottom[2].metric("Historical 20+ est.", _pct(pick["p_win20"]))
+
+st.caption(
+    "Spread source: nflverse/nfldata games.csv snapshot loaded at refresh. "
+    "Margin/loss/20+ estimates are empirical 2006–2025 regular-season favorite outcomes weighted toward similar point spreads; they are model estimates, not sportsbook probabilities."
+)
 
 if override_applied:
     note(
@@ -236,8 +241,8 @@ if committed_pick:
         commit_cols = st.columns(4)
         commit_cols[0].metric("COMMITTED", committed_pick)
         commit_cols[1].metric("Opponent", str(r.opponent))
-        commit_cols[2].metric("Spread at refresh", _signed(r.current_spread))
-        commit_cols[3].metric("Expected margin", _signed(r.calibrated_margin, 2))
+        commit_cols[2].metric("nflverse spread at refresh", _signed(r.current_spread))
+        commit_cols[3].metric("Model mean margin", _signed(r.calibrated_margin, 2))
     else:
         st.success(f"War Room pick committed: {committed_pick}")
     note(
@@ -327,7 +332,7 @@ else:
         format_func=lambda t: (
             f"{t} vs {available_rows[available_rows.team.eq(t)].iloc[0].opponent} · "
             f"spread {_signed(available_rows[available_rows.team.eq(t)].iloc[0].current_spread)} · "
-            f"expected {_signed(available_rows[available_rows.team.eq(t)].iloc[0].calibrated_margin, 2)}"
+            f"model mean {_signed(available_rows[available_rows.team.eq(t)].iloc[0].calibrated_margin, 2)}"
         ),
         key="margin_commit_team",
     )
@@ -335,8 +340,8 @@ else:
     selection_cols = st.columns(4)
     selection_cols[0].metric("Selected", selected_team)
     selection_cols[1].metric("Opponent", str(selected_row.opponent))
-    selection_cols[2].metric("Spread", _signed(selected_row.current_spread))
-    selection_cols[3].metric("Expected margin", _signed(selected_row.calibrated_margin, 2))
+    selection_cols[2].metric("nflverse spread", _signed(selected_row.current_spread))
+    selection_cols[3].metric("Model mean margin", _signed(selected_row.calibrated_margin, 2))
 
     acknowledge = st.checkbox(
         "I understand this records my War Room state only; I still submit the official pick on the pool site.",
@@ -379,10 +384,10 @@ board_display = pd.DataFrame({
     "Status": board["status"],
     "Team": board["team"],
     "Opp": board["opponent"],
-    "Spread": board["current_spread"],
-    "Exp margin": board["calibrated_margin"],
-    "P(loss)": board["p_loss"] * 100.0,
-    "P(20+)": board["p_win20"] * 100.0,
+    "nflverse spread": board["current_spread"],
+    "Model mean margin": board["calibrated_margin"],
+    "Hist loss est.": board["p_loss"] * 100.0,
+    "Hist 20+ est.": board["p_win20"] * 100.0,
     "Future cost": board["future_cost"],
     "Season EV Δ": board["total_season_ev_delta_vs_anchor"],
     "Sacrifice": board["current_sacrifice_vs_anchor"],
@@ -392,10 +397,10 @@ st.dataframe(
     hide_index=True,
     width="stretch",
     column_config={
-        "Spread": st.column_config.NumberColumn(format="%+.1f"),
-        "Exp margin": st.column_config.NumberColumn(format="%+.2f"),
-        "P(loss)": st.column_config.NumberColumn(format="%.1f%%"),
-        "P(20+)": st.column_config.NumberColumn(format="%.1f%%"),
+        "nflverse spread": st.column_config.NumberColumn(format="%+.1f"),
+        "Model mean margin": st.column_config.NumberColumn(format="%+.2f"),
+        "Hist loss est.": st.column_config.NumberColumn(format="%.1f%%"),
+        "Hist 20+ est.": st.column_config.NumberColumn(format="%.1f%%"),
         "Future cost": st.column_config.NumberColumn(format="%.2f"),
         "Season EV Δ": st.column_config.NumberColumn(format="%+.2f"),
         "Sacrifice": st.column_config.NumberColumn(format="%.1f"),
@@ -406,7 +411,7 @@ top_three = board.sort_values(["total_season_ev", "current_spread"], ascending=[
 for rank, (_, row) in enumerate(top_three.iterrows(), start=1):
     st.markdown(
         f"**{rank}. {row['team']} vs {row['opponent']}** — {row['current_spread']:+.1f} spread · "
-        f"{row['calibrated_margin']:+.2f} expected · {_pct(row['p_loss'])} loss · {_pct(row['p_win20'])} 20+ · "
+        f"{row['calibrated_margin']:+.2f} model mean · {_pct(row['p_loss'])} hist loss est. · {_pct(row['p_win20'])} hist 20+ est. · "
         f"{row['status']}"
     )
 
@@ -416,8 +421,8 @@ route_display = pd.DataFrame({
     "Week": route["week"].astype(int),
     "Team": route["team"],
     "Opp": route["opponent"],
-    "Projected spread": route["raw_value_spread"],
-    "Calibrated EV": route["calibrated_ev"],
+    "Value spread": route["raw_value_spread"],
+    "Model mean margin": route["calibrated_ev"],
     "Source": route["value_source"].map(_friendly_source),
 })
 st.dataframe(
@@ -425,8 +430,8 @@ st.dataframe(
     hide_index=True,
     width="stretch",
     column_config={
-        "Projected spread": st.column_config.NumberColumn(format="%+.2f"),
-        "Calibrated EV": st.column_config.NumberColumn(format="%+.2f"),
+        "Value spread": st.column_config.NumberColumn(format="%+.2f"),
+        "Model mean margin": st.column_config.NumberColumn(format="%+.2f"),
     },
 )
 note("Do not follow this route blindly. After every completed week, the remaining route is deleted and rebuilt.", amber=True)
@@ -654,4 +659,4 @@ with st.expander("Source mix and technical status"):
         "current_spread_sacrifice_cap": policy.get("current_spread_sacrifice_cap"),
     })
 
-source_footer("NFL schedule/market data: nflverse. Current games use posted market; future unpriced games use the validated V1 market-power allocator.")
+source_footer("Source: nflverse/nfldata games.csv for schedule and spread snapshots. Current-week rows require a posted nflverse spread; future unpriced games use PropWar's market-power allocator. Margin/loss/20+ values are historical spread-conditioned model estimates, not factual outcomes or sportsbook probabilities.")
