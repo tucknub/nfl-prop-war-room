@@ -770,7 +770,7 @@ def render_propwar_today_if_owner() -> None:
     st.markdown("## What Should I Do?")
     st.caption(
         "The few current actions PropWar believes deserve attention across "
-        "markets, fantasy, role changes, and Margin. Every card shows what deserves review, "
+        "fantasy, validated role changes, and Margin. Every card shows what deserves review, "
         "why it surfaced, evidence strength, freshness, and the source evidence."
     )
 
@@ -780,15 +780,9 @@ def render_propwar_today_if_owner() -> None:
     live_season, current_week, season_type = _live_context()
     live_preseason = season_type.startswith("pre")
 
-    try:
-        actions.extend(
-            _market_actions(
-                _today_market_snapshot(),
-                force_preseason=live_preseason,
-            )
-        )
-    except Exception as exc:
-        errors.append(f"Market radar: {exc}")
+    st.caption(
+        "Market preview signals stay inside Markets and are not promoted into Today because the no-key preview does not expose reliable per-book quote age."
+    )
 
     username = _remembered_sleeper_username()
     parlay_key = _secret("PARLAY_API_KEY")
