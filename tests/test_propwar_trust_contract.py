@@ -1,3 +1,4 @@
+# Validation-only PR trigger. Production trust contract is already on streamlit-cloud-deploy.
 from __future__ import annotations
 
 from pathlib import Path
