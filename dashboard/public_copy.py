@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 try:
-    from .research_data import load_operational_status
+    from .research_data_compat import load_operational_status
 except ImportError:  # Streamlit entrypoint adds dashboard/ directly to sys.path.
-    from research_data import load_operational_status
+    from research_data_compat import load_operational_status
 
 
 def role_home_copy() -> dict[str, str]:
