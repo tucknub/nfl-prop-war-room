@@ -19,6 +19,8 @@ def test_deep_prop_market_freshness_fails_closed() -> None:
     assert 'row.get("age_seconds")' in cache
     assert "No player-prop quotes at or under 120 seconds old" in cache
     assert "max_age_sec: int = 120" in feed
+    assert 'params={"limit": 10000}' in feed
+    assert '"maxAgeSec"' not in feed
 
 
 def test_no_key_preview_is_not_promoted_into_today() -> None:
