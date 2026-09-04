@@ -118,7 +118,7 @@ def _remembered_sleeper_username() -> str:
     return remembered_sleeper_username()
 
 
-@st.cache_data(ttl=600, show_spinner=False, refresh_mode="background")
+@st.cache_data(ttl=120, show_spinner=False, refresh_mode="background")
 def _today_market_snapshot() -> dict:
     return build_snapshot()
 
@@ -754,7 +754,7 @@ def _render_action_card(rank: int, row: TodayAction) -> None:
 
         st.write(row.why)
         st.caption(
-            f"Confidence: {row.confidence} · Freshness: {row.freshness}"
+            f"Evidence strength: {row.confidence} · Source freshness: {row.freshness}"
         )
         st.link_button(
             f"Open {row.source}",
@@ -770,8 +770,8 @@ def render_propwar_today_if_owner() -> None:
     st.markdown("## What Should I Do?")
     st.caption(
         "The few current actions PropWar believes deserve attention across "
-        "markets, fantasy, role changes, and Margin. Every card shows the action, "
-        "why it surfaced, confidence, freshness, and the source evidence."
+        "markets, fantasy, role changes, and Margin. Every card shows what deserves review, "
+        "why it surfaced, evidence strength, freshness, and the source evidence."
     )
 
     actions: list[TodayAction] = []
@@ -869,7 +869,7 @@ def render_propwar_today_if_owner() -> None:
     st.caption(
         "PropWar Today composes existing tool outputs; it does not create a "
         "second projection model. Missing or stale sources are omitted rather "
-        "than guessed."
+        "than guessed. Market cards are verification prompts, not direct bet instructions."
     )
 
 
