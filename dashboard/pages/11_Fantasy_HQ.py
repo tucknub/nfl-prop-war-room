@@ -1130,8 +1130,8 @@ def _render_all_league_decision_center(
 
     st.markdown("### What Should I Do?")
     st.caption(
-        "Across all Sleeper leagues, ranked by urgency and expected impact. "
-        "This combines lineup, waiver, FAAB, roster-health, and mutual trade "
+        "Across all Sleeper leagues, ranked by urgency and decision-support deltas. "
+        "This combines lineup, waiver, roster-health, and mutual trade "
         "signals into one decision feed."
     )
 
@@ -1192,8 +1192,8 @@ def _render_all_league_decision_center(
             if not weekly_feed.actions:
                 if weekly_feed.drafted_leagues:
                     st.success(
-                        "No market-backed lineup, waiver, FAAB, health, or "
-                        "mutual trade action currently clears the feed."
+                        "No market-backed lineup, waiver, health, or mutual trade "
+                        "review currently clears the feed."
                     )
                 else:
                     st.info(
@@ -1214,18 +1214,10 @@ def _render_all_league_decision_center(
                             "Type": row.action_type.title(),
                             "Move": row.title,
                             "Recommended action": row.action,
-                            "Impact": (
+                            "Decision delta": (
                                 f"{row.impact_points:+.2f} pts"
                                 if row.impact_points is not None
                                 else "—"
-                            ),
-                            "FAAB": (
-                                (
-                                    f"{row.faab_range} "
-                                    f"(target {row.faab_target})"
-                                )
-                                if row.faab_range and row.faab_target
-                                else row.faab_range or "—"
                             ),
                             "Confidence": row.confidence,
                             "Why": row.detail,
@@ -1254,13 +1246,8 @@ def _render_all_league_decision_center(
                         action_bits = []
                         if row.impact_points is not None:
                             action_bits.append(
-                                f"Impact {row.impact_points:+.2f} pts"
+                                f"Decision delta {row.impact_points:+.2f} pts"
                             )
-                        if row.faab_range:
-                            faab_text = f"FAAB {row.faab_range}"
-                            if row.faab_target:
-                                faab_text += f" · target {row.faab_target}"
-                            action_bits.append(faab_text)
                         if action_bits:
                             st.caption(" · ".join(action_bits))
                         st.write(row.detail)
@@ -1278,7 +1265,7 @@ def _render_all_league_decision_center(
 
                 st.caption(
                     "Priority is global across leagues: lineup fixes first, "
-                    "then meaningful waiver/FAAB upgrades, then mutual trade "
+                    "then meaningful waiver reviews, then mutual trade "
                     "opportunities and unresolved factual health issues. "
                     "Market-backed moves require usable sportsbook coverage."
                 )
@@ -2385,7 +2372,7 @@ def _render_sleeper() -> None:
                             )
                             mw_c.metric("HIGH need", market_waivers.high_need_count)
                             mw_d.metric(
-                                "+1.0 pt upgrades",
+                                "1.0+ baseline edges",
                                 market_waivers.upgrade_count,
                             )
     
@@ -2432,7 +2419,7 @@ def _render_sleeper() -> None:
                                                 is not None
                                                 else "—"
                                             ),
-                                            "Expected lineup improvement": (
+                                            "Market-baseline difference": (
                                                 round(
                                                     row.expected_lineup_improvement,
                                                     2,
@@ -2463,7 +2450,7 @@ def _render_sleeper() -> None:
                                 st.caption(
                                     "HIGH = an open/ineligible/serious starter slot. "
                                     "MEDIUM = a current WATCH slot. LOW is shown only "
-                                    "when a healthy starter can be improved by at "
+                                    "when a candidate exceeds the healthy starter's baseline by at "
                                     "least 1.00 market-implied fantasy point and "
                                     "both players have decision-grade core prop "
                                     "coverage for their positions. HIGH/MEDIUM "
