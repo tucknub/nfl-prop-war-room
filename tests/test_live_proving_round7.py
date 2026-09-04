@@ -82,7 +82,7 @@ def test_today_margin_is_medium_until_pool_field_is_loaded(monkeypatch) -> None:
 
     assert action is not None
     assert action.priority == today.MEDIUM
-    assert action.confidence == "MEDIUM"
+    assert action.confidence == "PARTIAL FIELD"
     assert action.action == "PICK LAC"
     assert "Provisional pool context" in action.why
     assert "pool size" in action.why
@@ -116,5 +116,5 @@ def test_today_margin_can_be_high_when_field_inputs_are_complete(monkeypatch) ->
 
     assert action is not None
     assert action.priority == today.HIGH
-    assert action.confidence == "HIGH"
+    assert action.confidence == "FULL FIELD"
     assert "Provisional pool context" not in action.why
