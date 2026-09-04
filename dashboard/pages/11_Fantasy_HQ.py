@@ -2471,24 +2471,22 @@ def _render_sleeper() -> None:
                                     "THIN or missing markets never create a ranking."
                                 )
     
-                st.markdown("##### FAAB Advisor")
+                st.markdown("##### FAAB Market Context")
                 st.caption(
-                    "Turns the Market-Ranked Waivers board into league-specific "
-                    "bid guidance using your FAAB budget, live remaining balance "
-                    "when Sleeper exposes it, roster need, market edge, demand, "
-                    "scarcity, league size, and recent winning bids."
+                    "Factual league budget and recent completed winning-bid context only. "
+                    "PropWar does not generate a target, aggressive, or max FAAB bid."
                 )
-    
+
                 if market_waivers is None:
                     st.info(
-                        "FAAB Advisor will populate when Market-Ranked Waivers "
+                        "FAAB Market Context will populate when Market-Ranked Waivers "
                         "is available."
                     )
                 else:
                     faab_week = _fantasy_regular_week(nfl_state)
                     faab_transactions = []
                     faab_history_errors = []
-                    if faab_week >= 1 and market_waivers.candidates:
+                    if faab_week >= 1:
                         for history_week in range(
                             max(1, faab_week - 3),
                             faab_week + 1,
@@ -2504,25 +2502,25 @@ def _render_sleeper() -> None:
                                 faab_history_errors.append(
                                     f"Week {history_week}: {exc}"
                                 )
-    
+
                     try:
                         faab_board = build_faab_advice_board(
                             league,
                             market_waivers,
                             current_week=faab_week,
                             transactions=faab_transactions,
-                            limit=20,
+                            limit=1,
                         )
                     except Exception as exc:
-                        st.warning("FAAB Advisor could not be built.")
+                        st.warning("FAAB Market Context could not be built.")
                         st.caption(str(exc))
                         faab_board = None
-    
+
                     if faab_board is not None:
                         if not faab_board.enabled:
                             st.info(faab_board.reason)
                         else:
-                            faab_a, faab_b, faab_c, faab_d = st.columns(4)
+                            faab_a, faab_b, faab_c, faab_d, faab_e = st.columns(5)
                             faab_a.metric(
                                 "Starting FAAB",
                                 f"${faab_board.starting_budget}",
@@ -2536,7 +2534,7 @@ def _render_sleeper() -> None:
                                 ),
                             )
                             faab_c.metric(
-                                "Recent winning bids",
+                                "Completed winning bids",
                                 faab_board.historical_bid_count,
                             )
                             faab_d.metric(
@@ -2547,105 +2545,34 @@ def _render_sleeper() -> None:
                                     else "—"
                                 ),
                             )
-    
+                            faab_e.metric(
+                                "Recent bid P75",
+                                (
+                                    f"{faab_board.historical_p75_pct:.1f}%"
+                                    if faab_board.historical_p75_pct is not None
+                                    else "—"
+                                ),
+                            )
+
                             if not faab_board.live_balance:
                                 st.warning(
-                                    "Sleeper did not expose your live "
-                                    "waiver_budget_used value. Dollar advice below "
-                                    "is based on the league's starting FAAB budget "
-                                    "and is not capped to a guessed balance."
+                                    "Sleeper did not expose your live waiver_budget_used value, "
+                                    "so remaining FAAB is left Unknown rather than guessed."
                                 )
-    
-                            if not faab_board.advice:
-                                st.info(
-                                    "There are no current Market-Ranked Waiver "
-                                    "candidates to price."
-                                )
-                            else:
-                                faab_rows = []
-                                for rank, advice in enumerate(
-                                    faab_board.advice,
-                                    start=1,
-                                ):
-                                    row = advice.candidate
-                                    faab_rows.append(
-                                        {
-                                            "Rank": rank,
-                                            "Player": row.player_name,
-                                            "Pos": row.position,
-                                            "Need": row.need,
-                                            "Best fit": row.target_slot,
-                                            "Market edge": (
-                                                round(
-                                                    row.expected_lineup_improvement,
-                                                    2,
-                                                )
-                                                if row.expected_lineup_improvement
-                                                is not None
-                                                else "—"
-                                            ),
-                                            "Recommended bid": (
-                                                f"${advice.recommended_bid}"
-                                            ),
-                                            "Recommended range": (
-                                                f"${advice.range_low_bid}"
-                                                f"–${advice.range_high_bid}"
-                                            ),
-                                            "Aggressive bid": (
-                                                f"${advice.aggressive_bid}"
-                                            ),
-                                            "Max bid": f"${advice.max_bid}",
-                                            "Target budget %": (
-                                                f"{advice.recommended_pct:.1f}%"
-                                            ),
-                                            "Competition": advice.competition,
-                                            "Confidence": advice.confidence,
-                                            "Sleeper adds": (
-                                                row.trend_count
-                                                if row.trend_count > 0
-                                                else "—"
-                                            ),
-                                            "Comparable supply": (
-                                                advice.comparable_supply
-                                            ),
-                                            "Why": advice.reason,
-                                        }
-                                    )
-    
-                                st.dataframe(
-                                    pd.DataFrame(faab_rows),
-                                    hide_index=True,
-                                    width="stretch",
-                                )
-    
-                                limited_count = sum(
-                                    1
-                                    for advice in faab_board.advice
-                                    if advice.budget_limited
-                                )
-                                if limited_count:
-                                    st.warning(
-                                        f"{limited_count} recommendation"
-                                        f"{'s are' if limited_count != 1 else ' is'} "
-                                        "capped by your live remaining FAAB."
-                                    )
-    
-                                st.caption(
-                                    "Recommended = default bid. Range = reasonable "
-                                    "landing zone. Aggressive = pay up when you "
-                                    "really want the player. Max = strategic ceiling, "
-                                    "not a target. Percentages are measured against "
-                                    "the league's starting FAAB budget. The model "
-                                    "uses recent completed winning bids only; failed "
-                                    "claims are not treated as market-clearing prices."
-                                )
-    
+
+                            st.caption(
+                                "Source: completed Sleeper waiver transactions from the current "
+                                "and prior three fantasy weeks. Median/P75 are percentages of the "
+                                "league's starting FAAB budget. Failed claims are excluded. "
+                                "No automated bid recommendation is shown."
+                            )
+
                             if faab_history_errors:
                                 st.caption(
                                     "Recent FAAB history was partially unavailable: "
                                     + " | ".join(faab_history_errors)
                                 )
-    
+
                 _render_available_player_search(
                     str(sleeper_user["user_id"]),
                     league_id,
