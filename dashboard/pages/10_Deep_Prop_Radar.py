@@ -224,7 +224,7 @@ def _render_stale(row: dict) -> None:
 _require_owner()
 
 st.markdown("## Market Research")
-st.caption("Advanced supporting diagnostics behind Markets · player props, line gaps, alternate ladders, stale prices, and near misses · 3-hour cache")
+st.caption("Advanced market research · ParlayAPI player props · only provider-dated quotes 120 seconds old or newer · 2-minute cache · verify every executable price in-book")
 
 key = _api_key()
 if not key:
@@ -257,7 +257,7 @@ ladder_violations = deep.get("ladder_violations", []) or []
 stale_props = enrich_stale_alerts(deep.get("stale_props", []) or [], rows)
 
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Prop glitches", len(price_outliers))
+m1.metric("Prop anomalies", len(price_outliers))
 m2.metric("Line-shop watches", len(line_shop))
 m3.metric("Line gaps", len(line_gaps))
 m4.metric("Ladder errors", len(ladder_violations))
@@ -269,6 +269,7 @@ st.caption(
     f"{len(line_shop):,} line-shop watches · refreshed {local_start_label(deep.get('fetched_at'))} · "
     f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
+st.caption("Source: ParlayAPI full player-prop feed. Undated quotes and quotes older than 120 seconds are rejected before analysis.")
 
 if coverage_truth.get("coverage_limited"):
     visible = ", ".join(coverage_truth.get("visible_user_books", []) or []) or "none"
@@ -287,7 +288,7 @@ if st.button("Force new deep scan (uses 3 credits)", type="primary"):
     shared_prop_snapshot.clear()
     st.rerun()
 
-st.markdown("### Highest-priority deep signals")
+st.markdown("### Highest-priority verification checks")
 shown = 0
 for row in price_outliers:
     if shown >= 5:
