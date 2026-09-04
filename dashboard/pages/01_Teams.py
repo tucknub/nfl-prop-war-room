@@ -190,7 +190,7 @@ else:
                 "Position": row["position"],
                 "Signal": row["classification"],
                 "Trend": row["trend"],
-                "Confidence": row["confidence"],
+                "Sample strength": row["confidence"],
                 "Last 8": None if pd.isna(row["last8_share"]) else float(row["last8_share"]) * 100,
                 "Last 4": None if pd.isna(row["last4_share"]) else float(row["last4_share"]) * 100,
                 "Last 2": None if pd.isna(row["last2_share"]) else float(row["last2_share"]) * 100,
@@ -201,7 +201,7 @@ else:
         radar_cards.append(
             {
                 "title": f"{row['player_name']} — {row['classification']}",
-                "subtitle": f"{row['position']} · {row['trend']} · {row['confidence']} confidence",
+                "subtitle": f"{row['position']} · {row['trend']} · {row['confidence']} sample strength",
                 "metrics": [
                     ("Role shift", shift_text, "Last 2 vs Last 8 normal-game share"),
                     ("Team rank", rank_text, "Last 8 → Last 2"),
@@ -224,7 +224,7 @@ else:
     )
     st.caption(
         "SURGE/DROP require large, directionally consistent movement across multiple windows. "
-        "Thin samples are labeled LOW confidence or INSUFFICIENT SAMPLE."
+        "Thin samples are labeled LOW sample strength or INSUFFICIENT SAMPLE."
     )
 
 movement = summary.dropna(subset=["change"]).copy() if not summary.empty else pd.DataFrame()
