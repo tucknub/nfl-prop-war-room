@@ -123,7 +123,7 @@ def main() -> None:
     metrics = {str(m.label): str(m.value) for m in app.metric}
     assert metrics.get("RECOMMENDED") == str(pick["team"])
     assert metrics.get("Opponent") == str(pick["opponent"])
-    assert metrics.get("Current spread") == f"{float(pick['current_spread']):+.1f}"
+    assert metrics.get("nflverse spread") == f"{float(pick['current_spread']):+.1f}"
 
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in [
