@@ -307,9 +307,11 @@ def test_fantasy_hq_exposes_faab_advisor():
         / "11_Fantasy_HQ.py"
     ).read_text(encoding="utf-8")
 
-    assert "FAAB Advisor" in page
+    assert "FAAB Market Context" in page
     assert "build_faab_advice_board" in page
-    assert "Recommended bid" in page
-    assert "Aggressive bid" in page
-    assert "Max bid" in page
+    assert "No automated bid recommendation is shown." in page
+    assert "Recommended bid" not in page
+    assert "Aggressive bid" not in page
+    assert "Max bid" not in page
     assert "Remaining FAAB" in page
+    assert "Recent bid P75" in page
