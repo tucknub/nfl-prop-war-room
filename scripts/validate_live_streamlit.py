@@ -1,3 +1,4 @@
+# Validation-only trigger for deployed Streamlit smoke run.
 from __future__ import annotations
 
 import os
