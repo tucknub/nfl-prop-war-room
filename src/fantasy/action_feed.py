@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
-from .faab_advisor import build_faab_advice_board
 from .lineup_check import NEEDS_ACTION, build_lineup_check
 from .market_start_sit import FILL, SWAP, build_market_start_sit_board
 from .market_trade import ACCEPT, GOOD_FOR_BOTH, analyze_market_trade
@@ -246,18 +245,6 @@ def _league_actions(
         trends=trends,
         limit=20,
     )
-    faab_board = build_faab_advice_board(
-        league,
-        market_waivers,
-        current_week=current_week,
-        transactions=transactions,
-        limit=20,
-    )
-    faab_by_player = {
-        advice.candidate.sleeper_player_id: advice
-        for advice in faab_board.advice
-    }
-
     for candidate in market_waivers.candidates[:4]:
         priority = {
             HIGH: PRIORITY_HIGH,
@@ -267,19 +254,9 @@ def _league_actions(
         improvement = candidate.expected_lineup_improvement
         if not waiver_candidate_visible_in_feed(candidate):
             continue
-        faab = faab_by_player.get(candidate.sleeper_player_id)
-        if faab is not None:
-            faab_range = f"${faab.range_low_bid}–${faab.range_high_bid}"
-            faab_target = f"${faab.recommended_bid}"
-            bid_text = (
-                f" Recommended FAAB {faab_range}; target {faab_target}."
-            )
-            confidence = faab.confidence
-        else:
-            faab_range = None
-            faab_target = None
-            bid_text = ""
-            confidence = _coverage_confidence(candidate.coverage)
+        faab_range = None
+        faab_target = None
+        confidence = _coverage_confidence(candidate.coverage)
 
         rows.append(
             _item(
@@ -288,8 +265,8 @@ def _league_actions(
                 action_type=WAIVER,
                 title=f"Add {candidate.player_name}",
                 action=(
-                    f"Target {candidate.player_name} for "
-                    f"{candidate.target_slot}.{bid_text}"
+                    f"Review {candidate.player_name} for "
+                    f"{candidate.target_slot}."
                 ),
                 detail=candidate.reason,
                 impact_points=improvement,
