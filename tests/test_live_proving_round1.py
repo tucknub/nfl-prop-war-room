@@ -51,15 +51,14 @@ def test_today_preserves_rank_order_when_two_columns_stack() -> None:
     assert "left, right = st.columns(2)" not in source
 
 
-def test_today_downgrades_preseason_ev_from_high_priority() -> None:
+def test_today_does_not_promote_unaged_market_preview() -> None:
     source = _source("dashboard/propwar_today_owner.py")
 
     assert "event_phase_label" in source
     assert 'is_preseason = force_preseason or phase == "PRESEASON"' in source
     assert 'live_preseason = season_type.startswith("pre")' in source
-    assert "force_preseason=live_preseason" in source
-    assert "MEDIUM\n                    if is_preseason" in source
-    assert "PRESEASON · " in source
+    assert "Market preview signals stay inside Markets" in source
+    assert "_market_actions(\n                _today_market_snapshot()" not in source
 
 
 def test_player_page_has_one_command_center_identity() -> None:
