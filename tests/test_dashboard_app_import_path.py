@@ -61,3 +61,5 @@ def test_public_role_pages_use_reload_safe_research_data_boundary() -> None:
     ):
         source = (repo_root / relative).read_text(encoding="utf-8")
         assert "research_data_compat" in source
+
+# Validation-only final Product Gate trigger.
