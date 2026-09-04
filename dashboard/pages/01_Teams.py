@@ -14,7 +14,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from research_data import (
+from research_data_compat import (
     ROLE_LABELS, available_seasons, available_weeks, primary_rows,
     situational_team_summary, team_window_summary,
 )
