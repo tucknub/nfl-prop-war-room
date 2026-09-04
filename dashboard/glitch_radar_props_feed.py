@@ -81,7 +81,7 @@ def normalize_feed_payload(payload: Any) -> list[dict[str, Any]]:
     return [normalize_feed_row(row) for row in rows if isinstance(row, dict)]
 
 
-def fetch_full_props(api_key: str, *, max_age_sec: int = 1800) -> list[dict[str, Any]]:
+def fetch_full_props(api_key: str, *, max_age_sec: int = 120) -> list[dict[str, Any]]:
     key = str(api_key or "").strip()
     if not key:
         raise ValueError("ParlayAPI key is required for deep prop scans")
