@@ -580,7 +580,7 @@ def _fantasy_actions(
     actions: list[TodayAction] = []
     for row in feed.actions:
         impact = (
-            f" · {row.impact_points:+.2f} projected lineup pts"
+            f" · {row.impact_points:+.2f} market-baseline delta"
             if row.impact_points is not None
             else ""
         )
@@ -659,7 +659,7 @@ def _margin_action() -> TodayAction | None:
     week = int(state["current_week"])
     missing_field_inputs = _margin_missing_field_inputs(state)
     field_ready = not missing_field_inputs
-    confidence = "HIGH" if field_ready else "MEDIUM"
+    confidence = "FULL FIELD" if field_ready else "PARTIAL FIELD"
 
     if committed and committed != recommendation:
         priority = HIGH
@@ -693,10 +693,10 @@ def _margin_action() -> TodayAction | None:
         ),
         action=action,
         why=(
-            f"{why_prefix} Spread {float(pick['current_spread']):+.1f} · "
-            f"expected margin {float(pick['calibrated_margin']):+.2f} · "
-            f"loss {float(pick['p_loss']) * 100:.1f}% · "
-            f"20+ {float(pick['p_win20']) * 100:.1f}%."
+            f"{why_prefix} nflverse spread {float(pick['current_spread']):+.1f} · "
+            f"model mean margin {float(pick['calibrated_margin']):+.2f} · "
+            f"historical loss-rate est. {float(pick['p_loss']) * 100:.1f}% · "
+            f"historical 20+ est. {float(pick['p_win20']) * 100:.1f}%."
             + (
                 " Provisional pool context — still missing "
                 + ", ".join(missing_field_inputs)
@@ -707,7 +707,7 @@ def _margin_action() -> TodayAction | None:
         ),
         confidence=confidence,
         freshness=(
-            "Margin engine · "
+            "nflverse + Margin model · "
             + local_start_label(audit.get("snapshot_utc"))
         ),
         href="/margin",
