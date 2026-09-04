@@ -3398,10 +3398,9 @@ def _render_sleeper() -> None:
     
                     st.markdown("##### Market-Assisted Trade Analyzer")
                     st.caption(
-                        "Build a real proposed trade and compare both teams' "
-                        "optimized legal starting lineups before and after it using "
-                        "this league's scoring and PropWar's shared sportsbook "
-                        "fantasy baselines."
+                        "Compare a proposed trade using current-week sportsbook-implied fantasy baselines only. "
+                        "This does not value rest-of-season role, schedule, injury recovery, age, keeper/dynasty value, "
+                        "or draft picks, so it is not an accept/decline trade verdict."
                     )
     
                     trade_parlay_key = _secret_default("PARLAY_API_KEY")
@@ -3600,41 +3599,41 @@ def _render_sleeper() -> None:
     
                                     if trade_analysis is not None:
                                         verdict_labels = {
-                                            "ACCEPT": "ACCEPT",
-                                            "BALANCED": "BALANCED",
-                                            "DECLINE": "DECLINE",
+                                            "ACCEPT": "CURRENT-WEEK FAVORABLE",
+                                            "BALANCED": "CURRENT-WEEK BALANCED",
+                                            "DECLINE": "CURRENT-WEEK UNFAVORABLE",
                                             "INCOMPLETE": "INCOMPLETE",
                                         }
                                         partner_fit_labels = {
-                                            "GOOD_FOR_BOTH": "GOOD FOR BOTH",
-                                            "PLAUSIBLE": "PLAUSIBLE",
-                                            "HARD_SELL": "HARD SELL",
+                                            "GOOD_FOR_BOTH": "TWO-WAY CURRENT-WEEK FIT",
+                                            "PLAUSIBLE": "PLAUSIBLE CURRENT-WEEK FIT",
+                                            "HARD_SELL": "WEAK CURRENT-WEEK FIT",
                                         }
     
                                         ta, tb, tc, td = st.columns(4)
                                         ta.metric(
-                                            "Verdict",
+                                            "Current-week baseline",
                                             verdict_labels.get(
                                                 trade_analysis.verdict,
                                                 trade_analysis.verdict,
                                             ),
                                         )
                                         tb.metric(
-                                            "My lineup impact",
+                                            "My baseline delta",
                                             (
                                                 f"{trade_analysis.my_team.lineup_delta:+.2f}"
                                                 " pts"
                                             ),
                                         )
                                         tc.metric(
-                                            "Partner lineup impact",
+                                            "Partner baseline delta",
                                             (
                                                 f"{trade_analysis.partner_team.lineup_delta:+.2f}"
                                                 " pts"
                                             ),
                                         )
                                         td.metric(
-                                            "Partner fit",
+                                            "Current-week partner fit",
                                             partner_fit_labels.get(
                                                 trade_analysis.partner_fit,
                                                 trade_analysis.partner_fit,
@@ -3643,7 +3642,7 @@ def _render_sleeper() -> None:
     
                                         te, tf, tg, th = st.columns(4)
                                         te.metric(
-                                            "Raw asset delta",
+                                            "Raw market-baseline delta",
                                             (
                                                 f"{trade_analysis.raw_asset_delta:+.2f}"
                                                 " pts"
@@ -3653,7 +3652,7 @@ def _render_sleeper() -> None:
                                             ),
                                         )
                                         tf.metric(
-                                            "Confidence",
+                                            "Coverage strength",
                                             trade_analysis.confidence,
                                         )
                                         tg.metric(
@@ -3663,7 +3662,7 @@ def _render_sleeper() -> None:
                                             ),
                                         )
                                         th.metric(
-                                            "Decision edge",
+                                            "Current-week decision delta",
                                             (
                                                 f"{trade_analysis.decision_edge:+.2f}"
                                                 if trade_analysis.decision_edge
@@ -3672,14 +3671,13 @@ def _render_sleeper() -> None:
                                             ),
                                         )
     
-                                        if trade_analysis.verdict == "ACCEPT":
-                                            st.success(trade_analysis.reason)
-                                        elif trade_analysis.verdict == "DECLINE":
-                                            st.error(trade_analysis.reason)
-                                        elif trade_analysis.verdict == "INCOMPLETE":
+                                        if trade_analysis.verdict == "INCOMPLETE":
                                             st.warning(trade_analysis.reason)
                                         else:
                                             st.info(trade_analysis.reason)
+                                        st.caption(
+                                            "Current-week market context only. A favorable baseline does not mean the trade should be accepted."
+                                        )
     
                                         trade_asset_rows = []
                                         for side, players in (
@@ -3733,7 +3731,7 @@ def _render_sleeper() -> None:
                                                     trade_analysis.my_team.post_trade.covered_points,
                                                     2,
                                                 ),
-                                                "Lineup delta": round(
+                                                "Current-week baseline delta": round(
                                                     trade_analysis.my_team.lineup_delta,
                                                     2,
                                                 ),
@@ -3768,7 +3766,7 @@ def _render_sleeper() -> None:
                                                     trade_analysis.partner_team.post_trade.covered_points,
                                                     2,
                                                 ),
-                                                "Lineup delta": round(
+                                                "Current-week baseline delta": round(
                                                     trade_analysis.partner_team.lineup_delta,
                                                     2,
                                                 ),
