@@ -27,7 +27,15 @@ OWNER_ONLY_HEADINGS = {
 
 
 def _body(page) -> str:
-    return page.locator("body").inner_text(timeout=30_000)
+    texts: list[str] = []
+    for frame in page.frames:
+        try:
+            text = frame.locator("body").inner_text(timeout=10_000).strip()
+        except Exception:
+            continue
+        if text and text not in texts:
+            texts.append(text)
+    return "\n\n".join(texts)
 
 
 def _goto(page, route: str) -> str:
@@ -43,14 +51,25 @@ def _capture_diagnostic(page, route: str, body: str) -> None:
     body_file = OUTPUT_DIR / f"{name}.txt"
     page.screenshot(path=str(screenshot), full_page=True)
     body_file.write_text(body, encoding="utf-8")
-    print(f"DIAGNOSTIC route=/{route} url={page.url} title={page.title()!r}")
-    print(body[:2000].replace("\n", " | "))
+    frame_urls = [frame.url for frame in page.frames]
+    print(f"DIAGNOSTIC route=/{route} url={page.url} title={page.title()!r} frames={frame_urls!r}")
+    print(body[:3000].replace("\n", " | "))
+
+
+def _visible_heading(page, heading: str) -> bool:
+    for frame in page.frames:
+        try:
+            locator = frame.get_by_role("heading", name=heading, exact=True)
+            if locator.count() and locator.first.is_visible():
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def _assert_any_heading(page, expected: tuple[str, ...], route: str) -> None:
     for heading in expected:
-        locator = page.get_by_role("heading", name=heading, exact=True)
-        if locator.count() and locator.first.is_visible():
+        if _visible_heading(page, heading):
             return
     raise AssertionError(f"{route or '/'} did not render any expected heading: {expected}")
 
@@ -91,8 +110,7 @@ def main() -> None:
                 _capture_diagnostic(page, route, body)
                 exposed = []
                 for heading in private_headings:
-                    locator = page.get_by_role("heading", name=heading, exact=True)
-                    if locator.count() and locator.first.is_visible():
+                    if _visible_heading(page, heading):
                         exposed.append(heading)
                 if exposed:
                     failures.append(
