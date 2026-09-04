@@ -58,7 +58,7 @@ def glitch_action(alert: Mapping[str, Any]) -> RadarAction:
         )
     return RadarAction(
         WATCH,
-        "The flagged book is better than consensus, but the quantified gap is not strong enough for an automatic BET label.",
+        "The flagged book is better than consensus, but the quantified gap is not strong enough for a high-priority verification signal.",
         edge_points=edge_points,
     )
 
@@ -70,7 +70,7 @@ def ev_action(row: Mapping[str, Any]) -> RadarAction:
     if ev >= 5.0:
         return RadarAction(VERIFY, "Feed-derived estimated EV is at least +5%. Verify the exact price and fair-value inputs in the sportsbook before acting.", ev_pct=ev)
     if ev >= 1.0:
-        return RadarAction(WATCH, "The price is positive EV, but below the +5% BET threshold.", ev_pct=ev)
+        return RadarAction(WATCH, "The feed-derived estimate is positive EV, but below the +5% high-priority verification threshold.", ev_pct=ev)
     return RadarAction(PASS, "The estimated edge is below +1%.", ev_pct=ev)
 
 
