@@ -16,8 +16,8 @@ def test_today_has_one_decision_heading_and_required_action_metadata() -> None:
 
     assert 'st.markdown("## What Should I Do?")' in source
     assert 'st.markdown("## PropWar Today")' not in source
-    assert "Confidence:" in source
-    assert "Freshness:" in source
+    assert "Evidence strength:" in source
+    assert "Source freshness:" in source
     assert "row.action" in source
     assert "row.why" in source
 
