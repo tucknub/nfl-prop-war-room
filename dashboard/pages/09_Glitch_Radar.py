@@ -640,10 +640,10 @@ def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
 
 
 def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict], evs: list[dict]) -> None:
-    st.markdown("### Best opportunities now")
+    st.markdown("### Highest-priority verification queue")
     st.caption(
-        "Highest-priority actionable signals across my sportsbooks. Glitches and arbs outrank ordinary +EV prices; "
-        "regular/postseason value ranks ahead of routine preseason value."
+        "Research candidates that deserve an immediate in-book check. Price anomalies and arb candidates rank ahead of provider-derived +EV candidates; "
+        "nothing on this board is treated as executable until the sportsbook confirms the exact market and price."
     )
 
     shown = 0
