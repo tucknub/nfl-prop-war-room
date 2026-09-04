@@ -54,3 +54,24 @@ def test_permanent_product_gate_keeps_supporting_tool_coverage() -> None:
     assert "tests/test_role_research.py" in workflow
     assert "tests/test_role_validation.py" in workflow
     assert "tests/test_weekly_role_report.py" in workflow
+
+
+
+def test_production_push_runs_product_gate_then_live_streamlit_smoke() -> None:
+    product = _read(".github/workflows/propwar-product-gate.yml")
+    live = _read(".github/workflows/live-streamlit-smoke.yml")
+
+    assert "push:" in product
+    assert "- streamlit-cloud-deploy" in product
+    assert '"dashboard/**"' in product
+    assert '"src/**"' in product
+    assert '"tests/**"' in product
+    assert '"scripts/validate_live_streamlit.py"' in product
+    assert '".github/workflows/live-streamlit-smoke.yml"' in product
+
+    assert "workflow_run:" in live
+    assert "- PropWar Product Gate" in live
+    assert "github.event.workflow_run.conclusion == 'success'" in live
+    assert "github.event.workflow_run.head_branch == 'streamlit-cloud-deploy'" in live
+    assert "ref: streamlit-cloud-deploy" in live
+    assert "Allow Streamlit deployment propagation" in live
