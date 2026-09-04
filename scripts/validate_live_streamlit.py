@@ -1,3 +1,4 @@
+# Validation-only post-fix live deployment trigger.
 from __future__ import annotations
 
 import os
