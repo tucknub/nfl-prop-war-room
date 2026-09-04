@@ -19,7 +19,7 @@ from launch_contract import (
     REPORT_METHODS,
     REPORT_ORDER,
 )
-from research_data import operational_status_text
+from research_data_compat import operational_status_text
 from research_ui import overview, page_intro, section, source_footer
 from supporting_evidence import validated_data_status
 
