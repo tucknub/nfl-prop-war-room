@@ -16,7 +16,7 @@ from glitch_radar_coverage import actionable_coverage_summary  # noqa: E402
 from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
-from glitch_radar_props_feed import PROP_CREDITS_PER_SCAN  # noqa: E402
+from glitch_radar_props_feed import PROP_CREDITS_PER_SCAN, PropsFeedUnavailable  # noqa: E402
 from glitch_radar_props_cache import shared_prop_snapshot  # noqa: E402
 from glitch_radar_stale import coverage_quality  # noqa: E402
 
@@ -196,9 +196,19 @@ if not key:
 try:
     with st.spinner("Scanning the full current NFL player-prop board..."):
         deep = shared_prop_snapshot(key)
+except PropsFeedUnavailable as exc:
+    st.warning(str(exc))
+    st.caption(
+        "Deep Prop Radar stayed fail-closed. No stale player-prop rows were substituted. "
+        "The 2-minute no-key market preview remains available while the provider recovers."
+    )
+    st.stop()
 except Exception as exc:
-    st.error(f"Deep prop scan failed: {exc}")
-    st.caption("The 2-minute no-key market preview remains available even if the deep feed is unavailable.")
+    st.error(f"Deep prop scan could not be completed: {exc}")
+    st.caption(
+        "No stale player-prop rows were substituted. "
+        "The 2-minute no-key market preview remains available."
+    )
     st.stop()
 
 coverage = deep.get("coverage", {}) or {}
