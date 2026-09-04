@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from public_copy import role_home_copy
-from research_data import ROLE_LABELS, available_seasons, available_weeks, operational_status_text
+from research_data_compat import ROLE_LABELS, available_seasons, available_weeks, operational_status_text
 from research_ui import (
     enable_browser_history_sync,
     methodology_expander,
