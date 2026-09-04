@@ -1,6 +1,18 @@
 name: PropWar Product Gate
 
 on:
+  push:
+    branches:
+      - streamlit-cloud-deploy
+    paths:
+      - "dashboard/**"
+      - "src/**"
+      - "outputs/**"
+      - "tests/**"
+      - "requirements.txt"
+      - "scripts/validate_live_streamlit.py"
+      - ".github/workflows/propwar-product-gate.yml"
+      - ".github/workflows/live-streamlit-smoke.yml"
   pull_request:
     branches:
       - streamlit-cloud-deploy
@@ -10,7 +22,9 @@ on:
       - "outputs/**"
       - "tests/**"
       - "requirements.txt"
+      - "scripts/validate_live_streamlit.py"
       - ".github/workflows/propwar-product-gate.yml"
+      - ".github/workflows/live-streamlit-smoke.yml"
   workflow_dispatch:
 
 permissions:
