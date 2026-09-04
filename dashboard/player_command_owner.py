@@ -242,7 +242,7 @@ def render_owner_player_command_center(
                 "are from different seasons. PropWar will not manufacture a cross-season workload edge."
             )
 
-        st.markdown("#### Live sportsbook")
+        st.markdown("#### Sportsbook snapshot")
         parlay_key = _secret_default("PARLAY_API_KEY")
         prop_context = None
         deep = None
@@ -250,7 +250,7 @@ def render_owner_player_command_center(
             st.caption("PARLAY_API_KEY is not configured, so live player-prop context is unavailable.")
         else:
             try:
-                with st.spinner("Loading shared live prop snapshot..."):
+                with st.spinner("Loading fresh player-prop snapshot..."):
                     deep = shared_prop_snapshot(parlay_key)
                 prop_context = build_player_prop_context(
                     deep.get("rows", ()) or (),
@@ -275,11 +275,11 @@ def render_owner_player_command_center(
 
             action = prop_context.action
             if action.action in {"CHECK", "SHOP"}:
-                st.warning(f"**PROP ACTION: {action.action}** — {action.headline}")
+                st.warning(f"**PROP CHECK: {action.action}** — {action.headline}")
             elif action.action == "NO EDGE FLAGGED":
-                st.success(f"**PROP ACTION: {action.action}**")
+                st.info(f"**PROP CHECK: {action.action}**")
             else:
-                st.info(f"**PROP ACTION: {action.action}** — {action.headline}")
+                st.info(f"**PROP CHECK: {action.action}** — {action.headline}")
             st.caption(action.reason)
 
             if action.book:
@@ -300,7 +300,7 @@ def render_owner_player_command_center(
                 st.caption("Comparison: " + " · ".join(peer_parts))
 
             if prop_context.best_prices:
-                st.markdown("##### Current best prices at my books")
+                st.markdown("##### Fresh snapshot prices at my books")
                 st.dataframe(
                     pd.DataFrame(
                         [
@@ -326,8 +326,9 @@ def render_owner_player_command_center(
                 )
             if deep and deep.get("fetched_at"):
                 st.caption(
-                    "Shared Deep Prop Radar snapshot · refreshed "
+                    "Source: ParlayAPI player-prop feed · PropWar rejects undated quotes and provider quote ages above 120 seconds · snapshot refreshed "
                     + local_start_label(deep.get("fetched_at"))
+                    + " · verify the exact line and price inside the sportsbook before betting"
                 )
 
         st.markdown("#### Fantasy")
