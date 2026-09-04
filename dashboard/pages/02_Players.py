@@ -23,7 +23,7 @@ from player_command_owner import (
 )
 from chart_utils import dataframe_inline_records
 
-from research_data import (
+from research_data_compat import (
     ROLE_LABELS, available_seasons, load_production_data, load_situational_data,
     opponent_from_game_id, player_profile, player_selector_rows, player_window_table,
     primary_rows, team_window_summary,
