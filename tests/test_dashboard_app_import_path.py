@@ -30,3 +30,13 @@ def test_dashboard_app_imports_from_outside_repo_root(tmp_path: Path) -> None:
         "directory is outside the repository root.\n"
         f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
+
+
+
+def test_research_ui_owns_formatters_without_research_data_symbol_import() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    source = (repo_root / "dashboard" / "research_ui.py").read_text(encoding="utf-8")
+
+    assert "from research_data import percent, pp" not in source
+    assert "def percent(value: object)" in source
+    assert "def pp(value: object)" in source
