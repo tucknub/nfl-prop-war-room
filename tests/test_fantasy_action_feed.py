@@ -355,5 +355,5 @@ def test_fantasy_hq_exposes_what_should_i_do_feed():
     assert "build_weekly_action_feed" in page
     assert "Across all Sleeper leagues" in page
     assert "Recommended action" in page
-    assert "Impact" in page
+    assert "Decision delta" in page
     assert "FAAB" in page
