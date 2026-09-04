@@ -446,6 +446,6 @@ def test_fantasy_hq_exposes_market_ranked_waivers():
 
     assert "Market-Ranked Waivers" in page
     assert "build_market_ranked_waivers" in page
-    assert "Expected lineup improvement" in page
+    assert "Market-baseline difference" in page
     assert "Market baseline" in page
     assert "Need" in page
