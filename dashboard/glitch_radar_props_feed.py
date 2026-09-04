@@ -15,6 +15,10 @@ BASE = "https://parlay-api.com"
 SPORT = "americanfootball_nfl"
 
 
+class PropsFeedUnavailable(RuntimeError):
+    """Raised when the upstream ParlayAPI player-prop feed is unavailable."""
+
+
 def _float(value: object) -> float | None:
     try:
         return float(value)
@@ -86,25 +90,45 @@ def fetch_full_props(api_key: str, *, max_age_sec: int = 120) -> list[dict[str, 
     if not key:
         raise ValueError("ParlayAPI key is required for deep prop scans")
 
-    response = httpx.get(
-        f"{BASE}/v1/sports/{SPORT}/props",
-        params={"limit": 10000, "maxAgeSec": int(max_age_sec)},
-        headers={"X-API-Key": key, "User-Agent": "PropWar-Glitch-Radar/2.0"},
-        timeout=35.0,
-        follow_redirects=True,
-    )
+    try:
+        response = httpx.get(
+            f"{BASE}/v1/sports/{SPORT}/props",
+            params={"limit": 10000},
+            headers={"X-API-Key": key, "User-Agent": "PropWar-Glitch-Radar/2.0"},
+            timeout=35.0,
+            follow_redirects=True,
+        )
+    except httpx.RequestError as exc:
+        raise PropsFeedUnavailable(
+            "ParlayAPI player-prop feed could not be reached. "
+            "PropWar did not use stale or undated quotes."
+        ) from exc
     if response.status_code == 401:
         raise RuntimeError("ParlayAPI key was rejected")
     if response.status_code in {402, 403}:
         raise RuntimeError("ParlayAPI free credits are exhausted for this billing month or access is not enabled")
     if response.status_code == 429:
         raise RuntimeError("ParlayAPI rate limit reached")
+    if 500 <= response.status_code <= 599:
+        raise PropsFeedUnavailable(
+            f"ParlayAPI player-prop feed is temporarily unavailable (HTTP {response.status_code}). "
+            "PropWar did not use stale or undated quotes."
+        )
     response.raise_for_status()
-    return normalize_feed_payload(response.json())
+    rows = normalize_feed_payload(response.json())
+    fresh_rows = []
+    for row in rows:
+        age_seconds = _float(row.get("age_seconds"))
+        if age_seconds is None:
+            continue
+        if 0 <= age_seconds <= float(max_age_sec):
+            fresh_rows.append(row)
+    return fresh_rows
 
 
 __all__ = [
     "PROP_CREDITS_PER_SCAN",
+    "PropsFeedUnavailable",
     "analyze_props",
     "fetch_full_props",
     "normalize_feed_payload",
