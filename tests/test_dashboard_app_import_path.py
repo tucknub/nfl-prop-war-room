@@ -40,3 +40,5 @@ def test_research_ui_owns_formatters_without_research_data_symbol_import() -> No
     assert "from research_data import percent, pp" not in source
     assert "def percent(value: object)" in source
     assert "def pp(value: object)" in source
+
+# Validation-only post-fix Product Gate trigger.
