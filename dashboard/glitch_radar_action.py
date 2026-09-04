@@ -13,7 +13,10 @@ except ImportError:
     from dashboard.glitch_radar_present import expected_ev_pct
 
 
-BET = "BET"
+VERIFY = "VERIFY"
+# Backward-compatible alias used by existing ranking/tests. Market anomalies are
+# verification signals, not direct betting instructions.
+BET = VERIFY
 WATCH = "WATCH"
 PASS = "PASS"
 
@@ -49,8 +52,8 @@ def glitch_action(alert: Mapping[str, Any]) -> RadarAction:
         )
     if edge_points >= 3.0 and severity in {"P0", "P1"}:
         return RadarAction(
-            BET,
-            "The flagged book is materially better than peer consensus, not merely different from it.",
+            VERIFY,
+            "The flagged book is materially better than peer consensus. Verify the exact price and market in the sportsbook before acting.",
             edge_points=edge_points,
         )
     return RadarAction(
@@ -65,7 +68,7 @@ def ev_action(row: Mapping[str, Any]) -> RadarAction:
     if ev is None:
         return RadarAction(WATCH, "Fair-value inputs are incomplete, so the price should be monitored rather than acted on.", ev_pct=None)
     if ev >= 5.0:
-        return RadarAction(BET, "Estimated EV is at least +5% versus the current fair estimate.", ev_pct=ev)
+        return RadarAction(VERIFY, "Feed-derived estimated EV is at least +5%. Verify the exact price and fair-value inputs in the sportsbook before acting.", ev_pct=ev)
     if ev >= 1.0:
         return RadarAction(WATCH, "The price is positive EV, but below the +5% BET threshold.", ev_pct=ev)
     return RadarAction(PASS, "The estimated edge is below +1%.", ev_pct=ev)
@@ -166,6 +169,7 @@ def peer_price_gap_range(
 
 __all__ = [
     "BET",
+    "VERIFY",
     "WATCH",
     "PASS",
     "RadarAction",
