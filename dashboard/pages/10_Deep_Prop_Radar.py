@@ -12,7 +12,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 
 from access_control import access_mode  # noqa: E402
 from glitch_radar_books import USER_BOOKS  # noqa: E402
-from glitch_radar_coverage import actionable_coverage_summary  # noqa: E402
+from glitch_radar_coverage import actionable_coverage_summary, comparison_coverage_summary  # noqa: E402
 from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
 from glitch_radar_present import event_phase_label, format_american, local_start_label  # noqa: E402
@@ -215,6 +215,7 @@ coverage = deep.get("coverage", {}) or {}
 rows = deep.get("rows", []) or []
 quality = coverage_quality(rows)
 coverage_truth = actionable_coverage_summary(rows)
+comparison_truth = comparison_coverage_summary(rows)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
 near_misses = build_near_miss_anomalies(rows)
 line_shop = build_line_shop_watches(rows)
@@ -228,9 +229,13 @@ m3.metric("Line gaps", len(line_gaps))
 m4.metric("Ladder errors", len(ladder_violations))
 
 st.caption(
-    f"{coverage.get('rows', 0):,} prop rows · {quality.get('cross_book_players', 0):,} cross-book player identities · "
-    f"{len(coverage.get('markets', []) or []):,} market families · {len(near_misses):,} same-line diagnostics · "
-    f"{len(line_shop):,} line-shop watches · refreshed {local_start_label(deep.get('fetched_at'))} · "
+    f"{coverage.get('rows', 0):,} prop rows · "
+    f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5 configured books visible · "
+    f"{quality.get('cross_book_players', 0):,} cross-book player identities · "
+    f"{comparison_truth.get('cross_book_family_groups', 0):,} cross-book player/market families · "
+    f"{comparison_truth.get('cross_book_exact_line_groups', 0):,} exact same-line groups · "
+    f"{len(coverage.get('markets', []) or []):,} market families · "
+    f"refreshed {local_start_label(deep.get('fetched_at'))} · "
     f"{PROP_CREDITS_PER_SCAN} free credits per deep scan"
 )
 st.caption("Source: ParlayAPI full player-prop feed. Undated quotes and quotes older than 120 seconds are rejected before analysis.")
@@ -344,6 +349,15 @@ if coverage_tab.open:
         c1.metric("Configured books visible", f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5")
         c2.metric("My-book rows", f"{int(coverage_truth.get('user_book_total_rows') or 0):,}")
         c3.metric("Dominant book share", f"{float(coverage_truth.get('dominant_user_book_share') or 0) * 100:.1f}%")
+
+        d1, d2, d3, d4 = st.columns(4)
+        d1.metric("Cross-book families", f"{int(comparison_truth.get('cross_book_family_groups') or 0):,}")
+        d2.metric("Exact-line groups", f"{int(comparison_truth.get('cross_book_exact_line_groups') or 0):,}")
+        d3.metric("My-book family overlaps", f"{int(comparison_truth.get('owner_cross_book_family_groups') or 0):,}")
+        d4.metric("My-book exact-line overlaps", f"{int(comparison_truth.get('owner_cross_book_exact_line_groups') or 0):,}")
+        st.caption(
+            "These overlap counts explain zero-signal scans. A zero exact-line overlap means the feed returned no apples-to-apples same player/market/line pair across books, so a zero price-anomaly count is not an all-clear."
+        )
     
         counts = coverage_truth.get("user_counts", {}) or {}
         for book in USER_BOOKS:
