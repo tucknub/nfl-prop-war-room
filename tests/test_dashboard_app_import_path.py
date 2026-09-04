@@ -30,3 +30,5 @@ def test_dashboard_app_imports_from_outside_repo_root(tmp_path: Path) -> None:
         "directory is outside the repository root.\n"
         f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
+
+# Validation-only trigger for product gate after live import fix.
