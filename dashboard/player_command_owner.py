@@ -222,7 +222,7 @@ def render_owner_player_command_center(
             ),
             help="Last 2 vs Last 8 normal-game share",
         )
-        top_d.metric("Role confidence", role_change.confidence)
+        top_d.metric("Sample strength", role_change.confidence)
 
         role_context = (
             f"Historical role evidence: {season} through Week {end_week} · "
