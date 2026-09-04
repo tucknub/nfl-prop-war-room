@@ -33,8 +33,18 @@ def _body(page) -> str:
 def _goto(page, route: str) -> str:
     url = BASE_URL if not route else f"{BASE_URL}/{route}"
     page.goto(url, wait_until="domcontentloaded", timeout=120_000)
-    page.wait_for_timeout(2_500)
+    page.wait_for_timeout(5_000)
     return _body(page)
+
+
+def _capture_diagnostic(page, route: str, body: str) -> None:
+    name = (route or "home").replace("-", "_")
+    screenshot = OUTPUT_DIR / f"{name}.png"
+    body_file = OUTPUT_DIR / f"{name}.txt"
+    page.screenshot(path=str(screenshot), full_page=True)
+    body_file.write_text(body, encoding="utf-8")
+    print(f"DIAGNOSTIC route=/{route} url={page.url} title={page.title()!r}")
+    print(body[:2000].replace("\n", " | "))
 
 
 def _assert_any_heading(page, expected: tuple[str, ...], route: str) -> None:
@@ -55,6 +65,7 @@ def main() -> None:
 
         try:
             root_body = _goto(page, "")
+            _capture_diagnostic(page, "", root_body)
             _assert_any_heading(page, PUBLIC_HEADINGS[""], "/")
             if "PROP WAR · NFL ROLE INTELLIGENCE · PUBLIC BETA" not in root_body:
                 failures.append("Public home is missing the expected PUBLIC BETA identity.")
@@ -68,18 +79,16 @@ def main() -> None:
             if not route:
                 continue
             try:
-                _goto(page, route)
+                route_body = _goto(page, route)
+                _capture_diagnostic(page, route, route_body)
                 _assert_any_heading(page, headings, route)
-                page.screenshot(
-                    path=str(OUTPUT_DIR / f"{route.replace('-', '_')}.png"),
-                    full_page=True,
-                )
             except Exception as exc:
                 failures.append(f"Public route /{route} failed: {exc}")
 
         for route, private_headings in OWNER_ONLY_HEADINGS.items():
             try:
                 body = _goto(page, route)
+                _capture_diagnostic(page, route, body)
                 exposed = []
                 for heading in private_headings:
                     locator = page.get_by_role("heading", name=heading, exact=True)
