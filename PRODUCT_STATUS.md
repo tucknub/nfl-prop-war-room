@@ -8,20 +8,24 @@ Statuses should be updated from real usage during the 2026 season.
 
 | Surface | Product role | Current status | Keep visible? | Finish condition |
 | --- | --- | --- | --- | --- |
-| Today | CORE | CONSOLIDATED / PROVING | Yes | Production-context startup passes; now needs repeated live-week proof that the ranked action set is actually useful |
+| Today | CORE | CONSOLIDATED / PROVING | Yes | Production-context startup passes; unaged no-key market preview is no longer promoted into Today; now needs repeated live-week proof that the remaining ranked action set is useful |
 | Players / Command Center | CORE | CONSOLIDATED / PROVING | Yes | Production-context startup passes and exact identity safeguards are built; now needs same-season 2026 role + market use |
-| Markets / Glitch Radar | CORE | USABLE / PROVING | Yes | Production-context startup passes and durable movement history is built; false-positive behavior must be understood through sustained live NFL markets |
-| Fantasy / Fantasy HQ | CORE | CONSOLIDATED / PROVING | Yes | Production-context startup passes, navigation is reduced to seven decision tabs, and the live data path is optimized; weekly lineup/waiver/trade usefulness still needs season proof |
+| Markets / Glitch Radar | CORE | VERIFICATION-FIRST / PROVING | Yes | Full prop quotes fail closed above 120 seconds or when undated; no-key preview is research-only; false-positive and provider-fair-value behavior still needs sustained live NFL proving |
+| Fantasy / Fantasy HQ | CORE | CONSOLIDATED / PROVING | Yes | Production-context startup passes; heuristic FAAB bid recommendations and automatic season-long trade promotion were removed; weekly lineup/waiver/current-week-baseline usefulness still needs season proof |
 | Teams | SUPPORT | USABLE ROLE EVIDENCE | More | Supports Players/role investigation without needing to act like a separate product |
 | Reports | SUPPORT | USABLE ROLE EVIDENCE | More | Reports remain understandable, current, and linked from role workflows |
 | Games | SUPPORT | USABLE ROLE EVIDENCE | More | Useful for game-level usage audit; not required as a primary destination |
 | Advanced Research | SUPPORT | ADVANCED | More | Stays powerful without becoming normal-user navigation clutter |
 | Market Research / Deep Prop Radar | SUPPORT | USABLE ADVANCED | More | Feeds Markets diagnostics; eventually fold more directly into Markets |
 | Methodology | SUPPORT | DOCUMENTATION | More | Accurate explanation of current public role methodology |
-| Margin War Room | PERSONAL | USABLE / SPECIALIZED | More | Reliable for the owner's live Margin pool |
+| Margin War Room | PERSONAL | MODEL-LABELED / SPECIALIZED | More | Current spread is source-labeled; mean margin/loss/20+ values are explicitly historical/model estimates; continue live pool proving |
 | Knockout Fantasy | PERSONAL | STRUCTURAL DECISION CENTER / PROVING | More | Decision-first state/roster/FAAB/released-roster workflow is built; prove it after the Sep. 3 draft and during live eliminations before adding survival probabilities or optimal-bid claims |
 | Admin Research | INTERNAL | HIDE | No | Never normal product navigation |
 | Historical projection/model labs | INTERNAL / LEGACY | ARCHIVE / R&D | No | Kept for auditability/research, not presented as current product |
+
+## September 4, 2026 trust-hardening milestone
+
+A repository-wide owner-workflow trust audit tightened market freshness and removed or relabeled unsupported certainty. The production state passed the full Product Gate with **827 tests passing** and every visible Streamlit page starting successfully. The governing standard is **[docs/propwar/TRUST_CONTRACT.md](docs/propwar/TRUST_CONTRACT.md)**.
 
 ## Current product call
 
