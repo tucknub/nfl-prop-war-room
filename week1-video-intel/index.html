@@ -31,7 +31,7 @@ button,input,select{font:inherit} a{color:inherit}
 .shell{max-width:1560px;margin:0 auto;padding:0 20px 64px}
 .hero{padding:25px 0 13px}.hero h2{font-size:28px;letter-spacing:-.55px;margin:0 0 7px}.hero p{margin:0;color:var(--muted);max-width:980px;line-height:1.55}
 .notice{margin-top:16px;border:1px solid #29475f;background:#0c1d2a;border-radius:13px;padding:12px 14px;font-size:13px;color:#bed2e3;line-height:1.45}
-.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:18px 0}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:18px 0}
 .stat{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px 15px}
 .stat b{display:block;font-size:25px;line-height:1}.stat span{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.7px}
 .toolbar{display:grid;grid-template-columns:minmax(240px,1.6fr) repeat(3,minmax(150px,.55fr));gap:9px;margin:11px 0 14px}
@@ -89,7 +89,7 @@ td{padding:12px;border-bottom:1px solid #182938;font-size:12.4px;vertical-align:
 </div></div>
 <main class="shell">
  <section class="hero"><h2>What did 20 YouTube sources actually teach us?</h2><p>Rank football signals by independent-source convergence, source-capped evidence quality, direction and verification. Convergence is not a betting grade, and a market translation is not a bet until the live price is checked.</p>
- <div class="notice"><b>Scope:</b> this is a football-intelligence dashboard. “Markets affected” only maps football evidence to possible prop/bet types. <b>Signal score ranks research quality, not sportsbook edge.</b></div>
+ <div class="notice"><b>Scope:</b> this is a football-intelligence dashboard. “Markets affected” only maps football evidence to possible prop/bet types. <b>Signal score ranks research quality, not sportsbook edge.</b> Official/current verification is tracked separately and never increases YouTube source convergence.</div>
  <div class="buildstamp">Current branch build · verification refreshed Sep. 9, 2026</div></section>
  <div class="stats" id="stats"></div>
  <section id="view-board" class="view active">
@@ -146,7 +146,7 @@ let state=savedJson("w1SignalState"),marketState=savedJson("w1MarketState");
 function saveState(){try{localStorage.setItem("w1SignalState",JSON.stringify(state))}catch(e){}}
 function saveMarket(){try{localStorage.setItem("w1MarketState",JSON.stringify(marketState))}catch(e){}}
 function marketDecision(m){return marketState[marketKey(m)]?.status||""}
-function stats(){const games=new Set(players.map(p=>p["Game"]).filter(Boolean)).size,multi=players.filter(p=>num(p["Source Count"])>=2).length,conv=players.filter(p=>p["Dashboard?"]==="Yes").length,verified=players.filter(p=>["VERIFIED","SUPPORT VERIFIED"].includes(verifyState(p,evidenceFor(p)))).length;document.getElementById("stats").innerHTML=[[games,"Games covered"],[sources.length,"YouTube sources"],[video.length,"Evidence claims"],[multi,"2+ source signals"],[verified,"Signals with verified support"]].map(x=>'<div class="stat"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join("")}
+function stats(){const games=new Set(players.map(p=>p["Game"]).filter(Boolean)).size,multi=players.filter(p=>num(p["Source Count"])>=2).length,videoClaims=video.filter(v=>v["Transcript Verified"]!=="N/A").length,officialChecks=video.length-videoClaims,verified=players.filter(p=>["VERIFIED","SUPPORT VERIFIED"].includes(verifyState(p,evidenceFor(p)))).length;document.getElementById("stats").innerHTML=[[games,"Games covered"],[sources.length,"YouTube sources"],[videoClaims,"Video claims"],[officialChecks,"Official checks"],[multi,"2+ source signals"],[verified,"Signals with verified support"]].map(x=>'<div class="stat"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join("")}
 const games=[...new Set(players.map(p=>p["Game"]).filter(Boolean))];
 function fillSelect(id,vals,label){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">'+label+'</option>'+vals.map(v=>'<option>'+esc(v)+'</option>').join("")}
 fillSelect("gameFilter",games,"All games");fillSelect("evGame",games,"All games");fillSelect("marketGame",games,"All games");fillSelect("evType",[...new Set(video.map(x=>x["Intel Type"]).filter(Boolean))].sort(),"All intel types");
