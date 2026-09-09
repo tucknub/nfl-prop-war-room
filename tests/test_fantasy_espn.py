@@ -199,3 +199,43 @@ def test_private_client_uses_read_host_and_cookie_auth() -> None:
     )
     assert "espn_s2=" in seen["cookie"]
     assert "SWID=" in seen["cookie"]
+
+
+def test_knockout_snapshot_scopes_roster_to_known_team() -> None:
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        seen.append(url)
+        payload = _payload()
+        if "view=mSettings" in url:
+            payload["teams"][0].pop("roster", None)
+            payload["teams"][0]["owners"] = ["{00000000-0000-0000-0000-000000000000}"]
+            payload.pop("schedule", None)
+        elif "view=mRoster" in url:
+            payload.pop("settings", None)
+            payload.pop("status", None)
+            payload.pop("schedule", None)
+        elif "view=mMatchupScore" in url:
+            payload.pop("settings", None)
+            payload.pop("status", None)
+            payload["teams"] = []
+        return httpx.Response(200, json=payload, headers={"content-type": "application/json"})
+
+    transport = httpx.MockTransport(handler)
+    credentials = EspnCredentials("x" * 80, SWID)
+    with EspnFantasyClient(credentials, transport=transport) as client:
+        snapshot = client.fetch_knockout_snapshot(
+            987654,
+            season=2026,
+            team_id=7,
+            swid=SWID,
+        )
+
+    assert snapshot["team_id"] == 7
+    assert snapshot["roster"][0]["player"] == "Dak Prescott"
+    assert snapshot["current_score"] == pytest.approx(91.25)
+    assert len(seen) == 3
+    roster_url = next(url for url in seen if "view=mRoster" in url)
+    assert "scoringPeriodId=1" in roster_url
+    assert "rosterForTeamId=7" in roster_url
