@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import importlib
+from datetime import datetime, timezone
 import json
 import sys
 from pathlib import Path
@@ -78,6 +79,28 @@ def _espn_credential_secret() -> str:
         return ""
 
 
+def _sync_age_seconds(last_synced_at_utc: object) -> float | None:
+    raw = str(last_synced_at_utc or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return max(0.0, (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds())
+
+
+def _auto_sync_due(connection: dict, *, max_age_seconds: int = 900) -> bool:
+    age = _sync_age_seconds(connection.get("last_synced_at_utc"))
+    if age is None or age < max_age_seconds:
+        return False
+    last_attempt = st.session_state.get("knockout_espn_auto_attempt_at")
+    attempt_age = _sync_age_seconds(last_attempt)
+    return attempt_age is None or attempt_age >= 300
+
+
 def _fetch_espn_snapshot(
     credentials: EspnCredentials,
     league_id: str,
@@ -99,6 +122,7 @@ def _fetch_espn_snapshot(
 page_intro(
     "Knockout Fantasy War Room",
     "Separate 18-team fantasy elimination league. Lowest weekly score is eliminated; eliminated rosters return to waivers. Trades are not allowed.",
+    show_data_status=False,
 )
 
 config = _state_config()
@@ -119,6 +143,43 @@ except Exception as exc:
     st.stop()
 
 league = state["league"]
+espn_connection = dict(state.get("espn_connection") or {})
+espn_secret = _espn_credential_secret()
+
+if espn_connection and espn_secret and _auto_sync_due(espn_connection):
+    st.session_state["knockout_espn_auto_attempt_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        credentials = open_credentials(
+            str(espn_connection.get("credential_envelope") or ""),
+            espn_secret,
+        )
+        snapshot = _fetch_espn_snapshot(
+            credentials,
+            str(espn_connection.get("league_id") or ""),
+            season=int(state["season"]),
+            team_id=int(
+                espn_connection.get("team_id")
+                or league.get("espn_team_id")
+                or 0
+            ),
+            league_name=str(
+                espn_connection.get("league_name")
+                or league.get("name")
+                or "Elwood TKO"
+            ),
+        )
+        updated = espn_sync.apply_espn_snapshot(state, snapshot)
+        _persist_transition(
+            config,
+            state,
+            updated,
+            f"Auto-sync ESPN Knockout league {espn_connection.get('league_id')}",
+        )
+        st.session_state.pop("knockout_espn_auto_sync_error", None)
+        st.rerun()
+    except Exception as exc:
+        st.session_state["knockout_espn_auto_sync_error"] = str(exc)
+
 readiness = engine.draft_readiness(state)
 current_phase = engine.phase(state)
 active_teams = engine.active_team_count(state)
@@ -172,21 +233,30 @@ section(
     "ESPN League Sync",
     "Read-only private ESPN connection. ESPN supplies the live roster, FAAB balance, current week, and current score; PropWar keeps Knockout elimination history and strategy.",
 )
-espn_connection = dict(state.get("espn_connection") or {})
-espn_secret = _espn_credential_secret()
-
 if espn_connection:
     sync_left, sync_mid, sync_right, sync_score = st.columns(4)
     sync_left.metric("Connected", "ESPN")
     sync_mid.metric("League", espn_connection.get("league_name") or espn_connection.get("league_id") or "—")
     sync_right.metric("My team", espn_connection.get("team_name") or "—")
     source_score = espn_connection.get("source_current_score")
-    sync_score.metric("Current score", "—" if source_score is None else f"{float(source_score):.2f}")
+    score_label = "Not started" if source_score is None else f"{float(source_score):.2f}"
+    sync_score.metric("Current score", score_label)
+    sync_age = _sync_age_seconds(espn_connection.get("last_synced_at_utc"))
+    sync_age_text = (
+        "just now"
+        if sync_age is not None and sync_age < 60
+        else f"{int(sync_age // 60)} min ago"
+        if sync_age is not None
+        else "unknown"
+    )
     st.caption(
         f"League ID {espn_connection.get('league_id', '—')} · "
-        f"last synced {espn_connection.get('last_synced_at_utc', '—')} · "
+        f"synced {sync_age_text} · auto-refresh every 15 min · "
         "credentials encrypted at rest · ESPN writes disabled"
     )
+    auto_error = st.session_state.get("knockout_espn_auto_sync_error")
+    if auto_error:
+        st.warning("Automatic ESPN refresh failed; the last good sync is still loaded. Use Resync ESPN to retry.")
 
     resync_col, disconnect_col = st.columns([1, 1])
     with resync_col:
@@ -348,7 +418,10 @@ if roster:
         st.caption("Current roster can fill every required starter slot.")
     else:
         st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
-    st.dataframe(pd.DataFrame(roster), hide_index=True, width="stretch")
+    roster_table = pd.DataFrame(roster).rename(
+        columns={"player": "Player", "position": "Pos", "nfl_team": "NFL"}
+    )
+    st.table(roster_table[["Player", "Pos", "NFL"]])
 else:
     if str(league.get("espn_league_id") or "").strip():
         st.info(
