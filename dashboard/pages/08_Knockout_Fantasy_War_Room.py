@@ -528,7 +528,27 @@ if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
     with st.form("knockout_week_result_form", clear_on_submit=False):
         result_col, eliminated_col = st.columns(2)
         with result_col:
-            user_score = st.number_input("My fantasy score", min_value=0.0, value=0.0, step=0.1, key="knockout_user_score")
+            if espn_connection:
+                espn_week_score = espn_connection.get("source_current_score")
+                user_score = float(espn_week_score or 0.0)
+                st.number_input(
+                    "My fantasy score (ESPN)",
+                    min_value=0.0,
+                    value=user_score,
+                    step=0.1,
+                    disabled=True,
+                    key="knockout_user_score_espn",
+                )
+                if espn_week_score is None:
+                    st.caption("ESPN has not posted a Week 1 score yet.")
+            else:
+                user_score = st.number_input(
+                    "My fantasy score",
+                    min_value=0.0,
+                    value=0.0,
+                    step=0.1,
+                    key="knockout_user_score",
+                )
         with eliminated_col:
             eliminated_team = st.text_input("Eliminated fantasy team", key="knockout_eliminated_team")
         user_eliminated = st.checkbox("My team was eliminated this week", key="knockout_user_eliminated")
