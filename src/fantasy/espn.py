@@ -602,10 +602,16 @@ class EspnFantasyClient:
                     return discovered
 
             if primary_error:
+                discovery_note = (
+                    " Automatic Elwood TKO discovery found no usable 2026 replacement."
+                    if league_name and not self._test_transport_injected
+                    else ""
+                )
                 raise EspnFantasyError(
-                    "Both ESPN sync paths failed. "
+                    "ESPN sync exhausted all read paths. "
                     f"Maintained client: {primary_error} "
                     f"Direct fallback: {fallback_exc}"
+                    f"{discovery_note}"
                 ) from fallback_exc
             raise
 
