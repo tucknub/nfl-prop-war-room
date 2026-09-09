@@ -34,7 +34,13 @@ from src.fantasy.espn import (  # noqa: E402
     open_credentials,
     seal_credentials,
 )
-from src.knockout import engine, espn_sync, state_store  # noqa: E402
+from src.knockout import engine as engine_module  # noqa: E402
+from src.knockout import espn_sync as espn_sync_module  # noqa: E402
+from src.knockout import state_store  # noqa: E402
+
+# Keep all Knockout modules aligned during Streamlit Cloud hot reloads.
+engine = importlib.reload(engine_module)
+espn_sync = importlib.reload(espn_sync_module)
 
 
 def _state_config() -> dict[str, str] | None:
