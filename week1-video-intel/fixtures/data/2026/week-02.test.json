@@ -1,0 +1,30 @@
+{
+  "fixture": true,
+  "notice": "NON-PRODUCTION TEST FIXTURE. Invented football content for schema and interaction tests only.",
+  "players": [
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Anytime TD; Receiving Yards; Receptions", "Fixture role evidence is internally consistent", "2", "2", "2", "0", "4.5", "0", "Confirm fixture route role.", "Yes"],
+    ["CCC @ DDD", "Fixture Quarterback", "CCC", "Passing Yards; Passing TDs", "Fixture passing caution has strong research support", "1", "1", "0", "0", "5", "0", "No unresolved football question is recorded.", "Yes"],
+    ["AAA @ BBB", "Fixture Pass Rush", "BBB", "Sacks; BBB DST", "Fixture pressure unit has one retained source", "1", "1", "1", "0", "4", "0", "Verify fixture personnel.", "No"]
+  ],
+  "games": [
+    ["AAA @ BBB", "Fixture Source One + Fixture Source Two", "", "", "", "Fixture game thesis for schema testing.", "Fixture attack point.", "Fixture role question.", "", ""],
+    ["CCC @ DDD", "Fixture Source Three", "", "", "", "Fixture passing environment for schema testing.", "Fixture passing point.", "No unresolved football question is recorded.", "", ""]
+  ],
+  "video": [
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Fixture Source One", "01:00", "Role", "Role", "Fixture receiver owns the scoring role.", "Anytime TD", "Positive", "High", "5", "Yes", "Confirmed", "Candidate", "https://example.test/video-1", "Fixture claim."],
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Fixture Source One", "02:00", "Usage", "Usage", "A repeated fixture claim from the same source.", "Receiving Yards", "Positive", "High", "4", "Yes", "Confirmed", "Candidate", "https://example.test/video-1", "Same-source repeat."],
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Fixture Source Two", "03:00", "Film", "Film", "Independent fixture film supports the same role.", "Anytime TD", "Positive", "High", "4", "Yes", "Confirmed", "Candidate", "https://example.test/video-2", "Second independent source."],
+    ["CCC @ DDD", "Fixture Quarterback", "CCC", "Fixture Source Three", "04:00", "Scheme", "Scheme", "Fixture evidence supports a passing under.", "Passing Yards", "Negative", "High", "5", "Yes", "Confirmed", "Candidate", "https://example.test/video-3", "Direction-neutral score test."],
+    ["AAA @ BBB", "Fixture Pass Rush", "BBB", "Fixture Source Two", "05:00", "Personnel", "Personnel", "Fixture pass rush has a personnel question.", "Sacks; BBB DST", "Positive", "High", "4", "Yes", "Not Checked", "Verify First", "https://example.test/video-2", "Fixture unresolved state."],
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Fixture Official Update", "Test date", "Current status", "Role", "Fixture role is confirmed.", "Anytime TD", "Positive", "High", "5", "N/A", "Confirmed", "Candidate", "https://example.test/official", "Does not count toward convergence."]
+  ],
+  "sources": [
+    ["Fixture Source One", "Video", "Fixture Creator", "AAA @ BBB", "https://example.test/video-1", "10:00", "Complete", "Fixture", "Test date", "Test-only source."],
+    ["Fixture Source Two", "Video", "Fixture Creator", "AAA @ BBB", "https://example.test/video-2", "10:00", "Complete", "Fixture", "Test date", "Test-only source."],
+    ["Fixture Source Three", "Video", "Fixture Creator", "CCC @ DDD", "https://example.test/video-3", "10:00", "Complete", "Fixture", "Test date", "Test-only source."]
+  ],
+  "marketIdeas": [
+    ["AAA @ BBB", "Fixture Receiver", "AAA", "Anytime TD", "Yes", "High", "5", "Fixture translation.", "", "Research", null, null, "2", "0", "", ""],
+    ["CCC @ DDD", "Fixture Quarterback", "CCC", "Passing TDs", "Under", "High", "5", "Fixture passing translation.", "", "Research", null, null, "1", "0", "", ""]
+  ]
+}

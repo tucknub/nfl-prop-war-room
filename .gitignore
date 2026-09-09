@@ -16,6 +16,11 @@ data/cache/role_research/
 outputs/role_research/.staging/
 outputs/run_reports/role_research/
 
+# NFL Video Intel frontend dependencies and transient build verification
+week1-video-intel/node_modules/
+week1-video-intel/preview-dist/
+week1-video-intel/.release-dist/
+
 # Fantasy HQ Cloudflare local/generated deployment state
 workers/fantasy-hq/wrangler.generated.jsonc
 workers/fantasy-hq/.wrangler/
