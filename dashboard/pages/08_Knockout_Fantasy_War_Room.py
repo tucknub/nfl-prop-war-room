@@ -84,6 +84,7 @@ def _fetch_espn_snapshot(
     *,
     season: int,
     team_id: int,
+    league_name: str,
 ) -> dict:
     with EspnFantasyClient(credentials) as client:
         return client.fetch_knockout_snapshot(
@@ -91,6 +92,7 @@ def _fetch_espn_snapshot(
             season=season,
             team_id=team_id,
             swid=credentials.swid,
+            league_name=league_name,
         )
 
 
@@ -210,6 +212,11 @@ if espn_connection:
                         or league.get("espn_team_id")
                         or 0
                     ),
+                    league_name=str(
+                        espn_connection.get("league_name")
+                        or league.get("name")
+                        or "Elwood TKO"
+                    ),
                 )
                 updated = espn_sync.apply_espn_snapshot(state, snapshot)
                 _persist_transition(
@@ -285,6 +292,7 @@ else:
                 configured_league_id,
                 season=int(state["season"]),
                 team_id=int(league.get("espn_team_id") or 0),
+                league_name=configured_league_name,
             )
             envelope = seal_credentials(credentials, espn_secret)
             updated = espn_sync.apply_espn_snapshot(
