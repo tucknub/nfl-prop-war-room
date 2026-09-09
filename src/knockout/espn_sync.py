@@ -32,6 +32,23 @@ def validate_snapshot_for_knockout(
         raise ValueError("ESPN season does not match the Knockout season.")
 
     league = state.get("league") or {}
+
+    expected_league_id = str(league.get("espn_league_id") or "").strip()
+    source_league_id = str(snapshot.get("league_id") or "").strip()
+    if expected_league_id and source_league_id != expected_league_id:
+        raise ValueError(
+            f"ESPN returned league {source_league_id or 'unknown'}; "
+            f"Knockout is configured for league {expected_league_id}."
+        )
+
+    expected_team_id = int(league.get("espn_team_id") or 0)
+    source_team_id = int(snapshot.get("team_id") or 0)
+    if expected_team_id and source_team_id != expected_team_id:
+        raise ValueError(
+            f"ESPN returned team {source_team_id or 'unknown'}; "
+            f"Knockout is configured for team {expected_team_id}."
+        )
+
     expected_teams = int(league.get("teams") or 0)
     team_count = int(snapshot.get("team_count") or 0)
     if expected_teams and team_count and team_count != expected_teams:
@@ -40,19 +57,6 @@ def validate_snapshot_for_knockout(
         )
 
     expected_roster = int(league.get("roster_size") or 14)
-    source_roster_size = int(snapshot.get("roster_size") or 0)
-    if source_roster_size and source_roster_size != expected_roster:
-        raise ValueError(
-            f"ESPN league roster size is {source_roster_size}; Knockout expects {expected_roster}."
-        )
-
-    faab_start = snapshot.get("faab_start")
-    expected_faab = int(league.get("faab_start") or 0)
-    if faab_start is not None and expected_faab and int(faab_start) != expected_faab:
-        raise ValueError(
-            f"ESPN league FAAB budget is {int(faab_start)} dollars; Knockout expects {expected_faab} dollars."
-        )
-
     return engine.validate_roster(
         _plain_roster(snapshot),
         roster_size=expected_roster,
