@@ -293,3 +293,50 @@ def test_knockout_snapshot_prefers_maintained_espn_client(monkeypatch) -> None:
     assert calls == [("987654", 2026)]
     assert snapshot["team_id"] == 7
     assert snapshot["roster"][0]["player"] == "Dak Prescott"
+
+
+def test_knockout_snapshot_uses_discovery_after_both_reads_fail(monkeypatch) -> None:
+    credentials = EspnCredentials("x" * 80, SWID)
+    client = EspnFantasyClient(credentials)
+    discovered = normalize_league_snapshot(_payload(), swid=SWID, team_id=7)
+    discovered["discovered_relink"] = True
+
+    def maintained(*args, **kwargs):
+        raise RuntimeError("maintained path failed")
+
+    def direct(*args, **kwargs):
+        raise RuntimeError("direct path failed")
+
+    monkeypatch.setattr(
+        client,
+        "_fetch_league_with_espn_api",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            __import__("src.fantasy.espn", fromlist=["EspnFantasyError"]).EspnFantasyError("maintained failed")
+        ),
+    )
+    monkeypatch.setattr(
+        client,
+        "fetch_league",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            __import__("src.fantasy.espn", fromlist=["EspnFantasyError"]).EspnFantasyError("direct failed")
+        ),
+    )
+    monkeypatch.setattr(
+        client,
+        "_discover_named_league_with_requests",
+        lambda **kwargs: discovered,
+    )
+
+    try:
+        snapshot = client.fetch_knockout_snapshot(
+            123456,
+            season=2026,
+            team_id=7,
+            swid=SWID,
+            league_name="Elwood TKO",
+        )
+    finally:
+        client.close()
+
+    assert snapshot["discovered_relink"] is True
+    assert snapshot["league_name"] == "Elwood TKO"
