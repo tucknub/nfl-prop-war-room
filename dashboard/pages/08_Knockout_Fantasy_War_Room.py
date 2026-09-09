@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -19,6 +20,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import note, page_intro, section  # noqa: E402
+from src.fantasy import espn as espn_module  # noqa: E402
+
+# Streamlit Cloud can hot-reload this page while keeping an older dependency
+# module alive. Reload the ESPN adapter before binding its classes.
+espn_module = importlib.reload(espn_module)
+
 from src.fantasy.espn import (  # noqa: E402
     EspnCredentials,
     EspnFantasyClient,
@@ -107,9 +114,12 @@ league = state["league"]
 readiness = engine.draft_readiness(state)
 current_phase = engine.phase(state)
 active_teams = engine.active_team_count(state)
+phase_label = {
+    "AWAITING_ESPN": "Waiting for ESPN",
+}.get(current_phase, current_phase.replace("_", " ").title())
 
 st.caption(
-    f"State: {current_phase.replace('_', ' ').title()} · Week {int(state.get('current_week', 0))} · "
+    f"State: {phase_label} · Week {int(state.get('current_week', 0))} · "
     f"{active_teams} teams alive · ${int(state.get('faab_remaining', 0))} FAAB · private authoritative state loaded"
 )
 
