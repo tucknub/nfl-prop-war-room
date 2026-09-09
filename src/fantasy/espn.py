@@ -420,6 +420,110 @@ class EspnFantasyClient:
             raise EspnSchemaError("ESPN returned a different season than requested.")
         return payload
 
+    def _discover_named_league_with_requests(
+        self,
+        *,
+        season: int,
+        league_name: str,
+    ) -> dict[str, Any] | None:
+        if self.credentials is None:
+            return None
+
+        try:
+            import requests
+        except ImportError:
+            return None
+
+        target_name = str(league_name or "").strip().casefold()
+        if not target_name:
+            return None
+
+        cookies = {
+            "espn_s2": self.credentials.espn_s2,
+            "SWID": self.credentials.swid,
+        }
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Referer": "https://fantasy.espn.com/",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/152.0.0.0 Safari/537.36"
+            ),
+        }
+
+        profile: dict[str, Any] | None = None
+        swid_variants = [
+            self.credentials.swid.strip("{}"),
+            self.credentials.swid,
+        ]
+        for swid_value in dict.fromkeys(swid_variants):
+            try:
+                response = requests.get(
+                    f"{ESPN_FAN_BASE}/{quote(swid_value, safe='')}",
+                    params={
+                        "displayHiddenPrefs": "true",
+                        "context": "fantasy",
+                        "useCookieAuth": "true",
+                        "source": "fantasyapp-web",
+                    },
+                    headers=headers,
+                    cookies=cookies,
+                    timeout=DEFAULT_TIMEOUT_SECONDS,
+                )
+            except requests.RequestException:
+                continue
+            if response.status_code != 200:
+                continue
+            try:
+                candidate_profile = response.json()
+            except ValueError:
+                continue
+            if isinstance(candidate_profile, dict):
+                profile = candidate_profile
+                break
+
+        if profile is None:
+            return None
+
+        candidate_ids = sorted(
+            _league_ids_from_value(profile),
+            key=lambda value: int(value),
+        )
+        for candidate_id in candidate_ids[:32]:
+            try:
+                payload = self._fetch_league_with_espn_api(
+                    candidate_id,
+                    season=season,
+                )
+            except EspnFantasyError:
+                continue
+
+            settings = (
+                payload.get("settings")
+                if isinstance(payload.get("settings"), Mapping)
+                else {}
+            )
+            candidate_name = str(
+                settings.get("name")
+                or payload.get("name")
+                or ""
+            ).strip()
+            candidate_season = int(payload.get("seasonId") or season)
+            if (
+                candidate_season == int(season)
+                and candidate_name.casefold() == target_name
+            ):
+                snapshot = normalize_league_snapshot(
+                    payload,
+                    swid=self.credentials.swid,
+                    team_id=None,
+                )
+                snapshot["discovered_relink"] = True
+                return snapshot
+
+        return None
+
     def fetch_knockout_snapshot(
         self,
         league_id: str | int,
@@ -427,6 +531,7 @@ class EspnFantasyClient:
         season: int,
         team_id: int,
         swid: str | None = None,
+        league_name: str | None = None,
     ) -> dict[str, Any]:
         primary_error: str | None = None
 
@@ -515,6 +620,14 @@ class EspnFantasyClient:
                 team_id=int(team_id),
             )
         except EspnFantasyError as fallback_exc:
+            if not self._test_transport_injected and league_name:
+                discovered = self._discover_named_league_with_requests(
+                    season=season,
+                    league_name=league_name,
+                )
+                if discovered is not None:
+                    return discovered
+
             if primary_error:
                 raise EspnFantasyError(
                     "Both ESPN sync paths failed. "
