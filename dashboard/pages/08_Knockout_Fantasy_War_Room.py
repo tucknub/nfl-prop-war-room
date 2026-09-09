@@ -410,7 +410,7 @@ section("Phase strategy", "The objective is survival first; the optimal risk pos
 for priority in engine.strategy_priorities(state):
     st.markdown(f"- {priority}")
 
-section("Roster state", "Draft intake and every later add/drop stay private and separate from all Margin data.")
+section("Roster state", "ESPN is the authoritative roster and FAAB source; Knockout-specific history stays private.")
 roster = list(state.get("roster") or [])
 if roster:
     st.success(f"Current roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
@@ -467,53 +467,62 @@ else:
                 st.error(str(exc))
 
 if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
-    section("Waiver / FAAB transaction", "Record completed add/drop results only. This does not submit a waiver claim to ESPN.")
-    with st.form("knockout_waiver_transaction_form", clear_on_submit=False):
-        add_col, pos_col, team_col = st.columns([2, 1, 1])
-        with add_col:
-            add_player = st.text_input("Player added", key="knockout_add_player")
-        with pos_col:
-            add_position = st.selectbox("Position", ["QB", "RB", "WR", "TE", "K", "DST"], key="knockout_add_position")
-        with team_col:
-            add_nfl_team = st.text_input("NFL team", max_chars=3, key="knockout_add_team")
+    if espn_connection:
+        section(
+            "Roster / FAAB updates",
+            "ESPN is authoritative for completed adds, drops, and FAAB balance.",
+        )
+        st.info(
+            "No manual roster or FAAB entry is needed. PropWar will pick up completed ESPN moves on the next automatic refresh or when you click Resync ESPN."
+        )
+    else:
+        section("Waiver / FAAB transaction", "Record completed add/drop results only.")
+        with st.form("knockout_waiver_transaction_form", clear_on_submit=False):
+            add_col, pos_col, team_col = st.columns([2, 1, 1])
+            with add_col:
+                add_player = st.text_input("Player added", key="knockout_add_player")
+            with pos_col:
+                add_position = st.selectbox("Position", ["QB", "RB", "WR", "TE", "K", "DST"], key="knockout_add_position")
+            with team_col:
+                add_nfl_team = st.text_input("NFL team", max_chars=3, key="knockout_add_team")
 
-        drop_options = [str(row["player"]) for row in roster]
-        spend_col, drop_col = st.columns([1, 2])
-        with spend_col:
-            spend = st.number_input(
-                "FAAB spent",
-                min_value=0,
-                max_value=int(state.get("faab_remaining", 0)),
-                value=0,
-                step=1,
-                key="knockout_faab_spend",
+            drop_options = [str(row["player"]) for row in roster]
+            spend_col, drop_col = st.columns([1, 2])
+            with spend_col:
+                spend = st.number_input(
+                    "FAAB spent",
+                    min_value=0,
+                    max_value=int(state.get("faab_remaining", 0)),
+                    value=0,
+                    step=1,
+                    key="knockout_faab_spend",
+                )
+            with drop_col:
+                drop_player = st.selectbox("Player dropped", drop_options, key="knockout_drop_player")
+            transaction_note = st.text_input("Transaction note", placeholder="Optional context", key="knockout_transaction_note")
+            confirm_transaction = st.checkbox(
+                "I confirm this add/drop is final and the FAAB amount is correct.", key="knockout_confirm_transaction"
             )
-        with drop_col:
-            drop_player = st.selectbox("Player dropped", drop_options, key="knockout_drop_player")
-        transaction_note = st.text_input("Transaction note", placeholder="Optional context", key="knockout_transaction_note")
-        confirm_transaction = st.checkbox(
-            "I confirm this add/drop is final and the FAAB amount is correct.", key="knockout_confirm_transaction"
-        )
-        can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
-        record_transaction = st.form_submit_button("Record waiver transaction")
-    if record_transaction and not can_record_transaction:
-        st.warning(
-            "Enter the added player and NFL team, then confirm the final transaction."
-        )
-    elif record_transaction:
-        try:
-            updated = engine.record_waiver_transaction(
-                state,
-                amount=int(spend),
-                add_player={"player": add_player, "position": add_position, "nfl_team": add_nfl_team},
-                drop_player=drop_player,
-                note=transaction_note,
+            can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
+            record_transaction = st.form_submit_button("Record waiver transaction")
+        if record_transaction and not can_record_transaction:
+            st.warning(
+                "Enter the added player and NFL team, then confirm the final transaction."
             )
-            _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} waiver transaction")
-            st.success("Roster and FAAB ledger updated.")
-            st.rerun()
-        except Exception as exc:
-            st.error(str(exc))
+        elif record_transaction:
+            try:
+                updated = engine.record_waiver_transaction(
+                    state,
+                    amount=int(spend),
+                    add_player={"player": add_player, "position": add_position, "nfl_team": add_nfl_team},
+                    drop_player=drop_player,
+                    note=transaction_note,
+                )
+                _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} waiver transaction")
+                st.success("Roster and FAAB ledger updated.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
 
     section("Weekly survival result", "Advance the league only after the week's elimination is official.")
     with st.form("knockout_week_result_form", clear_on_submit=False):
