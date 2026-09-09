@@ -362,3 +362,39 @@ def test_endgame_faab_posture_becomes_aggressive_without_bid_claim() -> None:
     assert engine.phase(active) == "ENDGAME"
     assert posture["posture"] == "AGGRESSIVE"
     assert "bid" not in posture["reason"].casefold()
+
+
+def test_awaiting_espn_state_is_not_pre_draft() -> None:
+    state = {
+        "schema_version": "knockout_live_state_v1",
+        "season": 2026,
+        "status": "AWAITING_ROSTER",
+        "current_week": 1,
+        "faab_remaining": 1000,
+        "roster": [],
+        "weekly_results": [],
+        "eliminations": [],
+        "faab_transactions": [],
+        "league": {
+            "name": "Elwood TKO",
+            "teams": 18,
+            "scoring": "FULL_PPR",
+            "roster_size": 14,
+            "starters": {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "FLEX": 1, "K": 1, "DST": 1},
+            "faab_start": 1000,
+            "faab_type": "CONTINUOUS",
+            "trades_allowed": False,
+            "elimination_rule": "LOWEST_WEEKLY_SCORE",
+            "elimination_weeks": "1-17",
+            "eliminated_roster_to_waivers": True,
+            "espn_league_id": "1787375379",
+            "espn_team_id": 7,
+        },
+    }
+
+    engine.validate_state(state)
+    assert engine.phase(state) == "AWAITING_ESPN"
+    summary = engine.knockout_decision_summary(state)
+    assert summary["next_action"] == "CONNECT ESPN"
+    assert summary["roster_risk"]["level"] == "NOT SCORED"
+    assert summary["faab"]["posture"] == "HOLD"
