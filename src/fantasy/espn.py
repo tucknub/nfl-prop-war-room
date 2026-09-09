@@ -472,4 +472,3 @@ def normalize_league_snapshot(payload: Mapping[str, Any], *, swid: str | None = 
         "current_score": current_score,
         "is_public": bool(settings.get("isPublic", False)),
     }
-}
