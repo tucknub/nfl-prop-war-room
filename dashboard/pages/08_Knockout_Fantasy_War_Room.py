@@ -404,7 +404,7 @@ with st.expander("League rules", expanded=False):
         ],
         columns=["Rule", "Setting"],
     )
-    st.dataframe(rules, hide_index=True, width="stretch")
+    st.table(rules)
 
 section("Phase strategy", "The objective is survival first; the optimal risk posture changes as the field shrinks.")
 for priority in engine.strategy_priorities(state):
@@ -418,10 +418,44 @@ if roster:
         st.caption("Current roster can fill every required starter slot.")
     else:
         st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
-    roster_table = pd.DataFrame(roster).rename(
-        columns={"player": "Player", "position": "Pos", "nfl_team": "NFL"}
-    )
-    st.table(roster_table[["Player", "Pos", "NFL"]])
+    espn_roster_details = list(espn_connection.get("roster_details") or [])
+    if espn_roster_details:
+        slot_order = {
+            "QB": 0,
+            "RB": 1,
+            "WR": 2,
+            "TE": 3,
+            "FLEX": 4,
+            "K": 5,
+            "D/ST": 6,
+            "DST": 6,
+            "Bench": 7,
+            "IR": 8,
+        }
+        roster_rows = []
+        for row in espn_roster_details:
+            role = str(row.get("lineup_role") or "").strip() or "Roster"
+            injury = str(row.get("injury_status") or "").strip()
+            roster_rows.append(
+                {
+                    "_order": slot_order.get(role, 9),
+                    "Slot": role,
+                    "Player": str(row.get("player") or "").strip(),
+                    "Pos": str(row.get("position") or "").strip(),
+                    "NFL": str(row.get("nfl_team") or "").strip(),
+                    "Status": "" if injury in {"", "ACTIVE"} else injury.title(),
+                }
+            )
+        roster_table = pd.DataFrame(roster_rows).sort_values(
+            ["_order", "Slot", "Player"],
+            kind="stable",
+        )
+        st.table(roster_table[["Slot", "Player", "Pos", "NFL", "Status"]])
+    else:
+        roster_table = pd.DataFrame(roster).rename(
+            columns={"player": "Player", "position": "Pos", "nfl_team": "NFL"}
+        )
+        st.table(roster_table[["Player", "Pos", "NFL"]])
 else:
     if str(league.get("espn_league_id") or "").strip():
         st.info(
