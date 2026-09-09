@@ -16,7 +16,7 @@ def base_state() -> dict:
         "eliminations": [],
         "faab_transactions": [],
         "league": {
-            "name": None,
+            "name": "Elwood TKO",
             "teams": 18,
             "scoring": "FULL_PPR",
             "roster_size": 14,
