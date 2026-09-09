@@ -286,6 +286,24 @@ class EspnFantasyClient:
             raise EspnSchemaError("ESPN returned invalid JSON.") from exc
         if not isinstance(payload, dict):
             raise EspnSchemaError("ESPN returned an unexpected response shape.")
+
+        messages = [
+            str(value or "").strip()
+            for value in payload.get("messages") or []
+        ]
+        detail_types = {
+            str(row.get("type") or "").strip()
+            for row in payload.get("details") or []
+            if isinstance(row, Mapping)
+        }
+        if any("not authorized" in message.casefold() for message in messages) or any(
+            value.startswith("AUTH_") for value in detail_types
+        ):
+            raise EspnAuthenticationError(
+                "ESPN says this browser session is not authorized for Elwood TKO. "
+                "Refresh espn_s2 and SWID from fantasy.espn.com while logged into the account that owns team 7."
+            )
+
         return payload
 
     def fetch_league(
