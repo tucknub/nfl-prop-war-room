@@ -72,3 +72,10 @@ def test_knockout_page_reloads_espn_adapter() -> None:
     client_import = source.index("from src.fantasy.espn import (")
     assert reload_call < client_import
     assert '"AWAITING_ESPN": "Waiting for ESPN"' in source
+
+
+def test_knockout_page_reloads_engine_and_sync_modules() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    assert "engine = importlib.reload(engine_module)" in source
+    assert "espn_sync = importlib.reload(espn_sync_module)" in source
