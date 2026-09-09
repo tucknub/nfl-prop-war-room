@@ -126,7 +126,7 @@ const badge=(t,c)=>'<span class="badge '+c+'">'+esc(t)+'</span>';
 const sigKey=p=>p["Game"]+"|"+p["Player/Unit"];
 const marketKey=m=>[m["Game"],m["Player / Unit"],m["Market"]].join("|");
 const evidenceFor=p=>video.filter(v=>v["Game"]===p["Game"]&&v["Player / Unit"]===p["Player/Unit"]);
-const researchEvidenceFor=p=>evidenceFor(p).filter(v=>VIDEO_SOURCE_NAMES.has(v["Source"]));
+const researchEvidenceFor=p=>evidenceFor(p).filter(v=>v["Transcript Verified"]!=="N/A");
 function easternDateString(){const f=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});const x=Object.fromEntries(f.formatToParts(new Date()).filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));return x.year+"-"+x.month+"-"+x.day}
 function daysUntil(game){const gd=GAME_DATES[game];if(!gd)return 99;const a=new Date(easternDateString()+"T12:00:00Z"),b=new Date(gd+"T12:00:00Z");return Math.round((b-a)/86400000)}
 function convergence(p){const s=num(p["Source Count"]);if(s>=3)return"3-SOURCE";if(s>=2&&p["Dashboard?"]==="Yes")return"2-SOURCE";if(s>=2)return"MULTI-MIXED";return"1-SOURCE"}
