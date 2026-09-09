@@ -154,6 +154,28 @@ def test_default_position_ids_are_not_treated_as_lineup_slot_ids() -> None:
     ]
 
 
+def test_eligible_slots_are_primary_position_signal() -> None:
+    payload = _payload()
+    payload["teams"][0]["roster"]["entries"] = [
+        {
+            "playerId": 20,
+            "lineupSlotId": 20,
+            "playerPoolEntry": {
+                "player": {
+                    "fullName": "Slot Tight End",
+                    "defaultPositionId": 3,
+                    "eligibleSlots": [6, 23, 20, 21],
+                    "proTeamId": 19,
+                }
+            },
+        }
+    ]
+
+    snapshot = normalize_league_snapshot(payload, swid=SWID)
+
+    assert snapshot["roster"][0]["position"] == "TE"
+
+
 def test_private_client_uses_read_host_and_cookie_auth() -> None:
     seen = {}
 
