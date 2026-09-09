@@ -35,7 +35,16 @@ def validate_snapshot_for_knockout(
 
     expected_league_id = str(league.get("espn_league_id") or "").strip()
     source_league_id = str(snapshot.get("league_id") or "").strip()
-    if expected_league_id and source_league_id != expected_league_id:
+    discovered_relink = bool(snapshot.get("discovered_relink"))
+    expected_name = str(league.get("name") or "").strip().casefold()
+    source_name = str(snapshot.get("league_name") or "").strip().casefold()
+    relink_allowed = bool(
+        discovered_relink
+        and expected_name
+        and source_name == expected_name
+    )
+
+    if expected_league_id and source_league_id != expected_league_id and not relink_allowed:
         raise ValueError(
             f"ESPN returned league {source_league_id or 'unknown'}; "
             f"Knockout is configured for league {expected_league_id}."
@@ -43,11 +52,13 @@ def validate_snapshot_for_knockout(
 
     expected_team_id = int(league.get("espn_team_id") or 0)
     source_team_id = int(snapshot.get("team_id") or 0)
-    if expected_team_id and source_team_id != expected_team_id:
+    if expected_team_id and source_team_id != expected_team_id and not relink_allowed:
         raise ValueError(
             f"ESPN returned team {source_team_id or 'unknown'}; "
             f"Knockout is configured for team {expected_team_id}."
         )
+    if relink_allowed and source_team_id <= 0:
+        raise ValueError("Discovered ESPN league did not resolve an authenticated team.")
 
     expected_teams = int(league.get("teams") or 0)
     team_count = int(snapshot.get("team_count") or 0)
@@ -90,6 +101,9 @@ def apply_espn_snapshot(
     league = dict(updated.get("league") or {})
     if str(snapshot.get("league_name") or "").strip():
         league["name"] = str(snapshot["league_name"]).strip()
+    if bool(snapshot.get("discovered_relink")):
+        league["espn_league_id"] = str(snapshot.get("league_id") or "").strip()
+        league["espn_team_id"] = int(snapshot.get("team_id") or 0)
     updated["league"] = league
 
     existing = dict(updated.get("espn_connection") or {})
