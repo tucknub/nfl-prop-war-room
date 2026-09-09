@@ -93,6 +93,8 @@ def _sync_age_seconds(last_synced_at_utc: object) -> float | None:
 
 
 def _auto_sync_due(connection: dict, *, max_age_seconds: int = 900) -> bool:
+    if not connection.get("roster_details"):
+        return True
     age = _sync_age_seconds(connection.get("last_synced_at_utc"))
     if age is None or age < max_age_seconds:
         return False
