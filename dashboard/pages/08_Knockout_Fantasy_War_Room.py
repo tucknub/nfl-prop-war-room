@@ -206,7 +206,7 @@ if espn_connection:
             st.rerun()
         except Exception as exc:
             st.error("ESPN resync failed. PropWar kept the last good Knockout state.")
-            st.caption(str(exc))
+            st.error(f"Reason: {exc}")
 
     if disconnect_espn:
         try:
@@ -286,7 +286,7 @@ else:
             st.rerun()
         except Exception as exc:
             st.error("ESPN connection failed. No Knockout state was changed.")
-            st.caption(str(exc))
+            st.error(f"Reason: {exc}")
 
 
 st.caption(
