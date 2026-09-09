@@ -251,7 +251,7 @@ if espn_connection:
     )
     st.caption(
         f"League ID {espn_connection.get('league_id', '—')} · "
-        f"synced {sync_age_text} · auto-refresh every 15 min · "
+        f"synced {sync_age_text} · auto-sync when older than 15 min · "
         "credentials encrypted at rest · ESPN writes disabled"
     )
     auto_error = st.session_state.get("knockout_espn_auto_sync_error")
