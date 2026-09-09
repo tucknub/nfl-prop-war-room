@@ -79,3 +79,15 @@ def test_knockout_page_reloads_engine_and_sync_modules() -> None:
 
     assert "engine = importlib.reload(engine_module)" in source
     assert "espn_sync = importlib.reload(espn_sync_module)" in source
+
+
+def test_knockout_connected_page_is_live_and_text_readable() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    assert "show_data_status=False" in source
+    assert "def _auto_sync_due" in source
+    assert "max_age_seconds: int = 900" in source
+    assert "Auto-sync ESPN Knockout league" in source
+    assert "auto-refresh every 15 min" in source
+    assert 'score_label = "Not started" if source_score is None' in source
+    assert 'st.table(roster_table[["Player", "Pos", "NFL"]])' in source
