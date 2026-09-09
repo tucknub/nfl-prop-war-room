@@ -142,10 +142,17 @@ def validate_state(state: dict[str, Any]) -> dict[str, Any]:
 def phase(state: dict[str, Any]) -> str:
     status = str(state.get("status", "PRE_DRAFT"))
     week = int(state.get("current_week", 0))
+    league = state.get("league") or {}
     if status == "ELIMINATED":
         return "ELIMINATED"
     if status == "CHAMPION":
         return "CHAMPION"
+    if (
+        status == "AWAITING_ROSTER"
+        and not state.get("roster")
+        and str(league.get("espn_league_id") or "").strip()
+    ):
+        return "AWAITING_ESPN"
     if week <= 0 or not state.get("roster"):
         return "PRE_DRAFT"
     if week <= 5:
@@ -162,6 +169,13 @@ def active_team_count(state: dict[str, Any]) -> int:
 def strategy_priorities(state: dict[str, Any]) -> list[str]:
     current_phase = phase(state)
     faab = int(state.get("faab_remaining", 1000))
+    if current_phase == "AWAITING_ESPN":
+        return [
+            "Connect Elwood TKO to ESPN so the authoritative 14-player roster can be loaded.",
+            "Do not manually recreate the roster; ESPN is the configured roster source for this league.",
+            "Keep FAAB unchanged until ESPN supplies the live league state.",
+            "After sync, Knockout strategy will score the actual roster structure and current field state.",
+        ]
     if current_phase == "PRE_DRAFT":
         return [
             "Build a lineup with secure Week 1-4 roles and enough RB/WR depth to absorb one injury or miss.",
@@ -236,10 +250,14 @@ def roster_depth(state: dict[str, Any]) -> dict[str, Any]:
 
 def structural_roster_risk(state: dict[str, Any]) -> dict[str, Any]:
     current_phase = phase(state)
-    if current_phase == "PRE_DRAFT":
+    if current_phase in {"PRE_DRAFT", "AWAITING_ESPN"}:
         return {
             "level": "NOT SCORED",
-            "reason": "Roster risk begins after the draft roster is recorded.",
+            "reason": (
+                "Roster risk begins after ESPN sync."
+                if current_phase == "AWAITING_ESPN"
+                else "Roster risk begins after the draft roster is recorded."
+            ),
         }
     if current_phase in {"ELIMINATED", "CHAMPION"}:
         return {
@@ -283,7 +301,10 @@ def faab_posture(state: dict[str, Any]) -> dict[str, Any]:
     current_phase = phase(state)
     risk = structural_roster_risk(state)
 
-    if current_phase == "PRE_DRAFT":
+    if current_phase == "AWAITING_ESPN":
+        posture = "HOLD"
+        reason = "Keep FAAB unchanged until ESPN supplies the authoritative league state."
+    elif current_phase == "PRE_DRAFT":
         posture = "HOLD"
         reason = "Do not spend FAAB before the draft roster exists."
     elif current_phase in {"ELIMINATED", "CHAMPION"}:
@@ -318,7 +339,10 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
     readiness = draft_readiness(state)
     alive = active_team_count(state)
 
-    if current_phase == "PRE_DRAFT":
+    if current_phase == "AWAITING_ESPN":
+        next_action = "CONNECT ESPN"
+        why = "The manual roster was intentionally cleared. Connect Elwood TKO so ESPN can supply the authoritative 14-player roster."
+    elif current_phase == "PRE_DRAFT":
         next_action = "DRAFT ROSTER"
         why = "No roster is recorded yet. Draft a startable 14-player roster before player-level survival decisions are scored."
     elif current_phase == "ELIMINATED":
