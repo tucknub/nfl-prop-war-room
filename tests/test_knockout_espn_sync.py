@@ -8,7 +8,7 @@ def base_state() -> dict:
     return {
         "schema_version": "knockout_live_state_v1",
         "season": 2026,
-        "status": "PRE_DRAFT",
+        "status": "AWAITING_ROSTER",
         "current_week": 0,
         "faab_remaining": 1000,
         "roster": [],
@@ -27,6 +27,8 @@ def base_state() -> dict:
             "elimination_rule": "LOWEST_WEEKLY_SCORE",
             "elimination_weeks": "1-17",
             "eliminated_roster_to_waivers": True,
+            "espn_league_id": "987654",
+            "espn_team_id": 7,
         },
     }
 
@@ -120,3 +122,19 @@ def test_disconnect_removes_credentials_but_keeps_last_good_roster() -> None:
     assert "espn_connection" not in disconnected
     assert disconnected["roster"] == connected["roster"]
     assert disconnected["status"] == "ACTIVE"
+
+
+def test_espn_identity_is_authoritative_not_optional_metadata() -> None:
+    bad = snapshot()
+    bad["team_id"] = 8
+
+    try:
+        apply_espn_snapshot(
+            base_state(),
+            bad,
+            credential_envelope="encrypted-token",
+        )
+    except ValueError as exc:
+        assert "configured for team 7" in str(exc)
+    else:
+        raise AssertionError("wrong ESPN team must be rejected")
