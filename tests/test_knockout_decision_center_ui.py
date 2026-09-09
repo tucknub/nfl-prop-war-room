@@ -100,3 +100,11 @@ def test_connected_espn_is_authoritative_for_roster_and_faab() -> None:
     assert '"Roster / FAAB updates"' in source
     assert "No manual roster or FAAB entry is needed." in source
     assert "ESPN is the authoritative roster and FAAB source" in source
+
+
+def test_connected_espn_supplies_weekly_score() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    assert '"My fantasy score (ESPN)"' in source
+    assert "disabled=True" in source
+    assert 'espn_connection.get("source_current_score")' in source
