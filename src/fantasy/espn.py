@@ -135,13 +135,9 @@ def _team_name(team: Mapping[str, Any]) -> str:
 
 
 def _position_from_player(player: Mapping[str, Any]) -> str:
-    try:
-        default_position = int(player.get("defaultPositionId"))
-    except (TypeError, ValueError):
-        default_position = -1
-    if default_position in DEFAULT_POSITION_MAP:
-        return DEFAULT_POSITION_MAP[default_position]
-
+    # ESPN football eligibleSlots are the most reliable position signal and
+    # use the lineup-slot ID table. Prefer them over defaultPositionId, whose
+    # community documentation has differed across endpoint families.
     for raw_slot in player.get("eligibleSlots") or []:
         try:
             slot = int(raw_slot)
@@ -149,7 +145,12 @@ def _position_from_player(player: Mapping[str, Any]) -> str:
             continue
         if slot in LINEUP_POSITION_MAP:
             return LINEUP_POSITION_MAP[slot]
-    return ""
+
+    try:
+        default_position = int(player.get("defaultPositionId"))
+    except (TypeError, ValueError):
+        default_position = -1
+    return DEFAULT_POSITION_MAP.get(default_position, "")
 
 
 def _league_ids_from_value(value: Any) -> set[str]:
