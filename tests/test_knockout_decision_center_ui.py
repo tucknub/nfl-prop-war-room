@@ -63,3 +63,12 @@ def test_configured_espn_league_disables_manual_roster_intake() -> None:
     configured_guard = source.index('if str(league.get("espn_league_id") or "").strip():')
     manual_upload = source.index('st.file_uploader("Draft roster CSV"')
     assert configured_guard < manual_upload
+
+
+def test_knockout_page_reloads_espn_adapter() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    reload_call = source.index("espn_module = importlib.reload(espn_module)")
+    client_import = source.index("from src.fantasy.espn import (")
+    assert reload_call < client_import
+    assert '"AWAITING_ESPN": "Waiting for ESPN"' in source
