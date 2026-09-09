@@ -231,6 +231,7 @@ else:
         with manual_col:
             manual_league_id = st.text_input(
                 "Or ESPN league ID",
+                value=str(league.get("espn_league_id") or ""),
                 placeholder="Numeric league ID from the ESPN league URL",
                 key="knockout_espn_manual_league",
             )
