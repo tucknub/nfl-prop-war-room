@@ -19,7 +19,15 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import note, page_intro, section  # noqa: E402
-from src.knockout import engine, state_store  # noqa: E402
+from src.fantasy.espn import (  # noqa: E402
+    EspnCredentials,
+    EspnFantasyClient,
+    credential_secret_from_mapping,
+    normalize_league_snapshot,
+    open_credentials,
+    seal_credentials,
+)
+from src.knockout import engine, espn_sync, state_store  # noqa: E402
 
 
 def _state_config() -> dict[str, str] | None:
@@ -48,6 +56,19 @@ def _parse_roster_csv(text: str) -> list[dict[str, str]]:
     if missing:
         raise ValueError(f"roster CSV missing columns: {missing}")
     return [dict(row) for row in reader]
+
+
+def _espn_credential_secret() -> str:
+    try:
+        return credential_secret_from_mapping(st.secrets)
+    except Exception:
+        return ""
+
+
+def _fetch_espn_snapshot(credentials: EspnCredentials, league_id: str, *, season: int) -> dict:
+    with EspnFantasyClient(credentials) as client:
+        payload = client.fetch_league(league_id, season=season)
+    return normalize_league_snapshot(payload, swid=credentials.swid)
 
 
 page_intro(
@@ -117,6 +138,172 @@ if current_phase != "PRE_DRAFT" and state.get("roster"):
 
 note(
     "NO TRADES is a hard rule in this engine. Roster improvement after the draft comes from waivers/FAAB and the player pool released by eliminated teams."
+)
+
+section(
+    "ESPN League Sync",
+    "Read-only private ESPN connection. ESPN supplies the live roster, FAAB balance, current week, and current score; PropWar keeps Knockout elimination history and strategy.",
+)
+espn_connection = dict(state.get("espn_connection") or {})
+espn_secret = _espn_credential_secret()
+
+if espn_connection:
+    sync_left, sync_mid, sync_right, sync_score = st.columns(4)
+    sync_left.metric("Connected", "ESPN")
+    sync_mid.metric("League", espn_connection.get("league_name") or espn_connection.get("league_id") or "—")
+    sync_right.metric("My team", espn_connection.get("team_name") or "—")
+    source_score = espn_connection.get("source_current_score")
+    sync_score.metric("Current score", "—" if source_score is None else f"{float(source_score):.2f}")
+    st.caption(
+        f"League ID {espn_connection.get('league_id', '—')} · "
+        f"last synced {espn_connection.get('last_synced_at_utc', '—')} · "
+        "credentials encrypted at rest · ESPN writes disabled"
+    )
+
+    resync_col, disconnect_col = st.columns([1, 1])
+    with resync_col:
+        resync_espn = st.button("Resync ESPN", type="primary", width="stretch", key="knockout_espn_resync")
+    with disconnect_col:
+        disconnect_espn = st.button("Disconnect ESPN", width="stretch", key="knockout_espn_disconnect")
+
+    if resync_espn:
+        try:
+            if not espn_secret:
+                raise RuntimeError("Secure ESPN credential encryption is unavailable.")
+            credentials = open_credentials(
+                str(espn_connection.get("credential_envelope") or ""),
+                espn_secret,
+            )
+            with st.spinner("Syncing ESPN roster and league state..."):
+                snapshot = _fetch_espn_snapshot(
+                    credentials,
+                    str(espn_connection.get("league_id") or ""),
+                    season=int(state["season"]),
+                )
+                updated = espn_sync.apply_espn_snapshot(state, snapshot)
+                _persist_transition(
+                    config,
+                    state,
+                    updated,
+                    f"Resync ESPN Knockout league {espn_connection.get('league_id')}",
+                )
+            st.success("ESPN sync complete.")
+            st.rerun()
+        except Exception as exc:
+            st.error("ESPN resync failed. PropWar kept the last good Knockout state.")
+            st.caption(str(exc))
+
+    if disconnect_espn:
+        try:
+            updated = espn_sync.disconnect_espn(state)
+            _persist_transition(config, state, updated, "Disconnect ESPN from Knockout")
+            st.success("ESPN disconnected. The last synced roster remains in Knockout.")
+            st.rerun()
+        except Exception as exc:
+            st.error("ESPN could not be disconnected.")
+            st.caption(str(exc))
+else:
+    st.info("ESPN is not connected yet. Connect it once and PropWar can stop relying on manual roster updates.")
+    with st.expander("Connect private ESPN league", expanded=True):
+        st.caption(
+            "PropWar never asks for your ESPN password. Paste only the espn_s2 and SWID cookies from a browser session already signed in to ESPN."
+        )
+        st.markdown(
+            "Chrome / Edge: ESPN → F12 → Application → Cookies → https://www.espn.com. "
+            "Copy **espn_s2** and **SWID**. Keep the curly braces around SWID if ESPN shows them."
+        )
+        espn_s2 = st.text_input(
+            "espn_s2",
+            type="password",
+            key="knockout_espn_s2",
+            autocomplete="off",
+        )
+        swid = st.text_input(
+            "SWID",
+            type="password",
+            key="knockout_espn_swid",
+            autocomplete="off",
+        )
+
+        find_col, manual_col = st.columns([1, 2])
+        with find_col:
+            find_leagues = st.button("Find my leagues", type="primary", width="stretch", key="knockout_espn_find")
+        with manual_col:
+            manual_league_id = st.text_input(
+                "Or ESPN league ID",
+                placeholder="Numeric league ID from the ESPN league URL",
+                key="knockout_espn_manual_league",
+            )
+
+        if find_leagues:
+            try:
+                credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
+                with st.spinner("Finding your 2026 ESPN fantasy football leagues..."):
+                    with EspnFantasyClient(credentials) as client:
+                        discovered = client.discover_leagues(season=int(state["season"]))
+                st.session_state["knockout_espn_discovered"] = discovered
+                if not discovered:
+                    st.warning(
+                        "ESPN did not expose a discoverable league list. Paste the numeric league ID from your ESPN league URL below; private sync still works."
+                    )
+            except Exception as exc:
+                st.session_state["knockout_espn_discovered"] = []
+                st.error("ESPN league discovery failed.")
+                st.caption(str(exc))
+
+        discovered = list(st.session_state.get("knockout_espn_discovered") or [])
+        selected_discovered_id = ""
+        if discovered:
+            options = {
+                f"{row.get('league_name') or row.get('league_id')} · {row.get('team_name') or 'My team'} · {row.get('team_count') or '?'} teams": str(row.get("league_id") or "")
+                for row in discovered
+            }
+            selected_label = st.selectbox(
+                "ESPN league",
+                tuple(options),
+                key="knockout_espn_discovered_select",
+            )
+            selected_discovered_id = options[selected_label]
+
+        selected_league_id = str(manual_league_id or selected_discovered_id or "").strip()
+        connect_espn = st.button(
+            "Connect ESPN league",
+            type="primary",
+            disabled=not bool(selected_league_id and espn_s2.strip() and swid.strip()),
+            key="knockout_espn_connect",
+        )
+        if connect_espn:
+            try:
+                if not espn_secret:
+                    raise RuntimeError("Secure ESPN credential encryption is unavailable.")
+                credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
+                with st.spinner("Connecting ESPN and validating the Knockout league..."):
+                    snapshot = _fetch_espn_snapshot(
+                        credentials,
+                        selected_league_id,
+                        season=int(state["season"]),
+                    )
+                    envelope = seal_credentials(credentials, espn_secret)
+                    updated = espn_sync.apply_espn_snapshot(
+                        state,
+                        snapshot,
+                        credential_envelope=envelope,
+                    )
+                    _persist_transition(
+                        config,
+                        state,
+                        updated,
+                        f"Connect ESPN Knockout league {selected_league_id}",
+                    )
+                st.success("ESPN connected. Roster, FAAB, week, and score are now synced from ESPN.")
+                st.rerun()
+            except Exception as exc:
+                st.error("ESPN connection failed. No Knockout state was changed.")
+                st.caption(str(exc))
+
+st.caption(
+    "ESPN Fantasy sync is an unofficial read-only compatibility integration. "
+    "PropWar never calls ESPN write endpoints and keeps the last successful state if a refresh fails."
 )
 
 with st.expander("League rules", expanded=False):
