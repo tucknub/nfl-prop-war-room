@@ -17,7 +17,15 @@ ESPN_FAN_BASE = "https://fan.api.espn.com/apis/v2/fans"
 DEFAULT_TIMEOUT_SECONDS = 12.0
 DEFAULT_VIEWS = ("mSettings", "mTeam", "mRoster", "mStatus", "mMatchupScore")
 
-POSITION_MAP = {
+DEFAULT_POSITION_MAP = {
+    1: "QB",
+    2: "RB",
+    3: "WR",
+    4: "TE",
+    5: "K",
+    16: "DST",
+}
+LINEUP_POSITION_MAP = {
     0: "QB",
     2: "RB",
     4: "WR",
@@ -131,16 +139,16 @@ def _position_from_player(player: Mapping[str, Any]) -> str:
         default_position = int(player.get("defaultPositionId"))
     except (TypeError, ValueError):
         default_position = -1
-    if default_position in POSITION_MAP:
-        return POSITION_MAP[default_position]
+    if default_position in DEFAULT_POSITION_MAP:
+        return DEFAULT_POSITION_MAP[default_position]
 
     for raw_slot in player.get("eligibleSlots") or []:
         try:
             slot = int(raw_slot)
         except (TypeError, ValueError):
             continue
-        if slot in POSITION_MAP:
-            return POSITION_MAP[slot]
+        if slot in LINEUP_POSITION_MAP:
+            return LINEUP_POSITION_MAP[slot]
     return ""
 
 
