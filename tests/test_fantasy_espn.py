@@ -268,3 +268,28 @@ def test_private_client_retries_with_decoded_s2() -> None:
     assert len(cookies_seen) == 2
     assert "%2F" in cookies_seen[0]
     assert "abc/def+ghi=" in cookies_seen[1]
+
+
+def test_knockout_snapshot_prefers_maintained_espn_client(monkeypatch) -> None:
+    credentials = EspnCredentials("x" * 80, SWID)
+    client = EspnFantasyClient(credentials)
+    calls = []
+
+    def maintained(league_id, *, season):
+        calls.append((str(league_id), int(season)))
+        return _payload()
+
+    monkeypatch.setattr(client, "_fetch_league_with_espn_api", maintained)
+    try:
+        snapshot = client.fetch_knockout_snapshot(
+            987654,
+            season=2026,
+            team_id=7,
+            swid=SWID,
+        )
+    finally:
+        client.close()
+
+    assert calls == [("987654", 2026)]
+    assert snapshot["team_id"] == 7
+    assert snapshot["roster"][0]["player"] == "Dak Prescott"
