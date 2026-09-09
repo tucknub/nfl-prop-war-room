@@ -42,7 +42,7 @@ def _payload() -> dict:
                             "playerPoolEntry": {
                                 "player": {
                                     "fullName": "Dak Prescott",
-                                    "defaultPositionId": 0,
+                                    "defaultPositionId": 1,
                                     "proTeamId": 6,
                                     "injuryStatus": "ACTIVE",
                                 }
@@ -93,6 +93,65 @@ def test_normalize_league_snapshot_identifies_owner_roster_and_faab() -> None:
     assert snapshot["roster"][0]["player"] == "Dak Prescott"
     assert snapshot["roster"][0]["nfl_team"] == "DAL"
     assert snapshot["roster"][1]["lineup_role"] == "Bench"
+
+
+def test_default_position_ids_are_not_treated_as_lineup_slot_ids() -> None:
+    payload = _payload()
+    payload["teams"][0]["roster"]["entries"] = [
+        {
+            "playerId": 10,
+            "lineupSlotId": 20,
+            "playerPoolEntry": {
+                "player": {
+                    "fullName": "Quarter Back",
+                    "defaultPositionId": 1,
+                    "proTeamId": 6,
+                }
+            },
+        },
+        {
+            "playerId": 11,
+            "lineupSlotId": 20,
+            "playerPoolEntry": {
+                "player": {
+                    "fullName": "Wide Receiver",
+                    "defaultPositionId": 3,
+                    "proTeamId": 4,
+                }
+            },
+        },
+        {
+            "playerId": 12,
+            "lineupSlotId": 20,
+            "playerPoolEntry": {
+                "player": {
+                    "fullName": "Tight End",
+                    "defaultPositionId": 4,
+                    "proTeamId": 19,
+                }
+            },
+        },
+        {
+            "playerId": 13,
+            "lineupSlotId": 20,
+            "playerPoolEntry": {
+                "player": {
+                    "fullName": "Kicker",
+                    "defaultPositionId": 5,
+                    "proTeamId": 33,
+                }
+            },
+        },
+    ]
+
+    snapshot = normalize_league_snapshot(payload, swid=SWID)
+
+    assert [row["position"] for row in snapshot["roster"]] == [
+        "QB",
+        "WR",
+        "TE",
+        "K",
+    ]
 
 
 def test_private_client_uses_read_host_and_cookie_auth() -> None:
