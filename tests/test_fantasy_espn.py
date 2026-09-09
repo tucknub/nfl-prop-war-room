@@ -241,18 +241,11 @@ def test_knockout_snapshot_scopes_roster_to_known_team() -> None:
     assert "rosterForTeamId=7" in roster_url
 
 
-def test_private_client_retries_with_decoded_s2() -> None:
-    cookies_seen = []
+def test_private_client_keeps_encoded_s2_verbatim() -> None:
+    seen = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
-        cookie = request.headers.get("cookie", "")
-        cookies_seen.append(cookie)
-        if "%2F" in cookie:
-            return httpx.Response(
-                403,
-                json={"messages": ["You are not authorized to view this League."]},
-                headers={"content-type": "application/json"},
-            )
+        seen["cookie"] = request.headers.get("cookie", "")
         return httpx.Response(
             200,
             json=_payload(),
@@ -260,14 +253,13 @@ def test_private_client_retries_with_decoded_s2() -> None:
         )
 
     transport = httpx.MockTransport(handler)
-    credentials = EspnCredentials("abc%2Fdef%2Bghi%3D" + "x" * 40, SWID)
+    encoded = "abc%2Fdef%2Bghi%3D" + "x" * 40
+    credentials = EspnCredentials(encoded, SWID)
     with EspnFantasyClient(credentials, transport=transport) as client:
         payload = client.fetch_league(987654, season=2026, views=("mTeam",))
 
     assert payload["id"] == 987654
-    assert len(cookies_seen) == 2
-    assert "%2F" in cookies_seen[0]
-    assert "abc/def+ghi=" in cookies_seen[1]
+    assert encoded in seen["cookie"]
 
 
 def test_knockout_snapshot_prefers_maintained_espn_client(monkeypatch) -> None:
