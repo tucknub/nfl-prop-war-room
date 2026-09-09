@@ -45,13 +45,21 @@ def test_knockout_does_not_claim_unvalidated_probability_or_optimal_bid() -> Non
     assert "V1 is the league-state foundation" not in source
 
 
-def test_knockout_espn_direct_connect_does_not_require_discovery() -> None:
+def test_knockout_espn_connect_is_single_submit_form() -> None:
     source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
 
-    direct = source.index('f"Connect {configured_league_name}"')
-    optional = source.index('with st.expander("Use a different ESPN league"')
-    discovery = source.index('"Find my leagues"')
+    assert 'with st.form("knockout_espn_connect_form"' in source
+    assert 'st.form_submit_button(' in source
+    assert 'f"Connect {configured_league_name}"' in source
+    assert '"Find my leagues"' not in source
+    assert '"Use a different ESPN league"' not in source
 
-    assert direct < optional < discovery
-    assert "League discovery is optional." in source
-    assert "This does not mean your ESPN cookies are bad." in source
+
+def test_configured_espn_league_disables_manual_roster_intake() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    assert "the previous manual roster was cleared and Elwood TKO is waiting for ESPN sync." in source
+    assert "Manual roster upload is disabled for this league" in source
+    configured_guard = source.index('if str(league.get("espn_league_id") or "").strip():')
+    manual_upload = source.index('st.file_uploader("Draft roster CSV"')
+    assert configured_guard < manual_upload
