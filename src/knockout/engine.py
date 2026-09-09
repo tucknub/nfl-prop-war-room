@@ -199,12 +199,15 @@ def roster_depth(state: dict[str, Any]) -> dict[str, Any]:
         for pos, needed in required.items()
         if counts[pos] < needed
     ]
+    # A 14-player knockout roster normally carries one QB, TE, K, and DST.
+    # Treat those singleton starter positions as valid structure, not automatic
+    # medium risk. Escalate only when RB/WR depth or the FLEX cushion is thin.
     thin_positions = [
         pos
-        for pos, needed in required.items()
-        if counts[pos] == needed
+        for pos in ("RB", "WR")
+        if counts[pos] <= required[pos]
     ]
-    if flex_cushion <= 0 and not any(pos in starter_gaps for pos in FLEX_POSITIONS):
+    if flex_cushion <= 1 and not any(pos in starter_gaps for pos in FLEX_POSITIONS):
         thin_positions.append("FLEX")
 
     return {
