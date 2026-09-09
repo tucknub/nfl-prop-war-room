@@ -176,3 +176,21 @@ def test_discovered_different_league_cannot_relink() -> None:
         assert "configured for league" in str(exc)
     else:
         raise AssertionError("different ESPN league name must not relink Knockout")
+
+
+def test_espn_sync_preserves_lineup_details() -> None:
+    snap = snapshot()
+    snap["roster"][0]["lineup_role"] = "QB"
+    snap["roster"][0]["lineup_slot_id"] = 0
+    snap["roster"][0]["injury_status"] = "ACTIVE"
+
+    updated = apply_espn_snapshot(
+        base_state(),
+        snap,
+        credential_envelope="encrypted-token",
+    )
+
+    details = updated["espn_connection"]["roster_details"]
+    assert len(details) == 14
+    assert details[0]["lineup_role"] == "QB"
+    assert details[0]["lineup_slot_id"] == 0
