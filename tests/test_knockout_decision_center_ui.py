@@ -91,3 +91,12 @@ def test_knockout_connected_page_is_live_and_text_readable() -> None:
     assert "auto-refresh every 15 min" in source
     assert 'score_label = "Not started" if source_score is None' in source
     assert 'st.table(roster_table[["Player", "Pos", "NFL"]])' in source
+
+
+def test_connected_espn_is_authoritative_for_roster_and_faab() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+
+    assert 'if espn_connection:' in source
+    assert '"Roster / FAAB updates"' in source
+    assert "No manual roster or FAAB entry is needed." in source
+    assert "ESPN is the authoritative roster and FAAB source" in source
