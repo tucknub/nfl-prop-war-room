@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 import httpx
 from cryptography.fernet import Fernet, InvalidToken
@@ -229,7 +229,6 @@ class EspnFantasyClient:
     ) -> None:
         self.credentials = credentials.normalized() if credentials is not None else None
         self._test_transport_injected = transport is not None
-        self._tried_decoded_s2 = False
         cookies: dict[str, str] = {}
         if self.credentials is not None:
             cookies = {
@@ -262,23 +261,6 @@ class EspnFantasyClient:
     def close(self) -> None:
         self._client.close()
 
-    def _auth_retry_available(self) -> bool:
-        if self.credentials is None or self._tried_decoded_s2:
-            return False
-        decoded = unquote(self.credentials.espn_s2)
-        return bool(decoded and decoded != self.credentials.espn_s2)
-
-    def _use_decoded_s2(self) -> None:
-        if self.credentials is None:
-            return
-        decoded = unquote(self.credentials.espn_s2)
-        self._tried_decoded_s2 = True
-        self.credentials = EspnCredentials(
-            espn_s2=decoded,
-            swid=self.credentials.swid,
-        ).normalized()
-        self._client.cookies.set("espn_s2", self.credentials.espn_s2)
-
     def _get_json(
         self,
         url: str,
@@ -291,9 +273,6 @@ class EspnFantasyClient:
             raise EspnFantasyError(f"ESPN request failed: {exc}") from exc
 
         if response.status_code in {401, 403}:
-            if self._auth_retry_available():
-                self._use_decoded_s2()
-                return self._get_json(url, params=params)
             raise EspnAuthenticationError(
                 "ESPN rejected this browser session for Elwood TKO. "
                 "Refresh espn_s2 and SWID from fantasy.espn.com while logged into the account that owns team 7."
@@ -304,9 +283,6 @@ class EspnFantasyClient:
             raise EspnFantasyError(f"ESPN returned HTTP {response.status_code}.")
         content_type = str(response.headers.get("content-type") or "").casefold()
         if "json" not in content_type:
-            if self._auth_retry_available():
-                self._use_decoded_s2()
-                return self._get_json(url, params=params)
             raise EspnAuthenticationError(
                 "ESPN returned a sign-in/HTML response instead of fantasy data. "
                 "Refresh espn_s2 and SWID from fantasy.espn.com."
@@ -330,9 +306,6 @@ class EspnFantasyClient:
         if any("not authorized" in message.casefold() for message in messages) or any(
             value.startswith("AUTH_") for value in detail_types
         ):
-            if self._auth_retry_available():
-                self._use_decoded_s2()
-                return self._get_json(url, params=params)
             raise EspnAuthenticationError(
                 "ESPN says this browser session is not authorized for Elwood TKO. "
                 "Refresh espn_s2 and SWID from fantasy.espn.com while logged into the account that owns team 7."
