@@ -233,6 +233,33 @@ def test_active_roster_depth_and_structural_risk_are_state_based() -> None:
     assert decision["next_action"] == "HOLD / SHOP"
 
 
+def test_standard_singleton_qb_te_k_dst_is_not_medium_risk() -> None:
+    state = base_state()
+    standard = [
+        {"player": "QB One", "position": "QB", "nfl_team": "DAL"},
+        {"player": "RB One", "position": "RB", "nfl_team": "LAC"},
+        {"player": "RB Two", "position": "RB", "nfl_team": "DEN"},
+        {"player": "RB Three", "position": "RB", "nfl_team": "WSH"},
+        {"player": "RB Four", "position": "RB", "nfl_team": "ARI"},
+        {"player": "RB Five", "position": "RB", "nfl_team": "KC"},
+        {"player": "RB Six", "position": "RB", "nfl_team": "SF"},
+        {"player": "WR One", "position": "WR", "nfl_team": "CIN"},
+        {"player": "WR Two", "position": "WR", "nfl_team": "CLE"},
+        {"player": "WR Three", "position": "WR", "nfl_team": "PHI"},
+        {"player": "WR Four", "position": "WR", "nfl_team": "NYJ"},
+        {"player": "TE One", "position": "TE", "nfl_team": "NYG"},
+        {"player": "K One", "position": "K", "nfl_team": "BAL"},
+        {"player": "DST One", "position": "DST", "nfl_team": "ATL"},
+    ]
+    active = engine.record_draft_state(state, standard)
+
+    depth = engine.roster_depth(active)
+    risk = engine.structural_roster_risk(active)
+
+    assert depth["thin_positions"] == []
+    assert risk["level"] == "LOW"
+
+
 def test_missing_starter_coverage_escalates_roster_and_faab_posture() -> None:
     active = engine.record_draft_state(base_state(), roster())
     broken = engine.record_waiver_transaction(
