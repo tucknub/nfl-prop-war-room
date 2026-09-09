@@ -88,7 +88,7 @@ def test_knockout_connected_page_is_live_and_text_readable() -> None:
     assert "def _auto_sync_due" in source
     assert "max_age_seconds: int = 900" in source
     assert "Auto-sync ESPN Knockout league" in source
-    assert "auto-refresh every 15 min" in source
+    assert "auto-sync when older than 15 min" in source
     assert 'score_label = "Not started" if source_score is None' in source
     assert 'st.table(roster_table[["Player", "Pos", "NFL"]])' in source
 
