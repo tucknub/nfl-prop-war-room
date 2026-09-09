@@ -310,40 +310,48 @@ if roster:
         st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
     st.dataframe(pd.DataFrame(roster), hide_index=True, width="stretch")
 else:
-    st.info("No roster is loaded yet. This is expected before the draft.")
-    st.caption("When the draft is complete, upload or paste exactly 14 rows with columns: player, position, nfl_team.")
-    upload = st.file_uploader("Draft roster CSV", type=["csv"], key="knockout_roster_upload")
-    pasted = st.text_area(
-        "Or paste roster CSV",
-        placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
-        height=150,
-        key="knockout_roster_paste",
-    )
-    raw_text = ""
-    if upload is not None:
-        raw_text = upload.getvalue().decode("utf-8-sig")
-    elif pasted.strip():
-        raw_text = pasted
+    if str(league.get("espn_league_id") or "").strip():
+        st.info(
+            "No roster is loaded. This is intentional: the previous manual roster was cleared and Elwood TKO is waiting for ESPN sync."
+        )
+        st.caption(
+            "When ESPN connects successfully, this section will populate from ESPN. Manual roster upload is disabled for this league so there is no ambiguity about the data source."
+        )
+    else:
+        st.info("No roster is loaded yet.")
+        st.caption("Manual draft intake is available only when no ESPN league is configured.")
+        upload = st.file_uploader("Draft roster CSV", type=["csv"], key="knockout_roster_upload")
+        pasted = st.text_area(
+            "Or paste roster CSV",
+            placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
+            height=150,
+            key="knockout_roster_paste",
+        )
+        raw_text = ""
+        if upload is not None:
+            raw_text = upload.getvalue().decode("utf-8-sig")
+        elif pasted.strip():
+            raw_text = pasted
 
-    if raw_text:
-        try:
-            parsed = _parse_roster_csv(raw_text)
-            normalized = engine.validate_roster(parsed, roster_size=int(league["roster_size"]))
-            lineup = engine.lineup_readiness(normalized)
-            st.success("Roster structure validates: 14 unique players with recognized positions and NFL teams.")
-            if lineup["ready"]:
-                st.caption("This roster can also fill every required starter slot.")
-            else:
-                st.warning("Roster can be saved, but starter coverage is incomplete: " + "; ".join(lineup["errors"]))
-            st.dataframe(pd.DataFrame(normalized), hide_index=True, width="stretch")
-            confirm = st.checkbox("I confirm this is my final drafted roster.", key="knockout_confirm_draft")
-            if st.button("Save draft roster", type="primary", disabled=not confirm, key="knockout_save_draft"):
-                updated = engine.record_draft_state(state, normalized)
-                _persist_transition(config, state, updated, "Record 2026 Knockout Fantasy draft roster")
-                st.success("Draft roster saved to private Knockout state.")
-                st.rerun()
-        except Exception as exc:
-            st.error(str(exc))
+        if raw_text:
+            try:
+                parsed = _parse_roster_csv(raw_text)
+                normalized = engine.validate_roster(parsed, roster_size=int(league["roster_size"]))
+                lineup = engine.lineup_readiness(normalized)
+                st.success("Roster structure validates.")
+                if lineup["ready"]:
+                    st.caption("This roster can fill every required starter slot.")
+                else:
+                    st.warning("Starter coverage is incomplete: " + "; ".join(lineup["errors"]))
+                st.dataframe(pd.DataFrame(normalized), hide_index=True, width="stretch")
+                confirm = st.checkbox("I confirm this is my final drafted roster.", key="knockout_confirm_draft")
+                if st.button("Save draft roster", type="primary", disabled=not confirm, key="knockout_save_draft"):
+                    updated = engine.record_draft_state(state, normalized)
+                    _persist_transition(config, state, updated, "Record 2026 Knockout Fantasy draft roster")
+                    st.success("Draft roster saved to private Knockout state.")
+                    st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
 
 if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
     section("Waiver / FAAB transaction", "Record completed add/drop results only. This does not submit a waiver claim to ESPN.")
