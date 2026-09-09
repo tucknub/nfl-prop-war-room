@@ -102,6 +102,19 @@ def validate_state(state: dict[str, Any]) -> dict[str, Any]:
     if len(eliminations) > 17:
         raise ValueError("there can be at most 17 eliminated teams")
 
+    espn_connection = state.get("espn_connection")
+    if espn_connection is not None:
+        if not isinstance(espn_connection, dict):
+            raise ValueError("espn_connection must be an object")
+        forbidden_keys = {"espn_s2", "swid", "SWID", "cookies", "password"}
+        exposed = forbidden_keys.intersection(espn_connection)
+        if exposed:
+            raise ValueError("raw ESPN credentials must never be stored in Knockout state")
+        if str(espn_connection.get("provider") or "").upper() != "ESPN":
+            raise ValueError("unsupported Knockout provider connection")
+        if not str(espn_connection.get("credential_envelope") or "").strip():
+            raise ValueError("ESPN connection requires an encrypted credential envelope")
+
     released_rosters = list(state.get("released_rosters") or [])
     seen_release_weeks: set[int] = set()
     elimination_keys = {
