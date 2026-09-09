@@ -138,3 +138,41 @@ def test_espn_identity_is_authoritative_not_optional_metadata() -> None:
         assert "configured for team 7" in str(exc)
     else:
         raise AssertionError("wrong ESPN team must be rejected")
+
+
+def test_discovered_elwood_relink_updates_provider_ids() -> None:
+    discovered = snapshot()
+    discovered["league_id"] = "222222"
+    discovered["team_id"] = 9
+    discovered["league_name"] = "Elwood TKO"
+    discovered["discovered_relink"] = True
+
+    updated = apply_espn_snapshot(
+        base_state(),
+        discovered,
+        credential_envelope="encrypted-token",
+    )
+
+    assert updated["league"]["espn_league_id"] == "222222"
+    assert updated["league"]["espn_team_id"] == 9
+    assert updated["espn_connection"]["league_id"] == "222222"
+    assert len(updated["roster"]) == 14
+
+
+def test_discovered_different_league_cannot_relink() -> None:
+    discovered = snapshot()
+    discovered["league_id"] = "222222"
+    discovered["team_id"] = 9
+    discovered["league_name"] = "Not Elwood TKO"
+    discovered["discovered_relink"] = True
+
+    try:
+        apply_espn_snapshot(
+            base_state(),
+            discovered,
+            credential_envelope="encrypted-token",
+        )
+    except ValueError as exc:
+        assert "configured for league" in str(exc)
+    else:
+        raise AssertionError("different ESPN league name must not relink Knockout")
