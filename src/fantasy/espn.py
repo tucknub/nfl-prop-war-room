@@ -452,7 +452,7 @@ class EspnFantasyClient:
             ),
         }
 
-        profile: dict[str, Any] | None = None
+        profile: Any | None = None
         swid_variants = [
             self.credentials.swid.strip("{}"),
             self.credentials.swid,
@@ -479,7 +479,7 @@ class EspnFantasyClient:
                 candidate_profile = response.json()
             except ValueError:
                 continue
-            if isinstance(candidate_profile, dict):
+            if isinstance(candidate_profile, (dict, list)):
                 profile = candidate_profile
                 break
 
