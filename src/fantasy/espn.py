@@ -228,6 +228,7 @@ class EspnFantasyClient:
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         self.credentials = credentials.normalized() if credentials is not None else None
+        self._test_transport_injected = transport is not None
         self._tried_decoded_s2 = False
         cookies: dict[str, str] = {}
         if self.credentials is not None:
@@ -339,6 +340,61 @@ class EspnFantasyClient:
 
         return payload
 
+    def _fetch_league_with_espn_api(
+        self,
+        league_id: str | int,
+        *,
+        season: int,
+    ) -> dict[str, Any]:
+        if self.credentials is None:
+            raise EspnAuthenticationError(
+                "Private ESPN league sync requires espn_s2 and SWID."
+            )
+
+        try:
+            from espn_api.requests.espn_requests import (
+                ESPNAccessDenied,
+                ESPNInvalidLeague,
+                ESPNUnknownError,
+                EspnFantasyRequests,
+            )
+        except ImportError as exc:
+            raise EspnFantasyError(
+                "The maintained espn-api client is unavailable in this deployment."
+            ) from exc
+
+        request = EspnFantasyRequests(
+            sport="nfl",
+            year=int(season),
+            league_id=int(league_id),
+            cookies={
+                "espn_s2": self.credentials.espn_s2,
+                "SWID": self.credentials.swid,
+            },
+        )
+        try:
+            payload = request.get_league()
+        except ESPNAccessDenied as exc:
+            raise EspnAuthenticationError(
+                "ESPN rejected these private-league credentials."
+            ) from exc
+        except ESPNInvalidLeague as exc:
+            raise EspnFantasyError(
+                f"ESPN says league {league_id} does not exist for {int(season)}."
+            ) from exc
+        except ESPNUnknownError as exc:
+            raise EspnFantasyError(f"ESPN request failed: {exc}") from exc
+        except Exception as exc:
+            raise EspnFantasyError(
+                f"The maintained ESPN client failed: {type(exc).__name__}: {exc}"
+            ) from exc
+
+        if not isinstance(payload, dict):
+            raise EspnSchemaError(
+                "The maintained ESPN client returned an unexpected response shape."
+            )
+        return payload
+
     def fetch_league(
         self,
         league_id: str | int,
@@ -372,71 +428,101 @@ class EspnFantasyClient:
         team_id: int,
         swid: str | None = None,
     ) -> dict[str, Any]:
-        base = self.fetch_league(
-            league_id,
-            season=season,
-            views=("mSettings", "mTeam", "mStatus"),
-        )
-        status = base.get("status") if isinstance(base.get("status"), Mapping) else {}
-        scoring_period = int(
-            status.get("currentScoringPeriod")
-            or status.get("currentMatchupPeriod")
-            or base.get("scoringPeriodId")
-            or 1
-        )
-        scoring_period = max(1, scoring_period)
+        primary_error: str | None = None
 
-        roster_payload = self.fetch_league(
-            league_id,
-            season=season,
-            views=("mRoster",),
-            extra_params={
-                "scoringPeriodId": scoring_period,
-                "rosterForTeamId": int(team_id),
-            },
-        )
-        score_payload = self.fetch_league(
-            league_id,
-            season=season,
-            views=("mMatchupScore",),
-            extra_params={"scoringPeriodId": scoring_period},
-        )
+        # Production path: use the maintained espn-api package, which mirrors
+        # ESPN Fantasy's long-running requests + cookie behavior.
+        if not self._test_transport_injected:
+            try:
+                payload = self._fetch_league_with_espn_api(
+                    league_id,
+                    season=season,
+                )
+                return normalize_league_snapshot(
+                    payload,
+                    swid=swid,
+                    team_id=int(team_id),
+                )
+            except EspnFantasyError as exc:
+                primary_error = str(exc)
 
-        merged = dict(base)
-        base_teams = [
-            dict(row)
-            for row in base.get("teams") or []
-            if isinstance(row, Mapping)
-        ]
-        roster_teams = {
-            int(row.get("id") or 0): dict(row)
-            for row in roster_payload.get("teams") or []
-            if isinstance(row, Mapping)
-        }
-        merged_teams: list[dict[str, Any]] = []
-        seen_ids: set[int] = set()
-        for team in base_teams:
-            current_id = int(team.get("id") or 0)
-            if current_id in roster_teams:
-                roster_team = roster_teams[current_id]
-                if isinstance(roster_team.get("roster"), Mapping):
-                    team["roster"] = dict(roster_team["roster"])
-                if isinstance(roster_team.get("transactionCounter"), Mapping):
-                    team["transactionCounter"] = dict(roster_team["transactionCounter"])
-            merged_teams.append(team)
-            seen_ids.add(current_id)
-        for current_id, team in roster_teams.items():
-            if current_id not in seen_ids:
+        # Fallback/test path: direct read calls kept independently so one
+        # implementation can still work if the other breaks.
+        try:
+            base = self.fetch_league(
+                league_id,
+                season=season,
+                views=("mSettings", "mTeam", "mStatus"),
+            )
+            status = base.get("status") if isinstance(base.get("status"), Mapping) else {}
+            scoring_period = int(
+                status.get("currentScoringPeriod")
+                or status.get("currentMatchupPeriod")
+                or base.get("scoringPeriodId")
+                or 1
+            )
+            scoring_period = max(1, scoring_period)
+
+            roster_payload = self.fetch_league(
+                league_id,
+                season=season,
+                views=("mRoster",),
+                extra_params={
+                    "scoringPeriodId": scoring_period,
+                    "rosterForTeamId": int(team_id),
+                },
+            )
+            score_payload = self.fetch_league(
+                league_id,
+                season=season,
+                views=("mMatchupScore",),
+                extra_params={"scoringPeriodId": scoring_period},
+            )
+
+            merged = dict(base)
+            base_teams = [
+                dict(row)
+                for row in base.get("teams") or []
+                if isinstance(row, Mapping)
+            ]
+            roster_teams = {
+                int(row.get("id") or 0): dict(row)
+                for row in roster_payload.get("teams") or []
+                if isinstance(row, Mapping)
+            }
+            merged_teams: list[dict[str, Any]] = []
+            seen_ids: set[int] = set()
+            for team in base_teams:
+                current_id = int(team.get("id") or 0)
+                if current_id in roster_teams:
+                    roster_team = roster_teams[current_id]
+                    if isinstance(roster_team.get("roster"), Mapping):
+                        team["roster"] = dict(roster_team["roster"])
+                    if isinstance(roster_team.get("transactionCounter"), Mapping):
+                        team["transactionCounter"] = dict(roster_team["transactionCounter"])
                 merged_teams.append(team)
-        merged["teams"] = merged_teams
-        merged["schedule"] = list(score_payload.get("schedule") or [])
-        merged["scoringPeriodId"] = scoring_period
+                seen_ids.add(current_id)
+            for current_id, team in roster_teams.items():
+                if current_id not in seen_ids:
+                    merged_teams.append(team)
+            merged["teams"] = merged_teams
+            merged["schedule"] = list(score_payload.get("schedule") or [])
+            merged["scoringPeriodId"] = scoring_period
 
-        return normalize_league_snapshot(
-            merged,
-            swid=swid,
-            team_id=int(team_id),
-        )
+            return normalize_league_snapshot(
+                merged,
+                swid=swid,
+                team_id=int(team_id),
+            )
+        except EspnFantasyError as fallback_exc:
+            if primary_error:
+                raise EspnFantasyError(
+                    "Both ESPN sync paths failed. "
+                    f"Maintained client: {primary_error} "
+                    f"Direct fallback: {fallback_exc}"
+                ) from fallback_exc
+            raise
+
 
     def discover_leagues(self, *, season: int = 2026) -> list[dict[str, Any]]:
         if self.credentials is None:
