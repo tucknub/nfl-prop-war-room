@@ -76,7 +76,7 @@ def apply_espn_snapshot(
 
     updated = deepcopy(state)
     updated["roster"] = normalized_roster
-    if str(updated.get("status") or "") == "PRE_DRAFT":
+    if str(updated.get("status") or "") in {"PRE_DRAFT", "AWAITING_ROSTER"}:
         updated["status"] = "ACTIVE"
 
     source_week = int(snapshot.get("current_week") or 0)
