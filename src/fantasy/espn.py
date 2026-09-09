@@ -236,12 +236,18 @@ class EspnFantasyClient:
             }
         self._client = httpx.Client(
             timeout=timeout,
-            follow_redirects=False,
+            follow_redirects=True,
             cookies=cookies,
             transport=transport,
             headers={
-                "Accept": "application/json",
-                "User-Agent": "PropWar/2026 ESPN read-only sync",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://fantasy.espn.com/",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/152.0.0.0 Safari/537.36"
+                ),
             },
         )
 
@@ -288,13 +294,16 @@ class EspnFantasyClient:
         *,
         season: int = 2026,
         views: Iterable[str] = DEFAULT_VIEWS,
+        extra_params: Mapping[str, str | int] | None = None,
     ) -> dict[str, Any]:
         league = str(league_id or "").strip()
         if not league.isdigit():
             raise ValueError("ESPN league ID must be numeric.")
         year = int(season)
         url = f"{ESPN_READ_BASE}/seasons/{year}/segments/0/leagues/{league}"
-        params = [("view", str(view)) for view in views]
+        params: list[tuple[str, str]] = [("view", str(view)) for view in views]
+        if extra_params:
+            params.extend((str(key), str(value)) for key, value in extra_params.items())
         payload = self._get_json(url, params=params)
         returned_id = str(payload.get("id") or "").strip()
         returned_season = int(payload.get("seasonId") or 0)
@@ -303,6 +312,80 @@ class EspnFantasyClient:
         if returned_season and returned_season != year:
             raise EspnSchemaError("ESPN returned a different season than requested.")
         return payload
+
+    def fetch_knockout_snapshot(
+        self,
+        league_id: str | int,
+        *,
+        season: int,
+        team_id: int,
+        swid: str | None = None,
+    ) -> dict[str, Any]:
+        base = self.fetch_league(
+            league_id,
+            season=season,
+            views=("mSettings", "mTeam", "mStatus"),
+        )
+        status = base.get("status") if isinstance(base.get("status"), Mapping) else {}
+        scoring_period = int(
+            status.get("currentScoringPeriod")
+            or status.get("currentMatchupPeriod")
+            or base.get("scoringPeriodId")
+            or 1
+        )
+        scoring_period = max(1, scoring_period)
+
+        roster_payload = self.fetch_league(
+            league_id,
+            season=season,
+            views=("mRoster",),
+            extra_params={
+                "scoringPeriodId": scoring_period,
+                "rosterForTeamId": int(team_id),
+            },
+        )
+        score_payload = self.fetch_league(
+            league_id,
+            season=season,
+            views=("mMatchupScore",),
+            extra_params={"scoringPeriodId": scoring_period},
+        )
+
+        merged = dict(base)
+        base_teams = [
+            dict(row)
+            for row in base.get("teams") or []
+            if isinstance(row, Mapping)
+        ]
+        roster_teams = {
+            int(row.get("id") or 0): dict(row)
+            for row in roster_payload.get("teams") or []
+            if isinstance(row, Mapping)
+        }
+        merged_teams: list[dict[str, Any]] = []
+        seen_ids: set[int] = set()
+        for team in base_teams:
+            current_id = int(team.get("id") or 0)
+            if current_id in roster_teams:
+                roster_team = roster_teams[current_id]
+                if isinstance(roster_team.get("roster"), Mapping):
+                    team["roster"] = dict(roster_team["roster"])
+                if isinstance(roster_team.get("transactionCounter"), Mapping):
+                    team["transactionCounter"] = dict(roster_team["transactionCounter"])
+            merged_teams.append(team)
+            seen_ids.add(current_id)
+        for current_id, team in roster_teams.items():
+            if current_id not in seen_ids:
+                merged_teams.append(team)
+        merged["teams"] = merged_teams
+        merged["schedule"] = list(score_payload.get("schedule") or [])
+        merged["scoringPeriodId"] = scoring_period
+
+        return normalize_league_snapshot(
+            merged,
+            swid=swid,
+            team_id=int(team_id),
+        )
 
     def discover_leagues(self, *, season: int = 2026) -> list[dict[str, Any]]:
         if self.credentials is None:
@@ -343,7 +426,12 @@ class EspnFantasyClient:
         return leagues
 
 
-def normalize_league_snapshot(payload: Mapping[str, Any], *, swid: str | None = None) -> dict[str, Any]:
+def normalize_league_snapshot(
+    payload: Mapping[str, Any],
+    *,
+    swid: str | None = None,
+    team_id: int | None = None,
+) -> dict[str, Any]:
     league_id = str(payload.get("id") or "").strip()
     season = int(payload.get("seasonId") or 0)
     settings = payload.get("settings") if isinstance(payload.get("settings"), Mapping) else {}
@@ -358,7 +446,18 @@ def normalize_league_snapshot(payload: Mapping[str, Any], *, swid: str | None = 
 
     owner_id = _normalize_owner_id(swid)
     my_team: dict[str, Any] | None = None
-    if owner_id:
+    target_team_id = int(team_id or 0)
+    if target_team_id > 0:
+        my_team = next(
+            (
+                team
+                for team in teams
+                if int(team.get("id") or 0) == target_team_id
+            ),
+            None,
+        )
+
+    if my_team is None and owner_id:
         for team in teams:
             owners = [_normalize_owner_id(value) for value in team.get("owners") or []]
             owners.extend(
@@ -374,7 +473,7 @@ def normalize_league_snapshot(payload: Mapping[str, Any], *, swid: str | None = 
         my_team = teams[0]
     if my_team is None:
         raise EspnSchemaError(
-            "PropWar could read the ESPN league but could not identify your fantasy team from SWID."
+            "PropWar could read the ESPN league but could not identify the configured fantasy team."
         )
 
     roster_rows: list[dict[str, Any]] = []
