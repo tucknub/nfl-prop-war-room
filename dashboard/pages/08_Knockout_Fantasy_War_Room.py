@@ -225,63 +225,33 @@ else:
             autocomplete="off",
         )
 
-        find_col, manual_col = st.columns([1, 2])
-        with find_col:
-            find_leagues = st.button("Find my leagues", type="primary", width="stretch", key="knockout_espn_find")
-        with manual_col:
-            manual_league_id = st.text_input(
-                "Or ESPN league ID",
-                value=str(league.get("espn_league_id") or ""),
-                placeholder="Numeric league ID from the ESPN league URL",
-                key="knockout_espn_manual_league",
+        configured_league_id = str(league.get("espn_league_id") or "").strip()
+        configured_league_name = str(league.get("name") or "Knockout league").strip() or "Knockout league"
+
+        if configured_league_id:
+            st.success(
+                f"Ready to connect **{configured_league_name}** · ESPN league ID {configured_league_id}"
             )
+        else:
+            st.warning("No ESPN league ID is configured for this Knockout league.")
 
-        if find_leagues:
-            try:
-                credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
-                with st.spinner("Finding your 2026 ESPN fantasy football leagues..."):
-                    with EspnFantasyClient(credentials) as client:
-                        discovered = client.discover_leagues(season=int(state["season"]))
-                st.session_state["knockout_espn_discovered"] = discovered
-                if not discovered:
-                    st.warning(
-                        "ESPN did not expose a discoverable league list. Paste the numeric league ID from your ESPN league URL below; private sync still works."
-                    )
-            except Exception as exc:
-                st.session_state["knockout_espn_discovered"] = []
-                st.error("ESPN league discovery failed.")
-                st.caption(str(exc))
-
-        discovered = list(st.session_state.get("knockout_espn_discovered") or [])
-        selected_discovered_id = ""
-        if discovered:
-            options = {
-                f"{row.get('league_name') or row.get('league_id')} · {row.get('team_name') or 'My team'} · {row.get('team_count') or '?'} teams": str(row.get("league_id") or "")
-                for row in discovered
-            }
-            selected_label = st.selectbox(
-                "ESPN league",
-                tuple(options),
-                key="knockout_espn_discovered_select",
-            )
-            selected_discovered_id = options[selected_label]
-
-        selected_league_id = str(manual_league_id or selected_discovered_id or "").strip()
-        connect_espn = st.button(
-            "Connect ESPN league",
+        connect_configured = st.button(
+            f"Connect {configured_league_name}",
             type="primary",
-            disabled=not bool(selected_league_id and espn_s2.strip() and swid.strip()),
-            key="knockout_espn_connect",
+            width="stretch",
+            disabled=not bool(configured_league_id and espn_s2.strip() and swid.strip()),
+            key="knockout_espn_connect_configured",
         )
-        if connect_espn:
+
+        if connect_configured:
             try:
                 if not espn_secret:
                     raise RuntimeError("Secure ESPN credential encryption is unavailable.")
                 credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
-                with st.spinner("Connecting ESPN and validating the Knockout league..."):
+                with st.spinner(f"Connecting ESPN to {configured_league_name}..."):
                     snapshot = _fetch_espn_snapshot(
                         credentials,
-                        selected_league_id,
+                        configured_league_id,
                         season=int(state["season"]),
                     )
                     envelope = seal_credentials(credentials, espn_secret)
@@ -294,13 +264,98 @@ else:
                         config,
                         state,
                         updated,
-                        f"Connect ESPN Knockout league {selected_league_id}",
+                        f"Connect ESPN Knockout league {configured_league_id}",
                     )
                 st.success("ESPN connected. Roster, FAAB, week, and score are now synced from ESPN.")
                 st.rerun()
             except Exception as exc:
                 st.error("ESPN connection failed. No Knockout state was changed.")
                 st.caption(str(exc))
+
+        with st.expander("Use a different ESPN league", expanded=False):
+            st.caption(
+                "League discovery is optional. ESPN's fan-profile discovery endpoint is less stable than direct league sync."
+            )
+            find_col, manual_col = st.columns([1, 2])
+            with find_col:
+                find_leagues = st.button(
+                    "Find my leagues",
+                    width="stretch",
+                    key="knockout_espn_find",
+                )
+            with manual_col:
+                manual_league_id = st.text_input(
+                    "Different ESPN league ID",
+                    placeholder="Numeric league ID from the ESPN league URL",
+                    key="knockout_espn_manual_league",
+                )
+
+            if find_leagues:
+                try:
+                    credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
+                    with st.spinner("Finding your 2026 ESPN fantasy football leagues..."):
+                        with EspnFantasyClient(credentials) as client:
+                            discovered = client.discover_leagues(season=int(state["season"]))
+                    st.session_state["knockout_espn_discovered"] = discovered
+                    if not discovered:
+                        st.info(
+                            "ESPN did not return a league list. Direct league sync can still work; enter a league ID instead."
+                        )
+                except Exception as exc:
+                    st.session_state["knockout_espn_discovered"] = []
+                    st.warning(
+                        "ESPN league discovery is unavailable right now. This does not mean your ESPN cookies are bad."
+                    )
+                    st.caption(str(exc))
+
+            discovered = list(st.session_state.get("knockout_espn_discovered") or [])
+            selected_discovered_id = ""
+            if discovered:
+                options = {
+                    f"{row.get('league_name') or row.get('league_id')} · {row.get('team_name') or 'My team'} · {row.get('team_count') or '?'} teams": str(row.get("league_id") or "")
+                    for row in discovered
+                }
+                selected_label = st.selectbox(
+                    "ESPN league",
+                    tuple(options),
+                    key="knockout_espn_discovered_select",
+                )
+                selected_discovered_id = options[selected_label]
+
+            selected_league_id = str(manual_league_id or selected_discovered_id or "").strip()
+            connect_other = st.button(
+                "Connect different ESPN league",
+                disabled=not bool(selected_league_id and espn_s2.strip() and swid.strip()),
+                key="knockout_espn_connect_other",
+            )
+            if connect_other:
+                try:
+                    if not espn_secret:
+                        raise RuntimeError("Secure ESPN credential encryption is unavailable.")
+                    credentials = EspnCredentials(espn_s2=espn_s2, swid=swid).normalized()
+                    with st.spinner("Connecting ESPN and validating the selected league..."):
+                        snapshot = _fetch_espn_snapshot(
+                            credentials,
+                            selected_league_id,
+                            season=int(state["season"]),
+                        )
+                        envelope = seal_credentials(credentials, espn_secret)
+                        updated = espn_sync.apply_espn_snapshot(
+                            state,
+                            snapshot,
+                            credential_envelope=envelope,
+                        )
+                        _persist_transition(
+                            config,
+                            state,
+                            updated,
+                            f"Connect ESPN Knockout league {selected_league_id}",
+                        )
+                    st.success("ESPN connected. Roster, FAAB, week, and score are now synced from ESPN.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error("ESPN connection failed. No Knockout state was changed.")
+                    st.caption(str(exc))
 
 st.caption(
     "ESPN Fantasy sync is an unofficial read-only compatibility integration. "
