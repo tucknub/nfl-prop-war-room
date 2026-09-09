@@ -65,10 +65,20 @@ def _espn_credential_secret() -> str:
         return ""
 
 
-def _fetch_espn_snapshot(credentials: EspnCredentials, league_id: str, *, season: int) -> dict:
+def _fetch_espn_snapshot(
+    credentials: EspnCredentials,
+    league_id: str,
+    *,
+    season: int,
+    team_id: int,
+) -> dict:
     with EspnFantasyClient(credentials) as client:
-        payload = client.fetch_league(league_id, season=season)
-    return normalize_league_snapshot(payload, swid=credentials.swid)
+        return client.fetch_knockout_snapshot(
+            league_id,
+            season=season,
+            team_id=team_id,
+            swid=credentials.swid,
+        )
 
 
 page_intro(
@@ -179,6 +189,11 @@ if espn_connection:
                     credentials,
                     str(espn_connection.get("league_id") or ""),
                     season=int(state["season"]),
+                    team_id=int(
+                        espn_connection.get("team_id")
+                        or league.get("espn_team_id")
+                        or 0
+                    ),
                 )
                 updated = espn_sync.apply_espn_snapshot(state, snapshot)
                 _persist_transition(
@@ -253,6 +268,7 @@ else:
                 credentials,
                 configured_league_id,
                 season=int(state["season"]),
+                team_id=int(league.get("espn_team_id") or 0),
             )
             envelope = seal_credentials(credentials, espn_secret)
             updated = espn_sync.apply_espn_snapshot(
