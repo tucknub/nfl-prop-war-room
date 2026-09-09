@@ -119,6 +119,17 @@ def apply_espn_snapshot(
         "source_week": source_week,
         "source_faab_remaining": snapshot.get("faab_remaining"),
         "source_current_score": snapshot.get("current_score"),
+        "roster_details": [
+            {
+                "player": str(row.get("player") or "").strip(),
+                "position": str(row.get("position") or "").strip(),
+                "nfl_team": str(row.get("nfl_team") or "").strip(),
+                "lineup_role": str(row.get("lineup_role") or "").strip(),
+                "lineup_slot_id": int(row.get("lineup_slot_id") or -1),
+                "injury_status": str(row.get("injury_status") or "").strip(),
+            }
+            for row in snapshot.get("roster") or []
+        ],
         "credential_envelope": envelope,
     }
     if not envelope:
