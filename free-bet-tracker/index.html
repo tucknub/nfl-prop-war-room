@@ -83,7 +83,6 @@
   <main class="app">
     <header class="topbar">
       <div class="title"><h1>Free Bet Tracker</h1><p>Use the money before the clock does.</p></div>
-      <button class="iconbtn" id="clearUsed" aria-label="Remove used promos" title="Remove used promos">✓</button>
     </header>
 
     <section class="summary" aria-label="Summary">
@@ -152,10 +151,7 @@
       const active=promos.filter(p=>!p.used && remaining(p.expires)>=0);
       $('#activeValue').textContent=money(active.reduce((a,p)=>a+Number(p.value||0),0));
       $('#expiringCount').textContent=active.filter(p=>remaining(p.expires)<24).length;
-      const ordered=[...promos].sort((a,b)=>{
-        if(a.used!==b.used)return a.used?1:-1;
-        return new Date(a.expires)-new Date(b.expires)
-      });
+      const ordered=promos.filter(p=>!p.used).sort((a,b)=>new Date(a.expires)-new Date(b.expires));
       if(!ordered.length){list.innerHTML=`<div class="empty"><div class="big">◷</div><strong>No promos waiting</strong>Add a free bet or boost and the urgent ones will rise to the top.</div>`;return}
       list.innerHTML=ordered.map(p=>{
         const h=remaining(p.expires), cls=statusClass(p);
@@ -186,7 +182,6 @@
       promos.push(item);
       save();postRemote({action:'add',...item,used:String(item.used)}); closeForm();
     };
-    $('#clearUsed').onclick=()=>{const used=promos.filter(p=>p.used);const count=used.length;if(count && confirm(`Remove ${count} used promo${count===1?'':'s'}?`)){promos=promos.filter(p=>!p.used);save();used.forEach(p=>postRemote({action:'delete',id:p.id}))}};
     $('#sortBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
     render();
     loadRemote();
