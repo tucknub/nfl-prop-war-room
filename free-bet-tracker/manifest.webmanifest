@@ -1,9 +1,14 @@
 {
   "name": "Free Bet Tracker",
   "short_name": "Free Bets",
-  "start_url": "./",
+  "description": "Live sportsbook promo and bonus-bet expiration tracker.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f7fa",
-  "theme_color": "#6d5cae",
-  "description": "Track sportsbook free bets and promo expirations."
+  "orientation": "portrait-primary",
+  "background_color": "#f4f2f7",
+  "theme_color": "#191321",
+  "icons": [
+    {"src":"./app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
 }
