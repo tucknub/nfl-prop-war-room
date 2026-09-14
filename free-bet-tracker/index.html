@@ -180,7 +180,7 @@
       const raw=$('#value').value.replace(/[^0-9.]/g,'');
       const item={id:crypto.randomUUID(),book:$('#book').value,value:Number(raw||0),expires:$('#expires').value,promo:$('#promo').value.trim(),notes:$('#notes').value.trim(),used:false,createdAt:new Date().toISOString()};
       promos.push(item);
-      save();postRemote({action:'add',...item,used:String(item.used)}); closeForm();
+      save();postRemote({action:'add',...item,expiresEpoch:String(new Date(item.expires).getTime()),used:String(item.used)}); closeForm();
     };
     $('#sortBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
     render();
