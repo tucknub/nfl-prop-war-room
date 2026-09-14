@@ -1,12 +1,13 @@
 {
+  "id": "./daily.html",
   "name": "Free Bet Tracker",
   "short_name": "Free Bets",
   "description": "Live sportsbook promo and bonus-bet expiration tracker.",
-  "start_url": "./index.html",
+  "start_url": "./daily.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f4f2f7",
+  "background_color": "#0b0810",
   "theme_color": "#191321",
   "icons": [
     {"src":"./app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
