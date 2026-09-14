@@ -1,191 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#6d5cae" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Free Bets" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <title>Free Bet Tracker</title>
-  <style>
-    :root{
-      --bg:#f7f7fa;
-      --surface:#ffffff;
-      --text:#17171c;
-      --muted:#73737f;
-      --border:#e5e5ec;
-      --purple:#6d5cae;
-      --purple-soft:#f3f0f8;
-      --urgent:#f4cccc;
-      --urgent-text:#7c2020;
-      --soon:#fce5cd;
-      --soon-text:#7b4a1f;
-      --used:#d9ead3;
-      --used-text:#285a2c;
-      --expired:#e6e6e6;
-      --expired-text:#66666f;
-      --shadow:0 8px 24px rgba(32,31,39,.07);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
-    body{min-height:100svh;padding-bottom:calc(92px + env(safe-area-inset-bottom))}
-    button,input,select,textarea{font:inherit}
-    .app{max-width:560px;margin:0 auto;padding:18px 16px 28px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .title h1{font-size:25px;line-height:1.05;margin:0;font-weight:800;letter-spacing:-.035em}
-    .title p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .iconbtn{border:0;background:var(--purple-soft);color:var(--purple);width:42px;height:42px;border-radius:14px;font-size:22px;font-weight:600;display:grid;place-items:center;cursor:pointer}
-    .summary{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-bottom:18px}
-    .stat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px 14px;box-shadow:0 4px 14px rgba(20,20,30,.035)}
-    .stat .label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-    .stat .value{font-size:25px;font-weight:850;letter-spacing:-.035em;margin-top:5px}
-    .stat.alert .value{color:#a13c30}
-    .sectionhead{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 10px}
-    .sectionhead h2{font-size:15px;margin:0;font-weight:800;letter-spacing:-.01em}
-    .sectionhead button{background:transparent;border:0;color:var(--purple);font-size:13px;font-weight:750;cursor:pointer}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow)}
-    .card.urgent{background:linear-gradient(180deg,#fff 0%,#fff 52%,var(--urgent) 160%);border-color:#efb7b7}
-    .card.soon{background:linear-gradient(180deg,#fff 0%,#fff 56%,var(--soon) 170%);border-color:#f0d3b9}
-    .card.expired{background:#f0f0f2;color:var(--expired-text);border-color:#dddddf;box-shadow:none}
-    .card.used{background:#f0f7ed;border-color:#cfe3c7;opacity:.78;box-shadow:none}
-    .cardtop{display:flex;align-items:flex-start;gap:12px}
-    .bookmark{width:44px;height:44px;border-radius:13px;background:var(--purple-soft);color:var(--purple);display:grid;place-items:center;font-weight:850;font-size:15px;flex:0 0 auto}
-    .cardmain{min-width:0;flex:1}
-    .bookrow{display:flex;align-items:center;gap:8px;min-width:0}
-    .book{font-weight:850;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .amount{margin-left:auto;font-weight:900;font-size:20px;letter-spacing:-.025em}
-    .promo{font-size:13px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .timebar{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(100,100,110,.14);gap:10px}
-    .time strong{display:block;font-size:14px;letter-spacing:-.01em}
-    .time span{font-size:11px;color:var(--muted)}
-    .urgent .time strong{color:var(--urgent-text)}
-    .soon .time strong{color:var(--soon-text)}
-    .usedbtn{border:0;border-radius:12px;background:#ededf2;color:#4c4c56;font-weight:800;font-size:13px;padding:10px 13px;cursor:pointer}
-    .usedbtn.done{background:var(--used);color:var(--used-text)}
-    .empty{text-align:center;padding:46px 18px;background:var(--surface);border:1px dashed #d7d7df;border-radius:20px;color:var(--muted)}
-    .empty .big{font-size:30px;margin-bottom:8px}.empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:5px}
-    .fabwrap{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(247,247,250,0),rgba(247,247,250,.92) 34%,var(--bg) 58%);pointer-events:none}
-    .fab{max-width:560px;margin:0 auto;display:block;width:100%;border:0;border-radius:16px;background:var(--purple);color:white;font-weight:850;padding:15px 18px;font-size:15px;box-shadow:0 10px 30px rgba(109,92,174,.28);pointer-events:auto;cursor:pointer}
-    .sheetbackdrop{position:fixed;inset:0;background:rgba(20,18,30,.38);display:none;align-items:flex-end;z-index:20}
-    .sheetbackdrop.open{display:flex}
-    .sheet{width:100%;max-width:560px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));max-height:88svh;overflow:auto;box-shadow:0 -10px 40px rgba(20,18,30,.16)}
-    .grab{width:38px;height:4px;background:#d8d8df;border-radius:99px;margin:2px auto 16px}
-    .sheethead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.sheethead h3{margin:0;font-size:20px;letter-spacing:-.025em}.close{border:0;background:#f0f0f4;width:36px;height:36px;border-radius:12px;font-size:20px;color:#555;cursor:pointer}
-    .grid{display:grid;gap:12px}.field label{display:block;font-size:12px;color:var(--muted);font-weight:750;margin:0 0 6px 2px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);background:#fbfbfd;border-radius:13px;padding:13px 12px;outline:none;color:var(--text)}.field input:focus,.field select:focus,.field textarea:focus{border-color:#aa9dd5;box-shadow:0 0 0 3px rgba(109,92,174,.10)}.field textarea{min-height:80px;resize:vertical}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.save{width:100%;border:0;background:var(--purple);color:white;border-radius:14px;padding:14px;font-weight:850;margin-top:4px;cursor:pointer}.hint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.45}
-    @media (min-width:700px){.app{padding-top:26px}.fabwrap{padding-bottom:18px}.sheet{border-radius:24px;margin-bottom:18px}.sheetbackdrop{align-items:center}.summary{grid-template-columns:1fr 1fr}.title h1{font-size:29px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#191321">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Free Bets">
+<meta name="description" content="Live sportsbook promo and bonus-bet expiration tracker.">
+<meta name="app-version" content="6.0">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./app-icon.svg">
+<title>Free Bet Tracker</title>
+<style>
+:root{--bg:#f4f2f7;--surface:#fff;--ink:#17151b;--muted:#77727f;--line:#e6e1ea;--purple:#7358bd;--purple2:#9b82df;--red:#f9dfdd;--redInk:#942f2b;--orange:#fff0dc;--orangeInk:#8a591e;--shadow:0 12px 30px rgba(41,31,55,.09)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}body{min-height:100svh}.app{max-width:590px;margin:auto;padding:12px 14px calc(34px + env(safe-area-inset-bottom))}
+.hero{position:relative;overflow:hidden;border-radius:26px;padding:20px 18px 17px;color:#fff;background:radial-gradient(circle at 86% 18%,rgba(150,118,221,.34),transparent 28%),linear-gradient(145deg,#17111f 0%,#2a2038 54%,#5a438c 125%);box-shadow:0 18px 48px rgba(47,34,67,.24)}.hero:before{content:"";position:absolute;width:230px;height:230px;right:-80px;bottom:-130px;border-radius:999px;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 28px rgba(255,255,255,.025),0 0 0 58px rgba(255,255,255,.018)}
+.top{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px}.top h1{font-size:29px;line-height:.98;margin:0;font-weight:950;letter-spacing:-.05em}.top p{margin:9px 0 0;color:#d8d1e1;font-size:13px;line-height:1.35}.refresh{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#fff;width:43px;height:43px;border-radius:14px;font-size:21px;font-weight:900;cursor:pointer}.refresh:active{transform:scale(.97)}
+.liveRow{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;font-size:11px;color:#d8d1e1}.liveNow{display:flex;align-items:center;gap:7px;font-weight:800}.liveDot{width:7px;height:7px;border-radius:50%;background:#72e29c;box-shadow:0 0 0 4px rgba(114,226,156,.12)}.lastSync{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logoRail{position:relative;z-index:2;display:flex;gap:8px;margin-top:12px;overflow-x:auto;scrollbar-width:none}.logoRail::-webkit-scrollbar{display:none}.railLogo{height:45px;min-width:66px;flex:1 0 66px;border-radius:14px;display:grid;place-items:center;padding:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);overflow:hidden}.railLogo.white{background:#fff}.railLogo.black{background:#111}.railLogo.green{background:#07664f}.railLogo img{max-width:100%;max-height:100%;object-fit:contain}.railFallback{display:none;color:#fff;font-weight:950;font-size:12px}.railLogo.white .railFallback{color:#23212a}
+.alert{display:none;margin-top:12px;border-radius:20px;padding:13px 14px;background:linear-gradient(135deg,#8f2727,#bc3c34);color:#fff;box-shadow:0 12px 28px rgba(146,43,39,.2)}.alert.show{display:block}.alert.critical{background:linear-gradient(135deg,#6f1616,#a91f1f);animation:pulse 1.6s ease-in-out infinite}.alertTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.alertLabel{font-size:10px;font-weight:950;letter-spacing:.1em;text-transform:uppercase;opacity:.8}.alertTime{font-variant-numeric:tabular-nums;font-size:22px;font-weight:950;letter-spacing:-.03em}.alertPromo{margin-top:3px;font-size:13px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alertBook{font-size:11px;opacity:.8;margin-top:2px}@keyframes pulse{50%{box-shadow:0 12px 34px rgba(169,31,31,.35),0 0 0 3px rgba(169,31,31,.08)}}
+.summary{display:grid;grid-template-columns:1.45fr 1fr;gap:10px;margin:14px 0 10px}.stat{background:#fff;border:1px solid var(--line);border-radius:19px;padding:15px 14px;box-shadow:0 5px 18px rgba(30,25,38,.04)}.label{font-size:10px;font-weight:900;letter-spacing:.095em;text-transform:uppercase;color:var(--muted)}.num{font-size:29px;font-weight:950;letter-spacing:-.05em;margin-top:6px}.danger .num{color:#a63e36}.meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;margin:0 3px 18px;line-height:1.45}.estimate{color:#8b651f}.updated{white-space:nowrap}.updated.stale{color:#99621f;font-weight:800}.updated.old,.offline{color:#a13c30;font-weight:900}.sectionRow{display:flex;align-items:flex-end;justify-content:space-between;margin:0 3px 10px}.section{font-size:16px;font-weight:950;margin:0}.subtle{font-size:11px;color:var(--muted)}.list{display:flex;flex-direction:column;gap:11px}
+details.card{--brand:#7358bd;position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s}details.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}details.card.urgent{border-color:#efb9b3;background:linear-gradient(180deg,#fff 0%,#fff 65%,var(--red) 175%)}details.card.soon{border-color:#efd6b5;background:linear-gradient(180deg,#fff 0%,#fff 67%,var(--orange) 185%)}details.card.finalHour{border-color:#d75750;box-shadow:0 14px 32px rgba(172,55,50,.16)}details.card.critical{border-color:#b51f1f;box-shadow:0 14px 34px rgba(170,32,32,.22)}details.card.first{box-shadow:0 14px 34px rgba(68,45,95,.15);border-color:#cfc1e8}.firstFlag,.hourFlag{position:absolute;top:0;right:0;color:#fff;font-size:9px;font-weight:950;letter-spacing:.09em;text-transform:uppercase;padding:6px 10px 6px 12px;border-radius:0 0 0 12px;z-index:2}.firstFlag{background:linear-gradient(135deg,#7358bd,#9b82df)}.hourFlag{display:none;background:linear-gradient(135deg,#9d2c27,#d04c43)}.finalHour .firstFlag{display:none}.finalHour .hourFlag{display:block}.critical .hourFlag{background:#9f1717}summary{list-style:none;cursor:pointer;padding:16px 15px 14px 18px;outline:none}summary::-webkit-details-marker{display:none}summary:focus-visible{box-shadow:inset 0 0 0 3px rgba(115,88,189,.18)}.cardTop{display:flex;gap:12px;align-items:flex-start}.logoTile{width:58px;height:58px;flex:0 0 58px;border-radius:17px;background:#f4f2f6;display:grid;place-items:center;padding:7px;overflow:hidden;border:1px solid rgba(0,0,0,.045)}.logoTile.dark{background:#151518}.logoTile.green{background:#07664f}.logoTile img{max-width:100%;max-height:100%;object-fit:contain}.fallback{font-size:14px;font-weight:950;color:var(--brand)}.main{min-width:0;flex:1}.bookline{display:flex;align-items:center;gap:8px}.book{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.065em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.heroValue{margin-left:auto;font-size:21px;font-weight:950;white-space:nowrap}.promo{font-size:15px;font-weight:900;margin-top:5px;line-height:1.24}.typeLine{display:flex;align-items:center;gap:7px;margin-top:8px}.typeIcon{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:#f1ecfb;color:var(--purple);font-size:12px}.tapHint{font-size:11px;color:var(--purple);font-weight:850}.foot{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;border-top:1px solid rgba(100,100,110,.13);margin-top:13px;padding-top:11px}.count{font-size:15px;font-weight:950;font-variant-numeric:tabular-nums}.finalHour .count{font-size:19px;color:#a92e29;letter-spacing:-.02em}.critical .count{color:#951616}.exact{display:block;color:var(--muted);font-size:11px;margin-top:3px}.badges{display:flex;align-items:center;gap:7px}.pill{font-size:9px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;color:var(--purple);background:#f1ecfb;padding:6px 8px;border-radius:9px}.pill.est{color:#76521f;background:#fff1db}.chev{font-size:18px;color:#88828f;transition:transform .16s ease}details[open] .chev{transform:rotate(180deg)}.progress{height:3px;background:#eeeaf1;overflow:hidden}.progress span{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width 1s linear}.finalHour .progress span{background:#d54e46}.critical .progress span{background:#a91919}.details{border-top:1px solid rgba(100,100,110,.13);padding:13px 16px 16px 18px;font-size:12px;line-height:1.55;color:#55515e;background:rgba(255,255,255,.62)}.detailLabel{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:950;margin-bottom:4px}.empty{background:#fff;border:1px dashed #d5d0dc;border-radius:20px;padding:48px 20px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);margin-bottom:5px}.note{text-align:center;color:var(--muted);font-size:11px;line-height:1.55;margin:20px 24px 0}.offlineStrip{display:none;margin:10px 0 0;padding:9px 11px;border-radius:12px;background:#fff0dc;color:#79511f;font-size:11px;font-weight:750}.offlineStrip.show{display:block}
+@media(min-width:700px){.app{padding-top:24px}.top h1{font-size:33px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div class="title"><h1>Free Bet Tracker</h1><p>Use the money before the clock does.</p></div>
-    </header>
-
-    <section class="summary" aria-label="Summary">
-      <div class="stat"><div class="label">Active value</div><div class="value" id="activeValue">$0</div></div>
-      <div class="stat alert"><div class="label">Under 24h</div><div class="value" id="expiringCount">0</div></div>
-    </section>
-
-    <div class="sectionhead"><h2>Active promos</h2><button id="sortBtn">Soonest first</button></div>
-    <section class="list" id="promoList"></section>
-  </main>
-
-  <div class="fabwrap"><button class="fab" id="addBtn">+ Add promo</button></div>
-
-  <div class="sheetbackdrop" id="backdrop" role="dialog" aria-modal="true" aria-labelledby="formTitle">
-    <form class="sheet" id="promoForm">
-      <div class="grab"></div>
-      <div class="sheethead"><h3 id="formTitle">Add promo</h3><button class="close" type="button" id="closeBtn" aria-label="Close">×</button></div>
-      <div class="grid">
-        <div class="field"><label for="book">Sportsbook</label><select id="book" required><option value="">Choose sportsbook</option><option>DraftKings</option><option>FanDuel</option><option>bet365</option><option>Caesars</option><option>BetMGM</option><option>Fanatics</option><option>Hard Rock Bet</option><option>ESPN BET</option><option>Other</option></select></div>
-        <div class="twocol">
-          <div class="field"><label for="value">Value</label><input id="value" inputmode="decimal" placeholder="$10" required /></div>
-          <div class="field"><label for="expires">Expires</label><input id="expires" type="datetime-local" required /></div>
-        </div>
-        <div class="field"><label for="promo">Promo / Free Bet</label><input id="promo" placeholder="Bonus Bet, Boomerang, etc." /></div>
-        <div class="field"><label for="notes">Notes</label><textarea id="notes" placeholder="Anything you need to remember"></textarea></div>
-        <button class="save" type="submit">Save promo</button>
-        <div class="hint" id="syncHint">Saved securely on this device. Google Sheet sync will take over automatically when the connected endpoint is enabled.</div>
-      </div>
-    </form>
-  </div>
-
-  <script>
-    const KEY='free-bet-mobile-v2';
-    const API_URL=''; // Google Apps Script /exec URL goes here once deployed.
-    let promos=[];
-    let remoteEnabled=Boolean(API_URL);
-    try{promos=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{promos=[]}
-    const $=s=>document.querySelector(s);
-    const list=$('#promoList'), backdrop=$('#backdrop');
-
-    function initials(book){return book.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}
-    function money(v){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v||0)}
-    function remaining(exp){return (new Date(exp).getTime()-Date.now())/36e5}
-    function fmtExpiry(exp){return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(exp))}
-    function remainingLabel(h){if(h<0)return 'Expired'; if(h<1)return `${Math.max(1,Math.round(h*60))}m left`; if(h<48)return `${h.toFixed(h<10?1:0)}h left`; return `${Math.ceil(h/24)}d left`}
-    function statusClass(p){if(p.used)return 'used'; const h=remaining(p.expires); if(h<0)return 'expired'; if(h<24)return 'urgent'; if(h<48)return 'soon'; return ''}
-    function saveLocal(){localStorage.setItem(KEY,JSON.stringify(promos))}
-    async function postRemote(payload){
-      if(!remoteEnabled)return;
-      const body=new URLSearchParams(payload);
-      try{await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body})}catch(e){console.warn('Sheet sync write failed',e)}
-    }
-    function save(){saveLocal();render()}
-    function loadRemote(){
-      if(!remoteEnabled)return;
-      const cb='freeBetSync_'+Date.now();
-      window[cb]=data=>{
-        try{if(Array.isArray(data?.promos)){promos=data.promos;saveLocal();render();document.querySelector('#syncHint').textContent='Synced with Google Sheet.'}}finally{delete window[cb];script.remove()}
-      };
-      const script=document.createElement('script');
-      script.src=API_URL+'?action=list&callback='+encodeURIComponent(cb)+'&_='+Date.now();
-      script.onerror=()=>{delete window[cb];script.remove()};
-      document.body.appendChild(script);
-    }
-    function render(){
-      const active=promos.filter(p=>!p.used && remaining(p.expires)>=0);
-      $('#activeValue').textContent=money(active.reduce((a,p)=>a+Number(p.value||0),0));
-      $('#expiringCount').textContent=active.filter(p=>remaining(p.expires)<24).length;
-      const ordered=promos.filter(p=>!p.used).sort((a,b)=>new Date(a.expires)-new Date(b.expires));
-      if(!ordered.length){list.innerHTML=`<div class="empty"><div class="big">◷</div><strong>No promos waiting</strong>Add a free bet or boost and the urgent ones will rise to the top.</div>`;return}
-      list.innerHTML=ordered.map(p=>{
-        const h=remaining(p.expires), cls=statusClass(p);
-        return `<article class="card ${cls}">
-          <div class="cardtop">
-            <div class="bookmark">${initials(p.book)}</div>
-            <div class="cardmain">
-              <div class="bookrow"><div class="book">${escapeHtml(p.book)}</div><div class="amount">${money(p.value)}</div></div>
-              <div class="promo">${escapeHtml(p.promo||'Free bet / promo')}</div>
-            </div>
-          </div>
-          <div class="timebar">
-            <div class="time"><strong>${p.used?'Used':remainingLabel(h)}</strong><span>${fmtExpiry(p.expires)}</span></div>
-            <button class="usedbtn ${p.used?'done':''}" data-id="${p.id}">${p.used?'✓ Used':'Mark used'}</button>
-          </div>
-        </article>`
-      }).join('');
-      document.querySelectorAll('.usedbtn').forEach(btn=>btn.onclick=()=>{const p=promos.find(x=>x.id===btn.dataset.id); if(p){p.used=!p.used;save();postRemote({action:'used',id:p.id,used:String(p.used)})}})
-    }
-    function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-    function openForm(){backdrop.classList.add('open');setTimeout(()=>$('#book').focus(),50)}
-    function closeForm(){backdrop.classList.remove('open');$('#promoForm').reset()}
-    $('#addBtn').onclick=openForm; $('#closeBtn').onclick=closeForm; backdrop.onclick=e=>{if(e.target===backdrop)closeForm()};
-    $('#promoForm').onsubmit=e=>{
-      e.preventDefault();
-      const raw=$('#value').value.replace(/[^0-9.]/g,'');
-      const item={id:crypto.randomUUID(),book:$('#book').value,value:Number(raw||0),expires:$('#expires').value,promo:$('#promo').value.trim(),notes:$('#notes').value.trim(),used:false,createdAt:new Date().toISOString()};
-      promos.push(item);
-      save();postRemote({action:'add',...item,expiresEpoch:String(new Date(item.expires).getTime()),used:String(item.used)}); closeForm();
-    };
-    $('#sortBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
-    render();
-    loadRemote();
-    setInterval(()=>{render();loadRemote()},60000);
-  </script>
+<main class="app">
+<section class="hero">
+<div class="top"><div><h1>Free Bet Tracker</h1><p>Free money first. Urgent promos next.</p></div><button class="refresh" id="refresh" aria-label="Refresh promo data">↻</button></div>
+<div class="liveRow"><div class="liveNow"><span class="liveDot"></span><span id="localClock">Local time</span></div><span class="lastSync" id="heroSync">Loading data…</span></div>
+<div class="logoRail" id="logoRail" aria-label="Active sportsbooks"></div>
+</section>
+<div class="offlineStrip" id="offlineStrip">Showing your last saved promo data because the live feed could not refresh.</div>
+<section class="alert" id="hourAlert"><div class="alertTop"><div><div class="alertLabel" id="alertLabel">Final hour</div><div class="alertPromo" id="alertPromo"></div><div class="alertBook" id="alertBook"></div></div><div class="alertTime" id="alertTime"></div></div></section>
+<section class="summary"><div class="stat"><div class="label">Bonus bet money</div><div class="num" id="money">$0</div></div><div class="stat danger"><div class="label">Under 24h</div><div class="num" id="urgent">0</div></div></section>
+<div class="meta"><span><span id="active">0 active</span><span id="estimated" class="estimate"></span></span><span id="updated" class="updated">Loading…</span></div>
+<div class="sectionRow"><h2 class="section">Expiring next</h2><span class="subtle">Countdown + exact time</span></div>
+<section class="list" id="list"></section>
+<p class="note">Every promo shows its exact expiration in Eastern Time plus a live countdown. Tap a promo for terms.</p>
+</main>
+<script>
+const DATA_URL='https://raw.githubusercontent.com/tucknub/nfl-prop-war-room/streamlit-cloud-deploy/free-bet-tracker/promos.json';
+const CACHE_KEY='free-bet-tracker-data-v6';
+const LOGOS={
+'DraftKings':{url:'https://dkstatic.s3.amazonaws.com/Creative-Development/2020/SB/Sportsbook_FC_on_dark.png',cls:'black',brand:'#62b715',abbr:'DK'},
+'FanDuel':{url:'https://upload.wikimedia.org/wikipedia/commons/b/b5/Fanduel_logo.svg',cls:'white',brand:'#1676d2',abbr:'FD'},
+'Caesars':{url:'https://s202.q4cdn.com/508919455/files/images/fact-sheets-images/CaesarsSportsbook/6250018-1000x200-Medallia-Property-Logo-Resize-Caesars-Sportsbook-Digital-v2.jpg',cls:'white',brand:'#9b773f',abbr:'CZR'},
+'Hard Rock Bet':{url:'https://www.hardrock.bet/wp-content/uploads/2024/03/Hard-Rock-Bet-Logo-White.svg',cls:'black',brand:'#d3ae33',abbr:'HR'},
+'bet365':{url:'https://upload.wikimedia.org/wikipedia/commons/d/dc/Bet365_Logo.svg',cls:'green',brand:'#0b8c67',abbr:'365'},
+'BetMGM':{url:'https://upload.wikimedia.org/wikipedia/commons/7/75/BetMGM_logo.svg',cls:'black',brand:'#c29a3a',abbr:'MGM'},
+'Fanatics':{url:'https://upload.wikimedia.org/wikipedia/commons/2/21/Fanatics_logo.svg',cls:'white',brand:'#e1261c',abbr:'FAN'}
+};
+const ICONS={bonus:'◆',boost:'↗',no_sweat:'✓',qualifier:'+'};
+const $=s=>document.querySelector(s),list=$('#list');let promos=[],dataUpdatedAt=null,usedCache=false;
+function fallbackRail(img){img.style.display='none';img.nextElementSibling.style.display='block'}
+function msLeft(x){return new Date(x).getTime()-Date.now()}function hrs(x){return msLeft(x)/36e5}
+function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0)}
+function currentTime(){return new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' ET'}
+function exact(x){const d=new Date(x);const date=new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',month:'short',day:'numeric'}).format(d);const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',hour:'numeric',minute:'2-digit'}).format(d);return `${date} · ${time} ET`}
+function updatedText(x){return 'Updated '+new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(x)).replace(',',' ·')+' ET'}
+function initials(s){return s.split(/\s+/).map(x=>x[0]).join('').slice(0,3).toUpperCase()}function esc(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c]))}
+function hero(p){if(p.value>0)return money(p.value);const m=p.promo.match(/\b\d+%/);if(m)return m[0];if(p.kind==='no_sweat')return'No Sweat';if(p.kind==='qualifier')return'Earn $10';return'Promo'}function kind(p){return p.kind==='bonus'?'Bonus Bet':p.kind==='no_sweat'?'No Sweat':p.kind==='qualifier'?'Bet & Get':'Boost'}
+function timer(ms){if(ms<=0)return'Expired';const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60;if(d>0)return `${d}d ${h}h`;if(h>0)return `${h}h ${m}m`;return `${m}:${String(sec).padStart(2,'0')}`}
+function state(ms){if(ms<=15*60e3)return'critical';if(ms<=60*60e3)return'finalHour';if(ms<=24*60*60e3)return'urgent';if(ms<=48*60*60e3)return'soon';return''}
+function progress(ms){const h=ms/36e5;if(h>=48)return100;if(h<=0)return0;return Math.max(4,Math.round(h/48*100))}
+function freshness(){const el=$('#updated');if(!dataUpdatedAt)return;const age=(Date.now()-new Date(dataUpdatedAt).getTime())/36e5;el.className='updated';if(age>=24)el.classList.add('old');else if(age>=12)el.classList.add('stale');el.textContent=updatedText(dataUpdatedAt);$('#heroSync').textContent=age>=24?'Promo data may be stale':age>=12?'Promo data getting old':'Promo data current'}
+function logoTile(book){const l=LOGOS[book];if(!l)return `<div class="logoTile"><span class="fallback">${initials(book)}</span></div>`;const cls=l.cls==='black'?'dark':l.cls==='green'?'green':'';return `<div class="logoTile ${cls}"><img src="${l.url}" alt="${esc(book)} logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="fallback" style="display:none">${l.abbr}</span></div>`}
+function renderLogoRail(active){const books=[...new Set(active.map(p=>p.book))];$('#logoRail').innerHTML=books.map(book=>{const l=LOGOS[book];if(!l)return `<div class="railLogo"><span class="railFallback" style="display:block">${initials(book)}</span></div>`;return `<div class="railLogo ${l.cls}"><img src="${l.url}" alt="${esc(book)}" onerror="fallbackRail(this)"><span class="railFallback">${l.abbr}</span></div>`}).join('')}
+function render(){const open=new Set([...document.querySelectorAll('details[open]')].map(x=>x.dataset.id));const active=promos.filter(p=>msLeft(p.expires)>0).sort((a,b)=>new Date(a.expires)-new Date(b.expires));renderLogoRail(active);$('#money').textContent=money(active.filter(p=>p.kind==='bonus').reduce((s,p)=>s+Number(p.value||0),0));$('#urgent').textContent=active.filter(p=>hrs(p.expires)<24).length;$('#active').textContent=active.length+' active';const est=active.filter(p=>p.estimated).length;$('#estimated').textContent=est?' · '+est+' estimated time'+(est===1?'':'s'):'';if(!active.length){list.innerHTML='<div class="empty"><strong>Nothing waiting</strong>No active promos are currently tracked.</div>';renderAlert([]);freshness();return}
+list.innerHTML=active.map((p,i)=>{const ms=msLeft(p.expires),st=state(ms),l=LOGOS[p.book]||{brand:'#7358bd'},isOpen=open.has(p.id);return `<details class="card ${st} ${i===0?'first':''}" data-id="${esc(p.id)}" style="--brand:${l.brand}" ${isOpen?'open':''}><span class="firstFlag">Use first</span><span class="hourFlag">${st==='critical'?'Expiring now':'Final hour'}</span><summary><div class="cardTop">${logoTile(p.book)}<div class="main"><div class="bookline"><div class="book">${esc(p.book)}</div><div class="heroValue">${esc(hero(p))}</div></div><div class="promo">${esc(p.promo)}</div><div class="typeLine"><span class="typeIcon">${ICONS[p.kind]||'•'}</span><span class="tapHint">${kind(p)} · Tap for terms</span></div></div></div><div class="foot"><div><span class="count" data-exp="${esc(p.expires)}">${timer(ms)}</span><span class="exact">Expires ${exact(p.expires)}</span></div><span class="badges"><span class="pill ${p.estimated?'est':''}">${p.estimated?'Estimated time':'Exact time'}</span><span class="chev">⌄</span></span></div></summary><div class="progress"><span style="width:${progress(ms)}%"></span></div><div class="details"><div class="detailLabel">Terms / notes</div><div>${esc(p.notes||'No extra terms captured.')}</div></div></details>`}).join('');renderAlert(active);freshness()}
+function renderAlert(active){const el=$('#hourAlert');const p=active[0];if(!p||msLeft(p.expires)>60*60e3){el.className='alert';document.title='Free Bet Tracker';return}const ms=msLeft(p.expires),critical=ms<=15*60e3;el.className='alert show'+(critical?' critical':'');$('#alertLabel').textContent=critical?'Expiring now':'Final hour';$('#alertPromo').textContent=p.promo;$('#alertBook').textContent=p.book+' · expires '+exact(p.expires);$('#alertTime').textContent=timer(ms);document.title=timer(ms)+' · '+p.book+' · Free Bet Tracker'}
+function tick(){document.querySelectorAll('.count[data-exp]').forEach(el=>{const ms=msLeft(el.dataset.exp);el.textContent=timer(ms);const card=el.closest('.card');const st=state(ms);card.classList.remove('critical','finalHour','urgent','soon');if(st)card.classList.add(st);const flag=card.querySelector('.hourFlag');if(flag)flag.textContent=st==='critical'?'Expiring now':'Final hour';const bar=card.querySelector('.progress span');if(bar)bar.style.width=progress(ms)+'%'});$('#localClock').textContent=currentTime();renderAlert(promos.filter(p=>msLeft(p.expires)>0).sort((a,b)=>new Date(a.expires)-new Date(b.expires)));if(promos.some(p=>msLeft(p.expires)<=0&&msLeft(p.expires)>-2000))render()}
+async function getJson(url){const r=await fetch(url+(url.includes('?')?'&':'?')+'ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('load');return r.json()}
+async function load(){try{const d=await getJson(DATA_URL);promos=Array.isArray(d.promos)?d.promos:[];dataUpdatedAt=d.updatedAt||null;usedCache=false;localStorage.setItem(CACHE_KEY,JSON.stringify(d));$('#offlineStrip').classList.remove('show');render()}catch{try{const d=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(d&&Array.isArray(d.promos)){promos=d.promos;dataUpdatedAt=d.updatedAt||null;usedCache=true;$('#offlineStrip').classList.add('show');render();$('#updated').className='updated offline'}else throw Error()}catch{$('#updated').textContent='Could not load promo data';$('#updated').className='updated offline';$('#heroSync').textContent='Data unavailable'}}}
+$('#refresh').onclick=load;load();tick();setInterval(tick,1000);setInterval(load,60000);
+</script>
 </body>
 </html>
