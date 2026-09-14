@@ -28,7 +28,7 @@ let promos=[],dataUpdatedAt=null,openId=null;
 function hrs(x){return(new Date(x).getTime()-Date.now())/36e5}
 function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0)}
 function exact(x){return new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(x))}
-function updatedText(x){return 'Updated '+new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(x)).replace(',',' ·')}
+function updatedStamp(x){return new Intl.DateTimeFormat('en-US',{timeZone:'America/Indiana/Indianapolis',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(x)).replace(',',' ·')}
 function left(h){if(h<1)return Math.max(1,Math.round(h*60))+'m left';if(h<48)return h.toFixed(h<10?1:0)+'h left';return Math.ceil(h/24)+'d left'}
 function cls(h){return h<24?'urgent':h<48?'soon':''}
 function initials(s){return s.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}
@@ -39,8 +39,10 @@ function freshness(){
  const el=$('#updated');if(!dataUpdatedAt)return;
  const age=(Date.now()-new Date(dataUpdatedAt).getTime())/36e5;
  el.classList.remove('stale','old','offline');
- if(age>=24)el.classList.add('old');else if(age>=12)el.classList.add('stale');
- el.textContent=updatedText(dataUpdatedAt);
+ const stamp=updatedStamp(dataUpdatedAt);
+ if(age>=24){el.classList.add('old');el.textContent='STALE · '+stamp}
+ else if(age>=12){el.classList.add('stale');el.textContent='AGING · '+stamp}
+ else el.textContent='Updated '+stamp;
 }
 function wireCards(){
  document.querySelectorAll('.card[data-id]').forEach(card=>{
