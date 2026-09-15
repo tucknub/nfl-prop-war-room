@@ -122,5 +122,5 @@ def enable_browser_history_sync() -> None:
         })();
         </script>
         """,
-        height=1,
+        height="content",
     )
