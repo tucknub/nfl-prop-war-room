@@ -26,11 +26,11 @@ from scripts.build_role_research_data import build_context_rows  # noqa: E402
 from dashboard.research_ui import nfl_week_axis_values, numeric_percent_sort, ratio_text, selection_summary_text  # noqa: E402
 
 
-def test_committed_canonical_data_is_unique_complete_and_ends_in_2025() -> None:
+def test_committed_canonical_data_is_unique_complete_and_includes_live_2026() -> None:
     profile = canonical_quality_profile()
-    assert profile["seasons"] == list(range(2018, 2026))
-    assert profile["latest_completed_season"] == 2025
-    assert available_seasons()[0] == 2025
+    assert profile["seasons"] == list(range(2018, 2027))
+    assert profile["latest_completed_season"] == 2026
+    assert available_seasons()[0] == 2026
     assert profile["duplicate_keys"] == 0
     assert profile["required_missing_cells"] == 0
     assert profile["identity_coverage"] == 1.0
@@ -59,7 +59,7 @@ def test_observable_changes_use_same_season_prior_games_only() -> None:
 def test_situational_archive_is_unique_bounded_and_has_valid_shares() -> None:
     frame = load_situational_data()
     key = ["season", "week", "game_id", "team", "player_id", "role_family", "context"]
-    assert sorted(frame["season"].unique().tolist()) == [2023, 2024, 2025]
+    assert sorted(frame["season"].unique().tolist()) == [2023, 2024, 2025, 2026]
     assert frame.duplicated(key).sum() == 0
     assert frame["team_opportunities"].gt(0).all()
     assert frame["raw_opportunities"].le(frame["team_opportunities"]).all()
@@ -68,7 +68,7 @@ def test_situational_archive_is_unique_bounded_and_has_valid_shares() -> None:
 
 def test_situational_all_and_normal_counts_reconcile_to_canonical() -> None:
     canonical = primary_rows()
-    canonical = canonical[canonical["season"].isin([2023, 2024, 2025])]
+    canonical = canonical[canonical["season"].isin([2023, 2024, 2025, 2026])]
     situational = load_situational_data()
     key = ["season", "week", "game_id", "team", "player_id", "role_family"]
     for context, suffix in [("all_play", "all"), ("normal_game", "normal")]:
