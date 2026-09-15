@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from html import escape
+import re
 from typing import Iterable
 from urllib.parse import quote
 
@@ -21,6 +22,20 @@ from supporting_evidence import validated_data_status_label
 
 
 PUBLIC_SOURCE_NOTE = "Regular-season role and opportunity data; current-season weeks appear only after validation."
+
+
+def heading_slug(text: object) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", str(text or "").casefold()).strip("-")
+    return slug or "section"
+
+
+def anchored_heading(text: object, *, level: int = 2) -> None:
+    safe_level = min(6, max(1, int(level)))
+    anchor_id = heading_slug(text)
+    st.markdown(
+        f'<h{safe_level} id="{escape(anchor_id)}">{escape(str(text))}</h{safe_level}>',
+        unsafe_allow_html=True,
+    )
 
 
 def percent(value: object) -> str:
@@ -265,8 +280,9 @@ def page_intro(
 
 
 def section(title: str, subtitle: str = "") -> None:
+    anchor_id = heading_slug(title)
     st.markdown(
-        f'<div class="pw-section"><h2>{escape(title)}</h2><span>{escape(subtitle)}</span></div>',
+        f'<div class="pw-section"><h2 id="{escape(anchor_id)}">{escape(title)}</h2><span>{escape(subtitle)}</span></div>',
         unsafe_allow_html=True,
     )
 
