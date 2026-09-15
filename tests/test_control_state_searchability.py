@@ -35,16 +35,20 @@ def test_query_initializes_then_widget_change_beats_stale_url() -> None:
     assert after_url_sync.value == "PHI"
 
 
-def test_browser_url_change_can_restore_dal_after_phi() -> None:
+def test_browser_url_change_can_restore_dal_after_phi_without_custom_browser_shim() -> None:
     back_navigation = resolve_control_state(
         ["DAL", "PHI"], "DAL", "PHI", query_present=True, query_changed=True
     )
     assert (back_navigation.value, back_navigation.source) == ("DAL", "query")
+
     state_source = (ROOT / "dashboard" / "control_state.py").read_text(encoding="utf-8")
-    assert 'addEventListener("popstate"' in state_source
+    assert 'addEventListener("popstate"' not in state_source
+    assert "def enable_browser_history_sync() -> None:" in state_source
+    assert "return None" in state_source
+
     for filename in ["home_page.py", "02_Players.py", "03_Games.py"]:
         path = next(path for path in PUBLIC_FILES if path.name == filename)
-        assert "enable_browser_history_sync()" in path.read_text(encoding="utf-8")
+        assert "enable_browser_history_sync()" not in path.read_text(encoding="utf-8")
 
     teams = next(path for path in PUBLIC_FILES if path.name == "01_Teams.py").read_text(encoding="utf-8")
     assert "enable_browser_history_sync()" not in teams
