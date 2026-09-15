@@ -22,8 +22,9 @@ PUBLIC_HEADINGS = {
 OWNER_ONLY_HEADINGS = {
     "glitch-radar": ("Markets",),
     "fantasy-hq": ("Fantasy HQ",),
+    "deep-prop-radar": ("Market Research",),
     "margin": ("Margin War Room",),
-    "knockout-fantasy": ("Knockout Fantasy",),
+    "knockout": ("Knockout Fantasy War Room",),
 }
 
 
