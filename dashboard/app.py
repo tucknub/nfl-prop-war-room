@@ -14,6 +14,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import research_data as _research_data  # noqa: E402
 from access_control import access_mode  # noqa: E402
 from research_ui import inject_styles, section  # noqa: E402
 from research_data import operational_status_text  # noqa: E402
@@ -28,6 +29,21 @@ REPORT_CARDS = (
     ("Target Hierarchy", "See how documented WR and TE targets are distributed within each offense."),
     ("Role Movement", "See which player roles gained or lost the most share versus the prior period."),
 )
+
+
+def _clear_role_data_caches() -> None:
+    """Reload committed role partitions on every run of the deployed entrypoint."""
+    for name in (
+        "load_operational_status",
+        "load_role_data",
+        "load_situational_data",
+        "load_production_data",
+        "load_opportunity_events",
+    ):
+        loader = getattr(_research_data, name, None)
+        cache_clear = getattr(loader, "cache_clear", None)
+        if callable(cache_clear):
+            cache_clear()
 
 
 def _secrets_snapshot() -> dict:
@@ -172,6 +188,7 @@ def _render_owner_auth(mode: str, user: dict) -> None:
 
 
 def main() -> None:
+    _clear_role_data_caches()
     st.set_page_config(
         page_title="PropWar",
         page_icon="PW",
