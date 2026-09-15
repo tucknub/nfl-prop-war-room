@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Callable, Iterable
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 @dataclass(frozen=True)
@@ -110,21 +109,18 @@ def parse_int(value: str) -> int | None:
 
 def enable_browser_history_sync() -> None:
     """Reload a deep-link page when browser Back/Forward activates another URL."""
-    # components.html is intentionally retained here because the Streamlit 1.61
-    # Cloud runtime rejects the equivalent st.iframe zero/minimal-height embed.
-    # This is fixed trusted HTML, not user-controlled content.
-    components.html(
+    # Trusted static script only. st.html avoids the iframe sizing path that
+    # fails on Streamlit Cloud while preserving the browser-history behavior.
+    st.html(
         """
         <script>
         (() => {
-          let host;
-          try { host = window.top; void host.location.href; }
-          catch (_) { host = window.parent; }
+          const host = window.top;
           if (host.__propwarHistorySyncInstalled) return;
           host.__propwarHistorySyncInstalled = true;
           host.addEventListener("popstate", () => host.setTimeout(() => host.location.reload(), 0));
         })();
         </script>
         """,
-        height=0,
+        unsafe_allow_javascript=True,
     )
