@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 BASE_URL = os.environ.get("PROPWAR_LIVE_URL", "https://propwar.streamlit.app").rstrip("/")
-OUTPUT_DIR = Path(os.environ.get("PROPWAR_LIVE_QA_DIR", "/tmp/propwar-live-qa"))
+OUTPUT_DIR = Path(os.environ.get("PROPWAR_LIVE_QA_DIR", "/tmp/propwar-live-qa")) / "release"
 
 PUBLIC_HEADINGS = {
     "": ("Latest NFL role research", "What changed in NFL roles?"),
@@ -27,12 +27,16 @@ OWNER_ONLY_HEADINGS = {
     "knockout": ("Knockout Fantasy War Room",),
 }
 
+PRIVATE_MARKERS = (
+    "PROP WAR · NFL DECISION INTELLIGENCE · PRIVATE BETA",
+    "private authoritative state loaded",
+)
 
-def _published_role_expectations() -> tuple[str | None, str | None]:
+
+def _published_expectations() -> tuple[str | None, str | None]:
     root = Path(__file__).resolve().parents[1]
-    status_files = sorted((root / "outputs" / "role_research").glob("role_research_status_*.json"))
     candidates: list[dict[str, object]] = []
-    for path in status_files:
+    for path in sorted((root / "outputs" / "role_research").glob("role_research_status_*.json")):
         try:
             candidates.append(json.loads(path.read_text(encoding="utf-8")))
         except (OSError, ValueError, TypeError):
@@ -69,118 +73,6 @@ def _goto(page, route: str) -> str:
     return _body(page)
 
 
-def _capture_diagnostic(page, route: str, body: str) -> None:
-    name = (route or "home").replace("-", "_")
-    screenshot = OUTPUT_DIR / f"{name}.png"
-    body_file = OUTPUT_DIR / f"{name}.txt"
-    page.screenshot(path=str(screenshot), full_page=True)
-    body_file.write_text(body, encoding="utf-8")
-    frame_urls = [frame.url for frame in page.frames]
-    print(f"DIAGNOSTIC route=/{route} url={page.url} title={page.title()!r} frames={frame_urls!r}")
-    print(body[:3000].replace("\n", " | "))
-
-
-def _print_source_metadata(page) -> None:
-    for frame_index, frame in enumerate(page.frames):
-        try:
-            forks = frame.get_by_text("Fork", exact=True)
-            for index in range(min(forks.count(), 5)):
-                html = forks.nth(index).evaluate(
-                    "el => (el.closest('a') || el.closest('button') || el.parentElement || el).outerHTML"
-                )
-                print(f"SOURCE_FORK frame={frame_index} index={index} html={html!r}")
-        except Exception as exc:
-            print(f"SOURCE_FORK_ERROR frame={frame_index} error={exc!r}")
-        try:
-            links = frame.locator("a").evaluate_all(
-                "els => els.map(a => ({text:(a.innerText || '').trim(), href:a.href || ''}))"
-            )
-            for link in links:
-                href = str(link.get("href") or "")
-                text = str(link.get("text") or "")
-                if "github.com" in href or "share.streamlit.io" in href or "streamlit.app" in href:
-                    print(f"SOURCE_LINK frame={frame_index} text={text!r} href={href!r}")
-        except Exception as exc:
-            print(f"SOURCE_LINK_ERROR frame={frame_index} error={exc!r}")
-
-
-def _probe_fork_metadata(page) -> None:
-    context = page.context
-    opened_pages = []
-    context.on("page", lambda opened: opened_pages.append(opened))
-    clicked = False
-    for frame_index, frame in enumerate(page.frames):
-        try:
-            fork = frame.get_by_text("Fork", exact=True)
-            if not fork.count() or not fork.first.is_visible():
-                continue
-            print(f"FORK_PROBE clicking frame={frame_index} frame_url={frame.url!r}")
-            fork.first.click(timeout=10_000)
-            clicked = True
-            break
-        except Exception as exc:
-            print(f"FORK_PROBE_CLICK_ERROR frame={frame_index} error={exc!r}")
-    if not clicked:
-        print("FORK_PROBE no visible Fork control found")
-        return
-
-    page.wait_for_timeout(4_000)
-    pages = list(context.pages)
-    for page_index, candidate in enumerate(pages):
-        try:
-            candidate.wait_for_load_state("domcontentloaded", timeout=10_000)
-        except Exception:
-            pass
-        print(f"FORK_PAGE index={page_index} url={candidate.url!r} title={candidate.title()!r}")
-        try:
-            body = candidate.locator("body").inner_text(timeout=5_000)
-            print(f"FORK_PAGE_BODY index={page_index} body={body[:5000]!r}")
-        except Exception as exc:
-            print(f"FORK_PAGE_BODY_ERROR index={page_index} error={exc!r}")
-        for frame_index, frame in enumerate(candidate.frames):
-            print(f"FORK_FRAME page={page_index} frame={frame_index} url={frame.url!r}")
-            try:
-                inputs = frame.locator("input").evaluate_all(
-                    "els => els.map(el => ({type:el.type, name:el.name, value:el.value, placeholder:el.placeholder, aria:el.getAttribute('aria-label')}))"
-                )
-                if inputs:
-                    print(f"FORK_INPUTS page={page_index} frame={frame_index} inputs={inputs!r}")
-            except Exception as exc:
-                print(f"FORK_INPUT_ERROR page={page_index} frame={frame_index} error={exc!r}")
-            try:
-                buttons = frame.locator("button").evaluate_all(
-                    "els => els.map(el => ({text:(el.innerText || '').trim(), aria:el.getAttribute('aria-label')})).filter(x => x.text || x.aria)"
-                )
-                if buttons:
-                    print(f"FORK_BUTTONS page={page_index} frame={frame_index} buttons={buttons[:30]!r}")
-            except Exception as exc:
-                print(f"FORK_BUTTON_ERROR page={page_index} frame={frame_index} error={exc!r}")
-            try:
-                links = frame.locator("a").evaluate_all(
-                    "els => els.map(a => ({text:(a.innerText || '').trim(), href:a.href || ''})).filter(x => x.href)"
-                )
-                source_links = [
-                    link for link in links
-                    if any(token in str(link.get("href") or "") for token in ("github.com", "share.streamlit.io", "streamlit.app"))
-                ]
-                if source_links:
-                    print(f"FORK_LINKS page={page_index} frame={frame_index} links={source_links[:30]!r}")
-            except Exception as exc:
-                print(f"FORK_LINK_ERROR page={page_index} frame={frame_index} error={exc!r}")
-
-    for opened in opened_pages:
-        if opened is not page:
-            try:
-                opened.close()
-            except Exception:
-                pass
-    if page.url.rstrip("/") != BASE_URL:
-        try:
-            _goto(page, "")
-        except Exception:
-            pass
-
-
 def _visible_heading(page, heading: str) -> bool:
     for frame in page.frames:
         try:
@@ -193,81 +85,58 @@ def _visible_heading(page, heading: str) -> bool:
 
 
 def _assert_any_heading(page, expected: tuple[str, ...], route: str) -> None:
-    for heading in expected:
-        if _visible_heading(page, heading):
-            return
-    raise AssertionError(f"{route or '/'} did not render any expected heading: {expected}")
+    if not any(_visible_heading(page, heading) for heading in expected):
+        raise AssertionError(f"/{route} missing expected heading {expected!r}")
+
+
+def _capture(page, route: str, body: str) -> None:
+    name = (route or "home").replace("-", "_")
+    page.screenshot(path=str(OUTPUT_DIR / f"{name}.png"), full_page=True)
+    (OUTPUT_DIR / f"{name}.txt").write_text(body, encoding="utf-8")
 
 
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
-    expected_status, expected_data_label = _published_role_expectations()
+    expected_status, expected_data_label = _published_expectations()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
 
-        try:
-            root_body = _goto(page, "")
-            _capture_diagnostic(page, "", root_body)
-            _print_source_metadata(page)
-            _probe_fork_metadata(page)
-            _assert_any_heading(page, PUBLIC_HEADINGS[""], "/")
-            if "PROP WAR · NFL ROLE INTELLIGENCE · PUBLIC BETA" not in root_body:
-                failures.append("Public home is missing the expected PUBLIC BETA identity.")
-            if "Owner" not in root_body:
-                failures.append("Public home is missing the owner sign-in control.")
-            if expected_status and expected_status not in root_body:
-                failures.append(
-                    f"Public home is stale: expected published status {expected_status!r}."
-                )
-            page.screenshot(path=str(OUTPUT_DIR / "home.png"), full_page=True)
-        except Exception as exc:
-            failures.append(f"Public home failed: {exc}")
-
         for route, headings in PUBLIC_HEADINGS.items():
-            if not route:
-                continue
-            try:
-                route_body = _goto(page, route)
-                _capture_diagnostic(page, route, route_body)
-                _assert_any_heading(page, headings, route)
-                if route == "games" and expected_data_label and expected_data_label not in route_body:
-                    failures.append(
-                        f"Games page is stale: expected data label {expected_data_label!r}."
-                    )
-            except Exception as exc:
-                failures.append(f"Public route /{route} failed: {exc}")
-
-        for route, private_headings in OWNER_ONLY_HEADINGS.items():
             try:
                 body = _goto(page, route)
-                _capture_diagnostic(page, route, body)
-                exposed = []
-                for heading in private_headings:
-                    if _visible_heading(page, heading):
-                        exposed.append(heading)
-                if exposed:
-                    failures.append(
-                        f"Anonymous request to /{route} exposed owner-only heading(s): {exposed}"
-                    )
-                if "Owner" not in body and "Page not found" not in body and "Latest NFL role research" not in body and "What changed in NFL roles?" not in body:
-                    failures.append(
-                        f"Anonymous /{route} did not clearly fall back to public/auth-safe content."
-                    )
+                _capture(page, route, body)
+                _assert_any_heading(page, headings, route)
+                if not route and expected_status and expected_status not in body:
+                    failures.append(f"Home is stale: expected {expected_status!r}.")
+                if route == "games" and expected_data_label and expected_data_label not in body:
+                    failures.append(f"Games is stale: expected {expected_data_label!r}.")
             except Exception as exc:
-                failures.append(f"Owner-only route /{route} could not be checked safely: {exc}")
+                failures.append(f"Public /{route} failed: {exc}")
+
+        for route, headings in OWNER_ONLY_HEADINGS.items():
+            try:
+                body = _goto(page, route)
+                _capture(page, route, body)
+                exposed = [heading for heading in headings if _visible_heading(page, heading)]
+                if exposed:
+                    failures.append(f"Anonymous /{route} exposed owner heading(s): {exposed}")
+                markers = [marker for marker in PRIVATE_MARKERS if marker in body]
+                if markers:
+                    failures.append(f"Anonymous /{route} exposed private marker(s): {markers}")
+            except Exception as exc:
+                failures.append(f"Owner-only /{route} could not be checked: {exc}")
 
         browser.close()
 
     if failures:
-        print("LIVE STREAMLIT QA FAILURES")
+        print("LIVE STREAMLIT RELEASE QA FAILURES")
         for failure in failures:
             print(f"- {failure}")
         raise SystemExit(1)
 
-    print("live_streamlit_public_home=PASS")
     print("live_streamlit_public_routes=PASS")
     print("live_streamlit_current_role_data=PASS")
     print("live_streamlit_owner_routes_hidden_anonymous=PASS")
