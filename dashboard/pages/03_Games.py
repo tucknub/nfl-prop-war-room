@@ -38,7 +38,6 @@ def _game_label(game_id: object) -> str:
     return f"{matchup} · {game_id}"
 
 
-enable_browser_history_sync()
 page_intro("Game Usage Review", "What happened to each player’s role in this game?")
 summary_slot = st.empty()
 seasons = available_seasons()

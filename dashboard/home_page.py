@@ -40,7 +40,6 @@ def _apply_filters(frame: pd.DataFrame, position: str, family: str, category: st
 
 
 def render_home() -> None:
-    enable_browser_history_sync()
     copy = role_home_copy()
     page_intro(copy["page_title"], copy["page_description"])
 

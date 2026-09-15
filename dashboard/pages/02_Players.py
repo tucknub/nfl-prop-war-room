@@ -42,7 +42,6 @@ def _whole(value: object) -> int:
     return 0 if pd.isna(value) else int(float(value))
 
 
-enable_browser_history_sync()
 owner_command_mode = owner_player_command_available()
 if owner_command_mode:
     page_intro(
