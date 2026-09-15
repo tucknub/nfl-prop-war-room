@@ -63,15 +63,19 @@ jobs:
       - name: Verify source contract
         shell: python
         run: |
-          import sys
+          import re
           from pathlib import Path
-          sys.path.insert(0, "dashboard")
-          from research_ui import heading_slug
-          assert heading_slug("Target Hierarchy") == "target-hierarchy"
-          assert heading_slug("1. Jaxon Smith-Njigba") == "1-jaxon-smith-njigba"
-          assert heading_slug("CLE leading roles") == "cle-leading-roles"
+          def slug(text):
+              return re.sub(r"[^a-z0-9]+", "-", text.casefold()).strip("-") or "section"
+          assert slug("Target Hierarchy") == "target-hierarchy"
+          assert slug("1. Jaxon Smith-Njigba") == "1-jaxon-smith-njigba"
+          assert slug("CLE leading roles") == "cle-leading-roles"
+          ui = Path("dashboard/research_ui.py").read_text(encoding="utf-8")
           reports = Path("dashboard/pages/04_Reports.py").read_text(encoding="utf-8")
+          assert "def heading_slug" in ui
+          assert 'id="{escape(anchor_id)}"' in ui
           assert 'anchored_heading(str(selected_report), level=2)' in reports
+          assert 'anchored_heading(f"{rank}. {row[\'player_name\']}", level=3)' in reports
       - name: Commit and remove workflow
         run: |
           rm -f .github/workflows/one-shot-ui-audit-fixes.yml
