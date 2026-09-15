@@ -1,0 +1,72 @@
+name: Diagnose Live Mobile Controls
+
+on:
+  push:
+    branches:
+      - qa/live-postmerge-20260915
+    paths:
+      - .github/workflows/qa-live-mobile-controls.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Inspect mobile expanders
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          base = "https://propwar.streamlit.app"
+          out = Path("/tmp/mobile-controls")
+          out.mkdir(parents=True, exist_ok=True)
+          cases = {
+              "reports": ["Season", "Time period", "Typical-game context", "Minimum opportunities to appear", "Sort results"],
+              "games": ["Season", "Week", "Search or select game"],
+          }
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              for route, labels in cases.items():
+                  context = browser.new_context(viewport={"width":390,"height":844}, is_mobile=True, has_touch=True)
+                  page = context.new_page()
+                  page.goto(f"{base}/{route}", wait_until="domcontentloaded", timeout=120000)
+                  page.wait_for_timeout(7000)
+                  expander = page.locator('[data-testid="stExpander"]').first
+                  summary = expander.locator("summary")
+                  print(f"{route}: expander_count={page.locator('[data-testid=stExpander]').count()} summary_visible={summary.is_visible()}")
+                  summary.click(timeout=10000)
+                  page.wait_for_timeout(2500)
+                  for label in labels:
+                      visible = False
+                      counts = 0
+                      for frame in page.frames:
+                          loc = frame.get_by_text(label, exact=True)
+                          counts += loc.count()
+                          for i in range(loc.count()):
+                              if loc.nth(i).is_visible():
+                                  visible = True
+                                  break
+                      print(f"{route}: {label!r} count={counts} visible={visible}")
+                  page.screenshot(path=str(out/f"{route}_expanded.png"), full_page=True)
+                  context.close()
+              browser.close()
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: live-mobile-controls
+          path: /tmp/mobile-controls
+          if-no-files-found: warn
