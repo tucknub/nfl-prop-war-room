@@ -1,0 +1,53 @@
+name: One-Time Post-Hardening Live Audit
+
+on:
+  push:
+    branches:
+      - streamlit-cloud-deploy
+    paths:
+      - ".github/workflows/one-time-post-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit-live-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Allow Streamlit deployment propagation
+        run: sleep 120
+
+      - name: Audit live desktop and anonymous owner-route safety
+        env:
+          PROPWAR_LIVE_URL: https://propwar.streamlit.app
+          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
+        run: python scripts/validate_live_streamlit.py
+
+      - name: Audit live mobile layout and controls
+        env:
+          PROPWAR_LIVE_URL: https://propwar.streamlit.app
+          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
+        run: python scripts/validate_live_streamlit_mobile.py
+
+      - name: Upload one-time evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: propwar-one-time-post-hardening-live-audit
+          path: /tmp/propwar-live-qa
+          if-no-files-found: warn
