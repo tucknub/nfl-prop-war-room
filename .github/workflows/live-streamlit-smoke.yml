@@ -47,7 +47,7 @@ jobs:
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
           PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit.py
+        run: python scripts/validate_live_streamlit_release.py
 
       - name: Verify deployed PropWar mobile surfaces and controls
         env:
