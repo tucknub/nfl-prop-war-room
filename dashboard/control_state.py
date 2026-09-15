@@ -108,9 +108,7 @@ def parse_int(value: str) -> int | None:
 
 
 def enable_browser_history_sync() -> None:
-    """Compatibility hook retained for callers without injecting browser code."""
-    # Deep-link query state remains authoritative through Streamlit. A custom
-    # browser popstate shim is intentionally disabled because Streamlit Cloud's
-    # runtime currently routes the available HTML helpers through an iframe
-    # sizing path that can fail before Home, Players, or Games render.
+    """Deprecated compatibility hook; dashboard pages no longer invoke it."""
+    # Keep this symbol only so older imports remain safe during Streamlit hot reloads.
+    # It must never inject HTML, JavaScript, components, or iframes.
     return None
