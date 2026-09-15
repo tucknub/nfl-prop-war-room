@@ -21,7 +21,8 @@ on:
         required: false
         type: string
   schedule:
-    - cron: "30 13 * 9-12,1 *"
+    - cron: "30 13 * 9-12,1 2-4"
+    - cron: "30 13 * 9-12,1 0,1,5,6"
 
 permissions:
   contents: write
