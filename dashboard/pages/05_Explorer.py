@@ -42,6 +42,10 @@ EXPLORER_DEFAULTS = {
     "explorer_minimum": 5,
 }
 
+for _key, _value in EXPLORER_DEFAULTS.items():
+    if _key not in st.session_state:
+        st.session_state[_key] = _value
+
 
 def _reset_explorer() -> None:
     defaults = {
@@ -96,15 +100,15 @@ with st.expander("Change filters"):
         or selected_weeks[1] not in weeks
     ):
         st.session_state["explorer_weeks"] = (weeks[0], weeks[-1])
-    with row1[4]: week_range = st.select_slider("Week range", options=weeks, value=(weeks[0], weeks[-1]), key="explorer_weeks")
+    with row1[4]: week_range = st.select_slider("Week range", options=weeks, key="explorer_weeks")
     row2 = st.columns(6)
     with row2[0]: game_state = st.selectbox("Game state", ["All", "Leading", "Trailing", "Close"], key="explorer_game_state")
     with row2[1]: quarter = st.selectbox("Quarter", ["All", "Q1", "Q2", "Q3", "Q4"], key="explorer_quarter")
     with row2[2]: down_distance = st.selectbox("Down & distance", ["All", "Early down", "Passing down", "Short yardage"], key="explorer_down")
     with row2[3]: field_zone = st.selectbox("Field zone", ["All", "Red zone", "Inside 10", "Inside 5"], key="explorer_zone")
     with row2[4]: two_minute = st.checkbox("Two-minute only", key="explorer_two_minute")
-    with row2[5]: normal_game = st.checkbox("Normal-game only", value=True, key="explorer_normal")
-    minimum_sample = st.slider("Minimum player opportunities", 1, 50, 5, key="explorer_minimum")
+    with row2[5]: normal_game = st.checkbox("Normal-game only", key="explorer_normal")
+    minimum_sample = st.slider("Minimum player opportunities", 1, 50, key="explorer_minimum")
     st.button("Reset filters", on_click=_reset_explorer, key="explorer_reset")
 
 summary, weekly = explorer_usage(
