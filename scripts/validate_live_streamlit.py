@@ -103,6 +103,83 @@ def _print_source_metadata(page) -> None:
             print(f"SOURCE_LINK_ERROR frame={frame_index} error={exc!r}")
 
 
+def _probe_fork_metadata(page) -> None:
+    context = page.context
+    opened_pages = []
+    context.on("page", lambda opened: opened_pages.append(opened))
+    clicked = False
+    for frame_index, frame in enumerate(page.frames):
+        try:
+            fork = frame.get_by_text("Fork", exact=True)
+            if not fork.count() or not fork.first.is_visible():
+                continue
+            print(f"FORK_PROBE clicking frame={frame_index} frame_url={frame.url!r}")
+            fork.first.click(timeout=10_000)
+            clicked = True
+            break
+        except Exception as exc:
+            print(f"FORK_PROBE_CLICK_ERROR frame={frame_index} error={exc!r}")
+    if not clicked:
+        print("FORK_PROBE no visible Fork control found")
+        return
+
+    page.wait_for_timeout(4_000)
+    pages = list(context.pages)
+    for page_index, candidate in enumerate(pages):
+        try:
+            candidate.wait_for_load_state("domcontentloaded", timeout=10_000)
+        except Exception:
+            pass
+        print(f"FORK_PAGE index={page_index} url={candidate.url!r} title={candidate.title()!r}")
+        try:
+            body = candidate.locator("body").inner_text(timeout=5_000)
+            print(f"FORK_PAGE_BODY index={page_index} body={body[:5000]!r}")
+        except Exception as exc:
+            print(f"FORK_PAGE_BODY_ERROR index={page_index} error={exc!r}")
+        for frame_index, frame in enumerate(candidate.frames):
+            print(f"FORK_FRAME page={page_index} frame={frame_index} url={frame.url!r}")
+            try:
+                inputs = frame.locator("input").evaluate_all(
+                    "els => els.map(el => ({type:el.type, name:el.name, value:el.value, placeholder:el.placeholder, aria:el.getAttribute('aria-label')}))"
+                )
+                if inputs:
+                    print(f"FORK_INPUTS page={page_index} frame={frame_index} inputs={inputs!r}")
+            except Exception as exc:
+                print(f"FORK_INPUT_ERROR page={page_index} frame={frame_index} error={exc!r}")
+            try:
+                buttons = frame.locator("button").evaluate_all(
+                    "els => els.map(el => ({text:(el.innerText || '').trim(), aria:el.getAttribute('aria-label')})).filter(x => x.text || x.aria)"
+                )
+                if buttons:
+                    print(f"FORK_BUTTONS page={page_index} frame={frame_index} buttons={buttons[:30]!r}")
+            except Exception as exc:
+                print(f"FORK_BUTTON_ERROR page={page_index} frame={frame_index} error={exc!r}")
+            try:
+                links = frame.locator("a").evaluate_all(
+                    "els => els.map(a => ({text:(a.innerText || '').trim(), href:a.href || ''})).filter(x => x.href)"
+                )
+                source_links = [
+                    link for link in links
+                    if any(token in str(link.get("href") or "") for token in ("github.com", "share.streamlit.io", "streamlit.app"))
+                ]
+                if source_links:
+                    print(f"FORK_LINKS page={page_index} frame={frame_index} links={source_links[:30]!r}")
+            except Exception as exc:
+                print(f"FORK_LINK_ERROR page={page_index} frame={frame_index} error={exc!r}")
+
+    for opened in opened_pages:
+        if opened is not page:
+            try:
+                opened.close()
+            except Exception:
+                pass
+    if page.url.rstrip("/") != BASE_URL:
+        try:
+            _goto(page, "")
+        except Exception:
+            pass
+
+
 def _visible_heading(page, heading: str) -> bool:
     for frame in page.frames:
         try:
@@ -134,6 +211,7 @@ def main() -> None:
             root_body = _goto(page, "")
             _capture_diagnostic(page, "", root_body)
             _print_source_metadata(page)
+            _probe_fork_metadata(page)
             _assert_any_heading(page, PUBLIC_HEADINGS[""], "/")
             if "PROP WAR · NFL ROLE INTELLIGENCE · PUBLIC BETA" not in root_body:
                 failures.append("Public home is missing the expected PUBLIC BETA identity.")
