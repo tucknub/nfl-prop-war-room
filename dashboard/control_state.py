@@ -108,19 +108,9 @@ def parse_int(value: str) -> int | None:
 
 
 def enable_browser_history_sync() -> None:
-    """Reload a deep-link page when browser Back/Forward activates another URL."""
-    # Trusted static script only. st.html avoids the iframe sizing path that
-    # fails on Streamlit Cloud while preserving the browser-history behavior.
-    st.html(
-        """
-        <script>
-        (() => {
-          const host = window.top;
-          if (host.__propwarHistorySyncInstalled) return;
-          host.__propwarHistorySyncInstalled = true;
-          host.addEventListener("popstate", () => host.setTimeout(() => host.location.reload(), 0));
-        })();
-        </script>
-        """,
-        unsafe_allow_javascript=True,
-    )
+    """Compatibility hook retained for callers without injecting browser code."""
+    # Deep-link query state remains authoritative through Streamlit. A custom
+    # browser popstate shim is intentionally disabled because Streamlit Cloud's
+    # runtime currently routes the available HTML helpers through an iframe
+    # sizing path that can fail before Home, Players, or Games render.
+    return None
