@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -24,6 +25,28 @@ OWNER_ONLY_HEADINGS = {
     "margin": ("Margin War Room",),
     "knockout-fantasy": ("Knockout Fantasy",),
 }
+
+
+def _published_role_expectations() -> tuple[str | None, str | None]:
+    root = Path(__file__).resolve().parents[1]
+    status_files = sorted((root / "outputs" / "role_research").glob("role_research_status_*.json"))
+    candidates: list[dict[str, object]] = []
+    for path in status_files:
+        try:
+            candidates.append(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, ValueError, TypeError):
+            continue
+    if not candidates:
+        return None, None
+    latest = max(candidates, key=lambda item: int(item.get("season") or 0))
+    season = latest.get("season")
+    week = latest.get("published_through_week")
+    if str(latest.get("status") or "") != "PUBLISHED" or season is None or week is None:
+        return None, None
+    return (
+        f"{season} current-season data published through Week {week}.",
+        f"Data through {season} Week {week}",
+    )
 
 
 def _body(page) -> str:
@@ -77,6 +100,7 @@ def _assert_any_heading(page, expected: tuple[str, ...], route: str) -> None:
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
+    expected_status, expected_data_label = _published_role_expectations()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -90,6 +114,10 @@ def main() -> None:
                 failures.append("Public home is missing the expected PUBLIC BETA identity.")
             if "Owner" not in root_body:
                 failures.append("Public home is missing the owner sign-in control.")
+            if expected_status and expected_status not in root_body:
+                failures.append(
+                    f"Public home is stale: expected published status {expected_status!r}."
+                )
             page.screenshot(path=str(OUTPUT_DIR / "home.png"), full_page=True)
         except Exception as exc:
             failures.append(f"Public home failed: {exc}")
@@ -101,6 +129,10 @@ def main() -> None:
                 route_body = _goto(page, route)
                 _capture_diagnostic(page, route, route_body)
                 _assert_any_heading(page, headings, route)
+                if route == "games" and expected_data_label and expected_data_label not in route_body:
+                    failures.append(
+                        f"Games page is stale: expected data label {expected_data_label!r}."
+                    )
             except Exception as exc:
                 failures.append(f"Public route /{route} failed: {exc}")
 
@@ -133,6 +165,7 @@ def main() -> None:
 
     print("live_streamlit_public_home=PASS")
     print("live_streamlit_public_routes=PASS")
+    print("live_streamlit_current_role_data=PASS")
     print("live_streamlit_owner_routes_hidden_anonymous=PASS")
     print(f"live_streamlit_origin={BASE_URL}")
 
