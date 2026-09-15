@@ -9,6 +9,7 @@ on:
       - "scripts/audit_role_change_signals.py"
       - "dashboard/**"
       - "tests/test_current_role_*.py"
+      - "tests/test_role_change_postpublish_audit.py"
       - "requirements.txt"
       - ".github/workflows/role-research-operations.yml"
   workflow_dispatch:
@@ -22,8 +23,8 @@ on:
         required: false
         type: string
   schedule:
-    - cron: "30 13 * 9-12,1 2-4"
-    - cron: "30 13 * 9-12,1 0,1,5,6"
+    - cron: "30 13 * 9-12,1 *"
+    - cron: "30 14 * 9-12,1 *"
 
 permissions:
   contents: write
@@ -61,6 +62,7 @@ jobs:
           python -m pytest -q \
             tests/test_current_role_operations.py \
             tests/test_current_role_dashboard_status.py \
+            tests/test_role_change_postpublish_audit.py \
             tests/test_public_role_research_language.py
 
       - name: Verify current nflreadpy schemas against a completed historical week
@@ -112,8 +114,45 @@ jobs:
           find /tmp/propwar-role-reports -maxdepth 2 -type f -print -exec cat {} \; || true
           exit 1
 
-  publish-current-season:
+  schedule-gate:
     if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.clock.outputs.run }}
+    steps:
+      - name: Resolve 9:30 AM Indiana schedule
+        id: clock
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from datetime import datetime, time, timezone
+          import os
+          from zoneinfo import ZoneInfo
+
+          if os.environ.get("EVENT_NAME") != "schedule":
+              print("run=true")
+              raise SystemExit(0)
+
+          schedule = os.environ.get("EVENT_SCHEDULE", "").strip()
+          try:
+              scheduled_hour = int(schedule.split()[1])
+          except (IndexError, ValueError):
+              print("run=false")
+              raise SystemExit(0)
+
+          zone = ZoneInfo("America/Indiana/Indianapolis")
+          now_local = datetime.now(timezone.utc).astimezone(zone)
+          target_local = datetime.combine(now_local.date(), time(9, 30), tzinfo=zone)
+          expected_utc_hour = target_local.astimezone(timezone.utc).hour
+          print(f"run={'true' if scheduled_hour == expected_utc_hour else 'false'}")
+          print(f"Indiana target 09:30 uses {expected_utc_hour:02d}:30 UTC on {now_local.date()}")
+          PY
+
+  publish-current-season:
+    needs: schedule-gate
+    if: needs.schedule-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -181,7 +220,7 @@ jobs:
         if: steps.attempt.outputs.status == 'PUBLISHED'
         run: |
           python scripts/validate_current_role_outputs.py --season "${{ steps.target.outputs.season }}"
-          python -m pytest -q tests/test_current_role_operations.py tests/test_current_role_dashboard_status.py
+          python -m pytest -q tests/test_current_role_operations.py tests/test_current_role_dashboard_status.py tests/test_role_change_postpublish_audit.py
 
       - name: Audit published role-change signals
         if: steps.attempt.outputs.status == 'PUBLISHED'
