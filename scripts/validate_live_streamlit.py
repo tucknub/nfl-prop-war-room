@@ -16,7 +16,7 @@ PUBLIC_HEADINGS = {
     "teams": ("Team Role Breakdown",),
     "players": ("Player Role Profile",),
     "games": ("Game Usage Review",),
-    "methodology": ("Methodology",),
+    "methodology": ("How to read a report",),
 }
 
 OWNER_ONLY_HEADINGS = {
@@ -118,6 +118,8 @@ def main() -> None:
                         failures.append(
                             "Home is missing the Week 1 baseline explanation, so the deployed UI code is stale."
                         )
+                if route == "methodology" and "Methodology" not in body:
+                    failures.append("Methodology route is missing its page identity text.")
                 if route == "games" and expected_data_label and expected_data_label not in body:
                     failures.append(f"Games is stale: expected {expected_data_label!r}.")
             except Exception as exc:
