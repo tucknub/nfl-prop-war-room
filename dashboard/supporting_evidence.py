@@ -254,10 +254,19 @@ def player_role_sentence(
     recent_games: int,
 ) -> str:
     recent_label = "Last 4" if recent_games >= 4 else f"latest {recent_games}-game sample"
-    direction = "above" if recent_share >= season_share else "below"
+    # Match the relation to the same one-decimal percentage precision shown to
+    # the reader. Values that render identically must not be called above/below.
+    season_display = round(float(season_share) * 100.0, 1)
+    recent_display = round(float(recent_share) * 100.0, 1)
+    if recent_display > season_display:
+        relation = "above"
+    elif recent_display < season_display:
+        relation = "below"
+    else:
+        relation = "in line with"
     return (
         f"{player_name} ranks {rank} of {peer_count} among {team} {position}s in {role_label.lower()}. "
-        f"The {recent_label} share is {recent_share:.1%}, {direction} the {season_share:.1%} season share."
+        f"The {recent_label} share is {recent_share:.1%}, {relation} the {season_share:.1%} season share."
     )
 
 
