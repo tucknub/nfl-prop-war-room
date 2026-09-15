@@ -156,7 +156,18 @@ def validate_published_role_outputs(
         add("source_coverage_week", int(row.get("through_week") or 0) == through_week, row.get("through_week"), through_week)
         add("source_coverage_games", int(row.get("completed_games") or 0) == len(completed_ids), row.get("completed_games"), len(completed_ids))
         add("opportunity_identity_coverage", float(row.get("opportunity_identity_coverage") or 0) == 1.0, row.get("opportunity_identity_coverage"), 1.0)
-        add("snap_identity_coverage", float(row.get("snap_identity_coverage") or 0) >= 0.99, row.get("snap_identity_coverage"), ">= 0.99")
+        add(
+            "all_offense_snap_identity_coverage",
+            float(row.get("snap_identity_coverage") or 0) >= 0.95,
+            row.get("snap_identity_coverage"),
+            ">= 0.95 diagnostic floor",
+        )
+        add(
+            "report_snap_identity_coverage",
+            float(row.get("report_snap_identity_coverage") or 0) >= 0.99,
+            row.get("report_snap_identity_coverage"),
+            ">= 0.99",
+        )
         add("opportunity_to_snap_coverage", float(row.get("opportunity_to_snap_coverage") or 0) >= 0.995, row.get("opportunity_to_snap_coverage"), ">= 0.995")
 
     return {
