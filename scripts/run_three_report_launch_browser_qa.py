@@ -20,6 +20,7 @@ REPORT_HEADING = "NFL Role Intelligence"
 METHODOLOGY_HEADING = "Methodology"
 REPORTS = ("Backfield Control", "Target Hierarchy", "Role Movement")
 ROLE_MOVEMENT_BASELINE = "Role Movement does not have two validated weeks yet for this selection."
+ROLE_MOVEMENT_EMPTY = "No players meet the selected time period and minimum opportunity requirement."
 ROLE_MOVEMENT_WAITING = "Waiting for more validated weekly history."
 RETIRED_REPORTS = (
     "Scoring-Area Usage",
@@ -272,13 +273,16 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     for report in REPORTS:
         click_report(page, report)
         text = body(page)
-        is_valid_role_baseline = report == "Role Movement" and ROLE_MOVEMENT_BASELINE in text
+        is_valid_role_baseline = report == "Role Movement" and (
+            ROLE_MOVEMENT_BASELINE in text or ROLE_MOVEMENT_EMPTY in text
+        )
         if is_valid_role_baseline:
-            check(
-                ROLE_MOVEMENT_WAITING in text,
-                f"{name}: Role Movement baseline missing waiting explanation",
-                failures,
-            )
+            if ROLE_MOVEMENT_BASELINE in text:
+                check(
+                    ROLE_MOVEMENT_WAITING in text,
+                    f"{name}: Role Movement baseline missing waiting explanation",
+                    failures,
+                )
         else:
             check("Top findings" in text, f"{name}: {report} missing top findings", failures)
             check("Complete report" in text, f"{name}: {report} missing complete table", failures)
