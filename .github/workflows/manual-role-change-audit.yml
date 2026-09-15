@@ -1,0 +1,52 @@
+name: Manual Role Change Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "NFL season"
+        required: true
+        default: "2026"
+        type: string
+      week:
+        description: "Published week to audit"
+        required: true
+        default: "2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: streamlit-cloud-deploy
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Audit published role-change signals
+        run: |
+          python scripts/audit_role_change_signals.py \
+            --season "${{ inputs.season }}" \
+            --week "${{ inputs.week }}"
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: role-change-audit-${{ inputs.season }}-week-${{ inputs.week }}
+          path: outputs/run_reports/role_research/role_change_audit_${{ inputs.season }}_week_${{ inputs.week }}.json
+          if-no-files-found: warn
+          retention-days: 14
