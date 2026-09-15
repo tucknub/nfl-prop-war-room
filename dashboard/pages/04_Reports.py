@@ -28,6 +28,7 @@ from research_data_compat import (
     operational_status_text,
 )
 from research_ui import (
+    anchored_heading,
     methodology_expander,
     page_intro,
     ratio_text,
@@ -131,9 +132,7 @@ def _render_answers(report: str, rows: pd.DataFrame, season: int, end_week: int)
     section("Top findings", "The clearest answers first, with the counts behind each percentage.")
     for rank, (_, row) in enumerate(rows.head(3).iterrows(), 1):
         with st.container(border=True):
-            st.markdown(
-                f"### {rank}. {row['player_name']}"
-            )
+            anchored_heading(f"{rank}. {row['player_name']}", level=3)
             st.caption(
                 f"{row['team']} · {row['position']} · {row['role_family_label']}"
             )
@@ -334,7 +333,7 @@ selected_report = st.segmented_control(
 if selected_report is None:
     selected_report = REPORT_ORDER[0]
 
-st.markdown(f"## {selected_report}")
+anchored_heading(str(selected_report), level=2)
 st.caption(REPORT_DEFINITIONS[selected_report])
 
 sort_options = ["Share", "Raw opportunities"]

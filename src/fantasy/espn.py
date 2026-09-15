@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
@@ -151,6 +152,31 @@ def _position_from_player(player: Mapping[str, Any]) -> str:
     except (TypeError, ValueError):
         default_position = -1
     return DEFAULT_POSITION_MAP.get(default_position, "")
+
+
+def _library_player_row(player: object) -> dict[str, Any] | None:
+    name = str(getattr(player, "name", "") or "").strip()
+    position = str(getattr(player, "position", "") or "").strip().upper().replace("D/ST", "DST")
+    nfl_team = str(getattr(player, "proTeam", "") or "").strip().upper()
+    if nfl_team in {"", "NONE", "FA"} or position not in {"QB", "RB", "WR", "TE", "K", "DST"} or not name:
+        return None
+
+    def finite_number(attribute: str) -> float | None:
+        try:
+            value = float(getattr(player, attribute, 0) or 0)
+        except (TypeError, ValueError):
+            return None
+        return value if math.isfinite(value) else None
+
+    return {
+        "player": name,
+        "position": position,
+        "nfl_team": nfl_team,
+        "espn_player_id": str(getattr(player, "playerId", "") or ""),
+        "injury_status": str(getattr(player, "injuryStatus", "") or "").strip(),
+        "percent_owned": finite_number("percent_owned"),
+        "projected_points": finite_number("projected_points"),
+    }
 
 
 def _league_ids_from_value(value: Any) -> set[str]:
@@ -497,6 +523,112 @@ class EspnFantasyClient:
 
         return None
 
+    def _fetch_knockout_league_context_with_espn_api(
+        self,
+        league_id: str | int,
+        *,
+        season: int,
+        current_week: int,
+        team_id: int,
+    ) -> dict[str, Any]:
+        """Read waivers and the completed-week field without ESPN write endpoints."""
+        if self.credentials is None:
+            raise EspnAuthenticationError("Private ESPN league context requires espn_s2 and SWID.")
+        try:
+            from espn_api.football import League
+        except ImportError as exc:
+            raise EspnFantasyError("The maintained espn-api League client is unavailable.") from exc
+
+        try:
+            league = League(
+                league_id=int(league_id),
+                year=int(season),
+                espn_s2=self.credentials.espn_s2,
+                swid=self.credentials.swid,
+            )
+            scoring_week = max(1, int(current_week or getattr(league, "current_week", 1) or 1))
+            available_players = [
+                row for player in league.free_agents(week=scoring_week, size=500)
+                if (row := _library_player_row(player)) is not None
+            ]
+
+            completed_week = scoring_week - 1
+            week_scores: list[dict[str, Any]] = []
+            lineups: dict[int, list[dict[str, Any]]] = {}
+            if completed_week >= 1:
+                for box in league.box_scores(completed_week):
+                    for side in ("home", "away"):
+                        team = getattr(box, f"{side}_team", None)
+                        if team is None:
+                            continue
+                        score = float(getattr(box, f"{side}_score", 0) or 0)
+                        team_key = int(getattr(team, "team_id", 0) or 0)
+                        owners = []
+                        for owner in list(getattr(team, "owners", []) or []):
+                            if isinstance(owner, Mapping):
+                                display = str(owner.get("displayName") or "").strip()
+                                if not display:
+                                    display = " ".join(
+                                        value for value in [str(owner.get("firstName") or "").strip(), str(owner.get("lastName") or "").strip()] if value
+                                    )
+                                if display:
+                                    owners.append(display)
+                        week_scores.append({
+                            "week": completed_week,
+                            "team_id": team_key,
+                            "team": str(getattr(team, "team_name", "") or f"Team {team_key}").strip(),
+                            "owners": owners,
+                            "score": score,
+                        })
+                        lineup = list(getattr(box, f"{side}_lineup", []) or [])
+                        lineups[team_key] = [
+                            row for player in lineup
+                            if (row := _library_player_row(player)) is not None
+                        ]
+
+            detected = None
+            team_total = len(list(getattr(league, "teams", []) or []))
+            if completed_week >= 1 and team_total and len(week_scores) == team_total:
+                low_score = min(float(row["score"]) for row in week_scores)
+                lowest = [row for row in week_scores if abs(float(row["score"]) - low_score) < 1e-9]
+                if len(lowest) == 1:
+                    detected = dict(lowest[0])
+                    mine = next((row for row in week_scores if int(row["team_id"]) == int(team_id)), None)
+                    detected["players"] = lineups.get(int(detected["team_id"]), [])
+                    detected["user_score"] = float(mine["score"]) if mine is not None else None
+                    detected["user_eliminated"] = int(detected["team_id"]) == int(team_id)
+
+            return {
+                "available_players": available_players,
+                "league_week_scores": week_scores,
+                "detected_elimination": detected,
+            }
+        except Exception as exc:
+            raise EspnFantasyError(
+                f"ESPN league-wide context read failed: {type(exc).__name__}: {exc}"
+            ) from exc
+
+    def _enrich_knockout_snapshot(
+        self,
+        snapshot: dict[str, Any],
+        *,
+        league_id: str | int,
+        season: int,
+        team_id: int,
+    ) -> dict[str, Any]:
+        if self._test_transport_injected:
+            return snapshot
+        try:
+            snapshot.update(self._fetch_knockout_league_context_with_espn_api(
+                league_id,
+                season=season,
+                current_week=int(snapshot.get("current_week") or 0),
+                team_id=team_id,
+            ))
+        except EspnFantasyError as exc:
+            snapshot["league_context_error"] = str(exc)
+        return snapshot
+
     def fetch_knockout_snapshot(
         self,
         league_id: str | int,
@@ -516,11 +648,12 @@ class EspnFantasyClient:
                     league_id,
                     season=season,
                 )
-                return normalize_league_snapshot(
+                snapshot = normalize_league_snapshot(
                     payload,
                     swid=swid,
                     team_id=int(team_id),
                 )
+                return self._enrich_knockout_snapshot(snapshot, league_id=league_id, season=season, team_id=int(team_id))
             except EspnFantasyError as exc:
                 primary_error = str(exc)
 
@@ -587,11 +720,12 @@ class EspnFantasyClient:
             merged["schedule"] = list(score_payload.get("schedule") or [])
             merged["scoringPeriodId"] = scoring_period
 
-            return normalize_league_snapshot(
+            snapshot = normalize_league_snapshot(
                 merged,
                 swid=swid,
                 team_id=int(team_id),
             )
+            return self._enrich_knockout_snapshot(snapshot, league_id=league_id, season=season, team_id=int(team_id))
         except EspnFantasyError as fallback_exc:
             if not self._test_transport_injected and league_name:
                 discovered = self._discover_named_league_with_requests(

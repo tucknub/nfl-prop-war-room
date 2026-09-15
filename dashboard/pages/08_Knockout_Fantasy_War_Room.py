@@ -233,7 +233,7 @@ note(
 
 section(
     "ESPN League Sync",
-    "Read-only private ESPN connection. ESPN supplies the live roster, FAAB balance, current week, and current score; PropWar keeps Knockout elimination history and strategy.",
+    "Read-only private ESPN connection. ESPN supplies roster, FAAB, week, scoring, and the current waiver/free-agent pool; PropWar keeps the validated Knockout ledger and strategy.",
 )
 if espn_connection:
     sync_left, sync_mid, sync_right, sync_score = st.columns(4)
@@ -378,7 +378,7 @@ else:
                 updated,
                 f"Connect ESPN Knockout league {configured_league_id}",
             )
-            st.success("ESPN connected. Roster, FAAB, week, and score are now synced from ESPN.")
+            st.success("ESPN connected. Roster, FAAB, week, scoring context, and waiver pool are now synced from ESPN.")
             st.rerun()
         except Exception as exc:
             st.error("ESPN connection failed. No Knockout state was changed.")
@@ -389,6 +389,65 @@ st.caption(
     "ESPN Fantasy sync is an unofficial read-only compatibility integration. "
     "PropWar never calls ESPN write endpoints and keeps the last successful state if a refresh fails."
 )
+
+league_context_error = str((state.get("espn_connection") or {}).get("league_context_error") or "").strip()
+if league_context_error:
+    st.warning(
+        "ESPN roster sync succeeded, but the league-wide waiver/scoring context could not be refreshed. "
+        "The last good waiver snapshot remains loaded when one exists."
+    )
+
+available_players = list((state.get("espn_connection") or {}).get("available_players") or [])
+if available_players:
+    section(
+        "ESPN Waiver Pool",
+        "League-wide FREEAGENT/WAIVERS players from the same read-only ESPN connection. PropWar does not submit acquisitions.",
+    )
+    released = sorted(
+        state.get("released_rosters") or [],
+        key=lambda row: int(row.get("week", 0)),
+    )
+    if released:
+        latest_release = released[-1]
+        st.success(
+            f"Week {int(latest_release.get('week', 0))} eliminated roster recorded: "
+            f"{latest_release.get('team', 'Unknown team')} · {len(latest_release.get('players') or [])} players released."
+        )
+        fit_rows = engine.released_roster_fit(state, latest_release)
+        if fit_rows:
+            fit_frame = pd.DataFrame(fit_rows).rename(
+                columns={
+                    "player": "Player",
+                    "position": "Pos",
+                    "nfl_team": "NFL",
+                    "fit": "Roster fit",
+                    "why": "Why",
+                }
+            )
+            st.dataframe(fit_frame, width="stretch", hide_index=True)
+
+    waiver_frame = pd.DataFrame(available_players).rename(
+        columns={
+            "player": "Player",
+            "position": "Pos",
+            "nfl_team": "NFL",
+            "injury_status": "Status",
+            "percent_owned": "ESPN rostered %",
+            "projected_points": "ESPN week projection",
+        }
+    )
+    show_columns = [
+        column
+        for column in [
+            "Player", "Pos", "NFL", "Status", "ESPN rostered %", "ESPN week projection"
+        ]
+        if column in waiver_frame.columns
+    ]
+    st.caption(
+        f"{len(waiver_frame)} available players synced from ESPN. "
+        "ESPN availability is source data, not a PropWar player ranking or FAAB recommendation."
+    )
+    st.dataframe(waiver_frame[show_columns], width="stretch", hide_index=True, height=520)
 
 with st.expander("League rules", expanded=False):
     st.caption("Knockout Fantasy is modeled independently from the Margin Pool.")
