@@ -11,6 +11,12 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _lineup_slot_id(value: object) -> int:
+    if value is None or str(value).strip() == "":
+        return -1
+    return int(value)
+
+
 def _plain_roster(snapshot: Mapping[str, Any]) -> list[dict[str, str]]:
     return [
         {
@@ -125,7 +131,7 @@ def apply_espn_snapshot(
                 "position": str(row.get("position") or "").strip(),
                 "nfl_team": str(row.get("nfl_team") or "").strip(),
                 "lineup_role": str(row.get("lineup_role") or "").strip(),
-                "lineup_slot_id": int(row.get("lineup_slot_id") or -1),
+                "lineup_slot_id": _lineup_slot_id(row.get("lineup_slot_id")),
                 "injury_status": str(row.get("injury_status") or "").strip(),
             }
             for row in snapshot.get("roster") or []
