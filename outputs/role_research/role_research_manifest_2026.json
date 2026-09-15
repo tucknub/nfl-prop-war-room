@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "published_through_week": 1,
+  "completed_game_ids": [
+    "2026_01_ARI_LAC",
+    "2026_01_ATL_PIT",
+    "2026_01_BAL_IND",
+    "2026_01_BUF_HOU",
+    "2026_01_CHI_CAR",
+    "2026_01_CLE_JAX",
+    "2026_01_DAL_NYG",
+    "2026_01_DEN_KC",
+    "2026_01_GB_MIN",
+    "2026_01_MIA_LV",
+    "2026_01_NE_SEA",
+    "2026_01_NO_DET",
+    "2026_01_NYJ_TEN",
+    "2026_01_SF_LA",
+    "2026_01_TB_CIN",
+    "2026_01_WAS_PHI"
+  ],
+  "generated_at_utc": "2026-09-15T14:36:45Z",
+  "canonical_rows": 443,
+  "situational_rows": 3381,
+  "production_rows": 309,
+  "opportunity_event_rows": 1778,
+  "quality_pass_rows": 443,
+  "confirmed_partial_rows": 0,
+  "suspected_partial_rows": 0,
+  "limitations": [
+    "Current-season participation data is unavailable in-season and is not used.",
+    "Current-season nflverse injury data is unavailable; partial-game exclusions require a manual reviewed override.",
+    "Snap counts are required before a completed week can publish.",
+    "RB, WR, and TE snap identity coverage gates publication; all-offense coverage remains a diagnostic.",
+    "Only consecutive fully completed regular-season weeks are admitted."
+  ],
+  "output_hashes": {
+    "canonical_sha256": "38134434cf8ef61375a1d456dad45373f6d3a76bb819131ebb8a44e67cfc1e84",
+    "situational_sha256": "228f70716454f2d01deded5cf7a60b3f5a6f0402152e0276f51e3b6dbc340b17",
+    "production_sha256": "4da6f905402f3effa94430d7a16e5f1061daf3836058f63f0ad7e17bac52b2a6",
+    "events_sha256": "679fcc57ff12ead6a552271b945f02c9f822f3d701273505a8e7bbe4276f9b62",
+    "partial_sha256": "a32dbec1c26cb99df38d0c0b261e5b8c773c6e97cc92fef001643efacf4a68a4",
+    "join_sha256": "22a835dfead969d199b39a5a8db595fa8788085a764a6fc385702f31d0fbdeb1",
+    "source_sha256": "5fa32d17e20e8f73800785e7cc876131f2ab78cc7c42ed8bdb1360621996a0aa"
+  }
+}

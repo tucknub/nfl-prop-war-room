@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "season": 2026,
+  "published_through_week": 1,
+  "checks": [
+    {
+      "check": "canonical_not_empty",
+      "passed": true,
+      "observed": 443,
+      "expected": "> 0"
+    },
+    {
+      "check": "canonical_unique_key",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "canonical_required_columns",
+      "passed": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "check": "canonical_required_complete",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "all_share_range",
+      "passed": true,
+      "observed": [
+        0.0,
+        0.9583333333333334
+      ],
+      "expected": "[0, 1]"
+    },
+    {
+      "check": "normal_share_range",
+      "passed": true,
+      "observed": [
+        0.0,
+        0.9565217391304348
+      ],
+      "expected": "[0, 1]"
+    },
+    {
+      "check": "all_numerator_le_denominator",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "normal_numerator_le_denominator",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "quality_pass_all",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "event_unique_grain",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "production_unique_grain",
+      "passed": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "situational_share_range",
+      "passed": true,
+      "observed": [
+        0.025,
+        1.0
+      ],
+      "expected": "[0, 1]"
+    },
+    {
+      "check": "opportunity_identity_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": 1.0
+    },
+    {
+      "check": "all_offense_snap_identity_coverage",
+      "passed": true,
+      "observed": 0.9795918367346939,
+      "expected": ">= 0.95 diagnostic floor"
+    },
+    {
+      "check": "report_snap_identity_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": ">= 0.99"
+    },
+    {
+      "check": "opportunity_to_snap_coverage",
+      "passed": true,
+      "observed": 1.0,
+      "expected": ">= 0.995"
+    }
+  ]
+}

@@ -1,12 +1,73 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "status": "PRESEASON",
-  "generated_at_utc": "2026-07-22T00:00:00Z",
-  "published_through_week": null,
-  "completed_games": 0,
-  "message": "2026 current-season role data will publish after the first fully completed regular-season week passes every source, identity, snap-count, and validation gate.",
-  "source_status": [],
+  "status": "PUBLISHED",
+  "generated_at_utc": "2026-09-15T14:36:45Z",
+  "published_through_week": 1,
+  "completed_games": 16,
+  "message": "Published through Week 1 after all completed-week gates passed.",
+  "source_status": [
+    {
+      "source": "pbp",
+      "rows": 2756,
+      "weeks": "1",
+      "latest_week": 1,
+      "cache_hit": false,
+      "cache_path": "pbp_2026.csv.gz",
+      "cache_mtime_utc": "2026-09-15T14:36:46Z",
+      "fetched_at_utc": "2026-09-15T14:36:45Z",
+      "nflreadpy_version": "0.1.5",
+      "error": ""
+    },
+    {
+      "source": "player_stats",
+      "rows": 1118,
+      "weeks": "1",
+      "latest_week": 1,
+      "cache_hit": false,
+      "cache_path": "player_stats_2026.csv.gz",
+      "cache_mtime_utc": "2026-09-15T14:36:46Z",
+      "fetched_at_utc": "2026-09-15T14:36:46Z",
+      "nflreadpy_version": "0.1.5",
+      "error": ""
+    },
+    {
+      "source": "rosters_weekly",
+      "rows": 5450,
+      "weeks": "1,2",
+      "latest_week": 2,
+      "cache_hit": false,
+      "cache_path": "rosters_weekly_2026.csv.gz",
+      "cache_mtime_utc": "2026-09-15T14:36:46Z",
+      "fetched_at_utc": "2026-09-15T14:36:46Z",
+      "nflreadpy_version": "0.1.5",
+      "error": ""
+    },
+    {
+      "source": "schedules",
+      "rows": 272,
+      "weeks": "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+      "latest_week": 18,
+      "cache_hit": false,
+      "cache_path": "schedules_2026.csv.gz",
+      "cache_mtime_utc": "2026-09-15T14:36:46Z",
+      "fetched_at_utc": "2026-09-15T14:36:46Z",
+      "nflreadpy_version": "0.1.5",
+      "error": ""
+    },
+    {
+      "source": "snap_counts",
+      "rows": 1492,
+      "weeks": "1",
+      "latest_week": 1,
+      "cache_hit": false,
+      "cache_path": "snap_counts_2026.csv.gz",
+      "cache_mtime_utc": "2026-09-15T14:36:46Z",
+      "fetched_at_utc": "2026-09-15T14:36:46Z",
+      "nflreadpy_version": "0.1.5",
+      "error": ""
+    }
+  ],
   "operational_policy": {
     "publication_grain": "consecutive fully completed regular-season weeks",
     "participation_data": "not used in-season because the current source is post-season only",
@@ -15,5 +76,53 @@
     "snap_counts_required": true,
     "stale_cache_default": "blocked",
     "atomic_publication": true
-  }
+  },
+  "completed_weeks": [
+    1
+  ],
+  "blocked_weeks": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "staging_run_id": "2026-1-9328ccafbd",
+  "staging_files": [
+    "canonical_role_2026_live.csv.gz",
+    "game_player_usage_2026_live.csv.gz",
+    "join_coverage_2026_live.csv",
+    "opportunity_events_2026_live.csv.gz",
+    "partial_game_status_2026_live.csv.gz",
+    "role_research_manifest_2026.json",
+    "role_research_validation_2026.json",
+    "situational_player_week_2026_live.csv.gz",
+    "source_coverage_2026_live.csv"
+  ],
+  "published_files": [
+    "canonical_role_2026_live.csv.gz",
+    "completion_gate_2026.csv",
+    "game_player_usage_2026_live.csv.gz",
+    "join_coverage_2026_live.csv",
+    "opportunity_events_2026_live.csv.gz",
+    "partial_game_status_2026_live.csv.gz",
+    "role_research_manifest_2026.json",
+    "role_research_validation_2026.json",
+    "situational_player_week_2026_live.csv.gz",
+    "source_coverage_2026_live.csv",
+    "source_input_manifest_2026_live.csv"
+  ],
+  "partial_override_rows": 0
 }
