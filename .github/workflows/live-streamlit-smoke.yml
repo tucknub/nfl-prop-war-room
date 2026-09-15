@@ -1,13 +1,11 @@
 name: PropWar Live Streamlit Smoke
 
 on:
-  push:
-    branches:
-      - streamlit-cloud-deploy
   workflow_dispatch:
   workflow_run:
     workflows:
       - PropWar Product Gate
+      - Current Role Operations
     types:
       - completed
 
@@ -15,13 +13,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: propwar-live-streamlit-smoke-${{ github.event.workflow_run.id || github.ref }}
+  group: propwar-live-streamlit-smoke-${{ github.event.workflow_run.id || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   live-smoke:
     if: >-
-      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'streamlit-cloud-deploy')
@@ -43,8 +40,8 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Allow Streamlit deployment propagation
-        if: github.event_name == 'push' || github.event_name == 'workflow_run'
-        run: sleep 45
+        if: github.event_name == 'workflow_run'
+        run: sleep 90
 
       - name: Verify deployed PropWar public and auth-safe surfaces
         env:
