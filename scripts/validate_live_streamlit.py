@@ -79,6 +79,30 @@ def _capture_diagnostic(page, route: str, body: str) -> None:
     print(body[:3000].replace("\n", " | "))
 
 
+def _print_source_metadata(page) -> None:
+    for frame_index, frame in enumerate(page.frames):
+        try:
+            forks = frame.get_by_text("Fork", exact=True)
+            for index in range(min(forks.count(), 5)):
+                html = forks.nth(index).evaluate(
+                    "el => (el.closest('a') || el.closest('button') || el.parentElement || el).outerHTML"
+                )
+                print(f"SOURCE_FORK frame={frame_index} index={index} html={html!r}")
+        except Exception as exc:
+            print(f"SOURCE_FORK_ERROR frame={frame_index} error={exc!r}")
+        try:
+            links = frame.locator("a").evaluate_all(
+                "els => els.map(a => ({text:(a.innerText || '').trim(), href:a.href || ''}))"
+            )
+            for link in links:
+                href = str(link.get("href") or "")
+                text = str(link.get("text") or "")
+                if "github.com" in href or "share.streamlit.io" in href or "streamlit.app" in href:
+                    print(f"SOURCE_LINK frame={frame_index} text={text!r} href={href!r}")
+        except Exception as exc:
+            print(f"SOURCE_LINK_ERROR frame={frame_index} error={exc!r}")
+
+
 def _visible_heading(page, heading: str) -> bool:
     for frame in page.frames:
         try:
@@ -109,6 +133,7 @@ def main() -> None:
         try:
             root_body = _goto(page, "")
             _capture_diagnostic(page, "", root_body)
+            _print_source_metadata(page)
             _assert_any_heading(page, PUBLIC_HEADINGS[""], "/")
             if "PROP WAR · NFL ROLE INTELLIGENCE · PUBLIC BETA" not in root_body:
                 failures.append("Public home is missing the expected PUBLIC BETA identity.")
