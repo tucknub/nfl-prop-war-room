@@ -28,6 +28,92 @@ def _plain_roster(snapshot: Mapping[str, Any]) -> list[dict[str, str]]:
     ]
 
 
+def _plain_available_players(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for raw in snapshot.get("available_players") or []:
+        player = str(raw.get("player") or "").strip()
+        position = engine.canonical_position(raw.get("position"))
+        nfl_team = str(raw.get("nfl_team") or "").strip().upper()
+        if not player or position not in engine.VALID_POSITIONS or not nfl_team:
+            continue
+        rows.append(
+            {
+                "player": player,
+                "position": position,
+                "nfl_team": nfl_team,
+                "espn_player_id": str(raw.get("espn_player_id") or "").strip(),
+                "injury_status": str(raw.get("injury_status") or "").strip(),
+                "percent_owned": raw.get("percent_owned"),
+                "projected_points": raw.get("projected_points"),
+            }
+        )
+    return rows
+
+
+def _reconcile_detected_elimination(
+    updated: dict[str, Any],
+    snapshot: Mapping[str, Any],
+) -> None:
+    detected = snapshot.get("detected_elimination")
+    if not isinstance(detected, Mapping):
+        return
+
+    week = int(detected.get("week") or 0)
+    source_week = int(snapshot.get("current_week") or 0)
+    team = str(detected.get("team") or "").strip()
+    if week < 1 or source_week <= week or not team:
+        return
+
+    same_week = [
+        row
+        for row in updated.get("eliminations") or []
+        if int(row.get("week", -1)) == week
+    ]
+    if same_week:
+        if any(
+            str(row.get("team") or "").strip().casefold() != team.casefold()
+            for row in same_week
+        ):
+            raise ValueError(
+                f"ESPN detected a different Week {week} elimination than the stored Knockout ledger."
+            )
+    else:
+        updated.setdefault("eliminations", []).append({"week": week, "team": team})
+
+    if not any(
+        int(row.get("week", -1)) == week
+        for row in updated.get("weekly_results") or []
+    ):
+        user_score = detected.get("user_score")
+        if user_score is not None:
+            updated.setdefault("weekly_results", []).append(
+                {
+                    "week": week,
+                    "user_score": float(user_score),
+                    "user_eliminated": bool(detected.get("user_eliminated")),
+                }
+            )
+
+    if not any(
+        int(row.get("week", -1)) == week
+        for row in updated.get("released_rosters") or []
+    ):
+        players = list(detected.get("players") or [])
+        expected = int((updated.get("league") or {}).get("roster_size", 14))
+        if len(players) == expected:
+            normalized = engine.validate_roster(players, roster_size=expected)
+            updated.setdefault("released_rosters", []).append(
+                {
+                    "week": week,
+                    "team": team,
+                    "players": normalized,
+                }
+            )
+
+    if bool(detected.get("user_eliminated")):
+        updated["status"] = "ELIMINATED"
+
+
 def validate_snapshot_for_knockout(
     state: Mapping[str, Any],
     snapshot: Mapping[str, Any],
@@ -112,8 +198,25 @@ def apply_espn_snapshot(
         league["espn_team_id"] = int(snapshot.get("team_id") or 0)
     updated["league"] = league
 
+    _reconcile_detected_elimination(updated, snapshot)
+
     existing = dict(updated.get("espn_connection") or {})
     envelope = credential_envelope or str(existing.get("credential_envelope") or "")
+    available_players = (
+        _plain_available_players(snapshot)
+        if "available_players" in snapshot
+        else list(existing.get("available_players") or [])
+    )
+    league_week_scores = (
+        [dict(row) for row in snapshot.get("league_week_scores") or []]
+        if "league_week_scores" in snapshot
+        else list(existing.get("league_week_scores") or [])
+    )
+    detected_elimination = (
+        dict(snapshot.get("detected_elimination") or {})
+        if "detected_elimination" in snapshot
+        else dict(existing.get("detected_elimination") or {})
+    )
     connection = {
         "provider": "ESPN",
         "mode": "PRIVATE_COOKIE_READ_ONLY",
@@ -125,6 +228,10 @@ def apply_espn_snapshot(
         "source_week": source_week,
         "source_faab_remaining": snapshot.get("faab_remaining"),
         "source_current_score": snapshot.get("current_score"),
+        "league_context_error": str(snapshot.get("league_context_error") or "").strip(),
+        "available_players": available_players,
+        "league_week_scores": league_week_scores,
+        "detected_elimination": detected_elimination,
         "roster_details": [
             {
                 "player": str(row.get("player") or "").strip(),
