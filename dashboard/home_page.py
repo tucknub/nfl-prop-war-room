@@ -101,11 +101,22 @@ def render_home() -> None:
         ROLE_LABELS[selected_family] if selected_family != "All" else "All role families",
         selected_category if selected_category != "All" else "All categories",
     ]
+    summary_detail = (
+        "Baseline week · comparisons begin Week 2"
+        if int(week) == 1
+        else f"{len(visible_cards)} situations · {visible_cards['category'].nunique() if not visible_cards.empty else 0} categories"
+    )
     selection_summary(
         f"{season} · Week {week}",
         " · ".join(active_filters),
-        f"{len(visible_cards)} situations · {visible_cards['category'].nunique() if not visible_cards.empty else 0} categories",
+        summary_detail,
     )
+
+    if int(week) == 1:
+        st.info(
+            "Week 1 establishes the in-season baseline, so this change screen intentionally has no prior-game comparisons yet. "
+            "Backfield Control and Target Hierarchy already show Week 1 role ownership; Week 2 adds the first role-change comparisons."
+        )
 
     period_notice = report_period_notice(int(week))
     if period_notice:
@@ -139,7 +150,10 @@ def render_home() -> None:
             "Technical category matches are shown here before the one-player, one-primary-category presentation rule."
         )
         if all_visible.empty:
-            st.info("No situations meet the documented screening rules for these filters.")
+            if int(week) == 1:
+                st.info("Week 1 is the baseline week; no prior-game comparison rows exist yet.")
+            else:
+                st.info("No situations meet the documented screening rules for these filters.")
         else:
             display = all_visible[
                 [
