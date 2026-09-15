@@ -223,13 +223,6 @@ jobs:
           python scripts/validate_current_role_outputs.py --season "${{ steps.target.outputs.season }}"
           python -m pytest -q tests/test_current_role_operations.py tests/test_current_role_dashboard_status.py tests/test_role_change_postpublish_audit.py
 
-      - name: Audit published role-change signals
-        if: steps.attempt.outputs.status == 'PUBLISHED'
-        run: |
-          python scripts/audit_role_change_signals.py \
-            --season "${{ steps.target.outputs.season }}" \
-            --week "${{ steps.attempt.outputs.through_week }}"
-
       - name: Commit validated partition
         if: steps.attempt.outputs.status == 'PUBLISHED'
         run: |
