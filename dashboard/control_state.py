@@ -62,10 +62,21 @@ def initialize_query_control(
     marker_key = f"_pw_query_seen::{page}::{query_key}"
     previous = st.session_state.get(marker_key, object())
     changed = previous != raw
+
+    session_value = st.session_state.get(widget_key)
+    if not present and available:
+        if query_key == "season":
+            latest_season = available[0]
+            if session_value != latest_season:
+                session_value = None
+        elif query_key == "week" and default in available:
+            if session_value != default:
+                session_value = None
+
     decision = resolve_control_state(
         available,
         requested,
-        st.session_state.get(widget_key),
+        session_value,
         default=default,
         query_present=present,
         query_changed=changed,
