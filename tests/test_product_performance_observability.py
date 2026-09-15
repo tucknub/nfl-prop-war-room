@@ -15,7 +15,7 @@ def test_product_gate_records_page_startup_timing_evidence() -> None:
     assert 'Path("/tmp/propwar-startup-timings.json")' in workflow
     assert '"seconds": round(elapsed, 3)' in workflow
     assert "Slowest visible page startups:" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v7" in workflow
     assert "name: propwar-startup-timings" in workflow
 
 
