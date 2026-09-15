@@ -31,9 +31,10 @@ PRIVATE_MARKERS = (
     "PROP WAR · NFL DECISION INTELLIGENCE · PRIVATE BETA",
     "private authoritative state loaded",
 )
+WEEK_ONE_BASELINE_MARKER = "Week 1 establishes the in-season baseline"
 
 
-def _published_expectations() -> tuple[str | None, str | None]:
+def _published_expectations() -> tuple[str | None, str | None, int | None]:
     root = Path(__file__).resolve().parents[1]
     candidates: list[dict[str, object]] = []
     for path in sorted((root / "outputs" / "role_research").glob("role_research_status_*.json")):
@@ -42,15 +43,16 @@ def _published_expectations() -> tuple[str | None, str | None]:
         except (OSError, ValueError, TypeError):
             continue
     if not candidates:
-        return None, None
+        return None, None, None
     latest = max(candidates, key=lambda item: int(item.get("season") or 0))
     season = latest.get("season")
     week = latest.get("published_through_week")
     if str(latest.get("status") or "") != "PUBLISHED" or season is None or week is None:
-        return None, None
+        return None, None, None
     return (
         f"{season} current-season data published through Week {week}.",
         f"Data through {season} Week {week}",
+        int(week),
     )
 
 
@@ -98,7 +100,7 @@ def _capture(page, route: str, body: str) -> None:
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
-    expected_status, expected_data_label = _published_expectations()
+    expected_status, expected_data_label, published_week = _published_expectations()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -109,8 +111,13 @@ def main() -> None:
                 body = _goto(page, route)
                 _capture(page, route, body)
                 _assert_any_heading(page, headings, route)
-                if not route and expected_status and expected_status not in body:
-                    failures.append(f"Home is stale: expected {expected_status!r}.")
+                if not route:
+                    if expected_status and expected_status not in body:
+                        failures.append(f"Home is stale: expected {expected_status!r}.")
+                    if published_week == 1 and WEEK_ONE_BASELINE_MARKER not in body:
+                        failures.append(
+                            "Home is missing the Week 1 baseline explanation, so the deployed UI code is stale."
+                        )
                 if route == "games" and expected_data_label and expected_data_label not in body:
                     failures.append(f"Games is stale: expected {expected_data_label!r}.")
             except Exception as exc:
@@ -139,6 +146,7 @@ def main() -> None:
 
     print("live_streamlit_public_routes=PASS")
     print("live_streamlit_current_role_data=PASS")
+    print("live_streamlit_current_ui=PASS")
     print("live_streamlit_owner_routes_hidden_anonymous=PASS")
     print(f"live_streamlit_origin={BASE_URL}")
 
