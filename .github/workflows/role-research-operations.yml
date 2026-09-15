@@ -41,10 +41,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: pip
@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload nflreadpy schema evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: current-role-schema-contract
           path: |
@@ -158,13 +158,13 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out production branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: streamlit-cloud-deploy
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: pip
@@ -239,7 +239,7 @@ jobs:
 
       - name: Upload operational evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: current-role-operations-${{ steps.target.outputs.season }}
           path: |
