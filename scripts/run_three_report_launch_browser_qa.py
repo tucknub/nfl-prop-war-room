@@ -19,6 +19,8 @@ HOME_HEADINGS = ("What changed in NFL roles?", "Latest NFL role research")
 REPORT_HEADING = "NFL Role Intelligence"
 METHODOLOGY_HEADING = "Methodology"
 REPORTS = ("Backfield Control", "Target Hierarchy", "Role Movement")
+ROLE_MOVEMENT_BASELINE = "Role Movement does not have two validated weeks yet for this selection."
+ROLE_MOVEMENT_WAITING = "Waiting for more validated weekly history."
 RETIRED_REPORTS = (
     "Scoring-Area Usage",
     "Game-Script Usage",
@@ -65,6 +67,19 @@ def first_visible(locator: Locator) -> Locator | None:
         item = locator.nth(index)
         if item.is_visible():
             return item
+    return None
+
+
+def selected_season(page: Page) -> str | None:
+    """Return the season represented by the live page, never a hard-coded year."""
+    query = parse_qs(urlsplit(page.url).query)
+    from_query = query.get("season", [""])[0]
+    if re.fullmatch(r"20\d{2}", from_query):
+        return from_query
+
+    match = re.search(r"·\s*(20\d{2})\s*·", body(page))
+    if match:
+        return match.group(1)
     return None
 
 
@@ -126,15 +141,15 @@ def validate_report_href(href: str | None, report: str) -> bool:
     return parsed.path.endswith("/reports") and query.get("report", [""])[0] == report
 
 
-def validate_player_href(href: str | None) -> bool:
-    if not href:
+def validate_player_href(href: str | None, expected_season: str | None) -> bool:
+    if not href or not expected_season:
         return False
     parsed = urlsplit(href)
     query = parse_qs(parsed.query)
     return (
         parsed.path.endswith("/players")
         and bool(query.get("player", [""])[0])
-        and query.get("season", [""])[0] == "2025"
+        and query.get("season", [""])[0] == expected_season
         and bool(query.get("family", [""])[0])
         and bool(query.get("week", [""])[0])
     )
@@ -142,11 +157,20 @@ def validate_player_href(href: str | None) -> bool:
 
 def verify_team_history_sync(page: Page, base: str, name: str, failures: list[str]) -> None:
     navigate(page, base, "teams", "Team Role Breakdown")
+    expected_season = selected_season(page)
+    check(
+        expected_season is not None,
+        f"{name}: could not determine current team season",
+        failures,
+    )
 
     def wait_for_team(team: str, failure: str) -> None:
+        if expected_season is None:
+            check(False, failure, failures)
+            return
         try:
             page.get_by_text(
-                re.compile(rf"^{re.escape(team)} · 2025 ·")
+                re.compile(rf"^{re.escape(team)} · {re.escape(expected_season)} ·")
             ).first.wait_for(timeout=15000)
         except Exception:
             check(False, failure, failures)
@@ -180,7 +204,6 @@ def verify_team_history_sync(page: Page, base: str, name: str, failures: list[st
         f"{name}: browser Back leaked Teams filter state onto the previous page",
         failures,
     )
-
 
 
 def record_page_state(page: Page, label: str, failures: list[str], overflow: list[str]) -> None:
@@ -249,11 +272,19 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     for report in REPORTS:
         click_report(page, report)
         text = body(page)
-        check("Top findings" in text, f"{name}: {report} missing top findings", failures)
-        check("Complete report" in text, f"{name}: {report} missing complete table", failures)
-        check("All-play evidence" in text, f"{name}: {report} missing all-play evidence", failures)
-        check("View player evidence" in text, f"{name}: {report} missing player evidence link", failures)
-        check("View team evidence" in text, f"{name}: {report} missing team evidence link", failures)
+        is_valid_role_baseline = report == "Role Movement" and ROLE_MOVEMENT_BASELINE in text
+        if is_valid_role_baseline:
+            check(
+                ROLE_MOVEMENT_WAITING in text,
+                f"{name}: Role Movement baseline missing waiting explanation",
+                failures,
+            )
+        else:
+            check("Top findings" in text, f"{name}: {report} missing top findings", failures)
+            check("Complete report" in text, f"{name}: {report} missing complete table", failures)
+            check("All-play evidence" in text, f"{name}: {report} missing all-play evidence", failures)
+            check("View player evidence" in text, f"{name}: {report} missing player evidence link", failures)
+            check("View team evidence" in text, f"{name}: {report} missing team evidence link", failures)
         page.screenshot(
             path=str(SHOTS / f"{name}_{report.lower().replace(' ', '_')}.png"),
             full_page=True,
@@ -262,9 +293,19 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     routes.append("Reports")
 
     click_report(page, "Backfield Control")
+    expected_season = selected_season(page)
+    check(
+        expected_season is not None,
+        f"{name}: could not determine current report season",
+        failures,
+    )
     evidence_link = first_visible(page.get_by_role("link", name="View player evidence", exact=True))
     href = evidence_link.get_attribute("href") if evidence_link is not None else None
-    check(validate_player_href(href), f"{name}: invalid Player evidence deep link: {href}", failures)
+    check(
+        validate_player_href(href, expected_season),
+        f"{name}: invalid Player evidence deep link for season {expected_season}: {href}",
+        failures,
+    )
     routes.append("Player evidence link contract")
 
     navigate(page, base, "methodology", METHODOLOGY_HEADING)
