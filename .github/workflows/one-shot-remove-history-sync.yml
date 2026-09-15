@@ -42,8 +42,20 @@ jobs:
           changed.append(str(test_path))
           print("changed:", *changed, sep="\n- ")
 
-      - name: Verify targeted regression
-        run: python -m pytest -q tests/test_no_runtime_browser_history_sync.py
+      - name: Verify targeted regression without dependencies
+        shell: python
+        run: |
+          from pathlib import Path
+          offenders = []
+          for path in Path("dashboard").rglob("*.py"):
+              if path.name == "control_state.py":
+                  continue
+              for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                  if line.strip() == "enable_browser_history_sync()":
+                      offenders.append(f"{path}:{line_number}")
+          if offenders:
+              raise SystemExit("runtime history-sync calls remain: " + ", ".join(offenders))
+          print("No dashboard page invokes enable_browser_history_sync().")
 
       - name: Commit fix and remove this one-shot workflow
         run: |
