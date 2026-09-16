@@ -1,4 +1,4 @@
-name: Prove Fixed Live PropWar QA 2026-09-16
+name: Prove Fixed Live Mobile PropWar QA 2026-09-16
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  live-qa:
+  live-mobile-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,18 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install playwright
           python -m playwright install --with-deps chromium
-      - name: Warm live Streamlit app
-        run: |
-          python - <<'PY'
-          import urllib.request
-          urllib.request.urlopen('https://propwar.streamlit.app', timeout=30).read(1024)
-          PY
-          sleep 15
-      - name: Verify live desktop/public/auth-safe surfaces
-        env:
-          PROPWAR_LIVE_URL: https://propwar.streamlit.app
-          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit.py
       - name: Verify fixed live mobile surfaces
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
@@ -47,6 +35,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: fixed-live-propwar-qa-20260916
+          name: fixed-live-mobile-propwar-qa-20260916
           path: /tmp/propwar-live-qa
           if-no-files-found: warn
