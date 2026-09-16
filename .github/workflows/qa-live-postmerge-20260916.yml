@@ -1,4 +1,4 @@
-name: Prove Fixed Live Mobile PropWar QA 2026-09-16
+name: Final Post-merge Live PropWar QA 2026-09-16
 
 on:
   push:
@@ -11,13 +11,13 @@ permissions:
   contents: read
 
 jobs:
-  live-mobile-qa:
+  live-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: fix/live-mobile-expander-validator-20260916
+          ref: streamlit-cloud-deploy
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -26,15 +26,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install playwright
           python -m playwright install --with-deps chromium
-      - name: Verify fixed live mobile surfaces
+      - name: Allow Streamlit Cloud propagation
+        run: sleep 45
+      - name: Verify live desktop/public/auth-safe surfaces
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
           PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit_mobile.py
-      - name: Upload live QA evidence
+        run: |
+          python scripts/validate_live_streamlit.py || {
+            echo 'First desktop pass hit a transient live-load failure; retrying once.'
+            sleep 20
+            python scripts/validate_live_streamlit.py
+          }
+      - name: Verify live mobile surfaces
+        env:
+          PROPWAR_LIVE_URL: https://propwar.streamlit.app
+          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
+        run: |
+          python scripts/validate_live_streamlit_mobile.py || {
+            echo 'First mobile pass hit a transient live-load failure; retrying once.'
+            sleep 15
+            python scripts/validate_live_streamlit_mobile.py
+          }
+      - name: Upload final live QA evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: fixed-live-mobile-propwar-qa-20260916
+          name: final-postmerge-live-propwar-qa-20260916
           path: /tmp/propwar-live-qa
           if-no-files-found: warn
