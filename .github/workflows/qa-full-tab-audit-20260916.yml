@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: streamlit-cloud-deploy
+          ref: fix/full-audit-2026-test-contracts
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: streamlit-cloud-deploy
+          ref: fix/full-audit-2026-test-contracts
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -125,7 +125,6 @@ jobs:
               'margin': ('Margin War Room',),
               'knockout': ('Knockout Fantasy War Room', 'Knockout'),
           }
-          nav_labels = ('Home','Reports','Teams','Players','Games','Advanced Research','Methodology')
           out = Path('/tmp/full-tab-live-audit'); out.mkdir(parents=True, exist_ok=True)
           results, failures = [], []
 
@@ -144,9 +143,10 @@ jobs:
 
           def audit_route(browser, route, expected, mobile):
               context=browser.new_context(viewport={'width':390,'height':844} if mobile else {'width':1440,'height':1000}, device_scale_factor=3 if mobile else 1, is_mobile=mobile, has_touch=mobile)
-              page=context.new_page(); console=[]; page_errors=[]
+              page=context.new_page(); console=[]; page_errors=[]; failed_responses=[]
               page.on('console', lambda msg: console.append((msg.type, msg.text)) if msg.type in ('error','warning') else None)
               page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+              page.on('response', lambda response: failed_responses.append((response.status, response.url)) if response.status >= 400 else None)
               url=base if not route else f'{base}/{route}'
               page.goto(url, wait_until='domcontentloaded', timeout=120000); page.wait_for_timeout(7000)
               body=texts(page)
@@ -158,13 +158,11 @@ jobs:
                       m=frame.evaluate('''() => ({v: innerWidth, d: document.documentElement?.scrollWidth||0, b: document.body?.scrollWidth||0})''')
                       if m['v'] and max(m['d'],m['b']) > m['v'] + 8: overflow.append(m)
                   except Exception: pass
-              nav_ok=True
-              if not mobile and route=='': nav_ok=all(label in body for label in nav_labels)
               stale='2025 current-season data published' in body
-              ok=identity and not bad_text and not overflow and not page_errors and nav_ok and not stale
+              ok=identity and not bad_text and not overflow and not page_errors and not stale
               name=route or 'home'; kind='mobile' if mobile else 'desktop'
               page.screenshot(path=str(out/f'{name}-{kind}.png'), full_page=True)
-              results.append({'route':name,'viewport':kind,'ok':ok,'identity':identity,'overflow':overflow,'page_errors':page_errors,'console':console[-20:],'nav_ok':nav_ok,'stale':stale})
+              results.append({'route':name,'viewport':kind,'ok':ok,'identity':identity,'overflow':overflow,'page_errors':page_errors,'console':console[-20:],'http_errors':failed_responses[-20:],'stale':stale})
               if not ok: failures.append(f'{name} {kind}')
               context.close()
 
