@@ -1,0 +1,197 @@
+name: Full PropWar Tab Audit 2026-09-16
+
+on:
+  push:
+    branches:
+      - qa/full-tab-audit-20260916
+    paths:
+      - .github/workflows/qa-full-tab-audit-20260916.yml
+
+permissions:
+  contents: read
+
+jobs:
+  full-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install production and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Compile all product surfaces
+        run: python -m compileall -q dashboard src tests scripts
+      - name: Run entire pytest suite
+        run: pytest -q
+
+  every-page-startup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install production dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Start every app/page file with Streamlit AppTest
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from streamlit.testing.v1 import AppTest
+
+          root = Path.cwd()
+          targets = [root / "dashboard" / "app.py"] + sorted((root / "dashboard" / "pages").glob("*.py"))
+          os.chdir("/tmp")
+          failures, rows = [], []
+          for target in targets:
+              started = time.perf_counter()
+              at = AppTest.from_file(str(target))
+              at.run(timeout=90)
+              elapsed = round(time.perf_counter() - started, 3)
+              errors = [str(exc.value) for exc in at.exception]
+              rows.append({"page": target.name, "seconds": elapsed, "exceptions": errors})
+              if errors:
+                  failures.append((target.name, errors))
+                  print("FAILED", target.name, errors)
+              else:
+                  print("PASS", target.name, elapsed)
+          Path("/tmp/full-tab-startup-audit.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
+          if failures:
+              raise SystemExit("Page startup failures: " + ", ".join(name for name, _ in failures))
+          PY
+      - name: Upload startup evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: full-tab-startup-audit
+          path: /tmp/full-tab-startup-audit.json
+          if-no-files-found: warn
+
+  live-public-and-access-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Allow production to settle
+        run: sleep 30
+      - name: Audit every public tab on desktop and mobile plus owner-route protection
+        env:
+          PROPWAR_LIVE_URL: https://propwar.streamlit.app
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          base = os.environ['PROPWAR_LIVE_URL'].rstrip('/')
+          public = {
+              '': ('What changed in NFL roles?', 'Latest NFL role research'),
+              'reports': ('NFL Role Intelligence',),
+              'teams': ('Team Role Breakdown',),
+              'players': ('Player Role Profile',),
+              'games': ('Game Usage Review',),
+              'explorer': ('Advanced Research',),
+              'methodology': ('Methodology',),
+          }
+          owner_only = {
+              'glitch-radar': ('Glitch Radar',),
+              'deep-prop-radar': ('Deep Prop Radar',),
+              'fantasy-hq': ('Fantasy HQ',),
+              'margin': ('Margin War Room',),
+              'knockout': ('Knockout Fantasy War Room', 'Knockout'),
+          }
+          nav_labels = ('Home','Reports','Teams','Players','Games','Advanced Research','Methodology')
+          out = Path('/tmp/full-tab-live-audit'); out.mkdir(parents=True, exist_ok=True)
+          results, failures = [], []
+
+          def texts(page):
+              chunks=[]
+              for frame in page.frames:
+                  try:
+                      text=frame.locator('body').inner_text(timeout=10000).strip()
+                  except Exception:
+                      continue
+                  if text and text not in chunks: chunks.append(text)
+              return '\n'.join(chunks)
+
+          def prop_frames(page):
+              return [f for f in page.frames if f.url.startswith(base)]
+
+          def audit_route(browser, route, expected, mobile):
+              context=browser.new_context(viewport={'width':390,'height':844} if mobile else {'width':1440,'height':1000}, device_scale_factor=3 if mobile else 1, is_mobile=mobile, has_touch=mobile)
+              page=context.new_page(); console=[]; page_errors=[]
+              page.on('console', lambda msg: console.append((msg.type, msg.text)) if msg.type in ('error','warning') else None)
+              page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+              url=base if not route else f'{base}/{route}'
+              page.goto(url, wait_until='domcontentloaded', timeout=120000); page.wait_for_timeout(7000)
+              body=texts(page)
+              identity=any(token in body for token in expected)
+              bad_text=any(token in body for token in ('Traceback (most recent call last)', 'Uncaught app exception', 'ModuleNotFoundError'))
+              overflow=[]
+              for frame in prop_frames(page):
+                  try:
+                      m=frame.evaluate('''() => ({v: innerWidth, d: document.documentElement?.scrollWidth||0, b: document.body?.scrollWidth||0})''')
+                      if m['v'] and max(m['d'],m['b']) > m['v'] + 8: overflow.append(m)
+                  except Exception: pass
+              nav_ok=True
+              if not mobile and route=='': nav_ok=all(label in body for label in nav_labels)
+              stale='2025 current-season data published' in body
+              ok=identity and not bad_text and not overflow and not page_errors and nav_ok and not stale
+              name=route or 'home'; kind='mobile' if mobile else 'desktop'
+              page.screenshot(path=str(out/f'{name}-{kind}.png'), full_page=True)
+              results.append({'route':name,'viewport':kind,'ok':ok,'identity':identity,'overflow':overflow,'page_errors':page_errors,'console':console[-20:],'nav_ok':nav_ok,'stale':stale})
+              if not ok: failures.append(f'{name} {kind}')
+              context.close()
+
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              for route, expected in public.items():
+                  audit_route(browser, route, expected, False)
+                  audit_route(browser, route, expected, True)
+              for route, forbidden in owner_only.items():
+                  context=browser.new_context(viewport={'width':1440,'height':1000})
+                  page=context.new_page(); page.goto(f'{base}/{route}', wait_until='domcontentloaded', timeout=120000); page.wait_for_timeout(5000)
+                  body=texts(page)
+                  leaked=any(token in body for token in forbidden)
+                  page.screenshot(path=str(out/f'owner-protection-{route}.png'), full_page=True)
+                  results.append({'route':route,'viewport':'anonymous-access','ok':not leaked,'owner_content_leaked':leaked})
+                  if leaked: failures.append(f'{route} anonymous owner-content leak')
+                  context.close()
+              browser.close()
+
+          (out/'results.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
+          print(json.dumps(results, indent=2))
+          if failures: raise SystemExit('Live full-tab audit failures: ' + ', '.join(failures))
+          PY
+      - name: Upload live audit evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: full-tab-live-audit
+          path: /tmp/full-tab-live-audit
+          if-no-files-found: warn
