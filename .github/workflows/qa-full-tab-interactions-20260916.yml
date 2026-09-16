@@ -1,0 +1,123 @@
+name: Full PropWar Interaction Audit 2026-09-16
+
+on:
+  push:
+    branches:
+      - qa/full-tab-audit-20260916
+    paths:
+      - .github/workflows/qa-full-tab-interactions-20260916.yml
+
+permissions:
+  contents: read
+
+jobs:
+  live-interactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: streamlit-cloud-deploy
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Exercise live public controls and navigation
+        env:
+          PROPWAR_LIVE_URL: https://propwar.streamlit.app
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          base=os.environ['PROPWAR_LIVE_URL'].rstrip('/')
+          out=Path('/tmp/propwar-interactions'); out.mkdir(parents=True, exist_ok=True)
+          failures=[]; results=[]
+
+          def frames(page): return [f for f in page.frames if f.url.startswith(base)]
+          def body(page):
+              chunks=[]
+              for f in page.frames:
+                  try: t=f.locator('body').inner_text(timeout=10000).strip()
+                  except Exception: continue
+                  if t and t not in chunks: chunks.append(t)
+              return '\n'.join(chunks)
+          def goto(page, route):
+              page.goto(base + (f'/{route}' if route else ''), wait_until='domcontentloaded', timeout=120000)
+              page.wait_for_timeout(7000)
+          def expander(page, label):
+              for f in frames(page):
+                  x=f.locator('[data-testid="stExpander"]').filter(has_text=label)
+                  if x.count():
+                      e=x.first; e.locator('summary').first.click(timeout=10000); page.wait_for_timeout(800); return e
+              raise AssertionError(f'expander not found: {label}')
+          def labels_visible(e, labels):
+              missing=[]
+              for label in labels:
+                  try: e.get_by_label(label, exact=True).first.wait_for(state='visible', timeout=5000)
+                  except Exception: missing.append(label)
+              if missing: raise AssertionError(f'missing controls {missing}')
+
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              for mobile in (False, True):
+                  context=browser.new_context(viewport={'width':390,'height':844} if mobile else {'width':1440,'height':1000}, device_scale_factor=3 if mobile else 1, is_mobile=mobile, has_touch=mobile)
+                  page=context.new_page(); kind='mobile' if mobile else 'desktop'
+                  cases=[
+                      ('reports','Customize report',('Season','Time period')),
+                      ('teams','Change filters',('Season','Search or select team','Window','Context','Role family')),
+                      ('players','Change season',('Season',)),
+                      ('games','Change game',('Season','Week','Search or select game')),
+                      ('explorer','Change filters',('Season','Search or select team','Search or select player','Role family')),
+                  ]
+                  for route, title, labels in cases:
+                      try:
+                          goto(page,route); e=expander(page,title); labels_visible(e,labels)
+                          page.screenshot(path=str(out/f'{route}-{kind}-controls.png'), full_page=True)
+                          results.append({'route':route,'viewport':kind,'controls':'PASS'})
+                      except Exception as exc:
+                          failures.append(f'{route} {kind}: {exc}'); results.append({'route':route,'viewport':kind,'controls':'FAIL','error':str(exc)})
+                  try:
+                      goto(page,'methodology'); text=body(page)
+                      assert 'How to read a report' in text and 'Launch report contract' in text
+                      results.append({'route':'methodology','viewport':kind,'content':'PASS'})
+                  except Exception as exc:
+                      failures.append(f'methodology {kind}: {exc}')
+                  context.close()
+
+              # Verify a real home-to-report navigation path on desktop without changing state.
+              context=browser.new_context(viewport={'width':1440,'height':1000})
+              page=context.new_page()
+              try:
+                  goto(page,'')
+                  clicked=False
+                  for f in frames(page):
+                      link=f.get_by_role('link', name='View Backfield Control', exact=True)
+                      if link.count() and link.first.is_visible():
+                          link.first.click(); clicked=True; break
+                  if not clicked: raise AssertionError('Backfield Control link not found')
+                  page.wait_for_timeout(4000)
+                  assert 'reports' in page.url.lower()
+                  assert 'NFL Role Intelligence' in body(page)
+                  results.append({'flow':'home -> Backfield Control report','status':'PASS'})
+                  page.screenshot(path=str(out/'home-to-report.png'), full_page=True)
+              except Exception as exc:
+                  failures.append(f'home-to-report: {exc}'); results.append({'flow':'home -> Backfield Control report','status':'FAIL','error':str(exc)})
+              context.close(); browser.close()
+
+          (out/'results.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
+          print(json.dumps(results,indent=2))
+          if failures: raise SystemExit('Interaction audit failures: ' + '; '.join(failures))
+          PY
+      - name: Upload interaction evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: full-tab-interaction-audit
+          path: /tmp/propwar-interactions
+          if-no-files-found: warn
