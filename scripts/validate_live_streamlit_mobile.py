@@ -112,13 +112,21 @@ def _exercise_expander(page, route: str, label: str, expected_tokens: tuple[str,
             details = frame.locator('[data-testid="stExpander"]').filter(has_text=label)
             if not details.count():
                 continue
-            summary = details.first.locator("summary")
+            expander = details.first
+            summary = expander.locator("summary")
             if not summary.count() or not summary.first.is_visible():
                 continue
             summary.first.click(timeout=10_000)
-            page.wait_for_timeout(1_000)
-            body = _body(page)
-            missing = [token for token in expected_tokens if token not in body]
+
+            missing: list[str] = []
+            for token in expected_tokens:
+                try:
+                    expander.get_by_label(token, exact=True).first.wait_for(
+                        state="visible",
+                        timeout=5_000,
+                    )
+                except Exception:
+                    missing.append(token)
             if missing:
                 raise AssertionError(
                     f"/{route} mobile control {label!r} missing fields {missing!r}"
