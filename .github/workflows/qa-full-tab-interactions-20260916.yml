@@ -102,9 +102,10 @@ jobs:
                           link.first.click(); clicked=True; break
                   if not clicked: raise AssertionError('Backfield Control link not found')
                   page.wait_for_timeout(4000)
-                  assert 'reports' in page.url.lower()
+                  frame_urls=[f.url for f in frames(page)]
+                  assert any('/reports' in url.lower() for url in frame_urls), frame_urls
                   assert 'NFL Role Intelligence' in body(page)
-                  results.append({'flow':'home -> Backfield Control report','status':'PASS'})
+                  results.append({'flow':'home -> Backfield Control report','status':'PASS','frame_urls':frame_urls})
                   page.screenshot(path=str(out/'home-to-report.png'), full_page=True)
               except Exception as exc:
                   failures.append(f'home-to-report: {exc}'); results.append({'flow':'home -> Backfield Control report','status':'FAIL','error':str(exc)})
