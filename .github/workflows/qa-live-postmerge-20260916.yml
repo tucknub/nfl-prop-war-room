@@ -1,4 +1,4 @@
-name: Post-merge Live PropWar QA 2026-09-16
+name: Diagnose Live Mobile Expanders 2026-09-16
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  live-qa:
+  diagnose-mobile-expanders:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,34 +26,69 @@ jobs:
           python -m pip install --upgrade pip
           pip install playwright
           python -m playwright install --with-deps chromium
-      - name: Allow Streamlit Cloud propagation
-        run: sleep 45
-      - name: Verify live desktop/public/auth-safe surfaces
+      - name: Diagnose reports and games expanders
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
-          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit.py
-      - name: Prove mobile control hydration timing
         run: |
           python - <<'PY'
-          from pathlib import Path
-          path = Path('scripts/validate_live_streamlit_mobile.py')
-          text = path.read_text(encoding='utf-8')
-          old = '            page.wait_for_timeout(1_000)\n            body = _body(page)'
-          new = '            page.wait_for_timeout(5_000)\n            body = _body(page)'
-          if old not in text:
-              raise SystemExit('expected mobile wait pattern not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          import os
+          from playwright.sync_api import sync_playwright
+
+          base = os.environ['PROPWAR_LIVE_URL'].rstrip('/')
+          cases = [
+              ('reports', 'Customize report'),
+              ('games', 'Change game'),
+          ]
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              for route, label in cases:
+                  context = browser.new_context(
+                      viewport={'width': 390, 'height': 844},
+                      device_scale_factor=3,
+                      is_mobile=True,
+                      has_touch=True,
+                  )
+                  page = context.new_page()
+                  page.goto(f'{base}/{route}', wait_until='domcontentloaded', timeout=120_000)
+                  page.wait_for_timeout(7_000)
+                  print(f'=== /{route} ===')
+                  found = False
+                  for index, frame in enumerate(page.frames):
+                      try:
+                          expanders = frame.locator('[data-testid="stExpander"]').filter(has_text=label)
+                          count = expanders.count()
+                      except Exception as exc:
+                          print('frame_error', index, frame.url, repr(exc))
+                          continue
+                      print('frame', index, frame.url, 'matching_expanders', count)
+                      if not count:
+                          continue
+                      found = True
+                      expander = expanders.first
+                      summary = expander.locator('summary').first
+                      print('before_text=', repr(expander.inner_text(timeout=10_000)))
+                      print('before_open=', expander.locator('details').first.get_attribute('open') if expander.locator('details').count() else 'no-details-child')
+                      print('summary_visible=', summary.is_visible() if summary.count() else False)
+                      if summary.count():
+                          summary.click(timeout=10_000)
+                          page.wait_for_timeout(3_000)
+                      print('after_text=', repr(expander.inner_text(timeout=10_000)))
+                      print('after_html=', expander.inner_html(timeout=10_000)[:12000])
+                      body = frame.locator('body').inner_text(timeout=10_000)
+                      print('body_has_Season=', 'Season' in body)
+                      print('body_has_Time_period=', 'Time period' in body)
+                      print('body_has_Search_or_select_game=', 'Search or select game' in body)
+                      page.screenshot(path=f'/tmp/{route}_after_click.png', full_page=True)
+                      break
+                  print('found=', found)
+                  context.close()
+              browser.close()
           PY
-      - name: Verify live mobile surfaces
-        env:
-          PROPWAR_LIVE_URL: https://propwar.streamlit.app
-          PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit_mobile.py
-      - name: Upload live QA evidence
+      - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: postmerge-live-propwar-qa-20260916-timing
-          path: /tmp/propwar-live-qa
+          name: mobile-expander-diagnostics-20260916
+          path: /tmp/*_after_click.png
           if-no-files-found: warn
