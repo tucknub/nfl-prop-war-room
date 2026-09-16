@@ -94,8 +94,9 @@ def test_cross_page_values_agree_for_identical_filters() -> None:
     assert (merged["share_team"] - merged["share_league"]).abs().max() < 1e-12
 
 
-def test_default_completed_season_and_public_navigation() -> None:
-    assert available_seasons()[0] == 2025
+def test_default_latest_season_and_public_navigation() -> None:
+    data = primary_rows()
+    assert available_seasons()[0] == int(data["season"].max())
     app = (ROOT / "dashboard" / "app.py").read_text(encoding="utf-8")
     for title in ["Home", "Teams", "Players", "Games", "Reports", "Advanced Research"]:
         assert f'title="{title}"' in app

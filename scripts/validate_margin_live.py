@@ -65,7 +65,25 @@ def main() -> None:
         {"week": 3, "team": "DET", "actual_margin": 0.0},
     ]
     week4["cumulative_score"] = 0.0
-    week4_audit = live_engine.run(week4)
+
+    # Week 4 is a synthetic model-regime test. Do not make CI depend on
+    # sportsbook lines that have not been posted yet in the real current season.
+    # Fill only missing Week 4 lines inside this test process so the validator
+    # can exercise the Week 4+ market-power path deterministically.
+    original_load_games = live_engine.base.load_games
+    synthetic_games = original_load_games().copy()
+    synthetic_week4 = (
+        synthetic_games["season"].eq(int(week4["season"]))
+        & synthetic_games["week"].eq(4)
+        & synthetic_games["spread_line"].isna()
+    )
+    synthetic_games.loc[synthetic_week4, "spread_line"] = 0.0
+    try:
+        live_engine.base.load_games = lambda: synthetic_games.copy()
+        week4_audit = live_engine.run(week4)
+    finally:
+        live_engine.base.load_games = original_load_games
+
     week4_route = week4_audit["route"]
     week4_board = week4_audit["board"]
     week4_sources = week4_audit["data_quality"]["remaining_value_source_counts"]

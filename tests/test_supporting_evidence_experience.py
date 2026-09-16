@@ -124,12 +124,17 @@ def test_player_role_fingerprint_is_compact_and_contextual() -> None:
     assert 'isin(role_fingerprint_contexts(role_family))' in source
 
 
-def test_validated_data_status_uses_complete_game_partitions_without_refresh_claim() -> None:
+def test_validated_data_status_uses_latest_complete_game_partition_without_refresh_claim() -> None:
+    data = primary_rows()
+    latest_season = int(data["season"].max())
+    latest_week = int(data.loc[data["season"].eq(latest_season), "week"].max())
+    latest_partition = data[data["season"].eq(latest_season) & data["week"].eq(latest_week)]
+
     status = validated_data_status()
     assert status["status"] == "AVAILABLE"
-    assert (status["season"], status["week"]) == (2025, 18)
-    assert status["completed_games"] == 16
-    assert status["label"] == "Data through 2025 Week 18"
+    assert (status["season"], status["week"]) == (latest_season, latest_week)
+    assert status["completed_games"] == latest_partition["game_id"].nunique()
+    assert status["label"] == f"Data through {latest_season} Week {latest_week}"
     assert status["refresh_timestamp"] is None
 
 

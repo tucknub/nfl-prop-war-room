@@ -26,8 +26,9 @@ on:
       - "tests/test_three_report_app_smoke.py"
       - "tests/test_three_report_launch.py"
       - "tests/test_public_role_research_language.py"
-      - "tests/test_current_role_dashboard_status.py             tests/test_browser_history_sync_regression.py"
+      - "tests/test_current_role_dashboard_status.py"
       - "tests/test_browser_history_sync_regression.py"
+      - "tests/test_native_home_browser_qa_contract.py"
       - "requirements.txt"
       - ".github/workflows/public-role-browser-qa.yml"
   workflow_dispatch:
@@ -45,10 +46,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up production Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: pip
@@ -68,12 +69,22 @@ jobs:
 
       - name: Run public-role contracts
         run: |
-          pytest -q             tests/test_three_report_app_smoke.py             tests/test_three_report_launch.py             tests/test_public_role_research_language.py             tests/test_current_role_dashboard_status.py
+          pytest -q \
+            tests/test_three_report_app_smoke.py \
+            tests/test_three_report_launch.py \
+            tests/test_public_role_research_language.py \
+            tests/test_current_role_dashboard_status.py \
+            tests/test_browser_history_sync_regression.py \
+            tests/test_native_home_browser_qa_contract.py
 
       - name: Start Streamlit
         run: |
           mkdir -p outputs/three_report_browser_qa
-          nohup streamlit run dashboard/Home.py             --server.headless true             --server.address 127.0.0.1             --server.port 8514             > outputs/three_report_browser_qa/streamlit.log 2>&1 &
+          nohup streamlit run dashboard/Home.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8514 \
+            > outputs/three_report_browser_qa/streamlit.log 2>&1 &
           echo $! > outputs/three_report_browser_qa/streamlit.pid
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8514/_stcore/health >/dev/null; then
@@ -89,7 +100,7 @@ jobs:
 
       - name: Upload browser QA evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: public-role-browser-qa
           path: outputs/three_report_browser_qa
