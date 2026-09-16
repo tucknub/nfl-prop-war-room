@@ -1,0 +1,84 @@
+name: Home Report Navigation Local QA 2026-09-16
+
+on:
+  push:
+    branches:
+      - qa/full-tab-audit-20260916
+    paths:
+      - .github/workflows/qa-home-report-nav-local-20260916.yml
+
+permissions:
+  contents: read
+
+jobs:
+  home-report-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/full-audit-2026-test-contracts
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install app and browser dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Start fixed PropWar locally
+        run: |
+          streamlit run dashboard/app.py --server.headless=true --server.address=127.0.0.1 --server.port=8501 >/tmp/propwar-local.log 2>&1 &
+          echo $! >/tmp/propwar-local.pid
+          python - <<'PY'
+          import time, urllib.request
+          for _ in range(60):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2) as r:
+                      if r.status == 200:
+                          raise SystemExit(0)
+              except SystemExit:
+                  raise
+              except Exception:
+                  time.sleep(1)
+          raise SystemExit('local Streamlit did not become healthy')
+          PY
+      - name: Verify Home report button navigates and preserves report selection
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          base='http://127.0.0.1:8501'
+          out=Path('/tmp/home-nav-evidence'); out.mkdir(parents=True, exist_ok=True)
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(viewport={'width':1440,'height':1000})
+              errors=[]
+              page.on('pageerror', lambda exc: errors.append(str(exc)))
+              page.goto(base, wait_until='domcontentloaded', timeout=120000)
+              page.wait_for_timeout(5000)
+              button=page.get_by_role('button', name='View Backfield Control', exact=True)
+              button.wait_for(state='visible', timeout=15000)
+              button.click()
+              page.wait_for_timeout(4000)
+              page.get_by_role('heading', name='NFL Role Intelligence', exact=True).wait_for(state='visible', timeout=15000)
+              assert '/reports' in page.url, page.url
+              assert 'report=Backfield' in page.url, page.url
+              assert not errors, errors
+              page.screenshot(path=str(out/'home-report-navigation.png'), full_page=True)
+              print('home_report_button_navigation=PASS')
+              print('destination=' + page.url)
+              browser.close()
+          PY
+      - name: Upload navigation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: home-report-navigation-local-qa
+          path: |
+            /tmp/home-nav-evidence
+            /tmp/propwar-local.log
+          if-no-files-found: warn
