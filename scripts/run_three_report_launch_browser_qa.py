@@ -252,13 +252,18 @@ def run_viewport(browser, base: str, width: int, height: int, name: str) -> dict
     for report in REPORTS:
         check(report in home_text, f"{name}: Home missing {report}", failures)
     check("View Backfield Control" in home_text, f"{name}: Home missing direct report CTA", failures)
-    home_cta = first_visible(page.get_by_role("link", name="View Backfield Control", exact=True))
-    home_href = home_cta.get_attribute("href") if home_cta is not None else None
-    check(
-        validate_report_href(home_href, "Backfield Control"),
-        f"{name}: invalid direct report link: {home_href}",
-        failures,
-    )
+    home_cta = first_visible(page.get_by_role("button", name="View Backfield Control", exact=True))
+    check(home_cta is not None, f"{name}: native Backfield Control CTA is not visible", failures)
+    if home_cta is not None:
+        home_cta.click()
+        page.get_by_role("heading", name=REPORT_HEADING, exact=True).wait_for(timeout=90000)
+        page.wait_for_timeout(800)
+        check(
+            validate_report_href(page.url, "Backfield Control"),
+            f"{name}: native report CTA landed at invalid URL: {page.url}",
+            failures,
+        )
+        goto_root(page, base)
     page.screenshot(path=str(SHOTS / f"{name}_home.png"), full_page=True)
     record_page_state(page, "Home", failures, overflow)
     routes.append("Home")
