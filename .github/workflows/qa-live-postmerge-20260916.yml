@@ -33,6 +33,18 @@ jobs:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
           PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
         run: python scripts/validate_live_streamlit.py
+      - name: Prove mobile control hydration timing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/validate_live_streamlit_mobile.py')
+          text = path.read_text(encoding='utf-8')
+          old = '            page.wait_for_timeout(1_000)\n            body = _body(page)'
+          new = '            page.wait_for_timeout(5_000)\n            body = _body(page)'
+          if old not in text:
+              raise SystemExit('expected mobile wait pattern not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Verify live mobile surfaces
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
@@ -42,6 +54,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: postmerge-live-propwar-qa-20260916
+          name: postmerge-live-propwar-qa-20260916-timing
           path: /tmp/propwar-live-qa
           if-no-files-found: warn
