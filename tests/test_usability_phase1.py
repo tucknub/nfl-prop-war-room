@@ -9,12 +9,13 @@ DASHBOARD = ROOT / "dashboard"
 
 def test_home_routes_directly_to_each_report() -> None:
     source = (DASHBOARD / "app.py").read_text(encoding="utf-8")
+    compact_source = "".join(source.split())
     copy_source = (DASHBOARD / "public_copy.py").read_text(encoding="utf-8")
     assert "role_home_copy" in source
     assert "Latest NFL role research" in copy_source
     assert "What changed in NFL roles?" in copy_source
-    assert 'st.switch_page("pages/04_Reports.py", query_params={"report": title})' in source
-    assert 'f"View {title}"' in source
+    assert 'st.switch_page("pages/04_Reports.py",query_params={"report":title})' in compact_source
+    assert 'f"View{title}"' in compact_source
     assert "Open Reports" not in source
     assert 'href="/reports?report=' not in source
 
