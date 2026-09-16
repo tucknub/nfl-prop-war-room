@@ -18,9 +18,9 @@ PUBLIC_ROUTES = {
 }
 
 EXPANDER_EXPECTATIONS = {
-    "reports": ("Customize report", ("Season", "Window")),
+    "reports": ("Customize report", ("Season", "Time period")),
     "players": ("Change season", ("Season",)),
-    "games": ("Change game", ("Season", "Week", "Game")),
+    "games": ("Change game", ("Season", "Week", "Search or select game")),
 }
 
 WEEK_ONE_BASELINE_MARKER = "Week 1 establishes the in-season baseline"
