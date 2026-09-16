@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from urllib.parse import quote
 
 import streamlit as st
 
@@ -82,8 +81,6 @@ def inject_usability_styles() -> None:
         .pw-status-line { display:flex; align-items:flex-start; gap:.7rem; padding:.62rem .75rem; border:1px solid #cbd9ef; border-radius:8px; background:#f7faff; margin:.75rem 0 .9rem; }
         .pw-status-line strong { color:var(--pw-ink); font-size:.78rem; white-space:nowrap; }
         .pw-status-line span { color:#40536a; font-size:.79rem; line-height:1.4; }
-        .pw-primary-link { display:flex; align-items:center; justify-content:center; min-height:2.45rem; padding:.45rem .75rem; border:1px solid var(--pw-blue); border-radius:6px; background:var(--pw-blue); color:#fff!important; font-size:.86rem; font-weight:760; text-decoration:none!important; text-align:center; }
-        .pw-primary-link:hover { background:#074edb; border-color:#074edb; }
         .pw-overview strong { line-height:1.25!important; white-space:normal!important; overflow-wrap:anywhere!important; }
         @media (max-width:900px) {
           .pw-home-hero h1 { font-size:2.55rem!important; line-height:1.02!important; }
@@ -155,10 +152,16 @@ def render_launch_home() -> None:
             with st.container(border=True):
                 st.markdown(f"### {title}")
                 st.write(description)
-                st.markdown(
-                    f'<a class="pw-primary-link" href="/reports?report={quote(title)}">View {title}</a>',
-                    unsafe_allow_html=True,
-                )
+                if st.button(
+                    f"View {title}",
+                    key=f"home_report_{title.lower().replace(' ', '_')}",
+                    type="primary",
+                    width="stretch",
+                ):
+                    st.switch_page(
+                        "pages/04_Reports.py",
+                        query_params={"report": title},
+                    )
     st.caption("Historical and current-season role research only. Every percentage remains attached to its player count and team total.")
     st.divider()
     render_home()
