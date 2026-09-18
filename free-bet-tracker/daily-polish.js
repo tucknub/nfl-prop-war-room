@@ -16,6 +16,16 @@
       .firstFlag{display:none!important}
       details.card.first:not(.finalHour):not(.critical) .firstFlag{display:block!important}
 
+      /* Caesars uses a very wide source logo. Give it a wide card tile instead of shrinking it into a square. */
+      .logoTile:has(img[src*="CaesarsSportsbook"]){width:92px!important;height:58px!important;flex:0 0 92px!important;border-radius:16px!important;padding:8px 10px!important}
+      .logoTile:has(img[src*="CaesarsSportsbook"]) img{display:block!important;width:82px!important;height:auto!important;max-width:none!important;max-height:34px!important;object-fit:contain!important;margin:auto!important}
+
+      /* Optical sizing: equal visual weight, not equal raw image dimensions. */
+      .railLogo img[src*="Hard-Rock-Bet"]{max-width:66%!important;max-height:42px!important}
+      .railLogo img[src*="CaesarsSportsbook"]{max-width:88%!important;max-height:42px!important}
+      .railLogo img[src*="Sportsbook_FC_on_dark"]{max-width:68%!important;max-height:42px!important}
+      .railLogo img[src*="Bet365_Logo"]{max-width:64%!important;max-height:34px!important}
+
       @media (min-width:760px){
         .app{max-width:880px!important;padding-left:24px!important;padding-right:24px!important;padding-bottom:52px!important}
         .hero{padding:24px 24px 22px!important;border-radius:30px!important}
@@ -28,6 +38,10 @@
         .logoRail{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin-top:15px!important;align-items:center!important}
         .railLogo{height:58px!important;border-radius:17px!important;padding:8px 14px!important}
         .railLogo img{display:block!important;width:auto!important;height:auto!important;max-width:78%!important;max-height:38px!important;object-fit:contain!important;transform:none!important;margin:auto!important}
+        .railLogo img[src*="Hard-Rock-Bet"]{max-width:62%!important;max-height:42px!important}
+        .railLogo img[src*="CaesarsSportsbook"]{max-width:90%!important;max-height:44px!important}
+        .railLogo img[src*="Sportsbook_FC_on_dark"]{max-width:66%!important;max-height:42px!important}
+        .railLogo img[src*="Bet365_Logo"]{max-width:62%!important;max-height:34px!important}
         .railCount{min-width:21px!important;height:21px!important;font-size:10px!important}
         .railNext{font-size:8px!important;padding:4px 8px!important;bottom:-8px!important}
 
@@ -59,6 +73,8 @@
         summary{padding:20px 20px 17px 24px!important}
         .cardTop{gap:16px!important;align-items:center!important}
         .logoTile{width:68px!important;height:68px!important;flex-basis:68px!important;border-radius:19px!important;padding:9px!important}
+        .logoTile:has(img[src*="CaesarsSportsbook"]){width:122px!important;height:68px!important;flex:0 0 122px!important;padding:8px 12px!important;border-radius:19px!important}
+        .logoTile:has(img[src*="CaesarsSportsbook"]) img{width:108px!important;max-width:none!important;max-height:40px!important}
         .book{font-size:12px!important}
         .heroValue{font-size:25px!important}
         .promo{font-size:18px!important;margin-top:7px!important}
