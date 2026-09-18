@@ -25,8 +25,9 @@
         .appIcon{width:51px!important;height:51px!important;border-radius:16px!important;top:-3px!important}
         .refresh{width:50px!important;height:50px!important;border-radius:16px!important;font-size:23px!important}
         .liveRow{margin-top:18px!important;font-size:12px!important}
-        .logoRail{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;gap:12px!important;margin-top:15px!important}
-        .railLogo{height:64px!important;border-radius:17px!important;padding:10px 14px!important}
+        .logoRail{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin-top:15px!important;align-items:center!important}
+        .railLogo{height:58px!important;border-radius:17px!important;padding:8px 14px!important}
+        .railLogo img{display:block!important;width:auto!important;height:auto!important;max-width:78%!important;max-height:38px!important;object-fit:contain!important;transform:none!important;margin:auto!important}
         .railCount{min-width:21px!important;height:21px!important;font-size:10px!important}
         .railNext{font-size:8px!important;padding:4px 8px!important;bottom:-8px!important}
 
