@@ -1,21 +1,4 @@
 {
-  "updatedAt": "2026-09-14T13:33:00-04:00",
-  "promos": [
-    {"id":"dk-20260914-sgpx20","book":"DraftKings","value":0,"expires":"2026-09-14T14:03:00-04:00","promo":"20% SGP(x) Boost","kind":"boost","estimated":false,"notes":"Expires today at 2:03 PM."},
-    {"id":"fd-20260914-broncos30","book":"FanDuel","value":0,"expires":"2026-09-14T20:13:00-04:00","promo":"30% Profit Boost - Broncos @ Chiefs","kind":"boost","estimated":true,"notes":"Approx expiry from screenshot showing 6h 40m remaining around 1:33 PM."},
-    {"id":"dk-20260914-nflsgpnosweat","book":"DraftKings","value":0,"expires":"2026-09-14T23:59:00-04:00","promo":"NFL SGP No Sweat","kind":"no_sweat","estimated":false,"notes":"No Sweat promo."},
-    {"id":"dk-20260915-boomerang10","book":"DraftKings","value":0,"expires":"2026-09-15T02:00:00-04:00","promo":"Boomerang Bet & Get Bonus Bet - $10","kind":"qualifier","estimated":false,"notes":"Qualifying promo for a $10 bonus bet; not counted as current bonus-bet cash."},
-    {"id":"czr-20260915-broncos30","book":"Caesars","value":0,"expires":"2026-09-15T02:33:00-04:00","promo":"30% Broncos @ Chiefs Same Game Profit Boost","kind":"boost","estimated":true,"notes":"Approx expiry from screenshot showing 13h left at about 1:33 PM."},
-    {"id":"czr-20260915-atd25","book":"Caesars","value":0,"expires":"2026-09-15T02:33:00-04:00","promo":"25% Anytime Touchdown Scorer Profit Boost","kind":"boost","estimated":true,"notes":"Approx expiry from screenshot showing 13h left at about 1:33 PM."},
-    {"id":"dk-20260915-parlay30","book":"DraftKings","value":0,"expires":"2026-09-15T03:15:00-04:00","promo":"NFL 30% Parlay Boost","kind":"boost","estimated":false,"notes":"Expires 9/15 at 3:15 AM."},
-    {"id":"dk-20260915-sgpx30","book":"DraftKings","value":0,"expires":"2026-09-15T03:15:00-04:00","promo":"NFL 30% SGP(x) Boost","kind":"boost","estimated":false,"notes":"Expires 9/15 at 3:15 AM."},
-    {"id":"dk-20260915-live30","book":"DraftKings","value":0,"expires":"2026-09-15T03:15:00-04:00","promo":"NFL 30% Live Boost","kind":"boost","estimated":false,"notes":"Expires 9/15 at 3:15 AM."},
-    {"id":"dk-20260915-broncos50","book":"DraftKings","value":0,"expires":"2026-09-15T03:30:00-04:00","promo":"Broncos vs Chiefs 50% Boost","kind":"boost","estimated":false,"notes":"Expires 9/15 at 3:30 AM."},
-    {"id":"hr-20260915-nosweat10","book":"Hard Rock Bet","value":0,"expires":"2026-09-15T12:27:00-04:00","promo":"NFL No Sweat Bet","kind":"no_sweat","estimated":false,"notes":"Up to $10 back as a Bonus Bet if Broncos vs. Chiefs SGP loses."},
-    {"id":"hr-20260920-bonus5","book":"Hard Rock Bet","value":5,"expires":"2026-09-20T23:35:00-04:00","promo":"$5 Bonus Bet","kind":"bonus","estimated":false,"notes":"Ready to use on any market."},
-    {"id":"hr-20260920-bonus20","book":"Hard Rock Bet","value":20,"expires":"2026-09-20T23:59:00-04:00","promo":"$20 Bonus Bet","kind":"bonus","estimated":false,"notes":"Bonus bet available on any market."},
-    {"id":"czr-20260921-bonus25","book":"Caesars","value":25,"expires":"2026-09-21T13:33:00-04:00","promo":"$25 Bonus Bet","kind":"bonus","estimated":true,"notes":"Screenshot only showed 1w left; exact expiry is approximate."},
-    {"id":"b365-20260921-balance86","book":"bet365","value":86,"expires":"2026-09-21T13:33:00-04:00","promo":"Bonus Bets Balance","kind":"bonus","estimated":true,"notes":"$86 aggregate bonus-bet balance; screenshot showed 1w left."},
-    {"id":"fd-20260921-profit25x2","book":"FanDuel","value":0,"expires":"2026-09-21T23:59:00-04:00","promo":"25% Profit Boost (2x)","kind":"boost","estimated":true,"notes":"2 tokens. No minimum, $10 max wager, -200 min odds, +200000 max. Date shown as 9/21; 11:59 PM assumed."}
-  ]
+  "updatedAt": "2026-09-18T16:25:00-04:00",
+  "promos": []
 }
