@@ -7,6 +7,12 @@
     ].forEach(k => localStorage.removeItem(k));
   } catch {}
 
+  try{
+    const style=document.createElement('style');
+    style.textContent='.attention.upnext{background:linear-gradient(135deg,#261b3b,#5b378b)!important;border-color:rgba(181,140,255,.28)!important}.attention.upnext .attentionBang{background:rgba(142,99,255,.2)!important}.attention.upnext:after{opacity:.45}.firstFlag{display:none!important}details.card.first:not(.finalHour):not(.critical) .firstFlag{display:block!important}';
+    document.head.appendChild(style);
+  }catch{}
+
   function fixFirstFlags(){
     try {
       document.querySelectorAll('.firstFlag').forEach(x=>x.style.display='none');
