@@ -7,9 +7,17 @@ function doGet(e) {
   const callback = String(p.callback || 'callback').replace(/[^A-Za-z0-9_.$]/g, '') || 'callback';
   let payload;
 
-  if (action === 'list') payload = {ok: true, promos: listUsedStatus_()};
-  else if (action === 'ping') payload = {ok: true, service: 'free-bet-tracker', time: new Date().toISOString()};
-  else payload = {ok: false, error: 'Unsupported action'};
+  if (action === 'list') {
+    payload = {
+      ok: true,
+      updatedAt: new Date().toISOString(),
+      promos: listPromos_()
+    };
+  } else if (action === 'ping') {
+    payload = {ok: true, service: 'free-bet-tracker', time: new Date().toISOString()};
+  } else {
+    payload = {ok: false, error: 'Unsupported action'};
+  }
 
   return ContentService.createTextOutput(callback + '(' + JSON.stringify(payload) + ')')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
@@ -33,12 +41,12 @@ function sheet_() {
   return sh;
 }
 
-function listUsedStatus_() {
+function listPromos_() {
   const sh = sheet_();
   const last = Math.max(sh.getLastRow(), START_ROW - 1);
   if (last < START_ROW) return [];
 
-  const rows = sh.getRange(START_ROW, 1, last - START_ROW + 1, 8).getValues();
+  const rows = sh.getRange(START_ROW, 1, last - START_ROW + 1, 10).getValues();
   let idsChanged = false;
 
   rows.forEach(r => {
@@ -54,7 +62,25 @@ function listUsedStatus_() {
 
   return rows
     .filter(r => r[0] && r[7])
-    .map(r => ({id: String(r[7]), used: Boolean(r[4])}));
+    .map(r => ({
+      id: String(r[7]),
+      book: String(r[0] || ''),
+      value: Number(r[1] || 0),
+      expires: r[2] instanceof Date ? r[2].toISOString() : String(r[2] || ''),
+      used: Boolean(r[4]),
+      promo: String(r[5] || ''),
+      notes: String(r[6] || ''),
+      kind: String(r[8] || inferKind_(r[5])),
+      estimated: Boolean(r[9])
+    }));
+}
+
+function inferKind_(promo) {
+  const text = String(promo || '').toLowerCase();
+  if (text.includes('no sweat')) return 'no_sweat';
+  if (text.includes('boost')) return 'boost';
+  if (text.includes('bet & get') || text.includes('bet and get') || text.includes('boomerang')) return 'qualifier';
+  return 'bonus';
 }
 
 function findRowById_(id) {
