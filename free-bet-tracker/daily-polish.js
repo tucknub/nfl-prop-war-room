@@ -1,5 +1,7 @@
 (()=>{
   const USED_KEY='free-bet-tracker-used-v1';
+  const BRIDGE_CONFIG_URL='https://raw.githubusercontent.com/tucknub/nfl-prop-war-room/streamlit-cloud-deploy/free-bet-tracker/bridge-config.json';
+  let bridgeUrl='';
 
   try{
     const style=document.createElement('style');
@@ -66,6 +68,58 @@
     try{return new Set(JSON.parse(localStorage.getItem(USED_KEY)||'[]').map(String))}catch{return new Set()}
   }
   function writeUsed(set){try{localStorage.setItem(USED_KEY,JSON.stringify([...set]))}catch{}}
+
+  async function loadBridgeConfig(){
+    try{
+      const r=await fetch(BRIDGE_CONFIG_URL+'?ts='+Date.now(),{cache:'no-store'});
+      if(!r.ok)return false;
+      const cfg=await r.json();
+      bridgeUrl=String((cfg&&cfg.bridgeUrl)||'').trim();
+      if(!bridgeUrl)return false;
+      await syncUsedFromSheet(true);
+      return true;
+    }catch{return false}
+  }
+
+  function bridgeList(){
+    return new Promise((resolve,reject)=>{
+      if(!bridgeUrl){resolve(null);return}
+      const cb='__fbtBridge_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const s=document.createElement('script');
+      let finished=false;
+      const cleanup=()=>{if(finished)return;finished=true;try{s.remove()}catch{};try{delete window[cb]}catch{}};
+      const timeout=setTimeout(()=>{cleanup();reject(new Error('bridge timeout'))},8000);
+      window[cb]=payload=>{clearTimeout(timeout);cleanup();resolve(payload)};
+      s.onerror=()=>{clearTimeout(timeout);cleanup();reject(new Error('bridge load failed'))};
+      const join=bridgeUrl.includes('?')?'&':'?';
+      s.src=bridgeUrl+join+'action=list&callback='+encodeURIComponent(cb)+'&ts='+Date.now();
+      document.head.appendChild(s);
+    });
+  }
+
+  async function syncUsedFromSheet(reloadPromos){
+    try{
+      const data=await bridgeList();
+      if(!data||!Array.isArray(data.promos))return false;
+      const sheetUsed=new Set(data.promos.filter(p=>p&&p.used).map(p=>String(p.id||''))).delete('');
+      const cleanUsed=new Set(data.promos.filter(p=>p&&p.used&&p.id).map(p=>String(p.id)));
+      writeUsed(cleanUsed);
+      if(reloadPromos&&typeof load==='function')await load();
+      else{pruneUsed();if(typeof render==='function')render()}
+      return true;
+    }catch{return false}
+  }
+
+  async function syncUsedToSheet(id,used){
+    if(!bridgeUrl||!id)return false;
+    try{
+      const body=new URLSearchParams({action:'used',id:String(id),used:String(Boolean(used))});
+      await fetch(bridgeUrl,{method:'POST',mode:'no-cors',cache:'no-store',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body});
+      setTimeout(()=>syncUsedFromSheet(true),1800);
+      return true;
+    }catch{return false}
+  }
+
   function pruneUsed(){
     try{
       if(typeof promos==='undefined'||!Array.isArray(promos))return false;
@@ -100,6 +154,7 @@
       const used=readUsed();used.add(id);writeUsed(used);
       if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
       if(typeof render==='function')render();
+      syncUsedToSheet(id,true);
       showUndo(id,removed);
     }catch{}
   }
@@ -114,6 +169,7 @@
       clearTimeout(timer);
       const used=readUsed();used.delete(id);writeUsed(used);
       try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
+      syncUsedToSheet(id,false);
       toast.remove();
       try{if(typeof render==='function')render()}catch{}
     };
@@ -127,5 +183,8 @@
   }catch{}
 
   window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
+  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
   setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
+  setTimeout(loadBridgeConfig,350);
+  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
 })();
