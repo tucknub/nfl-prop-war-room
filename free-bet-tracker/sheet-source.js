@@ -1,7 +1,7 @@
 (()=>{
   const CONFIG_URL='https://raw.githubusercontent.com/tucknub/nfl-prop-war-room/streamlit-cloud-deploy/free-bet-tracker/bridge-config.json';
   const USED_KEY='free-bet-tracker-used-v1';
-  const fallbackLoad=typeof window.load==='function'?window.load:null;
+  const fallbackLoad=typeof load==='function'?load:null;
   let bridgeUrl='';
   let configuring=null;
 
@@ -69,28 +69,28 @@
       if(!data||data.ok===false||!Array.isArray(data.promos))throw new Error('Invalid Sheet response');
       const rows=data.promos.map(normalize).filter(p=>p.id&&p.book&&p.expires);
       setUsedStatus(rows);
-      window.promos=rows.filter(p=>!p.used);
-      window.dataUpdatedAt=data.updatedAt||new Date().toISOString();
-      window.dataMode='live';
-      try{localStorage.setItem('free-bet-tracker-v10-20260918-slate',JSON.stringify({updatedAt:window.dataUpdatedAt,promos:window.promos}))}catch{}
+      promos=rows.filter(p=>!p.used);
+      dataUpdatedAt=data.updatedAt||new Date().toISOString();
+      dataMode='live';
+      try{localStorage.setItem('free-bet-tracker-v10-20260918-slate',JSON.stringify({updatedAt:dataUpdatedAt,promos}))}catch{}
       const strip=document.querySelector('#strip');
       if(strip){strip.className='strip';strip.textContent=''}
-      if(typeof window.render==='function')window.render();
+      if(typeof render==='function')render();
       return true;
     }catch{
       if(fallbackLoad){
         await fallbackLoad();
-        window.dataMode='snapshot';
+        dataMode='snapshot';
         const strip=document.querySelector('#strip');
         if(strip){strip.className='strip show';strip.textContent='Sheet sync is unavailable right now. Showing the backup promo snapshot.'}
-        if(typeof window.render==='function')window.render();
+        if(typeof render==='function')render();
       }
       return false;
     }
   }
 
   window.__fbtSheetLoad=sheetLoad;
-  window.load=sheetLoad;
+  try{load=sheetLoad}catch{}
   const refresh=document.querySelector('#refresh');
   if(refresh)refresh.onclick=sheetLoad;
   setTimeout(sheetLoad,120);
