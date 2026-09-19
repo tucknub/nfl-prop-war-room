@@ -1,19 +1,30 @@
 # Free Bet Tracker
 
-Canonical mobile dashboard: `index.html`
+Canonical installed dashboard: `daily.html`
 
 ## Structure
 
-- `index.html` — production dashboard UI. Update this file in place; do not create numbered dashboard copies.
-- `promos.json` — live promo/free-bet data consumed by the dashboard.
-- `manifest.webmanifest` — installable web-app metadata.
-- `app-icon.svg` — tracker favicon/PWA icon.
-- `Code.gs` — legacy Google Sheets bridge retained for reference; the current dashboard is read-only and is maintained from `promos.json` plus the Google Sheet.
+- `daily.html` — self-updating installed wrapper used on iPhone and desktop.
+- `app.html` — core tracker UI and countdown/rendering logic.
+- `daily-polish.css` / `daily-polish.js` — branded responsive styling and Mark Used interaction.
+- `sheet-source.js` — Sheet-first live data loader. When the bridge is configured, this is the authoritative promo source.
+- `bridge-config.json` — contains the deployed Apps Script web-app URL.
+- `Code.gs` — Google Sheets bridge for full promo reads and Used? writes.
+- `promos.json` — backup snapshot only. It is not the primary live source once the Sheet bridge is configured.
+- `manifest.webmanifest` / `app-icon-v3.svg` — installable web-app metadata and current icon.
+
+## Source of truth
+
+The Google Sheet `Free Bet Expiry Tracker`, tab `Free Bets`, is the authoritative tracker database. It stores sportsbook, value, expiration, Used?, promo name, notes, stable ID, promo kind, and whether the expiration is estimated.
+
+When `bridge-config.json` contains a deployed Apps Script URL, the installed app loads the Sheet first and refreshes it every minute. Mark Used writes the matching stable ID back to the Sheet, allowing phone and desktop to agree on active promos.
+
+`promos.json` remains a complete emergency snapshot so the tracker can still render when the Sheet bridge is temporarily unavailable. It should not overwrite newer Sheet data during normal operation.
 
 ## Time behavior
 
-All expiration timestamps are stored as offset-aware ISO timestamps and rendered in `America/Indiana/Indianapolis` / Eastern Time. Every active promo displays both an exact expiration date/time and a live countdown. Estimated expiration times are explicitly labeled.
+All expiration timestamps are rendered in `America/Indiana/Indianapolis` / Eastern Time. Every active promo displays an exact expiration date/time plus a live countdown. Estimated expiration times are explicitly labeled.
 
-## Data behavior
+## Active-view behavior
 
-Expired promos disappear from the active view automatically. The UI refreshes `promos.json` every minute and updates countdowns every second. The last successfully loaded data is cached locally as a fallback if the live data feed cannot refresh.
+Used and expired promos are hidden from the active wallet. The countdown UI updates every second. The Sheet source refreshes every minute and again when the app regains focus. A local cached snapshot is retained only as a resilience fallback.
