@@ -1,18 +1,10 @@
 {
-  "updatedAt": "2026-09-18T16:25:00-04:00",
+  "updatedAt": "2026-09-21T09:26:00-04:00",
   "promos": [
-    {"id":"dk-lindsay-20260921-bonus5","book":"DraftKings","value":5,"expires":"2026-09-21T20:26:00-04:00","promo":"Lindsay · $5 Free Bet","kind":"bonus","estimated":false,"notes":"Account: Lindsay. $5 DraftKings free bet."},
-    {"id":"czr-lindsay-20260921-bonus20","book":"Caesars","value":20,"expires":"2026-09-21T08:29:00-04:00","promo":"Lindsay · $20 Free Bet","kind":"bonus","estimated":false,"notes":"Account: Lindsay. $20 Caesars free bet."},
-    {"id":"czr-lindsay-20260921-bonus5-1","book":"Caesars","value":5,"expires":"2026-09-21T19:29:00-04:00","promo":"Lindsay · $5 Free Bet #1","kind":"bonus","estimated":false,"notes":"Account: Lindsay. One of four separate $5 Caesars free bets."},
-    {"id":"czr-lindsay-20260921-bonus5-2","book":"Caesars","value":5,"expires":"2026-09-21T19:29:00-04:00","promo":"Lindsay · $5 Free Bet #2","kind":"bonus","estimated":false,"notes":"Account: Lindsay. One of four separate $5 Caesars free bets."},
-    {"id":"czr-lindsay-20260921-bonus5-3","book":"Caesars","value":5,"expires":"2026-09-21T19:29:00-04:00","promo":"Lindsay · $5 Free Bet #3","kind":"bonus","estimated":false,"notes":"Account: Lindsay. One of four separate $5 Caesars free bets."},
-    {"id":"czr-lindsay-20260921-bonus5-4","book":"Caesars","value":5,"expires":"2026-09-21T19:29:00-04:00","promo":"Lindsay · $5 Free Bet #4","kind":"bonus","estimated":false,"notes":"Account: Lindsay. One of four separate $5 Caesars free bets."},
-    {"id":"czr-lindsay-20261001-bonus10","book":"Caesars","value":10,"expires":"2026-10-01T20:27:00-04:00","promo":"Lindsay · $10 Free Bet","kind":"bonus","estimated":false,"notes":"Account: Lindsay. $10 Caesars free bet."},
-    {"id":"b365-20260925-bonus270","book":"bet365","value":270,"expires":"2026-09-25T16:25:00-04:00","promo":"$270 Bonus Funds","kind":"bonus","estimated":true,"notes":"Exact time not provided. 'Expires in 1 week from today' entered as approximately Sep 25 at 4:25 PM ET based on the Sep 18 update time."},
-    {"id":"hr-20260920-bonus20","book":"Hard Rock Bet","value":20,"expires":"2026-09-20T23:59:00-04:00","promo":"$20 Bonus Bet","kind":"bonus","estimated":false,"notes":"Hard Rock Bet $20 bonus bet."},
-    {"id":"hr-20260921-bonus10","book":"Hard Rock Bet","value":10,"expires":"2026-09-21T23:24:00-04:00","promo":"$10 Bonus Bet","kind":"bonus","estimated":false,"notes":"Hard Rock Bet $10 bonus bet."},
-    {"id":"hr-20260921-nosweat10-1","book":"Hard Rock Bet","value":0,"expires":"2026-09-21T16:34:00-04:00","promo":"$10 NFL No Sweat Bet","kind":"no_sweat","estimated":false,"notes":"Up to $10 No Sweat Bet. First Hard Rock NFL No Sweat offer."},
-    {"id":"hr-20260921-nosweat10-2","book":"Hard Rock Bet","value":0,"expires":"2026-09-21T16:34:00-04:00","promo":"$10 NFL No Sweat Bet · 2+ legs","kind":"no_sweat","estimated":false,"notes":"Second Hard Rock NFL No Sweat offer. Minimum 2 legs."},
-    {"id":"czr-20261001-bonus25","book":"Caesars","value":25,"expires":"2026-10-01T23:32:00-04:00","promo":"$25 Free Bet","kind":"bonus","estimated":false,"notes":"Caesars $25 free bet."}
+    {"id":"reset-hr-20260921-bonus10","book":"Hard Rock Bet","value":10,"expires":"2026-09-21T23:24:00-04:00","promo":"$10 Bonus Bet","kind":"bonus","estimated":false,"notes":"Hard Rock Bet $10 bonus bet."},
+    {"id":"reset-hr-20260927-bonus20","book":"Hard Rock Bet","value":20,"expires":"2026-09-27T23:59:00-04:00","promo":"$20 Bonus Bet","kind":"bonus","estimated":false,"notes":"Hard Rock Bet $20 bonus bet."},
+    {"id":"reset-hr-20260928-bonus10","book":"Hard Rock Bet","value":10,"expires":"2026-09-28T00:00:00-04:00","promo":"$10 Bonus Bet","kind":"bonus","estimated":false,"notes":"Hard Rock Bet $10 bonus bet."},
+    {"id":"reset-b365-20260928-balance240","book":"bet365","value":240,"expires":"2026-09-28T09:26:00-04:00","promo":"$240 Bonus Bet Funds","kind":"bonus","estimated":true,"notes":"$240 bonus-bet funds. Expiry entered as one week from Sep 21, 2026 at 9:26 AM ET."},
+    {"id":"reset-czr-20261001-bonus25","book":"Caesars","value":25,"expires":"2026-10-01T23:32:00-04:00","promo":"$25 Bonus Bet","kind":"bonus","estimated":false,"notes":"Caesars $25 bonus bet."}
   ]
 }
