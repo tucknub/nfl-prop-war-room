@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import sys
 import time
 from datetime import datetime
@@ -60,10 +61,8 @@ from src.fantasy.market_fantasy import (  # noqa: E402
 from src.fantasy.market_start_sit import (  # noqa: E402
     build_market_start_sit_board,
 )
-from src.fantasy.market_waivers import (  # noqa: E402
-    build_market_bench_upgrades,
-    build_market_ranked_waivers,
-)
+from src.fantasy import market_waivers as market_waivers_module  # noqa: E402
+from src.fantasy.market_waivers import build_market_ranked_waivers  # noqa: E402
 from src.fantasy.market_trade import (  # noqa: E402
     analyze_market_trade,
 )
@@ -2494,7 +2493,13 @@ def _render_sleeper() -> None:
                 else:
                     try:
                         bench_snapshot = shared_prop_snapshot(parlay_key)
-                        bench_upgrade_board = build_market_bench_upgrades(
+                        bench_upgrade_builder = getattr(
+                            market_waivers_module, "build_market_bench_upgrades", None
+                        )
+                        if bench_upgrade_builder is None:
+                            importlib.reload(market_waivers_module)
+                            bench_upgrade_builder = market_waivers_module.build_market_bench_upgrades
+                        bench_upgrade_board = bench_upgrade_builder(
                             league,
                             all_catalog or _load_player_catalog(),
                             bench_snapshot.get("rows", ()),
