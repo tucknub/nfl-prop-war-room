@@ -584,7 +584,7 @@ with st.expander("Roster, history & manual corrections", expanded=False):
                         key="knockout_user_score_espn",
                     )
                     if espn_week_score is None:
-                        st.caption("ESPN has not posted a Week 1 score yet.")
+                        st.caption(f"ESPN has not posted a Week {int(state.get('current_week', 0))} score yet.")
                 else:
                     user_score = st.number_input(
                         "My fantasy score",
