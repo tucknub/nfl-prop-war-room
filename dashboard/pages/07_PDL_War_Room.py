@@ -211,7 +211,9 @@ hero_bottom[1].metric("Historical loss-rate est.", _pct(pick["p_loss"]))
 hero_bottom[2].metric("Historical 20+ est.", _pct(pick["p_win20"]))
 
 st.caption(
-    "Spread source: nflverse/nfldata games.csv snapshot loaded at refresh. "
+    "Spread source: nflverse/nfldata games.csv fetched for this calculation at "
+    f"{audit['snapshot_utc']}. nflverse does not expose a per-line change timestamp in this file, "
+    "so PropWar does not pretend the spread itself changed at the calculation time. "
     "Point-differential/loss/20+ estimates are empirical 2006–2025 regular-season favorite outcomes weighted toward similar point spreads; they are model estimates, not sportsbook probabilities."
 )
 

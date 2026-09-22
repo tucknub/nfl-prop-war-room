@@ -13,7 +13,7 @@ def test_source_row_counts_canonicalizes_configured_books():
     assert counts["Novig"] == 1
 
 
-def test_actionable_coverage_marks_two_of_five_as_limited():
+def test_actionable_coverage_marks_two_provider_books_as_limited():
     rows = [_row("DraftKings")] * 2151 + [_row("Caesars")] * 15 + [_row("Novig")] * 100
     summary = actionable_coverage_summary(rows)
     assert summary["visible_user_books"] == ["DraftKings", "Caesars"]
@@ -30,9 +30,25 @@ def test_actionable_coverage_three_books_is_not_limited():
     assert summary["coverage_limited"] is False
 
 
-def test_actionable_coverage_tracks_missing_books():
+def test_actionable_coverage_tracks_missing_books_and_provider_gaps():
     summary = actionable_coverage_summary([_row("DraftKings")])
-    assert summary["missing_user_books"] == ["FanDuel", "Caesars", "bet365", "Hard Rock Bet"]
+    assert summary["missing_user_books"] == [
+        "FanDuel",
+        "Caesars",
+        "bet365",
+        "Fanatics Sportsbook",
+        "Hard Rock Bet",
+        "theScore Bet",
+    ]
+    assert summary["provider_user_book_count"] == 6
+    assert summary["missing_provider_user_books"] == [
+        "FanDuel",
+        "Caesars",
+        "bet365",
+        "Fanatics Sportsbook",
+        "Hard Rock Bet",
+    ]
+    assert summary["provider_unsupported_user_books"] == ["theScore Bet"]
 
 
 

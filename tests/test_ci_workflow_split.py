@@ -56,7 +56,7 @@ def test_permanent_product_gate_keeps_supporting_tool_coverage() -> None:
     assert "tests/test_weekly_role_report.py" in workflow
 
 
-def test_production_push_runs_product_gate_but_live_smoke_is_manual_only() -> None:
+def test_production_push_runs_product_gate_and_live_smoke_follows_success() -> None:
     product = _read(".github/workflows/propwar-product-gate.yml")
     live = _read(".github/workflows/live-streamlit-smoke.yml")
 
@@ -67,11 +67,24 @@ def test_production_push_runs_product_gate_but_live_smoke_is_manual_only() -> No
     assert '"tests/**"' in product
     assert '"scripts/validate_live_streamlit.py"' in product
     assert '".github/workflows/live-streamlit-smoke.yml"' in product
+    assert '".github/workflows/role-research-operations.yml"' in product
 
     assert "workflow_dispatch:" in live
-    assert "workflow_run:" not in live
-    assert "push:" not in live
-    assert "schedule:" not in live
+    assert "workflow_run:" in live
+    assert 'workflows: ["PropWar Product Gate"]' in live
+    assert "github.event.workflow_run.conclusion == 'success'" in live
     assert "ref: streamlit-cloud-deploy" in live
     assert "validate_live_streamlit.py" in live
     assert "validate_live_streamlit_mobile.py" in live
+
+
+def test_role_schedule_gate_writes_only_machine_output_to_github_output() -> None:
+    workflow = _read(".github/workflows/role-research-operations.yml")
+    schedule_gate = workflow.split("  schedule-gate:", 1)[1].split(
+        "  publish-current-season:", 1
+    )[0]
+
+    assert "emit_run(" in schedule_gate
+    assert 'open(os.environ["GITHUB_OUTPUT"], "a"' in schedule_gate
+    assert 'python - <<\'PY\' >> "$GITHUB_OUTPUT"' not in schedule_gate
+    assert "Indiana target 09:30" in schedule_gate

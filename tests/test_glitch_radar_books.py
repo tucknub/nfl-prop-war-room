@@ -1,4 +1,6 @@
 from dashboard.glitch_radar_books import (
+    PROVIDER_COVERED_USER_BOOKS,
+    PROVIDER_UNSUPPORTED_USER_BOOKS,
     USER_BOOKS,
     canonical_book,
     comparison_books_seen,
@@ -16,8 +18,12 @@ def test_user_book_roster_is_exact():
         "DraftKings",
         "Caesars",
         "bet365",
+        "Fanatics Sportsbook",
         "Hard Rock Bet",
+        "theScore Bet",
     )
+    assert PROVIDER_UNSUPPORTED_USER_BOOKS == ("theScore Bet",)
+    assert PROVIDER_COVERED_USER_BOOKS == USER_BOOKS[:-1]
 
 
 def test_common_aliases_canonicalize_to_user_books():
@@ -25,7 +31,10 @@ def test_common_aliases_canonicalize_to_user_books():
     assert canonical_book("DraftKings Sportsbook") == "DraftKings"
     assert canonical_book("Caesars Sportsbook") == "Caesars"
     assert canonical_book("BET365") == "bet365"
+    assert canonical_book("Fanatics") == "Fanatics Sportsbook"
     assert canonical_book("Hard Rock") == "Hard Rock Bet"
+    assert canonical_book("ESPN BET") == "theScore Bet"
+    assert canonical_book("theScore") == "theScore Bet"
     assert all(is_user_book(book) for book in USER_BOOKS)
     assert not is_user_book("BetRivers")
     assert not is_user_book("Pinnacle")

@@ -13,6 +13,8 @@ if str(DASHBOARD_DIR) not in sys.path:
 from access_control import access_mode  # noqa: E402
 from glitch_radar_live import american_to_decimal, build_snapshot, evaluate_profit_boost  # noqa: E402
 from glitch_radar_books import (  # noqa: E402
+    PROVIDER_COVERED_USER_BOOKS,
+    PROVIDER_UNSUPPORTED_USER_BOOKS,
     USER_BOOKS,
     comparison_books_seen,
     filter_actionable_alerts,
@@ -639,7 +641,14 @@ def _render_arb_card(row: dict, *, show_evidence: bool = True) -> None:
                 )
 
 
-def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict], evs: list[dict]) -> None:
+def _render_top_board(
+    alerts: list[dict],
+    arbs: list[dict],
+    middles: list[dict],
+    evs: list[dict],
+    *,
+    scan_complete: bool = True,
+) -> None:
     st.markdown("### Highest-priority verification queue")
     st.caption(
         "Research candidates that deserve an immediate in-book check. Price anomalies and arb candidates rank ahead of provider-derived +EV candidates; "
@@ -683,7 +692,12 @@ def _render_top_board(alerts: list[dict], arbs: list[dict], middles: list[dict],
         shown += 1
 
     if shown == 0:
-        st.info("Nothing requiring verification is showing in the current preview scan.")
+        if scan_complete:
+            st.info("Nothing requiring verification is showing in the current preview scan.")
+        else:
+            st.warning(
+                "No verification candidate is showing from the feeds that returned, but this scan is partial and is not an all-clear."
+            )
 
 
 _require_owner()
@@ -701,6 +715,19 @@ raw_evs = snapshot.get("ev", []) or []
 quotes = snapshot.get("quotes", []) or []
 books = snapshot.get("books", []) or []
 in_play_quotes_excluded = int(snapshot.get("in_play_quotes_excluded") or 0)
+feed_status = snapshot.get("feed_status", {}) or {}
+errors = snapshot.get("errors", []) or []
+
+if feed_status.get("odds") != "OK":
+    st.error(
+        "Market preview unavailable: the core odds feed failed or returned no usable quotes. "
+        "PropWar will not treat this as a zero-opportunity scan."
+    )
+    if errors:
+        with st.expander("Feed failure details"):
+            for error in errors:
+                st.warning(error)
+    st.stop()
 
 alerts = filter_actionable_alerts(raw_alerts)
 arbs = filter_actionable_two_leg(raw_arbs)
@@ -710,30 +737,46 @@ rank = {"P0": 0, "P1": 1, "P2": 2, "TEST": 3}
 alerts = sorted(alerts, key=lambda row: rank.get(row.get("severity", "P2"), 9))
 my_books_seen = user_books_seen(books)
 comparison_books = comparison_books_seen(books)
-missing_books = [book for book in USER_BOOKS if book not in my_books_seen]
+missing_provider_books = [
+    book for book in PROVIDER_COVERED_USER_BOOKS if book not in my_books_seen
+]
 
 observations = build_market_observations(alerts, evs)
 history_backend = "In-memory fallback"
 history_warning = ""
+history_inputs_complete = (
+    feed_status.get("odds") == "OK" and feed_status.get("ev") != "ERROR"
+)
 try:
     durable_store = _durable_market_history_store()
-    if durable_store is not None:
+    if history_inputs_complete and durable_store is not None:
         market_history = durable_store.update(
             observations,
             fetched_at=str(snapshot.get("fetched_at") or ""),
         )
         history_backend = "Private durable history"
-    else:
+    elif history_inputs_complete:
         market_history = _market_history_store().update(
             observations,
             fetched_at=str(snapshot.get("fetched_at") or ""),
         )
+    elif durable_store is not None:
+        market_history = durable_store.snapshot()
+        history_backend = "Private durable history · movement paused"
+        history_warning = (
+            "Movement history was not advanced because at least one source used by "
+            "the tracked signal set failed. No opportunity is marked disappeared from this scan."
+        )
+    else:
+        market_history = _market_history_store().snapshot()
+        history_backend = "In-memory fallback · movement paused"
+        history_warning = (
+            "Movement history was not advanced because at least one source used by "
+            "the tracked signal set failed. No opportunity is marked disappeared from this scan."
+        )
 except Exception as exc:
     history_warning = str(exc)
-    market_history = _market_history_store().update(
-        observations,
-        fetched_at=str(snapshot.get("fetched_at") or ""),
-    )
+    market_history = _market_history_store().snapshot()
 
 for alert in alerts:
     alert["_history"] = history_for_key(
@@ -759,22 +802,31 @@ m4.metric("EV candidates", len(evs))
 
 status_col, refresh_col = st.columns([4, 1])
 with status_col:
+    provider_visible_count = sum(
+        book in my_books_seen for book in PROVIDER_COVERED_USER_BOOKS
+    )
     st.caption(
         f"{len(quotes)} quotes scanned · {in_play_quotes_excluded} in-progress quotes excluded · "
-        f"{len(my_books_seen)}/{len(USER_BOOKS)} of my books visible · "
+        f"{provider_visible_count}/{len(PROVIDER_COVERED_USER_BOOKS)} provider-covered books visible · "
         f"last scan {local_start_label(snapshot.get('fetched_at'))} · demo requests left: {snapshot.get('demo_remaining_hour', '—')}"
     )
-    if missing_books:
+    if missing_provider_books:
         st.caption(
-            f"Not returned in this preview: {', '.join(missing_books)}. "
-            "This does not remove them from my configured sportsbook list."
+            "Provider-covered books not returned in this preview: "
+            + ", ".join(missing_provider_books)
+            + "."
+        )
+    if PROVIDER_UNSUPPORTED_USER_BOOKS:
+        st.caption(
+            "My books without current ParlayAPI ingestion: "
+            + ", ".join(PROVIDER_UNSUPPORTED_USER_BOOKS)
+            + ". They remain available in account-specific tools such as Boost Lab."
         )
 with refresh_col:
     if st.button("Force fresh scan", type="primary", width="stretch"):
         _live_snapshot.clear()
         st.rerun()
 
-errors = snapshot.get("errors", []) or []
 if errors:
     with st.expander("Feed warnings"):
         for error in errors:
@@ -791,10 +843,13 @@ st.caption(
     f"{int(market_history.get('scan_count') or 0)} scans tracked."
 )
 if history_warning:
-    st.warning(
-        "Durable market history could not be updated, so this run is using in-memory fallback."
-    )
-    with st.expander("History persistence warning"):
+    if history_warning.startswith("Movement history was not advanced"):
+        st.warning(history_warning)
+    else:
+        st.warning(
+            "Market history could not be updated; the previous in-memory history remains loaded."
+        )
+    with st.expander("History warning"):
         st.caption(history_warning)
 
 recent_changes = list(recent_history_changes(market_history, limit=50))
@@ -836,7 +891,18 @@ if disappeared_rows:
                 f"first seen {local_start_label(row.get('first_seen'))}"
             )
 
-_render_top_board(alerts, arbs, middles, evs)
+secondary_feed_failures = [
+    name
+    for name in ("arbitrage", "middles", "ev")
+    if feed_status.get(name) == "ERROR"
+]
+_render_top_board(
+    alerts,
+    arbs,
+    middles,
+    evs,
+    scan_complete=not secondary_feed_failures,
+)
 
 st.divider()
 
@@ -862,7 +928,10 @@ if arb_tab.open:
         st.markdown("### Arbitrage candidates to verify")
         st.caption("Only shown when every required leg is at a sportsbook I use. Recheck both legs in-book before treating the displayed prices as executable.")
         if not arbs:
-            st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
+            if feed_status.get("arbitrage") == "ERROR":
+                st.warning("Arbitrage feed unavailable in this scan; no all-clear is implied.")
+            else:
+                st.info("No actionable arbitrage using only my sportsbooks is in the current preview.")
         for row in sorted(
             arbs,
             key=lambda value: _arb_edge_pct(value) or 0.0,
@@ -875,7 +944,10 @@ if middle_tab.open:
         st.markdown("### Middle windows")
         st.caption("Different lines at my books that can create a range where both bets win.")
         if not middles:
-            st.info("No middle using only my sportsbooks is in the current preview.")
+            if feed_status.get("middles") == "ERROR":
+                st.warning("Middle feed unavailable in this scan; no all-clear is implied.")
+            else:
+                st.info("No middle using only my sportsbooks is in the current preview.")
         for row in middles:
             _render_middle_card(row)
     
@@ -887,7 +959,10 @@ if ev_tab.open:
             "The fair value is provider-derived, not a proprietary PropWar projection, and the exact book price must be verified."
         )
         if not evs:
-            st.info("No +EV price at one of my sportsbooks is in the current preview.")
+            if feed_status.get("ev") == "ERROR":
+                st.warning("+EV feed unavailable in this scan; no all-clear is implied.")
+            else:
+                st.info("No +EV price at one of my sportsbooks is in the current preview.")
         for row in evs:
             _render_ev_card(row)
     
@@ -935,7 +1010,12 @@ if source_tab.open:
             with st.container(border=True):
                 st.markdown("#### My actionable books")
                 for book in USER_BOOKS:
-                    status = "VISIBLE NOW" if book in my_books_seen else "NOT IN CURRENT PREVIEW"
+                    if book in my_books_seen:
+                        status = "VISIBLE NOW"
+                    elif book in PROVIDER_UNSUPPORTED_USER_BOOKS:
+                        status = "PROVIDER COVERAGE UNAVAILABLE"
+                    else:
+                        status = "NOT IN CURRENT PREVIEW"
                     st.write(f"**{book}** — {status}")
         with c2:
             with st.container(border=True):
@@ -951,7 +1031,11 @@ if source_tab.open:
             [
                 ("Provider", "ParlayAPI preview feed"),
                 ("Quotes scanned", len(quotes)),
-                ("My books visible", f"{len(my_books_seen)}/{len(USER_BOOKS)}"),
+                (
+                    "Provider-covered books visible",
+                    f"{sum(book in my_books_seen for book in PROVIDER_COVERED_USER_BOOKS)}/"
+                    f"{len(PROVIDER_COVERED_USER_BOOKS)}",
+                ),
                 ("Last scan", local_start_label(snapshot.get("fetched_at"))),
                 ("Demo requests left this hour", snapshot.get("demo_remaining_hour", "—")),
                 ("Actionable books", ", ".join(USER_BOOKS)),

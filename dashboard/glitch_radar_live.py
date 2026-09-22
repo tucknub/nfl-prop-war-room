@@ -293,24 +293,28 @@ def detect_price_outliers(
 def build_snapshot() -> dict[str, Any]:
     errors: list[str] = []
 
-    odds, err = _safe("odds", lambda: _get(f"/v1/try/{SPORT}/odds"))
-    if err:
-        errors.append(err)
-    arbitrage, err = _safe("arbitrage", lambda: _get(f"/v1/try/{SPORT}/arbitrage"))
-    if err:
-        errors.append(err)
-    middles, err = _safe("middles", lambda: _get(f"/v1/try/{SPORT}/middles"))
-    if err:
-        errors.append(err)
-    ev, err = _safe("ev", lambda: _get(f"/v1/try/{SPORT}/ev"))
-    if err:
-        errors.append(err)
-    command_center, err = _safe(
+    odds, odds_error = _safe("odds", lambda: _get(f"/v1/try/{SPORT}/odds"))
+    if odds_error:
+        errors.append(odds_error)
+    arbitrage, arbitrage_error = _safe(
+        "arbitrage", lambda: _get(f"/v1/try/{SPORT}/arbitrage")
+    )
+    if arbitrage_error:
+        errors.append(arbitrage_error)
+    middles, middles_error = _safe(
+        "middles", lambda: _get(f"/v1/try/{SPORT}/middles")
+    )
+    if middles_error:
+        errors.append(middles_error)
+    ev, ev_error = _safe("ev", lambda: _get(f"/v1/try/{SPORT}/ev"))
+    if ev_error:
+        errors.append(ev_error)
+    command_center, command_center_error = _safe(
         "command_center",
         lambda: _get("/live/api/command_center", {"sport": SPORT, "limit": 50}),
     )
-    if err:
-        errors.append(err)
+    if command_center_error:
+        errors.append(command_center_error)
 
     now = datetime.now(timezone.utc)
     quotes = parse_odds(odds or {})
@@ -326,6 +330,13 @@ def build_snapshot() -> dict[str, Any]:
         enrich_ev_markets(_opportunities(ev), packed_quotes),
         now=now,
     )
+    feed_status = {
+        "odds": "ERROR" if odds_error else "OK" if packed_quotes else "EMPTY",
+        "arbitrage": "ERROR" if arbitrage_error else "OK",
+        "middles": "ERROR" if middles_error else "OK",
+        "ev": "ERROR" if ev_error else "OK",
+        "command_center": "ERROR" if command_center_error else "OK",
+    }
 
     return {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
@@ -338,5 +349,6 @@ def build_snapshot() -> dict[str, Any]:
         "command_center": command_center or {},
         "demo_remaining_hour": odds.get("demo_remaining_hour") if isinstance(odds, dict) else None,
         "in_play_quotes_excluded": in_play_quotes_excluded,
+        "feed_status": feed_status,
         "errors": errors,
     }

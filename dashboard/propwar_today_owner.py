@@ -37,6 +37,7 @@ try:
         ROLE_LABELS,
         available_seasons,
         available_weeks,
+        load_operational_status,
         primary_rows,
         team_window_summary,
     )
@@ -71,6 +72,7 @@ except ImportError:
         ROLE_LABELS,
         available_seasons,
         available_weeks,
+        load_operational_status,
         primary_rows,
         team_window_summary,
     )
@@ -237,8 +239,41 @@ def _today_fantasy_feed(
     return feed, tuple(errors)
 
 
+def _role_publication_ready(
+    live_season: int,
+    required_through_week: int,
+) -> tuple[bool, str]:
+    status = load_operational_status()
+    state = str(status.get("status") or "").strip().upper()
+    try:
+        season = int(status.get("season") or 0)
+        through_week = int(status.get("published_through_week") or 0)
+    except (TypeError, ValueError):
+        season = 0
+        through_week = 0
+    ready = (
+        state == "PUBLISHED"
+        and season == int(live_season)
+        and through_week >= int(required_through_week)
+    )
+    reason = (
+        f"Role Intelligence needs {live_season} through Week {required_through_week}; "
+        f"published boundary is {season or 'unknown'} Week {through_week or 'unknown'} "
+        f"({state or 'UNKNOWN'})."
+    )
+    return ready, reason
+
+
 @st.cache_data(ttl=5 * 60, show_spinner=False)
-def _today_role_actions(live_season: int) -> tuple[TodayAction, ...]:
+def _today_role_actions(
+    live_season: int,
+    required_through_week: int = 0,
+) -> tuple[TodayAction, ...]:
+    if required_through_week > 0:
+        ready, _ = _role_publication_ready(live_season, required_through_week)
+        if not ready:
+            return ()
+
     seasons = set(available_seasons())
     if live_season not in seasons:
         return ()
@@ -798,11 +833,21 @@ def render_propwar_today_if_owner() -> None:
     except Exception as exc:
         errors.append(f"Fantasy HQ: {exc}")
 
-    if live_season.isdigit():
+    if live_season.isdigit() and current_week >= 2:
+        required_role_week = current_week - 1
         try:
-            actions.extend(
-                _today_role_actions(int(live_season))
+            role_ready, role_reason = _role_publication_ready(
+                int(live_season), required_role_week
             )
+            if role_ready:
+                actions.extend(
+                    _today_role_actions(
+                        int(live_season),
+                        required_through_week=required_role_week,
+                    )
+                )
+            else:
+                errors.append(f"Role Change Detector: {role_reason}")
         except Exception as exc:
             errors.append(f"Role Change Detector: {exc}")
 

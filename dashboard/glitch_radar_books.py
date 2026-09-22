@@ -13,7 +13,16 @@ USER_BOOKS: tuple[str, ...] = (
     "DraftKings",
     "Caesars",
     "bet365",
+    "Fanatics Sportsbook",
     "Hard Rock Bet",
+    "theScore Bet",
+)
+
+# Sportsbooks the owner uses but the current provider is not expected to ingest.
+# Keep provider coverage separate from ownership so missing-feed coverage is explicit.
+PROVIDER_UNSUPPORTED_USER_BOOKS: tuple[str, ...] = ("theScore Bet",)
+PROVIDER_COVERED_USER_BOOKS: tuple[str, ...] = tuple(
+    book for book in USER_BOOKS if book not in PROVIDER_UNSUPPORTED_USER_BOOKS
 )
 
 # These are useful price-discovery anchors when the feed supplies them. They are
@@ -36,9 +45,14 @@ _BOOK_ALIASES: dict[str, str] = {
     "caesars": "Caesars",
     "caesarssportsbook": "Caesars",
     "bet365": "bet365",
+    "fanatics": "Fanatics Sportsbook",
+    "fanaticssportsbook": "Fanatics Sportsbook",
     "hardrock": "Hard Rock Bet",
     "hardrockbet": "Hard Rock Bet",
     "hardrocksportsbook": "Hard Rock Bet",
+    "thescore": "theScore Bet",
+    "thescorebet": "theScore Bet",
+    "espnbet": "theScore Bet",
     "pinnacle": "Pinnacle",
     "pinnaclesports": "Pinnacle",
     "circa": "Circa Sports",

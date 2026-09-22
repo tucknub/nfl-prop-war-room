@@ -11,7 +11,11 @@ if str(DASHBOARD_DIR) not in sys.path:
     sys.path.insert(0, str(DASHBOARD_DIR))
 
 from access_control import access_mode  # noqa: E402
-from glitch_radar_books import USER_BOOKS  # noqa: E402
+from glitch_radar_books import (  # noqa: E402
+    PROVIDER_COVERED_USER_BOOKS,
+    PROVIDER_UNSUPPORTED_USER_BOOKS,
+    USER_BOOKS,
+)
 from glitch_radar_coverage import actionable_coverage_summary, comparison_coverage_summary  # noqa: E402
 from glitch_radar_line_shop import build_line_shop_watches  # noqa: E402
 from glitch_radar_near_miss import build_near_miss_anomalies  # noqa: E402
@@ -216,6 +220,12 @@ rows = deep.get("rows", []) or []
 quality = coverage_quality(rows)
 coverage_truth = actionable_coverage_summary(rows)
 comparison_truth = comparison_coverage_summary(rows)
+provider_book_total = int(
+    coverage_truth.get("provider_user_book_count") or len(PROVIDER_COVERED_USER_BOOKS)
+)
+visible_provider_book_count = int(
+    coverage_truth.get("visible_provider_user_book_count") or 0
+)
 price_outliers = [row for row in deep.get("price_outliers", []) or [] if row.get("actionable")]
 near_misses = build_near_miss_anomalies(rows)
 line_shop = build_line_shop_watches(rows)
@@ -230,7 +240,7 @@ m4.metric("Ladder errors", len(ladder_violations))
 
 st.caption(
     f"{coverage.get('rows', 0):,} prop rows · "
-    f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5 configured books visible · "
+    f"{visible_provider_book_count}/{provider_book_total} provider-covered books visible · "
     f"{quality.get('cross_book_players', 0):,} cross-book player identities · "
     f"{comparison_truth.get('cross_book_family_groups', 0):,} cross-book player/market families · "
     f"{comparison_truth.get('cross_book_exact_line_groups', 0):,} exact same-line groups · "
@@ -241,13 +251,13 @@ st.caption(
 st.caption("Source: ParlayAPI full player-prop feed. Undated quotes and quotes older than 120 seconds are rejected before analysis.")
 
 if coverage_truth.get("coverage_limited"):
-    visible = ", ".join(coverage_truth.get("visible_user_books", []) or []) or "none"
-    missing = ", ".join(coverage_truth.get("missing_user_books", []) or []) or "none"
+    visible = ", ".join(coverage_truth.get("visible_provider_user_books", []) or []) or "none"
+    missing = ", ".join(coverage_truth.get("missing_provider_user_books", []) or []) or "none"
     dominant_book = coverage_truth.get("dominant_user_book") or "No book"
     dominant_share = float(coverage_truth.get("dominant_user_book_share") or 0) * 100
     st.warning(
-        f"COVERAGE LIMITED — only {int(coverage_truth.get('visible_user_book_count') or 0)}/5 configured books returned prop rows. "
-        "Zero signal counts below mean no signal was found in the returned data; they are not evidence that all five sportsbooks are aligned."
+        f"COVERAGE LIMITED - only {visible_provider_book_count}/{provider_book_total} provider-covered books returned prop rows. "
+        "Zero signal counts below mean no signal was found in the returned data; they are not evidence that all provider-covered sportsbooks are aligned."
     )
     st.caption(
         f"Visible: {visible}. Missing: {missing}. {dominant_book} supplies {dominant_share:.1f}% of the returned rows from my configured books."
@@ -276,7 +286,7 @@ for row in line_gaps:
     shown += 1
 if shown == 0:
     if coverage_truth.get("coverage_limited"):
-        st.warning("No major signal was classified in the returned rows, but actionable cross-book coverage is too limited to treat this scan as an all-clear across my five sportsbooks.")
+        st.warning("No major signal was classified in the returned rows, but actionable cross-book coverage is too limited to treat this scan as an all-clear across my provider-covered sportsbooks.")
     else:
         st.success("No major prop-price, ladder, or material line-gap anomaly is visible at one of my books in this deep scan.")
 
@@ -300,7 +310,7 @@ price_tab, shop_tab, watch_tab, gap_tab, ladder_tab, coverage_tab = st.tabs(
 if price_tab.open:
     with price_tab:
         st.markdown("### Exact same player / market / line price anomalies")
-        st.caption("Peer books can establish context, but only anomalies at FanDuel, DraftKings, Caesars, bet365 or Hard Rock Bet are promoted for verification here.")
+        st.caption("Peer books can establish context, but only anomalies at my sportsbooks that are actually returned by the provider are promoted for verification here.")
         if not price_outliers:
             st.info("No actionable exact-line prop price outlier was found in the returned coverage.")
         for row in price_outliers:
@@ -346,7 +356,7 @@ if coverage_tab.open:
     with coverage_tab:
         st.markdown("### My sportsbook prop coverage")
         c1, c2, c3 = st.columns(3)
-        c1.metric("Configured books visible", f"{int(coverage_truth.get('visible_user_book_count') or 0)}/5")
+        c1.metric("Provider-covered books visible", f"{visible_provider_book_count}/{provider_book_total}")
         c2.metric("My-book rows", f"{int(coverage_truth.get('user_book_total_rows') or 0):,}")
         c3.metric("Dominant book share", f"{float(coverage_truth.get('dominant_user_book_share') or 0) * 100:.1f}%")
 
@@ -362,7 +372,12 @@ if coverage_tab.open:
         counts = coverage_truth.get("user_counts", {}) or {}
         for book in USER_BOOKS:
             count = int(counts.get(book, 0) or 0)
-            status = f"{count:,} rows" if count else "not visible in this scan"
+            if count:
+                status = f"{count:,} rows"
+            elif book in PROVIDER_UNSUPPORTED_USER_BOOKS:
+                status = "provider coverage unavailable"
+            else:
+                status = "not visible in this scan"
             st.write(f"**{book}** — {status}")
     
         st.divider()
@@ -388,5 +403,5 @@ if coverage_tab.open:
         st.markdown("#### Market families detected")
         markets = coverage.get("markets", []) or []
         st.write(", ".join(str(market).replace("_", " ") for market in markets) if markets else "None returned.")
-        st.caption("Reference books may establish comparison context, but only the configured five sportsbooks are treated as actionable books.")
+        st.caption("Reference books may establish comparison context. My sportsbooks are actionable when the provider returns them; provider-unsupported books are labeled separately instead of counted as missing coverage.")
     

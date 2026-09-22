@@ -3,6 +3,8 @@ from dashboard.propwar_today import MARKET, MEDIUM
 from dashboard.propwar_today_owner import (
     _fantasy_actions,
     _market_actions,
+    _role_publication_ready,
+    _today_role_actions,
 )
 
 
@@ -233,5 +235,22 @@ def test_sensitive_owner_pages_keep_defense_in_depth_guards() -> None:
 
     assert "state_store.owner_write_authorized(config)" in knockout
     assert knockout.index("state_store.owner_write_authorized(config)") < knockout.index(
-        'section(\n    "What Should I Do?"'
+        'with st.spinner("Loading private Knockout state...")'
     )
+
+
+def test_today_role_actions_fail_closed_when_publication_is_behind(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dashboard.propwar_today_owner.load_operational_status",
+        lambda: {
+            "status": "PUBLISHED",
+            "season": 2026,
+            "published_through_week": 1,
+        },
+    )
+    ready, reason = _role_publication_ready(2026, 2)
+    assert ready is False
+    assert "needs 2026 through Week 2" in reason
+
+    _today_role_actions.clear()
+    assert _today_role_actions(2026, required_through_week=2) == ()
