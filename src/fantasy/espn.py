@@ -154,7 +154,7 @@ def _position_from_player(player: Mapping[str, Any]) -> str:
     return DEFAULT_POSITION_MAP.get(default_position, "")
 
 
-def _library_player_row(player: object) -> dict[str, Any] | None:
+def _library_player_row(player: object, *, week: int | None = None) -> dict[str, Any] | None:
     name = str(getattr(player, "name", "") or "").strip()
     position = str(getattr(player, "position", "") or "").strip().upper().replace("D/ST", "DST")
     nfl_team = str(getattr(player, "proTeam", "") or "").strip().upper()
@@ -171,6 +171,21 @@ def _library_player_row(player: object) -> dict[str, Any] | None:
             return None
         return value if math.isfinite(value) else None
 
+    projected_points = finite_number("projected_points")
+    stats = getattr(player, "stats", None)
+    if week is not None and isinstance(stats, Mapping):
+        week_stats = stats.get(week)
+        if week_stats is None:
+            week_stats = stats.get(str(week))
+        if isinstance(week_stats, Mapping):
+            raw_week_projection = week_stats.get("projected_points")
+            try:
+                week_projection = float(raw_week_projection)
+            except (TypeError, ValueError):
+                week_projection = None
+            if week_projection is not None and math.isfinite(week_projection):
+                projected_points = week_projection
+
     return {
         "player": name,
         "position": position,
@@ -178,7 +193,7 @@ def _library_player_row(player: object) -> dict[str, Any] | None:
         "espn_player_id": str(getattr(player, "playerId", "") or ""),
         "injury_status": str(getattr(player, "injuryStatus", "") or "").strip(),
         "percent_owned": finite_number("percent_owned"),
-        "projected_points": finite_number("projected_points"),
+        "projected_points": projected_points,
     }
 
 
@@ -550,99 +565,98 @@ class EspnFantasyClient:
                 swid=self.credentials.swid,
             )
             scoring_week = max(1, int(current_week or getattr(league, "current_week", 1) or 1))
+            teams = list(getattr(league, "teams", []) or [])
             available_players = [
                 row for player in league.free_agents(week=scoring_week, size=500)
-                if (row := _library_player_row(player)) is not None
+                if (row := _library_player_row(player, week=scoring_week)) is not None
             ]
+
             roster_player_metrics: list[dict[str, Any]] = []
-            try:
-                current_boxes = list(league.box_scores(scoring_week))
-            except Exception:
-                current_boxes = []
-            for box in current_boxes:
-                for side in ("home", "away"):
-                    team = getattr(box, f"{side}_team", None)
-                    if team is None or int(getattr(team, "team_id", 0) or 0) != int(team_id):
-                        continue
-                    lineup = list(getattr(box, f"{side}_lineup", []) or [])
-                    roster_player_metrics = [
-                        row for player in lineup
-                        if (row := _library_player_row(player)) is not None
-                    ]
-                    break
-                if roster_player_metrics:
-                    break
+            for team in teams:
+                if int(getattr(team, "team_id", 0) or 0) != int(team_id):
+                    continue
+                roster_player_metrics = [
+                    row for player in list(getattr(team, "roster", []) or [])
+                    if (row := _library_player_row(player, week=scoring_week)) is not None
+                ]
+                break
 
-            if not roster_player_metrics:
-                for team in list(getattr(league, "teams", []) or []):
-                    if int(getattr(team, "team_id", 0) or 0) != int(team_id):
-                        continue
-                    roster_player_metrics = [
-                        row for player in list(getattr(team, "roster", []) or [])
-                        if (row := _library_player_row(player)) is not None
-                    ]
-                    break
-
-            week_scores: list[dict[str, Any]] = []
-            detections: list[dict[str, Any]] = []
-            team_total = len(list(getattr(league, "teams", []) or []))
+            historical_lineups: dict[int, dict[int, list[dict[str, Any]]]] = {}
             for completed_week in range(1, scoring_week):
                 try:
-                    completed_boxes = list(league.box_scores(completed_week))
+                    boxes = list(league.box_scores(completed_week))
                 except Exception:
-                    continue
-                current_scores: list[dict[str, Any]] = []
-                lineups: dict[int, list[dict[str, Any]]] = {}
-                for box in completed_boxes:
+                    boxes = []
+                week_lineups: dict[int, list[dict[str, Any]]] = {}
+                for box in boxes:
                     for side in ("home", "away"):
                         team = getattr(box, f"{side}_team", None)
                         if team is None:
                             continue
-                        score = float(getattr(box, f"{side}_score", 0) or 0)
                         team_key = int(getattr(team, "team_id", 0) or 0)
-                        owners = []
-                        for owner in list(getattr(team, "owners", []) or []):
-                            if isinstance(owner, Mapping):
-                                display = str(owner.get("displayName") or "").strip()
-                                if not display:
-                                    display = " ".join(
-                                        value for value in [
-                                            str(owner.get("firstName") or "").strip(),
-                                            str(owner.get("lastName") or "").strip(),
-                                        ] if value
-                                    )
-                                if display:
-                                    owners.append(display)
-                        current_scores.append({
-                            "week": completed_week,
-                            "team_id": team_key,
-                            "team": str(getattr(team, "team_name", "") or f"Team {team_key}").strip(),
-                            "owners": owners,
-                            "score": score,
-                        })
                         lineup = list(getattr(box, f"{side}_lineup", []) or [])
-                        lineups[team_key] = [
+                        week_lineups[team_key] = [
                             row for player in lineup
-                            if (row := _library_player_row(player)) is not None
+                            if (row := _library_player_row(player, week=completed_week)) is not None
                         ]
+                historical_lineups[completed_week] = week_lineups
+
+            week_scores: list[dict[str, Any]] = []
+            detections: list[dict[str, Any]] = []
+            eliminated_ids: set[int] = set()
+            for completed_week in range(1, scoring_week):
+                current_scores: list[dict[str, Any]] = []
+                for team in teams:
+                    team_key = int(getattr(team, "team_id", 0) or 0)
+                    scores = list(getattr(team, "scores", []) or [])
+                    if team_key <= 0 or len(scores) < completed_week:
+                        continue
+                    try:
+                        score = float(scores[completed_week - 1])
+                    except (TypeError, ValueError):
+                        continue
+                    owners = []
+                    for owner in list(getattr(team, "owners", []) or []):
+                        if isinstance(owner, Mapping):
+                            display = str(owner.get("displayName") or "").strip()
+                            if not display:
+                                display = " ".join(
+                                    value for value in [
+                                        str(owner.get("firstName") or "").strip(),
+                                        str(owner.get("lastName") or "").strip(),
+                                    ] if value
+                                )
+                            if display:
+                                owners.append(display)
+                    current_scores.append({
+                        "week": completed_week,
+                        "team_id": team_key,
+                        "team": str(getattr(team, "team_name", "") or f"Team {team_key}").strip(),
+                        "owners": owners,
+                        "score": score,
+                    })
                 week_scores.extend(current_scores)
-                if not team_total or len(current_scores) != team_total:
+
+                eligible = [row for row in current_scores if int(row["team_id"]) not in eliminated_ids]
+                if not eligible:
                     continue
-                low_score = min(float(row["score"]) for row in current_scores)
+                low_score = min(float(row["score"]) for row in eligible)
                 lowest = [
-                    row for row in current_scores
+                    row for row in eligible
                     if abs(float(row["score"]) - low_score) < 1e-9
                 ]
                 if len(lowest) != 1:
                     continue
                 detected = dict(lowest[0])
+                eliminated_id = int(detected["team_id"])
+                eliminated_ids.add(eliminated_id)
                 mine = next(
                     (row for row in current_scores if int(row["team_id"]) == int(team_id)),
                     None,
                 )
-                detected["players"] = lineups.get(int(detected["team_id"]), [])
+                detected["players"] = historical_lineups.get(completed_week, {}).get(eliminated_id, [])
                 detected["user_score"] = float(mine["score"]) if mine is not None else None
-                detected["user_eliminated"] = int(detected["team_id"]) == int(team_id)
+                detected["user_eliminated"] = eliminated_id == int(team_id)
                 detections.append(detected)
 
             return {
