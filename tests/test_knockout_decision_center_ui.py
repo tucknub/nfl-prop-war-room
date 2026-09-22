@@ -116,7 +116,8 @@ def test_connected_espn_supplies_weekly_score() -> None:
 def test_knockout_renders_espn_lineup_slots_and_static_rules() -> None:
     source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
 
-    assert 'if not connection.get("roster_details"):' in source
+    assert "projection_coverage < 0.5" in source
+    assert "detected_eliminations" in source
     assert 'espn_connection.get("roster_details")' in source
     assert '"Slot": role' in source
     assert 'st.table(roster_table[["Slot", "Player", "Pos", "NFL", "Status"]])' in source

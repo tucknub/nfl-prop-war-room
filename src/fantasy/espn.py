@@ -555,20 +555,45 @@ class EspnFantasyClient:
                 if (row := _library_player_row(player)) is not None
             ]
             roster_player_metrics: list[dict[str, Any]] = []
-            for team in list(getattr(league, "teams", []) or []):
-                if int(getattr(team, "team_id", 0) or 0) != int(team_id):
-                    continue
-                roster_player_metrics = [
-                    row for player in list(getattr(team, "roster", []) or [])
-                    if (row := _library_player_row(player)) is not None
-                ]
-                break
+            try:
+                current_boxes = list(league.box_scores(scoring_week))
+            except Exception:
+                current_boxes = []
+            for box in current_boxes:
+                for side in ("home", "away"):
+                    team = getattr(box, f"{side}_team", None)
+                    if team is None or int(getattr(team, "team_id", 0) or 0) != int(team_id):
+                        continue
+                    lineup = list(getattr(box, f"{side}_lineup", []) or [])
+                    roster_player_metrics = [
+                        row for player in lineup
+                        if (row := _library_player_row(player)) is not None
+                    ]
+                    break
+                if roster_player_metrics:
+                    break
 
-            completed_week = scoring_week - 1
+            if not roster_player_metrics:
+                for team in list(getattr(league, "teams", []) or []):
+                    if int(getattr(team, "team_id", 0) or 0) != int(team_id):
+                        continue
+                    roster_player_metrics = [
+                        row for player in list(getattr(team, "roster", []) or [])
+                        if (row := _library_player_row(player)) is not None
+                    ]
+                    break
+
             week_scores: list[dict[str, Any]] = []
-            lineups: dict[int, list[dict[str, Any]]] = {}
-            if completed_week >= 1:
-                for box in league.box_scores(completed_week):
+            detections: list[dict[str, Any]] = []
+            team_total = len(list(getattr(league, "teams", []) or []))
+            for completed_week in range(1, scoring_week):
+                try:
+                    completed_boxes = list(league.box_scores(completed_week))
+                except Exception:
+                    continue
+                current_scores: list[dict[str, Any]] = []
+                lineups: dict[int, list[dict[str, Any]]] = {}
+                for box in completed_boxes:
                     for side in ("home", "away"):
                         team = getattr(box, f"{side}_team", None)
                         if team is None:
@@ -581,11 +606,14 @@ class EspnFantasyClient:
                                 display = str(owner.get("displayName") or "").strip()
                                 if not display:
                                     display = " ".join(
-                                        value for value in [str(owner.get("firstName") or "").strip(), str(owner.get("lastName") or "").strip()] if value
+                                        value for value in [
+                                            str(owner.get("firstName") or "").strip(),
+                                            str(owner.get("lastName") or "").strip(),
+                                        ] if value
                                     )
                                 if display:
                                     owners.append(display)
-                        week_scores.append({
+                        current_scores.append({
                             "week": completed_week,
                             "team_id": team_key,
                             "team": str(getattr(team, "team_name", "") or f"Team {team_key}").strip(),
@@ -597,24 +625,32 @@ class EspnFantasyClient:
                             row for player in lineup
                             if (row := _library_player_row(player)) is not None
                         ]
-
-            detected = None
-            team_total = len(list(getattr(league, "teams", []) or []))
-            if completed_week >= 1 and team_total and len(week_scores) == team_total:
-                low_score = min(float(row["score"]) for row in week_scores)
-                lowest = [row for row in week_scores if abs(float(row["score"]) - low_score) < 1e-9]
-                if len(lowest) == 1:
-                    detected = dict(lowest[0])
-                    mine = next((row for row in week_scores if int(row["team_id"]) == int(team_id)), None)
-                    detected["players"] = lineups.get(int(detected["team_id"]), [])
-                    detected["user_score"] = float(mine["score"]) if mine is not None else None
-                    detected["user_eliminated"] = int(detected["team_id"]) == int(team_id)
+                week_scores.extend(current_scores)
+                if not team_total or len(current_scores) != team_total:
+                    continue
+                low_score = min(float(row["score"]) for row in current_scores)
+                lowest = [
+                    row for row in current_scores
+                    if abs(float(row["score"]) - low_score) < 1e-9
+                ]
+                if len(lowest) != 1:
+                    continue
+                detected = dict(lowest[0])
+                mine = next(
+                    (row for row in current_scores if int(row["team_id"]) == int(team_id)),
+                    None,
+                )
+                detected["players"] = lineups.get(int(detected["team_id"]), [])
+                detected["user_score"] = float(mine["score"]) if mine is not None else None
+                detected["user_eliminated"] = int(detected["team_id"]) == int(team_id)
+                detections.append(detected)
 
             return {
                 "available_players": available_players,
                 "roster_player_metrics": roster_player_metrics,
                 "league_week_scores": week_scores,
-                "detected_elimination": detected,
+                "detected_elimination": detections[-1] if detections else None,
+                "detected_eliminations": detections,
             }
         except Exception as exc:
             raise EspnFantasyError(

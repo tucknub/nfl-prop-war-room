@@ -194,3 +194,43 @@ def test_espn_sync_preserves_lineup_details() -> None:
     assert len(details) == 14
     assert details[0]["lineup_role"] == "QB"
     assert details[0]["lineup_slot_id"] == 0
+
+
+def test_sync_backfills_all_completed_week_eliminations() -> None:
+    snap = snapshot()
+    snap["current_week"] = 3
+    released = [dict(row) for row in snap["roster"]]
+    snap["detected_eliminations"] = [
+        {
+            "week": 1,
+            "team_id": 18,
+            "team": "Week One Chop",
+            "score": 61.2,
+            "user_score": 118.4,
+            "user_eliminated": False,
+            "players": released,
+        },
+        {
+            "week": 2,
+            "team_id": 17,
+            "team": "Week Two Chop",
+            "score": 67.8,
+            "user_score": 126.1,
+            "user_eliminated": False,
+            "players": released,
+        },
+    ]
+    snap["detected_elimination"] = snap["detected_eliminations"][-1]
+
+    updated = apply_espn_snapshot(
+        base_state(),
+        snap,
+        credential_envelope="encrypted-token",
+    )
+
+    assert [row["week"] for row in updated["eliminations"]] == [1, 2]
+    assert [row["team"] for row in updated["eliminations"]] == ["Week One Chop", "Week Two Chop"]
+    assert len(updated["weekly_results"]) == 2
+    assert len(updated["released_rosters"]) == 2
+    assert engine.active_team_count(updated) == 16
+    assert len(updated["espn_connection"]["detected_eliminations"]) == 2

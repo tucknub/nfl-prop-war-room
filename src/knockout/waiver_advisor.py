@@ -10,6 +10,7 @@ _DECISION_ORDER = {"ADD": 0, "VALUE": 1, "PASS": 2}
 _SERIOUS_STATUSES = {
     "IR",
     "INJURED RESERVE",
+    "INJURY RESERVE",
     "OUT",
     "SUSPENDED",
     "SUSPENSION",

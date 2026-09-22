@@ -198,7 +198,16 @@ def apply_espn_snapshot(
         league["espn_team_id"] = int(snapshot.get("team_id") or 0)
     updated["league"] = league
 
-    _reconcile_detected_elimination(updated, snapshot)
+    detected_rows = snapshot.get("detected_eliminations")
+    if isinstance(detected_rows, list):
+        for detected in detected_rows:
+            if not isinstance(detected, Mapping):
+                continue
+            replay = dict(snapshot)
+            replay["detected_elimination"] = detected
+            _reconcile_detected_elimination(updated, replay)
+    else:
+        _reconcile_detected_elimination(updated, snapshot)
 
     existing = dict(updated.get("espn_connection") or {})
     envelope = credential_envelope or str(existing.get("credential_envelope") or "")
@@ -227,6 +236,11 @@ def apply_espn_snapshot(
         if "detected_elimination" in snapshot
         else dict(existing.get("detected_elimination") or {})
     )
+    detected_eliminations = (
+        [dict(row) for row in snapshot.get("detected_eliminations") or [] if isinstance(row, Mapping)]
+        if "detected_eliminations" in snapshot
+        else list(existing.get("detected_eliminations") or [])
+    )
     connection = {
         "provider": "ESPN",
         "mode": "PRIVATE_COOKIE_READ_ONLY",
@@ -244,6 +258,7 @@ def apply_espn_snapshot(
         "league_faab": league_faab,
         "league_week_scores": league_week_scores,
         "detected_elimination": detected_elimination,
+        "detected_eliminations": detected_eliminations,
         "roster_details": [
             {
                 "player": str(row.get("player") or "").strip(),

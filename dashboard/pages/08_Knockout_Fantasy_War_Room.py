@@ -94,11 +94,24 @@ def _sync_age_seconds(last_synced_at_utc: object) -> float | None:
 
 
 def _auto_sync_due(connection: dict, *, max_age_seconds: int = 900) -> bool:
-    if not connection.get("roster_details"):
-        return True
+    roster_details = list(connection.get("roster_details") or [])
+    metrics = list(connection.get("roster_player_metrics") or [])
+    projected = sum(row.get("projected_points") is not None for row in metrics)
+    projection_coverage = projected / len(metrics) if metrics else 0.0
+    source_week = int(connection.get("source_week") or 0)
+    detected = list(connection.get("detected_eliminations") or [])
+    completed_weeks = max(0, source_week - 1)
+
+    needs_refresh = (
+        not roster_details
+        or projection_coverage < 0.5
+        or len(detected) < completed_weeks
+    )
     age = _sync_age_seconds(connection.get("last_synced_at_utc"))
-    if age is None or age < max_age_seconds:
+    stale = age is not None and age >= max_age_seconds
+    if not needs_refresh and not stale:
         return False
+
     last_attempt = st.session_state.get("knockout_espn_auto_attempt_at")
     attempt_age = _sync_age_seconds(last_attempt)
     return attempt_age is None or attempt_age >= 300
@@ -195,7 +208,7 @@ st.caption(
     f"{active_teams} teams alive · ${int(state.get('faab_remaining', 0))} FAAB · private authoritative state loaded"
 )
 
-render_knockout_war_room(state)
+war_room = render_knockout_war_room(state)
 
 section(
     "ESPN League Sync",
@@ -402,316 +415,317 @@ with st.expander("League rules", expanded=False):
     )
     st.table(rules)
 
-section("Phase strategy", "The objective is survival first; the optimal risk posture changes as the field shrinks.")
-for priority in engine.strategy_priorities(state):
-    st.markdown(f"- {priority}")
+with st.expander("Roster, history & manual corrections", expanded=False):
+    section("Phase strategy", "The objective is survival first; the optimal risk posture changes as the field shrinks.")
+    for priority in engine.strategy_priorities(state):
+        st.markdown(f"- {priority}")
 
-section("Roster state", "ESPN is the authoritative roster and FAAB source; Knockout-specific history stays private.")
-roster = list(state.get("roster") or [])
-if roster:
-    st.success(f"Current roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
-    if readiness["ready"]:
-        st.caption("Current roster can fill every required starter slot.")
-    else:
-        st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
-    espn_roster_details = list(espn_connection.get("roster_details") or [])
-    if espn_roster_details:
-        slot_order = {
-            "QB": 0,
-            "RB": 1,
-            "WR": 2,
-            "TE": 3,
-            "FLEX": 4,
-            "K": 5,
-            "D/ST": 6,
-            "DST": 6,
-            "Bench": 7,
-            "IR": 8,
-        }
-        roster_rows = []
-        for row in espn_roster_details:
-            role = str(row.get("lineup_role") or "").strip() or "Roster"
-            injury = str(row.get("injury_status") or "").strip()
-            roster_rows.append(
-                {
-                    "_order": slot_order.get(role, 9),
-                    "Slot": role,
-                    "Player": str(row.get("player") or "").strip(),
-                    "Pos": str(row.get("position") or "").strip(),
-                    "NFL": str(row.get("nfl_team") or "").strip(),
-                    "Status": "" if injury in {"", "ACTIVE"} else injury.title(),
-                }
+    section("Roster state", "ESPN is the authoritative roster and FAAB source; Knockout-specific history stays private.")
+    roster = list(state.get("roster") or [])
+    if roster:
+        st.success(f"Current roster loaded. {readiness['roster_count']} players are recorded for Week {state['current_week']}.")
+        if readiness["ready"]:
+            st.caption("Current roster can fill every required starter slot.")
+        else:
+            st.warning("Roster is saved, but the current lineup is incomplete: " + "; ".join(readiness["lineup_errors"]))
+        espn_roster_details = list(espn_connection.get("roster_details") or [])
+        if espn_roster_details:
+            slot_order = {
+                "QB": 0,
+                "RB": 1,
+                "WR": 2,
+                "TE": 3,
+                "FLEX": 4,
+                "K": 5,
+                "D/ST": 6,
+                "DST": 6,
+                "Bench": 7,
+                "IR": 8,
+            }
+            roster_rows = []
+            for row in espn_roster_details:
+                role = str(row.get("lineup_role") or "").strip() or "Roster"
+                injury = str(row.get("injury_status") or "").strip()
+                roster_rows.append(
+                    {
+                        "_order": slot_order.get(role, 9),
+                        "Slot": role,
+                        "Player": str(row.get("player") or "").strip(),
+                        "Pos": str(row.get("position") or "").strip(),
+                        "NFL": str(row.get("nfl_team") or "").strip(),
+                        "Status": "" if injury in {"", "ACTIVE"} else injury.title(),
+                    }
+                )
+            roster_table = pd.DataFrame(roster_rows).sort_values(
+                ["_order", "Slot", "Player"],
+                kind="stable",
             )
-        roster_table = pd.DataFrame(roster_rows).sort_values(
-            ["_order", "Slot", "Player"],
-            kind="stable",
-        )
-        st.table(roster_table[["Slot", "Player", "Pos", "NFL", "Status"]])
-    else:
-        roster_table = pd.DataFrame(roster).rename(
-            columns={"player": "Player", "position": "Pos", "nfl_team": "NFL"}
-        )
-        st.table(roster_table[["Player", "Pos", "NFL"]])
-else:
-    if str(league.get("espn_league_id") or "").strip():
-        st.info(
-            "No roster is loaded. This is intentional: the previous manual roster was cleared and Elwood TKO is waiting for ESPN sync."
-        )
-        st.caption(
-            "When ESPN connects successfully, this section will populate from ESPN. Manual roster upload is disabled for this league so there is no ambiguity about the data source."
-        )
-    else:
-        st.info("No roster is loaded yet.")
-        st.caption("Manual draft intake is available only when no ESPN league is configured.")
-        upload = st.file_uploader("Draft roster CSV", type=["csv"], key="knockout_roster_upload")
-        pasted = st.text_area(
-            "Or paste roster CSV",
-            placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
-            height=150,
-            key="knockout_roster_paste",
-        )
-        raw_text = ""
-        if upload is not None:
-            raw_text = upload.getvalue().decode("utf-8-sig")
-        elif pasted.strip():
-            raw_text = pasted
-
-        if raw_text:
-            try:
-                parsed = _parse_roster_csv(raw_text)
-                normalized = engine.validate_roster(parsed, roster_size=int(league["roster_size"]))
-                lineup = engine.lineup_readiness(normalized)
-                st.success("Roster structure validates.")
-                if lineup["ready"]:
-                    st.caption("This roster can fill every required starter slot.")
-                else:
-                    st.warning("Starter coverage is incomplete: " + "; ".join(lineup["errors"]))
-                st.dataframe(pd.DataFrame(normalized), hide_index=True, width="stretch")
-                confirm = st.checkbox("I confirm this is my final drafted roster.", key="knockout_confirm_draft")
-                if st.button("Save draft roster", type="primary", disabled=not confirm, key="knockout_save_draft"):
-                    updated = engine.record_draft_state(state, normalized)
-                    _persist_transition(config, state, updated, "Record 2026 Knockout Fantasy draft roster")
-                    st.success("Draft roster saved to private Knockout state.")
-                    st.rerun()
-            except Exception as exc:
-                st.error(str(exc))
-
-if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
-    if espn_connection:
-        section(
-            "Roster / FAAB updates",
-            "ESPN is authoritative for completed adds, drops, and FAAB balance.",
-        )
-        st.info(
-            "No manual roster or FAAB entry is needed. PropWar will pick up completed ESPN moves on the next automatic refresh or when you click Resync ESPN."
-        )
-    else:
-        section("Waiver / FAAB transaction", "Record completed add/drop results only.")
-        with st.form("knockout_waiver_transaction_form", clear_on_submit=False):
-            add_col, pos_col, team_col = st.columns([2, 1, 1])
-            with add_col:
-                add_player = st.text_input("Player added", key="knockout_add_player")
-            with pos_col:
-                add_position = st.selectbox("Position", ["QB", "RB", "WR", "TE", "K", "DST"], key="knockout_add_position")
-            with team_col:
-                add_nfl_team = st.text_input("NFL team", max_chars=3, key="knockout_add_team")
-
-            drop_options = [str(row["player"]) for row in roster]
-            spend_col, drop_col = st.columns([1, 2])
-            with spend_col:
-                spend = st.number_input(
-                    "FAAB spent",
-                    min_value=0,
-                    max_value=int(state.get("faab_remaining", 0)),
-                    value=0,
-                    step=1,
-                    key="knockout_faab_spend",
-                )
-            with drop_col:
-                drop_player = st.selectbox("Player dropped", drop_options, key="knockout_drop_player")
-            transaction_note = st.text_input("Transaction note", placeholder="Optional context", key="knockout_transaction_note")
-            confirm_transaction = st.checkbox(
-                "I confirm this add/drop is final and the FAAB amount is correct.", key="knockout_confirm_transaction"
+            st.table(roster_table[["Slot", "Player", "Pos", "NFL", "Status"]])
+        else:
+            roster_table = pd.DataFrame(roster).rename(
+                columns={"player": "Player", "position": "Pos", "nfl_team": "NFL"}
             )
-            can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
-            record_transaction = st.form_submit_button("Record waiver transaction")
-        if record_transaction and not can_record_transaction:
-            st.warning(
-                "Enter the added player and NFL team, then confirm the final transaction."
-            )
-        elif record_transaction:
-            try:
-                updated = engine.record_waiver_transaction(
-                    state,
-                    amount=int(spend),
-                    add_player={"player": add_player, "position": add_position, "nfl_team": add_nfl_team},
-                    drop_player=drop_player,
-                    note=transaction_note,
-                )
-                _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} waiver transaction")
-                st.success("Roster and FAAB ledger updated.")
-                st.rerun()
-            except Exception as exc:
-                st.error(str(exc))
-
-    section("Weekly survival result", "Advance the league only after the week's elimination is official.")
-    with st.form("knockout_week_result_form", clear_on_submit=False):
-        result_col, eliminated_col = st.columns(2)
-        with result_col:
-            if espn_connection:
-                espn_week_score = espn_connection.get("source_current_score")
-                user_score = float(espn_week_score or 0.0)
-                st.number_input(
-                    "My fantasy score (ESPN)",
-                    min_value=0.0,
-                    value=user_score,
-                    step=0.1,
-                    disabled=True,
-                    key="knockout_user_score_espn",
-                )
-                if espn_week_score is None:
-                    st.caption("ESPN has not posted a Week 1 score yet.")
-            else:
-                user_score = st.number_input(
-                    "My fantasy score",
-                    min_value=0.0,
-                    value=0.0,
-                    step=0.1,
-                    key="knockout_user_score",
-                )
-        with eliminated_col:
-            eliminated_team = st.text_input("Eliminated fantasy team", key="knockout_eliminated_team")
-        user_eliminated = st.checkbox("My team was eliminated this week", key="knockout_user_eliminated")
-        confirm_week = st.checkbox("I confirm this week's elimination is final.", key="knockout_confirm_week")
-        can_record = bool(confirm_week and eliminated_team.strip())
-        complete_week = st.form_submit_button(
-            f"Complete Week {int(state['current_week'])}",
-            type="primary",
-        )
-    if complete_week and not can_record:
-        st.warning("Enter the eliminated team and confirm the result is final.")
-    elif complete_week:
-        updated = engine.record_week_state(
-            state,
-            user_score=float(user_score),
-            eliminated_team=eliminated_team,
-            user_eliminated=user_eliminated,
-        )
-        _persist_transition(config, state, updated, f"Complete Knockout Fantasy Week {state['current_week']}")
-        st.success("Weekly Knockout state updated.")
-        st.rerun()
-
-latest_elimination = None
-if state.get("eliminations"):
-    latest_elimination = max(
-        state["eliminations"],
-        key=lambda row: int(row.get("week", 0)),
-    )
-
-if latest_elimination is not None:
-    release_week = int(latest_elimination.get("week", 0))
-    release_team = str(latest_elimination.get("team") or "").strip()
-    released_entry = next(
-        (
-            row
-            for row in state.get("released_rosters") or []
-            if int(row.get("week", -1)) == release_week
-        ),
-        None,
-    )
-
-    section(
-        "Eliminated roster → waivers",
-        "Capture the actual released roster once the elimination is official, then evaluate structural fit against your roster.",
-    )
-    if released_entry is None:
-        st.warning(
-            f"Week {release_week}: {release_team} was eliminated, but the released "
-            "14-player roster has not been loaded yet."
-        )
-        release_upload = st.file_uploader(
-            "Released roster CSV",
-            type=["csv"],
-            key=f"knockout_release_upload_{release_week}",
-        )
-        release_paste = st.text_area(
-            "Or paste released roster CSV",
-            placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
-            height=150,
-            key=f"knockout_release_paste_{release_week}",
-        )
-        release_text = ""
-        if release_upload is not None:
-            release_text = release_upload.getvalue().decode("utf-8-sig")
-        elif release_paste.strip():
-            release_text = release_paste
-
-        if release_text:
-            try:
-                parsed_release = _parse_roster_csv(release_text)
-                normalized_release = engine.validate_roster(
-                    parsed_release,
-                    roster_size=int(league["roster_size"]),
-                )
-                st.success(
-                    f"Released roster validates: {len(normalized_release)} players from {release_team}."
-                )
-                st.dataframe(
-                    pd.DataFrame(normalized_release),
-                    hide_index=True,
-                    width="stretch",
-                )
-                confirm_release = st.checkbox(
-                    f"I confirm this is {release_team}'s full released roster.",
-                    key=f"knockout_confirm_release_{release_week}",
-                )
-                if st.button(
-                    f"Save Week {release_week} released roster",
-                    type="primary",
-                    disabled=not confirm_release,
-                    key=f"knockout_save_release_{release_week}",
-                ):
-                    updated = engine.record_released_roster(
-                        state,
-                        week=release_week,
-                        team=release_team,
-                        players=normalized_release,
-                    )
-                    _persist_transition(
-                        config,
-                        state,
-                        updated,
-                        f"Record Knockout Week {release_week} released roster",
-                    )
-                    st.success("Released roster saved to private Knockout state.")
-                    st.rerun()
-            except Exception as exc:
-                st.error(str(exc))
+            st.table(roster_table[["Player", "Pos", "NFL"]])
     else:
-        st.success(
-            f"Week {release_week} released roster loaded: {release_team}."
-        )
-        fits = engine.released_roster_fit(state, released_entry)
-        if fits:
-            st.markdown("**Roster-fit screen**")
-            st.dataframe(pd.DataFrame(fits), hide_index=True, width="stretch")
+        if str(league.get("espn_league_id") or "").strip():
+            st.info(
+                "No roster is loaded. This is intentional: the previous manual roster was cleared and Elwood TKO is waiting for ESPN sync."
+            )
             st.caption(
-                "Fit is structural only. It identifies positional need; it does not "
-                "rank player quality, project weekly points, or recommend a FAAB bid."
+                "When ESPN connects successfully, this section will populate from ESPN. Manual roster upload is disabled for this league so there is no ambiguity about the data source."
             )
+        else:
+            st.info("No roster is loaded yet.")
+            st.caption("Manual draft intake is available only when no ESPN league is configured.")
+            upload = st.file_uploader("Draft roster CSV", type=["csv"], key="knockout_roster_upload")
+            pasted = st.text_area(
+                "Or paste roster CSV",
+                placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
+                height=150,
+                key="knockout_roster_paste",
+            )
+            raw_text = ""
+            if upload is not None:
+                raw_text = upload.getvalue().decode("utf-8-sig")
+            elif pasted.strip():
+                raw_text = pasted
 
-section("Season history", "Private ledger of eliminations, weekly scores, released rosters, and waiver/FAAB moves.")
-if state.get("weekly_results"):
-    results = pd.DataFrame(state["weekly_results"])
-    eliminations = pd.DataFrame(state.get("eliminations") or [])
-    history = results.merge(eliminations, on="week", how="left", suffixes=("", "_eliminated"))
-    st.dataframe(history, hide_index=True, width="stretch")
-else:
-    st.caption("No weekly results recorded yet.")
+            if raw_text:
+                try:
+                    parsed = _parse_roster_csv(raw_text)
+                    normalized = engine.validate_roster(parsed, roster_size=int(league["roster_size"]))
+                    lineup = engine.lineup_readiness(normalized)
+                    st.success("Roster structure validates.")
+                    if lineup["ready"]:
+                        st.caption("This roster can fill every required starter slot.")
+                    else:
+                        st.warning("Starter coverage is incomplete: " + "; ".join(lineup["errors"]))
+                    st.dataframe(pd.DataFrame(normalized), hide_index=True, width="stretch")
+                    confirm = st.checkbox("I confirm this is my final drafted roster.", key="knockout_confirm_draft")
+                    if st.button("Save draft roster", type="primary", disabled=not confirm, key="knockout_save_draft"):
+                        updated = engine.record_draft_state(state, normalized)
+                        _persist_transition(config, state, updated, "Record 2026 Knockout Fantasy draft roster")
+                        st.success("Draft roster saved to private Knockout state.")
+                        st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
 
-if state.get("faab_transactions"):
-    st.markdown("**Waiver / FAAB transactions**")
-    st.dataframe(pd.DataFrame(state["faab_transactions"]), hide_index=True, width="stretch")
+    if roster and current_phase not in {"ELIMINATED", "CHAMPION"}:
+        if espn_connection:
+            section(
+                "Roster / FAAB updates",
+                "ESPN is authoritative for completed adds, drops, and FAAB balance.",
+            )
+            st.info(
+                "No manual roster or FAAB entry is needed. PropWar will pick up completed ESPN moves on the next automatic refresh or when you click Resync ESPN."
+            )
+        else:
+            section("Waiver / FAAB transaction", "Record completed add/drop results only.")
+            with st.form("knockout_waiver_transaction_form", clear_on_submit=False):
+                add_col, pos_col, team_col = st.columns([2, 1, 1])
+                with add_col:
+                    add_player = st.text_input("Player added", key="knockout_add_player")
+                with pos_col:
+                    add_position = st.selectbox("Position", ["QB", "RB", "WR", "TE", "K", "DST"], key="knockout_add_position")
+                with team_col:
+                    add_nfl_team = st.text_input("NFL team", max_chars=3, key="knockout_add_team")
+
+                drop_options = [str(row["player"]) for row in roster]
+                spend_col, drop_col = st.columns([1, 2])
+                with spend_col:
+                    spend = st.number_input(
+                        "FAAB spent",
+                        min_value=0,
+                        max_value=int(state.get("faab_remaining", 0)),
+                        value=0,
+                        step=1,
+                        key="knockout_faab_spend",
+                    )
+                with drop_col:
+                    drop_player = st.selectbox("Player dropped", drop_options, key="knockout_drop_player")
+                transaction_note = st.text_input("Transaction note", placeholder="Optional context", key="knockout_transaction_note")
+                confirm_transaction = st.checkbox(
+                    "I confirm this add/drop is final and the FAAB amount is correct.", key="knockout_confirm_transaction"
+                )
+                can_record_transaction = bool(confirm_transaction and add_player.strip() and add_nfl_team.strip())
+                record_transaction = st.form_submit_button("Record waiver transaction")
+            if record_transaction and not can_record_transaction:
+                st.warning(
+                    "Enter the added player and NFL team, then confirm the final transaction."
+                )
+            elif record_transaction:
+                try:
+                    updated = engine.record_waiver_transaction(
+                        state,
+                        amount=int(spend),
+                        add_player={"player": add_player, "position": add_position, "nfl_team": add_nfl_team},
+                        drop_player=drop_player,
+                        note=transaction_note,
+                    )
+                    _persist_transition(config, state, updated, f"Record Knockout Week {state['current_week']} waiver transaction")
+                    st.success("Roster and FAAB ledger updated.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+
+        section("Weekly survival result", "Advance the league only after the week's elimination is official.")
+        with st.form("knockout_week_result_form", clear_on_submit=False):
+            result_col, eliminated_col = st.columns(2)
+            with result_col:
+                if espn_connection:
+                    espn_week_score = espn_connection.get("source_current_score")
+                    user_score = float(espn_week_score or 0.0)
+                    st.number_input(
+                        "My fantasy score (ESPN)",
+                        min_value=0.0,
+                        value=user_score,
+                        step=0.1,
+                        disabled=True,
+                        key="knockout_user_score_espn",
+                    )
+                    if espn_week_score is None:
+                        st.caption("ESPN has not posted a Week 1 score yet.")
+                else:
+                    user_score = st.number_input(
+                        "My fantasy score",
+                        min_value=0.0,
+                        value=0.0,
+                        step=0.1,
+                        key="knockout_user_score",
+                    )
+            with eliminated_col:
+                eliminated_team = st.text_input("Eliminated fantasy team", key="knockout_eliminated_team")
+            user_eliminated = st.checkbox("My team was eliminated this week", key="knockout_user_eliminated")
+            confirm_week = st.checkbox("I confirm this week's elimination is final.", key="knockout_confirm_week")
+            can_record = bool(confirm_week and eliminated_team.strip())
+            complete_week = st.form_submit_button(
+                f"Complete Week {int(state['current_week'])}",
+                type="primary",
+            )
+        if complete_week and not can_record:
+            st.warning("Enter the eliminated team and confirm the result is final.")
+        elif complete_week:
+            updated = engine.record_week_state(
+                state,
+                user_score=float(user_score),
+                eliminated_team=eliminated_team,
+                user_eliminated=user_eliminated,
+            )
+            _persist_transition(config, state, updated, f"Complete Knockout Fantasy Week {state['current_week']}")
+            st.success("Weekly Knockout state updated.")
+            st.rerun()
+
+    latest_elimination = None
+    if state.get("eliminations"):
+        latest_elimination = max(
+            state["eliminations"],
+            key=lambda row: int(row.get("week", 0)),
+        )
+
+    if latest_elimination is not None:
+        release_week = int(latest_elimination.get("week", 0))
+        release_team = str(latest_elimination.get("team") or "").strip()
+        released_entry = next(
+            (
+                row
+                for row in state.get("released_rosters") or []
+                if int(row.get("week", -1)) == release_week
+            ),
+            None,
+        )
+
+        section(
+            "Eliminated roster → waivers",
+            "Capture the actual released roster once the elimination is official, then evaluate structural fit against your roster.",
+        )
+        if released_entry is None:
+            st.warning(
+                f"Week {release_week}: {release_team} was eliminated, but the released "
+                "14-player roster has not been loaded yet."
+            )
+            release_upload = st.file_uploader(
+                "Released roster CSV",
+                type=["csv"],
+                key=f"knockout_release_upload_{release_week}",
+            )
+            release_paste = st.text_area(
+                "Or paste released roster CSV",
+                placeholder="player,position,nfl_team\nPlayer One,RB,IND\n...",
+                height=150,
+                key=f"knockout_release_paste_{release_week}",
+            )
+            release_text = ""
+            if release_upload is not None:
+                release_text = release_upload.getvalue().decode("utf-8-sig")
+            elif release_paste.strip():
+                release_text = release_paste
+
+            if release_text:
+                try:
+                    parsed_release = _parse_roster_csv(release_text)
+                    normalized_release = engine.validate_roster(
+                        parsed_release,
+                        roster_size=int(league["roster_size"]),
+                    )
+                    st.success(
+                        f"Released roster validates: {len(normalized_release)} players from {release_team}."
+                    )
+                    st.dataframe(
+                        pd.DataFrame(normalized_release),
+                        hide_index=True,
+                        width="stretch",
+                    )
+                    confirm_release = st.checkbox(
+                        f"I confirm this is {release_team}'s full released roster.",
+                        key=f"knockout_confirm_release_{release_week}",
+                    )
+                    if st.button(
+                        f"Save Week {release_week} released roster",
+                        type="primary",
+                        disabled=not confirm_release,
+                        key=f"knockout_save_release_{release_week}",
+                    ):
+                        updated = engine.record_released_roster(
+                            state,
+                            week=release_week,
+                            team=release_team,
+                            players=normalized_release,
+                        )
+                        _persist_transition(
+                            config,
+                            state,
+                            updated,
+                            f"Record Knockout Week {release_week} released roster",
+                        )
+                        st.success("Released roster saved to private Knockout state.")
+                        st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+        else:
+            st.success(
+                f"Week {release_week} released roster loaded: {release_team}."
+            )
+            fits = engine.released_roster_fit(state, released_entry)
+            if fits:
+                st.markdown("**Roster-fit screen**")
+                st.dataframe(pd.DataFrame(fits), hide_index=True, width="stretch")
+                st.caption(
+                    "Fit is structural only. It identifies positional need; it does not "
+                    "rank player quality, project weekly points, or recommend a FAAB bid."
+                )
+
+    section("Season history", "Private ledger of eliminations, weekly scores, released rosters, and waiver/FAAB moves.")
+    if state.get("weekly_results"):
+        results = pd.DataFrame(state["weekly_results"])
+        eliminations = pd.DataFrame(state.get("eliminations") or [])
+        history = results.merge(eliminations, on="week", how="left", suffixes=("", "_eliminated"))
+        st.dataframe(history, hide_index=True, width="stretch")
+    else:
+        st.caption("No weekly results recorded yet.")
+
+    if state.get("faab_transactions"):
+        st.markdown("**Waiver / FAAB transactions**")
+        st.dataframe(pd.DataFrame(state["faab_transactions"]), hide_index=True, width="stretch")
 
 st.caption(
     "Knockout War Room uses authoritative ESPN league state plus synced weekly projections for player-level decisions. "
