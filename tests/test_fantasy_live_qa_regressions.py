@@ -34,7 +34,7 @@ def test_market_start_sit_keeps_filled_uncovered_starters_visible():
 def test_action_center_watch_metric_matches_watch_rows():
     source = _page_source()
 
-    assert '"Watch / action leagues"' in source
+    assert '"Leagues with health flags"' in source
     assert "len(action_center.action_leagues)" in source
 
 

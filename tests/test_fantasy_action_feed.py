@@ -357,3 +357,87 @@ def test_fantasy_hq_exposes_what_should_i_do_feed():
     assert "Recommended action" in page
     assert "Decision delta" in page
     assert "FAAB" in page
+
+
+def test_questionable_starter_surfaces_as_health_monitor(monkeypatch):
+    league = _league("a", "League A")
+    starter = SimpleNamespace(name="Questionable RB", player_id="q1")
+    slot = SimpleNamespace(
+        slot_index=0,
+        slot="RB",
+        needs_watch=True,
+        needs_action=False,
+        starter=starter,
+        reason="Current starter status: Questionable.",
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_lineup_check",
+        lambda *_args, **_kwargs: SimpleNamespace(slots=(slot,)),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_market_start_sit_board",
+        lambda *_args, **_kwargs: SimpleNamespace(slots=()),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_market_ranked_waivers",
+        lambda *_args, **_kwargs: SimpleNamespace(candidates=()),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_trade_candidate_board",
+        lambda *_args, **_kwargs: SimpleNamespace(matches=()),
+    )
+    result = build_weekly_action_feed((league,), {}, ())
+    assert len(result.actions) == 1
+    row = result.actions[0]
+    assert row.action_type == HEALTH
+    assert row.priority == PRIORITY_MEDIUM
+    assert row.player_ids == ("q1",)
+    assert "Monitor Questionable RB" in row.title
+
+
+def test_market_screened_two_way_trade_surfaces(monkeypatch):
+    league = _league("a", "League A")
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_lineup_check",
+        lambda *_args, **_kwargs: SimpleNamespace(slots=()),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_market_start_sit_board",
+        lambda *_args, **_kwargs: SimpleNamespace(slots=()),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_market_ranked_waivers",
+        lambda *_args, **_kwargs: SimpleNamespace(candidates=()),
+    )
+    give = SimpleNamespace(name="My QB", sleeper_player_id="g1")
+    receive = SimpleNamespace(name="Their RB", sleeper_player_id="r1")
+    match = SimpleNamespace(
+        two_way=True,
+        partner_roster_id="2",
+        partner_team_name="Trade Partner",
+        players_i_could_target=(receive,),
+        my_players_they_could_target=(give,),
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.build_trade_candidate_board",
+        lambda *_args, **_kwargs: SimpleNamespace(matches=(match,)),
+    )
+    analysis = SimpleNamespace(
+        verdict="ACCEPT",
+        mutual_lineup_gain=True,
+        my_team=SimpleNamespace(lineup_delta=2.5),
+        confidence="HIGH",
+        reason="Both starting lineups improve.",
+    )
+    monkeypatch.setattr(
+        "src.fantasy.action_feed.analyze_market_trade",
+        lambda *_args, **_kwargs: analysis,
+    )
+    result = build_weekly_action_feed((league,), {}, ())
+    assert len(result.actions) == 1
+    row = result.actions[0]
+    assert row.action_type == TRADE
+    assert row.priority == PRIORITY_MEDIUM
+    assert row.partner_roster_id == "2"
+    assert row.player_ids == ("g1", "r1")
+    assert "My QB for Their RB" in row.title

@@ -6,6 +6,8 @@ from typing import Any, Iterable, Mapping
 from .lineup_check import NEEDS_ACTION, build_lineup_check
 from .market_start_sit import FILL, SWAP, build_market_start_sit_board
 from .market_waivers import HIGH, LOW, MEDIUM, build_market_ranked_waivers
+from .market_trade import ACCEPT, BALANCED, analyze_market_trade
+from .trade_candidates import build_trade_candidate_board
 from .models import FantasyLeagueState, LeagueTransaction, MatchupTeam
 from .sleeper import SleeperTrendingPlayer
 
@@ -276,7 +278,68 @@ def _league_actions(
             )
         )
 
+    trade_board = build_trade_candidate_board(league, player_catalog)
+    for match in tuple(row for row in trade_board.matches if row.two_way)[:3]:
+        best_trade = None
+        for receive in match.players_i_could_target[:3]:
+            for give in match.my_players_they_could_target[:3]:
+                try:
+                    analysis = analyze_market_trade(
+                        league,
+                        player_catalog,
+                        prop_rows,
+                        partner_roster_id=match.partner_roster_id,
+                        give_player_ids=(give.sleeper_player_id,),
+                        receive_player_ids=(receive.sleeper_player_id,),
+                    )
+                except Exception:
+                    continue
+                if analysis.verdict not in {ACCEPT, BALANCED} or not analysis.mutual_lineup_gain:
+                    continue
+                candidate = (float(analysis.my_team.lineup_delta), analysis, give, receive)
+                if best_trade is None or candidate[0] > best_trade[0]:
+                    best_trade = candidate
+        if best_trade is None:
+            continue
+        _, analysis, give, receive = best_trade
+        rows.append(
+            _item(
+                league,
+                priority=(PRIORITY_MEDIUM if analysis.verdict == ACCEPT else PRIORITY_LOW),
+                action_type=TRADE,
+                title=f"Explore {give.name} for {receive.name}",
+                action=f"Review a trade with {match.partner_team_name}.",
+                detail=analysis.reason,
+                impact_points=float(analysis.my_team.lineup_delta),
+                confidence=analysis.confidence,
+                player_ids=(give.sleeper_player_id, receive.sleeper_player_id),
+                partner_roster_id=match.partner_roster_id,
+                bonus=6.0,
+            )
+        )
+
     for slot in lineup.slots:
+        if slot.needs_watch and slot.starter is not None:
+            already_covered = any(
+                slot.starter.player_id in row.player_ids
+                and row.action_type in {LINEUP, WAIVER}
+                for row in rows
+            )
+            if not already_covered:
+                rows.append(
+                    _item(
+                        league,
+                        priority=PRIORITY_MEDIUM,
+                        action_type=HEALTH,
+                        title=f"Monitor {slot.starter.name}: Questionable",
+                        action=f"Monitor {slot.starter.name} before kickoff.",
+                        detail=slot.reason + " Keep an eligible replacement ready.",
+                        impact_points=None,
+                        confidence="HIGH",
+                        player_ids=(slot.starter.player_id,),
+                    )
+                )
+            continue
         if not slot.needs_action or slot.slot_index in resolved_action_slots:
             continue
         matching_waiver = any(

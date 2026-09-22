@@ -1131,8 +1131,8 @@ def _render_all_league_decision_center(
     st.markdown("### What Should I Do?")
     st.caption(
         "Across all Sleeper leagues, ranked by urgency and decision-support deltas. "
-        "This combines lineup, waiver, roster-health, and mutual trade "
-        "signals into one decision feed."
+        "This combines immediate lineup fixes, market-ranked waivers, starter-status "
+        "watches, and market-screened mutual trade opportunities."
     )
 
     weekly_feed = None
@@ -1192,8 +1192,8 @@ def _render_all_league_decision_center(
             if not weekly_feed.actions:
                 if weekly_feed.drafted_leagues:
                     st.success(
-                        "No market-backed lineup, waiver, health, or mutual trade "
-                        "review currently clears the feed."
+                        "No immediate lineup, market-ranked waiver, starter-status, "
+                        "or market-screened mutual-trade move currently clears the feed."
                     )
                 else:
                     st.info(
@@ -1282,6 +1282,24 @@ def _render_all_league_decision_center(
                     for error in combined_feed_errors:
                         st.caption(error)
 
+    if action_center is not None and action_center.action_leagues:
+        st.markdown("#### Monitor, not action yet")
+        st.caption(
+            "These are factual roster-health watches that do not currently require a lineup move. "
+            "Bench Questionables stay here unless they move into a starter slot or create a real roster need."
+        )
+        monitor_rows = []
+        for league_row in action_center.action_leagues:
+            for issue in league_row.top_issues:
+                monitor_rows.append({
+                    "League": league_row.league_name,
+                    "Level": issue.severity,
+                    "Player / area": issue.player_name or issue.position or "Roster",
+                    "Watch": issue.message,
+                })
+        if monitor_rows:
+            st.dataframe(pd.DataFrame(monitor_rows[:8]), hide_index=True, width="stretch")
+
     with st.expander("All-league health & coverage", expanded=False):
         st.markdown("#### All-league status")
         if action_center is None:
@@ -1299,11 +1317,11 @@ def _render_all_league_decision_center(
                 f"{action_center.drafted_count}/{action_center.league_count}",
             )
             action_c.metric(
-                "Watch / action leagues",
+                "Leagues with health flags",
                 len(action_center.action_leagues),
             )
             action_d.metric(
-                "Cross-league opportunities",
+                "Cross-league availability",
                 action_center.opportunity_count,
             )
 
@@ -1385,7 +1403,8 @@ def _render_all_league_decision_center(
                     "on one of your Sleeper rosters "
                     f"{'are' if action_center.opportunity_count != 1 else 'is'} "
                     "currently available in another Sleeper league. "
-                    "Open Cross-league below for the exact players and leagues."
+                    "This is availability context, not an automatic pickup recommendation. "
+                    "Open Across leagues below for the exact players and leagues."
                 )
 
 
