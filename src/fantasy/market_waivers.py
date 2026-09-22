@@ -29,6 +29,7 @@ LOW = "LOW"
 _NEED_ORDER = {HIGH: 0, MEDIUM: 1, LOW: 2}
 
 MIN_UPGRADE_EDGE = 1.0
+MIN_BENCH_UPGRADE_EDGE = 2.0
 _SUPPORTED_POSITIONS = frozenset({"QB", "RB", "WR", "TE", "FB"})
 _DECISION_GRADE_COMPONENTS = {
     "QB": frozenset({"passing_yards", "passing_tds", "interceptions", "rushing_yards"}),
@@ -87,6 +88,27 @@ class MarketWaiverBoard:
     @property
     def full_coverage_count(self) -> int:
         return sum(1 for row in self.candidates if row.coverage == FULL)
+
+
+@dataclass(frozen=True)
+class MarketBenchUpgradeCandidate:
+    sleeper_player_id: str
+    player_name: str
+    position: str
+    nfl_team: str
+    market_fantasy_points: float
+    coverage: str
+    drop_player_id: str
+    drop_player_name: str
+    drop_market_fantasy_points: float
+    improvement: float
+    trend_count: int = 0
+    mine_elsewhere: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MarketBenchUpgradeBoard:
+    candidates: tuple[MarketBenchUpgradeCandidate, ...]
 
 
 @dataclass(frozen=True)
@@ -242,6 +264,131 @@ def build_market_ranked_waivers(
         market_covered_count=covered_count,
         candidates=tuple(ranked[:limit]),
     )
+
+
+def build_market_bench_upgrades(
+    league: FantasyLeagueState,
+    player_catalog: Mapping[str, Mapping[str, Any]],
+    prop_rows: Iterable[Mapping[str, Any]],
+    *,
+    all_leagues: Iterable[FantasyLeagueState] = (),
+    trends: Iterable[SleeperTrendingPlayer] = (),
+    limit: int = 3,
+) -> MarketBenchUpgradeBoard:
+    if not league.ownership_ready:
+        raise ValueError("Sleeper ownership is not ready; bench upgrades are unsafe")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 10:
+        raise ValueError("limit must be an integer from 1 to 10")
+    my_roster = _my_roster(league)
+    if my_roster is None:
+        return MarketBenchUpgradeBoard(candidates=())
+
+
+    rows = tuple(dict(row) for row in prop_rows)
+    trend_counts = {
+        str(row.player_id): max(0, int(row.count))
+        for row in trends
+        if str(row.player_id or "").strip()
+    }
+    league_rows = tuple(all_leagues)
+    starter_ids = {str(value) for value in my_roster.starters if str(value or "").strip()}
+    reserve_ids = {str(value) for value in (*my_roster.reserve, *my_roster.taxi) if str(value or "").strip()}
+    bench_ids = tuple(
+        str(value) for value in my_roster.players
+        if str(value or "").strip() not in {"", "0"}
+        and str(value) not in starter_ids
+        and str(value) not in reserve_ids
+    )
+
+    weakest_by_position: dict[str, tuple[str, str, float]] = {}
+    for player_id in bench_ids:
+        player = player_catalog.get(player_id) or {}
+        position = str(player.get("position") or "").strip().upper()
+        if position not in _SUPPORTED_POSITIONS:
+            continue
+        name = _player_name(player, player_id)
+        baseline = build_market_fantasy_baseline(
+            name, position, league.rules.scoring_settings, rows
+        )
+        if (
+            baseline is None
+            or baseline.coverage_status not in USABLE_COVERAGE
+            or not _decision_grade_baseline(baseline, position)
+        ):
+            continue
+        points = float(baseline.fantasy_points)
+        current = weakest_by_position.get(position)
+        if current is None or points < current[2]:
+            weakest_by_position[position] = (player_id, name, points)
+
+    rostered = _rostered_player_ids(league)
+    ranked: list[MarketBenchUpgradeCandidate] = []
+    for raw_player_id, raw_player in player_catalog.items():
+        player_id = str(raw_player_id or "").strip()
+        if not player_id or player_id in rostered or not isinstance(raw_player, Mapping):
+            continue
+        if raw_player.get("active") is False:
+            continue
+        position = str(raw_player.get("position") or "").strip().upper()
+        drop = weakest_by_position.get(position)
+        if drop is None:
+            continue
+        raw_status = (
+            str(raw_player.get("injury_status") or "").strip()
+            or str(raw_player.get("status") or "").strip()
+            or "Active"
+        )
+        if raw_status.casefold() in SERIOUS_STATUSES or raw_status.casefold() in {"retired", "inactive"}:
+            continue
+
+        name = _player_name(raw_player, player_id)
+        baseline = build_market_fantasy_baseline(
+            name, position, league.rules.scoring_settings, rows
+        )
+        if (
+            baseline is None
+            or baseline.coverage_status not in USABLE_COVERAGE
+            or not _decision_grade_baseline(baseline, position)
+        ):
+            continue
+        candidate_points = float(baseline.fantasy_points)
+        drop_id, drop_name, drop_points = drop
+        improvement = candidate_points - drop_points
+        if improvement < MIN_BENCH_UPGRADE_EDGE:
+            continue
+        mine_elsewhere: tuple[str, ...] = ()
+        if league_rows:
+            cross = lookup_live_sleeper_player(league_rows, player_id)
+            selected_name = league.name or league.platform_league_id
+            mine_elsewhere = tuple(name for name in cross.mine_in if name != selected_name)
+
+        ranked.append(
+            MarketBenchUpgradeCandidate(
+                sleeper_player_id=player_id,
+                player_name=name,
+                position=position,
+                nfl_team=str(raw_player.get("team") or "FA").strip().upper() or "FA",
+                market_fantasy_points=candidate_points,
+                coverage=baseline.coverage_status,
+                drop_player_id=drop_id,
+                drop_player_name=drop_name,
+                drop_market_fantasy_points=drop_points,
+                improvement=improvement,
+                trend_count=trend_counts.get(player_id, 0),
+                mine_elsewhere=mine_elsewhere,
+            )
+        )
+
+    ranked.sort(
+        key=lambda row: (
+            -row.improvement,
+            0 if row.coverage == FULL else 1,
+            -row.market_fantasy_points,
+            -row.trend_count,
+            row.player_name.casefold(),
+        )
+    )
+    return MarketBenchUpgradeBoard(candidates=tuple(ranked[:limit]))
 
 
 def _target_for_slot(
@@ -458,6 +605,18 @@ def _slot_labels(lineup: LineupCheck) -> Mapping[int, str]:
     return labels
 
 
+def _my_roster(league: FantasyLeagueState):
+    if league.my_platform_roster_id:
+        for roster in league.rosters:
+            if roster.platform_roster_id == league.my_platform_roster_id:
+                return roster
+    if league.current_platform_user_id:
+        for roster in league.rosters:
+            if roster.platform_user_id == league.current_platform_user_id:
+                return roster
+    return None
+
+
 def _rostered_player_ids(league: FantasyLeagueState) -> set[str]:
     return {
         str(player_id)
@@ -510,9 +669,13 @@ __all__ = [
     "LOW",
     "MEDIUM",
     "MIN_UPGRADE_EDGE",
+    "MIN_BENCH_UPGRADE_EDGE",
     "PARTIAL",
+    "MarketBenchUpgradeBoard",
+    "MarketBenchUpgradeCandidate",
     "MarketWaiverBoard",
     "MarketWaiverCandidate",
+    "build_market_bench_upgrades",
     "build_market_ranked_waivers",
     "_decision_grade_baseline",
 ]

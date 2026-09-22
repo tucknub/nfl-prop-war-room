@@ -6,6 +6,7 @@ from src.fantasy.lineup_check import build_lineup_check
 from src.fantasy.market_waivers import (
     HIGH,
     LOW,
+    build_market_bench_upgrades,
     build_market_ranked_waivers,
 )
 from src.fantasy.models import FantasyLeagueState, LeagueRules, Manager, Roster
@@ -449,3 +450,51 @@ def test_fantasy_hq_exposes_market_ranked_waivers():
     assert "Market-baseline difference" in page
     assert "Market baseline" in page
     assert "Need" in page
+
+
+def test_market_bench_upgrades_find_same_position_upgrade():
+    league = _league(
+        starters=("qb1", "rb1", "wr1", "te1"),
+        my_players=("qb1", "rb1", "wr1", "te1", "wr3"),
+    )
+    board = build_market_bench_upgrades(
+        league,
+        CATALOG,
+        [
+            *_wr_rows("Volume Wideout", rec=3.0, rec_yd=40.0),
+            *_wr_rows("Market Wideout", rec=6.5, rec_yd=78.0),
+        ],
+    )
+    assert len(board.candidates) == 1
+    row = board.candidates[0]
+    assert row.sleeper_player_id == "wr2"
+    assert row.drop_player_id == "wr3"
+    assert row.position == "WR"
+    assert row.improvement >= 2.0
+
+
+
+def test_market_bench_upgrades_reject_small_churn_edge():
+    league = _league(
+        starters=("qb1", "rb1", "wr1", "te1"),
+        my_players=("qb1", "rb1", "wr1", "te1", "wr3"),
+    )
+    board = build_market_bench_upgrades(
+        league,
+        CATALOG,
+        [
+            *_wr_rows("Volume Wideout", rec=5.0, rec_yd=62.0),
+            *_wr_rows("Market Wideout", rec=5.5, rec_yd=66.0),
+        ],
+    )
+    assert board.candidates == ()
+
+
+def test_fantasy_hq_exposes_best_bench_upgrades():
+    from pathlib import Path
+
+    page = (Path(__file__).resolve().parents[1] / "dashboard" / "pages" / "11_Fantasy_HQ.py").read_text(encoding="utf-8")
+    assert "Best Bench Upgrades" in page
+    assert "build_market_bench_upgrades" in page
+    assert "Drop candidate" in page
+    assert "Bench upgrade" in page

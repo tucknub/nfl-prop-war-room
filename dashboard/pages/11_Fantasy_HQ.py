@@ -61,6 +61,7 @@ from src.fantasy.market_start_sit import (  # noqa: E402
     build_market_start_sit_board,
 )
 from src.fantasy.market_waivers import (  # noqa: E402
+    build_market_bench_upgrades,
     build_market_ranked_waivers,
 )
 from src.fantasy.market_trade import (  # noqa: E402
@@ -2477,6 +2478,61 @@ def _render_sleeper() -> None:
                                     "THIN or missing markets never create a ranking."
                                 )
     
+                st.markdown("##### Best Bench Upgrades")
+                st.caption(
+                    "Small, conservative bench-upgrade board. A player appears only when a same-position "
+                    "free agent has decision-grade market coverage and clears the weakest comparable bench "
+                    "player by at least 2.00 current-week market-baseline points."
+                )
+
+                bench_upgrade_board = None
+                parlay_key = _secret_default("PARLAY_API_KEY")
+                if not parlay_key:
+                    st.info(
+                        "Best Bench Upgrades are unavailable because PARLAY_API_KEY is not configured."
+                    )
+                else:
+                    try:
+                        bench_snapshot = shared_prop_snapshot(parlay_key)
+                        bench_upgrade_board = build_market_bench_upgrades(
+                            league,
+                            all_catalog or _load_player_catalog(),
+                            bench_snapshot.get("rows", ()),
+                            all_leagues=(all_states or (league,)),
+                            trends=trending_adds,
+                            limit=3,
+                        )
+                    except Exception as exc:
+                        st.warning("Best Bench Upgrades could not be built.")
+                        st.caption(str(exc))
+
+                if bench_upgrade_board is not None:
+                    if not bench_upgrade_board.candidates:
+                        st.success(
+                            "No conservative same-position bench upgrade clears the +2.00-point threshold right now."
+                        )
+                    else:
+                        bench_rows = [
+                            {
+                                "Add": row.player_name,
+                                "Pos": row.position,
+                                "NFL": row.nfl_team,
+                                "Drop candidate": row.drop_player_name,
+                                "Add baseline": round(row.market_fantasy_points, 2),
+                                "Drop baseline": round(row.drop_market_fantasy_points, 2),
+                                "Bench upgrade": f"{row.improvement:+.2f}",
+                                "Coverage": row.coverage,
+                                "Sleeper adds": row.trend_count or "—",
+                                "I roster elsewhere": " · ".join(row.mine_elsewhere) or "—",
+                            }
+                            for row in bench_upgrade_board.candidates
+                        ]
+                        st.dataframe(pd.DataFrame(bench_rows), hide_index=True, width="stretch")
+                        st.caption(
+                            "This is a current-week bench-value screen, not an automatic drop command or rest-of-season ranking. "
+                            "Players without comparable decision-grade markets are intentionally left out."
+                        )
+
                 st.markdown("##### FAAB Market Context")
                 st.caption(
                     "Factual league budget and recent completed winning-bid context only. "
