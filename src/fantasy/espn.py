@@ -551,6 +551,15 @@ class EspnFantasyClient:
                 row for player in league.free_agents(week=scoring_week, size=500)
                 if (row := _library_player_row(player)) is not None
             ]
+            roster_player_metrics: list[dict[str, Any]] = []
+            for team in list(getattr(league, "teams", []) or []):
+                if int(getattr(team, "team_id", 0) or 0) != int(team_id):
+                    continue
+                roster_player_metrics = [
+                    row for player in list(getattr(team, "roster", []) or [])
+                    if (row := _library_player_row(player)) is not None
+                ]
+                break
 
             completed_week = scoring_week - 1
             week_scores: list[dict[str, Any]] = []
@@ -600,6 +609,7 @@ class EspnFantasyClient:
 
             return {
                 "available_players": available_players,
+                "roster_player_metrics": roster_player_metrics,
                 "league_week_scores": week_scores,
                 "detected_elimination": detected,
             }
@@ -883,6 +893,21 @@ def normalize_league_snapshot(
         faab_spent = 0
     faab_remaining = max(0, faab_start - faab_spent) if faab_start > 0 else None
 
+    league_faab: list[dict[str, Any]] = []
+    if faab_start > 0:
+        for team in teams:
+            team_tx = team.get("transactionCounter") if isinstance(team.get("transactionCounter"), Mapping) else {}
+            try:
+                team_spent = int(team_tx.get("acquisitionBudgetSpent") or 0)
+            except (TypeError, ValueError):
+                team_spent = 0
+            league_faab.append({
+                "team_id": int(team.get("id") or 0),
+                "team": _team_name(team),
+                "faab_spent": team_spent,
+                "faab_remaining": max(0, faab_start - team_spent),
+            })
+
     draft_settings = settings.get("draftSettings") if isinstance(settings.get("draftSettings"), Mapping) else {}
     try:
         roster_size = int(draft_settings.get("slotCount") or 0)
@@ -938,6 +963,7 @@ def normalize_league_snapshot(
         "faab_start": faab_start or None,
         "faab_spent": faab_spent,
         "faab_remaining": faab_remaining,
+        "league_faab": league_faab,
         "roster_size": roster_size or len(roster_rows),
         "roster": roster_rows,
         "current_score": current_score,

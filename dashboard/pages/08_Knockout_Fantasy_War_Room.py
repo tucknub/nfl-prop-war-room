@@ -21,6 +21,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from research_ui import note, page_intro, section  # noqa: E402
+from knockout_war_room_ui import render_knockout_war_room  # noqa: E402
 from src.fantasy import espn as espn_module  # noqa: E402
 
 # Streamlit Cloud can hot-reload this page while keeping an older dependency
@@ -194,42 +195,7 @@ st.caption(
     f"{active_teams} teams alive · ${int(state.get('faab_remaining', 0))} FAAB · private authoritative state loaded"
 )
 
-decision = engine.knockout_decision_summary(state)
-risk = decision["roster_risk"]
-faab_posture = decision["faab"]
-
-section(
-    "What Should I Do?",
-    "Decision-first Knockout guidance from the authoritative league state. Structural signals only; no fake survival probability or optimal bid.",
-)
-decision_cols = st.columns(4)
-decision_cols[0].metric("Next action", decision["next_action"])
-decision_cols[1].metric("Roster risk", risk["level"])
-decision_cols[2].metric("FAAB posture", faab_posture["posture"])
-decision_cols[3].metric("Teams alive", decision["teams_alive"])
-st.info(f"**WHY:** {decision['why']}")
-st.caption(
-    f"FAAB remaining: ${faab_posture['remaining']} / ${faab_posture['start']} "
-    f"({faab_posture['pct_remaining']:.0%}) · {faab_posture['reason']}"
-)
-
-if current_phase != "PRE_DRAFT" and state.get("roster"):
-    depth = engine.roster_depth(state)
-    depth_cols = st.columns(4)
-    depth_cols[0].metric("QB", depth["counts"]["QB"])
-    depth_cols[1].metric("RB", depth["counts"]["RB"])
-    depth_cols[2].metric("WR", depth["counts"]["WR"])
-    depth_cols[3].metric("TE", depth["counts"]["TE"])
-    if depth["starter_gaps"]:
-        st.error("Missing starter coverage: " + ", ".join(depth["starter_gaps"]))
-    elif depth["thin_positions"]:
-        st.warning("Thin structural depth: " + ", ".join(depth["thin_positions"]))
-    else:
-        st.success("Required starter coverage has bench cushion.")
-
-note(
-    "NO TRADES is a hard rule in this engine. Roster improvement after the draft comes from waivers/FAAB and the player pool released by eliminated teams."
-)
+render_knockout_war_room(state)
 
 section(
     "ESPN League Sync",
@@ -399,55 +365,24 @@ if league_context_error:
 
 available_players = list((state.get("espn_connection") or {}).get("available_players") or [])
 if available_players:
-    section(
-        "ESPN Waiver Pool",
-        "League-wide FREEAGENT/WAIVERS players from the same read-only ESPN connection. PropWar does not submit acquisitions.",
-    )
-    released = sorted(
-        state.get("released_rosters") or [],
-        key=lambda row: int(row.get("week", 0)),
-    )
-    if released:
-        latest_release = released[-1]
-        st.success(
-            f"Week {int(latest_release.get('week', 0))} eliminated roster recorded: "
-            f"{latest_release.get('team', 'Unknown team')} · {len(latest_release.get('players') or [])} players released."
+    with st.expander("Raw ESPN waiver pool", expanded=False):
+        waiver_frame = pd.DataFrame(available_players).rename(
+            columns={
+                "player": "Player",
+                "position": "Pos",
+                "nfl_team": "NFL",
+                "injury_status": "Status",
+                "percent_owned": "ESPN rostered %",
+                "projected_points": "ESPN week projection",
+            }
         )
-        fit_rows = engine.released_roster_fit(state, latest_release)
-        if fit_rows:
-            fit_frame = pd.DataFrame(fit_rows).rename(
-                columns={
-                    "player": "Player",
-                    "position": "Pos",
-                    "nfl_team": "NFL",
-                    "fit": "Roster fit",
-                    "why": "Why",
-                }
-            )
-            st.dataframe(fit_frame, width="stretch", hide_index=True)
-
-    waiver_frame = pd.DataFrame(available_players).rename(
-        columns={
-            "player": "Player",
-            "position": "Pos",
-            "nfl_team": "NFL",
-            "injury_status": "Status",
-            "percent_owned": "ESPN rostered %",
-            "projected_points": "ESPN week projection",
-        }
-    )
-    show_columns = [
-        column
-        for column in [
-            "Player", "Pos", "NFL", "Status", "ESPN rostered %", "ESPN week projection"
+        show_columns = [
+            column for column in [
+                "Player", "Pos", "NFL", "Status", "ESPN rostered %", "ESPN week projection"
+            ] if column in waiver_frame.columns
         ]
-        if column in waiver_frame.columns
-    ]
-    st.caption(
-        f"{len(waiver_frame)} available players synced from ESPN. "
-        "ESPN availability is source data, not a PropWar player ranking or FAAB recommendation."
-    )
-    st.dataframe(waiver_frame[show_columns], width="stretch", hide_index=True, height=520)
+        st.caption(f"{len(waiver_frame)} available players synced from ESPN. Use the War Room above for decisions.")
+        st.dataframe(waiver_frame[show_columns], width="stretch", hide_index=True, height=420)
 
 with st.expander("League rules", expanded=False):
     st.caption("Knockout Fantasy is modeled independently from the Margin Pool.")
