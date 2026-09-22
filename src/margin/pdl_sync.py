@@ -113,6 +113,14 @@ def reconcile_state(
         raise ValueError(f"PDL entrant {entrant_name!r} is not active")
 
     hero_results = _final_weeks(hero, completed_week, team_map)
+    prior_results = {
+        (int(row.get("week", 0)), str(row.get("team", ""))): row
+        for row in (stored_state.get("weekly_results") or [])
+    }
+    for row in hero_results:
+        prior = prior_results.get((int(row["week"]), str(row["team"]))) or {}
+        if prior.get("completed_at_utc"):
+            row["completed_at_utc"] = prior["completed_at_utc"]
     used_teams = [row["team"] for row in hero_results]
     cumulative_score = float(sum(row["actual_margin"] for row in hero_results))
 
