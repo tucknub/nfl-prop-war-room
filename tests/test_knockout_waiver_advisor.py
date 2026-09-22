@@ -122,6 +122,8 @@ def test_war_room_refuses_player_advice_when_roster_projection_coverage_is_too_l
 
 def test_espn_sync_persists_roster_metrics_and_full_league_faab() -> None:
     state = _state()
+    state["eliminations"] = []
+    state["released_rosters"] = []
     state["espn_connection"]["credential_envelope"] = "encrypted-token"
     snapshot = {
         "provider": "ESPN",

@@ -162,8 +162,11 @@ def _library_player_row(player: object) -> dict[str, Any] | None:
         return None
 
     def finite_number(attribute: str) -> float | None:
+        raw = getattr(player, attribute, None)
+        if raw is None:
+            return None
         try:
-            value = float(getattr(player, attribute, 0) or 0)
+            value = float(raw)
         except (TypeError, ValueError):
             return None
         return value if math.isfinite(value) else None

@@ -714,6 +714,6 @@ if state.get("faab_transactions"):
     st.dataframe(pd.DataFrame(state["faab_transactions"]), hide_index=True, width="stretch")
 
 st.caption(
-    "Knockout Decision Center uses authoritative league state, roster structure, field size, FAAB state, and recorded released rosters. "
-    "It intentionally does not claim a weekly survival probability, player-quality ranking, or optimal FAAB bid until projection and opponent-field evidence are validated."
+    "Knockout War Room uses authoritative ESPN league state plus synced weekly projections for player-level decisions. "
+    "Recommended bids and hard maxes are decision estimates, not promises of the exact winning bid; survival remains structural until live field projections are validated."
 )

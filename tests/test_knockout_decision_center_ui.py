@@ -12,16 +12,18 @@ def _source(relative: str) -> str:
 
 def test_knockout_page_is_decision_first() -> None:
     source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+    war_room = _source("dashboard/knockout_war_room_ui.py")
 
-    decision = source.index('"What Should I Do?"')
+    decision = source.index("render_knockout_war_room(state)")
     rules = source.index('st.expander("League rules"')
     roster = source.index('section("Roster state"')
 
     assert decision < rules < roster
-    assert 'decision_cols[0].metric("Next action"' in source
-    assert 'decision_cols[1].metric("Roster risk"' in source
-    assert 'decision_cols[2].metric("FAAB posture"' in source
-    assert 'decision_cols[3].metric("Teams alive"' in source
+    for heading in ("This Week", "The Chop", "Waiver War Room", "My Claim Plan", "Survival"):
+        assert f'"{heading}"' in war_room
+    assert '"FAAB rank"' in war_room
+    assert '"Hard max"' in war_room
+    assert '"Drop"' in war_room
 
 
 def test_knockout_released_roster_flow_is_private_and_fit_only() -> None:
@@ -36,12 +38,13 @@ def test_knockout_released_roster_flow_is_private_and_fit_only() -> None:
     assert "recommend a FAAB bid" in source
 
 
-def test_knockout_does_not_claim_unvalidated_probability_or_optimal_bid() -> None:
+def test_knockout_labels_estimates_without_fake_survival_probability() -> None:
     source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+    war_room = _source("dashboard/knockout_war_room_ui.py")
 
-    assert "no fake survival probability or optimal bid" in source
-    assert "does not claim a weekly survival probability" in source
-    assert "player-quality ranking" in source
+    assert "No fake elimination percentage." in war_room
+    assert "PropWar decision estimates" in war_room
+    assert "not claims about the exact winning bid" in war_room
     assert "V1 is the league-state foundation" not in source
 
 

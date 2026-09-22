@@ -31,20 +31,17 @@ def _candidate_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
                 "Player": row["player"],
                 "Pos": row["position"],
                 "Source": row["source"],
-                "ESPN Proj": row.get("projected_points"),
                 "Lineup +": row.get("lineup_delta"),
                 "Bid": f"${int(row.get('recommended_bid') or 0)}",
                 "Hard max": f"${int(row.get('max_bid') or 0)}",
                 "Drop": row.get("drop_player") or "—",
-                "Confidence": row.get("confidence") or "—",
                 "Why": row.get("why") or "",
             }
             for row in rows
         ]
     )
     if not frame.empty:
-        for column in ("ESPN Proj", "Lineup +"):
-            frame[column] = pd.to_numeric(frame[column], errors="coerce").round(1)
+        frame["Lineup +"] = pd.to_numeric(frame["Lineup +"], errors="coerce").round(1)
     return frame
 
 

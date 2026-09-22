@@ -169,7 +169,7 @@ def _phase_caps(state: Mapping[str, Any], decision: str) -> tuple[float, float]:
         return (55.0, 70.0) if decision == "ADD" else (35.0, 45.0)
     if current == "MIDSEASON":
         return (45.0, 55.0) if decision == "ADD" else (25.0, 35.0)
-    return (35.0, 45.0) if decision == "ADD" else (18.0, 25.0)
+    return (30.0, 38.0) if decision == "ADD" else (15.0, 22.0)
 
 
 def _bid_amounts(
@@ -193,8 +193,8 @@ def _bid_amounts(
     owned_bonus = 0.0
     if percent_owned is not None:
         owned_bonus = max(0.0, min(5.0, ((percent_owned - 80.0) / 20.0) * 5.0))
-    impact = max(0.0, lineup_delta) * 3.2
-    if depth_delta is not None:
+    impact = max(0.0, lineup_delta) * 3.0
+    if lineup_delta < 0.5 and depth_delta is not None:
         impact += min(10.0, max(0.0, depth_delta)) * 0.7
     base_pct = (5.0 if decision == "ADD" else 2.0) + impact + owned_bonus
     target_cap, max_cap = _phase_caps(state, decision)
@@ -259,8 +259,8 @@ def _candidate_row(
         tie_key = (
             float(after["total"]),
             1 if drop["player"] not in baseline_starters else 0,
-            -(drop_projection if drop_projection is not None else 0.0),
             -(drop_owned if drop_owned is not None else 0.0),
+            -(drop_projection if drop_projection is not None else 0.0),
             drop["player"].casefold(),
         )
         if best is None or tie_key > best[0]:
