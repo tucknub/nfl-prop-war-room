@@ -212,6 +212,16 @@ def apply_espn_snapshot(
         if "league_week_scores" in snapshot
         else list(existing.get("league_week_scores") or [])
     )
+    roster_player_metrics = (
+        _plain_available_players({"available_players": snapshot.get("roster_player_metrics") or []})
+        if "roster_player_metrics" in snapshot
+        else list(existing.get("roster_player_metrics") or [])
+    )
+    league_faab = (
+        [dict(row) for row in snapshot.get("league_faab") or []]
+        if "league_faab" in snapshot
+        else list(existing.get("league_faab") or [])
+    )
     detected_elimination = (
         dict(snapshot.get("detected_elimination") or {})
         if "detected_elimination" in snapshot
@@ -230,6 +240,8 @@ def apply_espn_snapshot(
         "source_current_score": snapshot.get("current_score"),
         "league_context_error": str(snapshot.get("league_context_error") or "").strip(),
         "available_players": available_players,
+        "roster_player_metrics": roster_player_metrics,
+        "league_faab": league_faab,
         "league_week_scores": league_week_scores,
         "detected_elimination": detected_elimination,
         "roster_details": [
