@@ -125,7 +125,7 @@ def render_launch_home() -> None:
 
         st.caption(
             "Use the top navigation for Players, Markets, and Fantasy. "
-            "Supporting research, Margin, and Knockout live under More."
+            "Supporting research, PDL, and Knockout live under More."
         )
         return
 
@@ -230,7 +230,8 @@ def main() -> None:
                 st.Page("pages/03_Games.py", title="Games", icon=":material/sports_football:", url_path="games"),
                 st.Page("pages/05_Explorer.py", title="Advanced Research", icon=":material/search:", url_path="explorer", visibility="hidden"),
                 st.Page("pages/10_Deep_Prop_Radar.py", title="Market Research", icon=":material/query_stats:", url_path="deep-prop-radar", visibility="hidden"),
-                st.Page("pages/07_Margin_War_Room.py", title="Margin", icon=":material/trophy:", url_path="margin"),
+                st.Page("pages/07_PDL_War_Room.py", title="PDL", icon=":material/trophy:", url_path="pdl"),
+                st.Page("pages/07_PDL_Legacy_Redirect.py", title="PDL", url_path="margin", visibility="hidden"),
                 st.Page("pages/08_Knockout_Fantasy_War_Room.py", title="Knockout", icon=":material/bolt:", url_path="knockout"),
                 st.Page("pages/06_Methodology.py", title="Methodology", icon=":material/menu_book:", url_path="methodology"),
             ],

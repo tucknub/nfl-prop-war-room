@@ -129,7 +129,7 @@ def test_owner_home_hooks_propwar_today_without_market_copy_in_public_app():
     assert 'href="/glitch-radar"' in owner
     assert '"/fantasy-hq?"' in owner
     assert 'urlencode({"fh_sleeper": username})' in owner
-    assert 'href="/margin"' in owner
+    assert 'href="/pdl"' in owner
 
 
 def test_today_uses_bounded_parallel_sleeper_loading_and_background_catalog() -> None:
@@ -204,7 +204,8 @@ def test_owner_navigation_registers_all_private_routes_only_in_owner_mode() -> N
         "glitch-radar": "pages/09_Glitch_Radar.py",
         "fantasy-hq": "pages/11_Fantasy_HQ.py",
         "deep-prop-radar": "pages/10_Deep_Prop_Radar.py",
-        "margin": "pages/07_Margin_War_Room.py",
+        "pdl": "pages/07_PDL_War_Room.py",
+        "margin": "pages/07_PDL_Legacy_Redirect.py",
         "knockout": "pages/08_Knockout_Fantasy_War_Room.py",
     }
     for route, page in private_routes.items():

@@ -1,4 +1,4 @@
-name: Margin Live V2
+name: PDL Live V2
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - 'dashboard/access_control.py'
       - 'dashboard/public_copy.py'
       - 'dashboard/home_page.py'
-      - 'dashboard/pages/07_Margin_War_Room.py'
+      - 'dashboard/pages/07_PDL_War_Room.py'
       - 'scripts/validate_margin_live.py'
       - 'scripts/validate_margin_championship.py'
       - 'scripts/update_margin_pool_state.py'
@@ -26,7 +26,7 @@ on:
       - 'dashboard/access_control.py'
       - 'dashboard/public_copy.py'
       - 'dashboard/home_page.py'
-      - 'dashboard/pages/07_Margin_War_Room.py'
+      - 'dashboard/pages/07_PDL_War_Room.py'
       - 'scripts/validate_margin_live.py'
       - 'scripts/validate_margin_championship.py'
       - 'scripts/update_margin_pool_state.py'
@@ -50,8 +50,8 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt pytest
-      - name: Compile Margin and owner-auth production files
-        run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py src/margin/championship.py src/margin/championship_override.py src/margin/pool_state.py src/margin/state_store.py dashboard/app.py dashboard/access_control.py dashboard/public_copy.py dashboard/home_page.py dashboard/pages/07_Margin_War_Room.py scripts/validate_margin_live.py scripts/validate_margin_championship.py scripts/update_margin_pool_state.py
+      - name: Compile PDL and owner-auth production files
+        run: python -m py_compile src/margin/live_engine.py src/margin/live_engine_v2.py src/margin/championship.py src/margin/championship_override.py src/margin/pool_state.py src/margin/state_store.py dashboard/app.py dashboard/access_control.py dashboard/public_copy.py dashboard/home_page.py dashboard/pages/07_PDL_War_Room.py scripts/validate_margin_live.py scripts/validate_margin_championship.py scripts/update_margin_pool_state.py
       - name: Smoke-test pool updater CLI
         run: python scripts/update_margin_pool_state.py --help >/dev/null
       - name: Validate Week 1 parity, Week 4 power, and rendered dashboard

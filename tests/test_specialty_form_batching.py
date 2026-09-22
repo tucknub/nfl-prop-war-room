@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_margin_field_preview_batches_multi_field_edits() -> None:
     source = (
-        ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
+        ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
     ).read_text(encoding="utf-8")
 
     assert 'with st.form("margin_pool_preview_form", clear_on_submit=False):' in source
@@ -19,7 +19,7 @@ def test_margin_field_preview_batches_multi_field_edits() -> None:
 
 def test_margin_authoritative_writes_require_confirmation_forms() -> None:
     source = (
-        ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
+        ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
     ).read_text(encoding="utf-8")
 
     assert 'with st.form("margin_week_completion_form", clear_on_submit=False):' in source

@@ -385,7 +385,7 @@ if available_players:
         st.dataframe(waiver_frame[show_columns], width="stretch", hide_index=True, height=420)
 
 with st.expander("League rules", expanded=False):
-    st.caption("Knockout Fantasy is modeled independently from the Margin Pool.")
+    st.caption("Knockout Fantasy is modeled independently from the Point Differential League.")
     rules = pd.DataFrame(
         [
             ("Teams", league["teams"]),

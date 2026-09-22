@@ -17,7 +17,7 @@ from src.margin import live_engine_v2 as margin_live  # noqa: E402
 from src.margin import pdl_sync, state_store  # noqa: E402
 
 
-PAGE = ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
+PAGE = ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
 
 
 def _base_state() -> dict[str, Any]:
@@ -173,7 +173,7 @@ def _metric_values(app: AppTest) -> dict[str, str]:
 
 
 def _preview_field(app: AppTest) -> None:
-    _element_by_label(app.text_input, "Pool name").set_value("Official Margin Pool")
+    _element_by_label(app.text_input, "Pool name").set_value("Official PDL")
     _element_by_label(app.number_input, "Entrants (0 = infer from rows)").set_value(3)
     _element_by_label(app.selectbox, "First-place tie rule").set_value("split")
     _element_by_label(app.selectbox, "Picks before deadline").set_value("hidden")
@@ -198,11 +198,11 @@ def test_week_completion_requires_confirmation_and_accepts_confirmed_zero(monkey
     _element_by_label(app.button, "Complete Week 1").click()
     app.run()
     assert box["writes"] == []
-    assert any("Confirm the official final margin" in str(item.value) for item in app.warning)
+    assert any("Confirm the official point differential" in str(item.value) for item in app.warning)
 
     _element_by_label(
         app.checkbox,
-        "I confirm this is the official final margin for LAC in Week 1.",
+        "I confirm this is the official point differential for LAC in Week 1.",
     ).set_value(True)
     _element_by_label(app.number_input, "Final point differential").set_value(0.0)
     _element_by_label(app.button, "Complete Week 1").click()
@@ -237,23 +237,23 @@ def test_validated_preview_is_non_mutating_until_confirmed_and_then_becomes_auth
     preview_calculations = sum(bool(item.get("opponents")) for item in box["calculation_states"])
     assert preview_calculations == 1
 
-    _element_by_label(app.button, "Save validated field to Margin state").click()
+    _element_by_label(app.button, "Save validated field to PDL state").click()
     app.run()
     assert box["writes"] == []
     assert any("Confirm the validated field" in str(item.value) for item in app.warning)
 
     _element_by_label(
         app.checkbox,
-        "I confirm the pool standings, scores, and burned-team inventories match the official Margin Pool.",
+        "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
     ).set_value(True)
-    _element_by_label(app.button, "Save validated field to Margin state").click()
+    _element_by_label(app.button, "Save validated field to PDL state").click()
     app.run()
 
     assert not app.exception
     assert len(box["writes"]) == 1
     saved = box["state"]
     assert saved["pool"] == {
-        "name": "Official Margin Pool",
+        "name": "Official PDL",
         "size": 3,
         "pick_deadline": "Sunday 12:55 PM ET",
         "picks_visible_before_deadline": False,
@@ -281,9 +281,9 @@ def test_stale_authoritative_state_rejects_validated_preview_persistence(monkeyp
     box["stale_fetch_count"] = 0
     _element_by_label(
         app.checkbox,
-        "I confirm the pool standings, scores, and burned-team inventories match the official Margin Pool.",
+        "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
     ).set_value(True)
-    _element_by_label(app.button, "Save validated field to Margin state").click()
+    _element_by_label(app.button, "Save validated field to PDL state").click()
     app.run()
 
     assert not app.exception

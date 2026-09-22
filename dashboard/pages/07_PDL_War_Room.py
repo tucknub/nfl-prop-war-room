@@ -106,22 +106,22 @@ def _persist_transition(config: dict[str, str], expected_state: dict, new_state:
 
 
 page_intro(
-    "Margin War Room",
-    "One-use NFL team allocation for the 2026 Margin Pool. Only the current week's recommendation is actionable; every future slot is provisional.",
+    "PDL War Room",
+    "One-use NFL team allocation for the 2026 Point Differential League. Only the current week's recommendation is actionable; every future slot is provisional.",
 )
 
 state_config = _state_config()
 if state_config is None:
-    st.error("Private Margin state is not configured. Add the private state repository settings in Streamlit Secrets.")
+    st.error("Private PDL state is not configured. Add the private state repository settings in Streamlit Secrets.")
     st.stop()
 if not state_store.owner_write_authorized(state_config):
-    st.error("Private Margin state is available only to the authenticated owner.")
+    st.error("Private PDL state is available only to the authenticated owner.")
     st.stop()
 try:
-    with st.spinner("Loading private Margin state..."):
+    with st.spinner("Loading private PDL state..."):
         stored_state, _state_sha = state_store.fetch_remote_state(state_config)
 except Exception as exc:
-    st.error("The private Margin state could not be loaded. No public fallback will be used.")
+    st.error("The private PDL state could not be loaded. No public fallback will be used.")
     st.exception(exc)
     st.stop()
 
@@ -131,7 +131,7 @@ try:
         if not _same_state(state, stored_state):
             sync_sha = state_store.write_remote_state(
                 state_config, state, expected_sha=_state_sha,
-                message=f"Sync Margin state from PDL through Week {state['completed_week']}",
+                message=f"Sync PDL state through Week {state['completed_week']}",
             )
             _state_sha = sync_sha or _state_sha
 except Exception as exc:
@@ -157,9 +157,9 @@ try:
         audit = _calculate_snapshot(state_text)
 except Exception as exc:
     if bool(state.get("season_complete")):
-        st.success("The 2026 Margin Pool season is complete.")
+        st.success("The 2026 Point Differential League season is complete.")
         st.stop()
-    st.error("The live Margin engine could not produce a valid board.")
+    st.error("The live PDL engine could not produce a valid board.")
     st.exception(exc)
     st.stop()
 
@@ -212,13 +212,13 @@ hero_top[0].metric("RECOMMENDED", str(pick["team"]))
 hero_top[1].metric("Opponent", str(pick["opponent"]))
 hero_top[2].metric("nflverse spread", _signed(pick["current_spread"]))
 hero_bottom = st.columns(3)
-hero_bottom[0].metric("Model mean margin", _signed(pick["calibrated_margin"]))
+hero_bottom[0].metric("Model mean point differential", _signed(pick["calibrated_margin"]))
 hero_bottom[1].metric("Historical loss-rate est.", _pct(pick["p_loss"]))
 hero_bottom[2].metric("Historical 20+ est.", _pct(pick["p_win20"]))
 
 st.caption(
     "Spread source: nflverse/nfldata games.csv snapshot loaded at refresh. "
-    "Margin/loss/20+ estimates are empirical 2006–2025 regular-season favorite outcomes weighted toward similar point spreads; they are model estimates, not sportsbook probabilities."
+    "Point-differential/loss/20+ estimates are empirical 2006–2025 regular-season favorite outcomes weighted toward similar point spreads; they are model estimates, not sportsbook probabilities."
 )
 
 if override_applied:
@@ -256,12 +256,12 @@ if committed_pick:
         commit_cols[0].metric("COMMITTED", committed_pick)
         commit_cols[1].metric("Opponent", str(r.opponent))
         commit_cols[2].metric("nflverse spread at refresh", _signed(r.current_spread))
-        commit_cols[3].metric("Model mean margin", _signed(r.calibrated_margin, 2))
+        commit_cols[3].metric("Model mean point differential", _signed(r.calibrated_margin, 2))
     else:
         st.success(f"War Room pick committed: {committed_pick}")
     note(
         f"{committed_pick} is recorded in the War Room for Week {state['current_week']}. "
-        "Make sure the same team is submitted on the official Margin Pool site."
+        "Make sure the same team is submitted on the official PDL site."
     )
 
     with st.form("margin_week_completion_form", clear_on_submit=False):
@@ -273,7 +273,7 @@ if committed_pick:
             key="margin_final_margin",
         )
         confirm_final_margin = st.checkbox(
-            f"I confirm this is the official final margin for {committed_pick} in Week {state['current_week']}.",
+            f"I confirm this is the official point differential for {committed_pick} in Week {state['current_week']}.",
             key="margin_final_margin_confirm",
         )
         complete_week = st.form_submit_button(
@@ -283,7 +283,7 @@ if committed_pick:
             width="stretch",
         )
     if complete_week and not confirm_final_margin:
-        st.warning("Confirm the official final margin before completing the week.")
+        st.warning("Confirm the official point differential before completing the week.")
     elif complete_week:
         try:
             updated_state = state_store.complete_week_state(state, final_margin)
@@ -291,7 +291,7 @@ if committed_pick:
                 state_config,
                 state,
                 updated_state,
-                f"Complete Margin Week {state['current_week']}: {committed_pick} {float(final_margin):+g}",
+                f"Complete PDL Week {state['current_week']}: {committed_pick} {float(final_margin):+g}",
             )
             _calculate_snapshot.clear()
             st.success(f"Week completed and saved to private state ({commit_sha[:8]}). Advancing the War Room.")
@@ -325,7 +325,7 @@ if committed_pick:
                     state_config,
                     state,
                     updated_state,
-                    f"Change Margin Week {state['current_week']} pick: {committed_pick} to {replacement}",
+                    f"Change PDL Week {state['current_week']} pick: {committed_pick} to {replacement}",
                 )
                 _calculate_snapshot.clear()
                 st.success(f"Recorded pick changed to {replacement} ({commit_sha[:8]}).")
@@ -355,7 +355,7 @@ else:
     selection_cols[0].metric("Selected", selected_team)
     selection_cols[1].metric("Opponent", str(selected_row.opponent))
     selection_cols[2].metric("nflverse spread", _signed(selected_row.current_spread))
-    selection_cols[3].metric("Model mean margin", _signed(selected_row.calibrated_margin, 2))
+    selection_cols[3].metric("Model mean point differential", _signed(selected_row.calibrated_margin, 2))
 
     acknowledge = st.checkbox(
         "I understand this records my War Room state only; I still submit the official pick on the pool site.",
@@ -375,7 +375,7 @@ else:
                 state_config,
                 state,
                 updated_state,
-                f"Commit Margin Week {state['current_week']} pick: {selected_team}",
+                f"Commit PDL Week {state['current_week']} pick: {selected_team}",
             )
             _calculate_snapshot.clear()
             st.success(f"{selected_team} recorded and saved to private state ({commit_sha[:8]}).")
@@ -399,7 +399,7 @@ board_display = pd.DataFrame({
     "Team": board["team"],
     "Opp": board["opponent"],
     "nflverse spread": board["current_spread"],
-    "Model mean margin": board["calibrated_margin"],
+    "Model mean point differential": board["calibrated_margin"],
     "Hist loss est.": board["p_loss"] * 100.0,
     "Hist 20+ est.": board["p_win20"] * 100.0,
     "Future cost": board["future_cost"],
@@ -412,7 +412,7 @@ st.dataframe(
     width="stretch",
     column_config={
         "nflverse spread": st.column_config.NumberColumn(format="%+.1f"),
-        "Model mean margin": st.column_config.NumberColumn(format="%+.2f"),
+        "Model mean point differential": st.column_config.NumberColumn(format="%+.2f"),
         "Hist loss est.": st.column_config.NumberColumn(format="%.1f%%"),
         "Hist 20+ est.": st.column_config.NumberColumn(format="%.1f%%"),
         "Future cost": st.column_config.NumberColumn(format="%.2f"),
@@ -436,7 +436,7 @@ route_display = pd.DataFrame({
     "Team": route["team"],
     "Opp": route["opponent"],
     "Value spread": route["raw_value_spread"],
-    "Model mean margin": route["calibrated_ev"],
+    "Model mean point differential": route["calibrated_ev"],
     "Source": route["value_source"].map(_friendly_source),
 })
 st.dataframe(
@@ -445,7 +445,7 @@ st.dataframe(
     width="stretch",
     column_config={
         "Value spread": st.column_config.NumberColumn(format="%+.2f"),
-        "Model mean margin": st.column_config.NumberColumn(format="%+.2f"),
+        "Model mean point differential": st.column_config.NumberColumn(format="%+.2f"),
     },
 )
 note("Do not follow this route blindly. After every completed week, the remaining route is deleted and rebuilt.", amber=True)
@@ -468,7 +468,7 @@ if not history.empty:
     st.markdown("#### Completed picks")
     st.dataframe(history, hide_index=True, width="stretch")
 else:
-    st.caption("No 2026 Margin Pool picks have been completed yet.")
+    st.caption("No 2026 Point Differential League picks have been completed yet.")
 
 section(
     "Pool field preview",
@@ -609,24 +609,24 @@ if preview_state_text:
         st.download_button(
             "Download validated state JSON",
             data=pretty_preview_state,
-            file_name="margin_live_state_2026_validated_preview.json",
+            file_name="pdl_live_state_2026_validated_preview.json",
             mime="application/json",
             key="margin_preview_download",
         )
         with st.form("margin_pool_preview_persist_form", clear_on_submit=False):
             confirm_pool_field = st.checkbox(
-                "I confirm the pool standings, scores, and burned-team inventories match the official Margin Pool.",
+                "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
                 key="margin_preview_persist_confirm",
             )
             save_validated_field = st.form_submit_button(
-                "Save validated field to Margin state",
+                "Save validated field to PDL state",
                 type="primary",
                 disabled=not authorized,
                 width="stretch",
             )
 
         if save_validated_field and not confirm_pool_field:
-            st.warning("Confirm the validated field matches the official Margin Pool before saving.")
+            st.warning("Confirm the validated field matches the official PDL before saving.")
         elif save_validated_field:
             try:
                 preview_base_state = json.loads(st.session_state["margin_pool_preview_base_state"])
@@ -634,12 +634,12 @@ if preview_state_text:
                     state_config,
                     preview_base_state,
                     preview_state,
-                    f"Save validated Margin pool field for Week {state['current_week']}",
+                    f"Save validated PDL field for Week {state['current_week']}",
                 )
                 _calculate_snapshot.clear()
                 st.session_state.pop("margin_pool_preview_state", None)
                 st.session_state.pop("margin_pool_preview_base_state", None)
-                st.success(f"Validated field saved to private Margin state ({commit_sha[:8]}).")
+                st.success(f"Validated field saved to private PDL state ({commit_sha[:8]}).")
                 st.rerun()
             except Exception as exc:
                 st.error(f"Validated field was not saved: {exc}")
@@ -678,4 +678,4 @@ with st.expander("Source mix and technical status"):
         "current_spread_sacrifice_cap": policy.get("current_spread_sacrifice_cap"),
     })
 
-source_footer("Source: nflverse/nfldata games.csv for schedule and spread snapshots. Current-week rows require a posted nflverse spread; future unpriced games use PropWar's market-power allocator. Margin/loss/20+ values are historical spread-conditioned model estimates, not factual outcomes or sportsbook probabilities.")
+source_footer("Source: nflverse/nfldata games.csv for schedule and spread snapshots. Current-week rows require a posted nflverse spread; future unpriced games use PropWar's market-power allocator. Point-differential/loss/20+ values are historical spread-conditioned model estimates, not factual outcomes or sportsbook probabilities.")

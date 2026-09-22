@@ -107,7 +107,7 @@ def main() -> None:
     if str(week4_pick["team"]) != str(week4_audit["anchor"]["team"]):
         assert float(week4_pick["total_season_ev_delta_vs_anchor"]) >= 0.5 - 1e-12
 
-    page = REPO_ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
+    page = REPO_ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
 
     # The production page now requires private remote state. Patch only the
     # storage boundary in this test process so dashboard rendering can be
@@ -136,7 +136,7 @@ def main() -> None:
         state_store.fetch_remote_state = original_fetch_remote_state
 
     if app.exception:
-        raise AssertionError(f"Margin dashboard raised Streamlit exceptions: {[str(x.value) for x in app.exception]}")
+        raise AssertionError(f"PDL dashboard raised Streamlit exceptions: {[str(x.value) for x in app.exception]}")
 
     metrics = {str(m.label): str(m.value) for m in app.metric}
     assert metrics.get("RECOMMENDED") == str(pick["team"])
@@ -145,7 +145,7 @@ def main() -> None:
 
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in [
-        "Margin War Room",
+        "PDL War Room",
         "Current recommendation",
         "Weekly board",
         "Provisional remaining route",
@@ -172,18 +172,18 @@ def main() -> None:
     unconfigured.run()
     unconfigured_errors = "\n".join(str(x.value) for x in unconfigured.error)
     unconfigured_metrics = {str(m.label): str(m.value) for m in unconfigured.metric}
-    assert "Private Margin state is not configured" in unconfigured_errors
+    assert "Private PDL state is not configured" in unconfigured_errors
     assert "RECOMMENDED" not in unconfigured_metrics
 
     print("production_week1_v1_v2_parity=PASS")
-    print("production_margin_route_invariants=PASS")
+    print("production_pdl_route_invariants=PASS")
     print("production_week4_raw_long_slow=PASS")
     print("production_week4_cap3_threshold=PASS")
     print("production_no_style_numeric_override=PASS")
-    print("production_margin_dashboard_private_state_render=PASS")
-    print("production_margin_private_state_fail_closed=PASS")
-    print("production_margin_dead_admin_key_removed=PASS")
-    print("production_margin_pool_preview_render=PASS")
+    print("production_pdl_dashboard_private_state_render=PASS")
+    print("production_pdl_private_state_fail_closed=PASS")
+    print("production_pdl_dead_admin_key_removed=PASS")
+    print("production_pdl_pool_preview_render=PASS")
     print(f"current_pick={pick['team']} opponent={pick['opponent']} spread={pick['current_spread']:+.1f}")
 
 

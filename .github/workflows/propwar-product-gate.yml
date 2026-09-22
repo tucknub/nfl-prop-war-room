@@ -85,7 +85,7 @@ jobs:
               root / "dashboard" / "pages" / "04_Reports.py",
               root / "dashboard" / "pages" / "05_Explorer.py",
               root / "dashboard" / "pages" / "06_Methodology.py",
-              root / "dashboard" / "pages" / "07_Margin_War_Room.py",
+              root / "dashboard" / "pages" / "07_PDL_War_Room.py",
               root / "dashboard" / "pages" / "08_Knockout_Fantasy_War_Room.py",
               root / "dashboard" / "pages" / "09_Glitch_Radar.py",
               root / "dashboard" / "pages" / "10_Deep_Prop_Radar.py",

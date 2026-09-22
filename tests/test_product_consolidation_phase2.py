@@ -108,7 +108,7 @@ def test_core_internal_deep_links_target_registered_routes() -> None:
     normalized = {path.lstrip("/") for path in internal_paths}
     normalized.discard("")
 
-    assert {"reports", "glitch-radar", "fantasy-hq", "margin"} <= registered
+    assert {"reports", "glitch-radar", "fantasy-hq", "pdl", "margin"} <= registered
     assert normalized <= registered
 
 
@@ -126,7 +126,7 @@ def test_owner_navigation_hides_deep_research_but_keeps_context_links() -> None:
         'title="Market Research", icon=":material/query_stats:", '
         'url_path="deep-prop-radar", visibility="hidden"'
     ) in owner_more
-    assert 'title="Margin"' in owner_more
+    assert 'title="PDL"' in owner_more
     assert 'title="Knockout"' in owner_more
 
     assert "/deep-prop-radar" in markets

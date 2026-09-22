@@ -29,7 +29,7 @@ def _optional_bool(value: str | None) -> bool | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Safely replace the Margin Pool opponent field snapshot."
+        description="Safely replace the PDL opponent field snapshot."
     )
     parser.add_argument("--field-csv", required=True, type=Path)
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE)

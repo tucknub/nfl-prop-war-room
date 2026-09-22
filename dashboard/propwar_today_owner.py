@@ -694,7 +694,7 @@ def _margin_action() -> TodayAction | None:
         action=action,
         why=(
             f"{why_prefix} nflverse spread {float(pick['current_spread']):+.1f} · "
-            f"model mean margin {float(pick['calibrated_margin']):+.2f} · "
+            f"model mean point differential {float(pick['calibrated_margin']):+.2f} · "
             f"historical loss-rate est. {float(pick['p_loss']) * 100:.1f}% · "
             f"historical 20+ est. {float(pick['p_win20']) * 100:.1f}%."
             + (
@@ -707,12 +707,12 @@ def _margin_action() -> TodayAction | None:
         ),
         confidence=confidence,
         freshness=(
-            "nflverse + Margin model · "
+            "nflverse + PDL model · "
             + local_start_label(audit.get("snapshot_utc"))
         ),
-        href="/margin",
+        href="/pdl",
         score=score,
-        source="Margin War Room",
+        source="PDL War Room",
     )
 
 
@@ -770,7 +770,7 @@ def render_propwar_today_if_owner() -> None:
     st.markdown("## What Should I Do?")
     st.caption(
         "The few current actions PropWar believes deserve attention across "
-        "fantasy, validated role changes, and Margin. Every card shows what deserves review, "
+        "fantasy, validated role changes, and PDL. Every card shows what deserves review, "
         "why it surfaced, evidence strength, freshness, and the source evidence."
     )
 
@@ -811,7 +811,7 @@ def render_propwar_today_if_owner() -> None:
         if margin is not None:
             actions.append(margin)
     except Exception as exc:
-        errors.append(f"Margin War Room: {exc}")
+        errors.append(f"PDL War Room: {exc}")
 
     ranked = rank_today_actions(actions, limit=6)
 

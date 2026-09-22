@@ -81,10 +81,10 @@ def test_role_confidence_is_labeled_as_sample_strength() -> None:
 
 
 def test_margin_estimates_are_labeled_as_models() -> None:
-    margin = _read("dashboard/pages/07_Margin_War_Room.py")
+    margin = _read("dashboard/pages/07_PDL_War_Room.py")
 
     assert 'metric("nflverse spread"' in margin
-    assert 'metric("Model mean margin"' in margin
+    assert 'metric("Model mean point differential"' in margin
     assert 'metric("Historical loss-rate est."' in margin
     assert "they are model estimates, not sportsbook probabilities" in margin
 

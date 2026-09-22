@@ -31,7 +31,7 @@ def test_owner_navigation_is_collapsed_to_four_core_workspaces() -> None:
     ):
         assert f'title="{title}"' in app
 
-    assert 'title="Margin"' in app
+    assert 'title="PDL"' in app
     assert 'title="Knockout"' in app
 
 

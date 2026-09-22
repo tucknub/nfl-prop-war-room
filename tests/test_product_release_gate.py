@@ -22,7 +22,7 @@ def test_product_gate_matches_production_runtime_and_all_visible_pages() -> None
         "04_Reports.py",
         "05_Explorer.py",
         "06_Methodology.py",
-        "07_Margin_War_Room.py",
+        "07_PDL_War_Room.py",
         "08_Knockout_Fantasy_War_Room.py",
         "09_Glitch_Radar.py",
         "10_Deep_Prop_Radar.py",
