@@ -993,7 +993,7 @@ def _render_player_market_map(league: FantasyLeagueState, all_states: tuple[Fant
                             "thresholds only. Yardage/reception/TD "
                             "lines are market medians/probabilities, "
                             "not statistical means. The same shared "
-                            "3-hour prop snapshot powers Deep Prop "
+                            "2-minute prop snapshot powers Deep Prop "
                             "Radar and Fantasy HQ to avoid duplicate "
                             "ParlayAPI scans."
                         )

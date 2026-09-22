@@ -15,6 +15,7 @@ on:
       - "scripts/audit_role_change_signals.py"
       - ".github/workflows/propwar-product-gate.yml"
       - ".github/workflows/live-streamlit-smoke.yml"
+      - ".github/workflows/role-research-operations.yml"
   pull_request:
     branches:
       - streamlit-cloud-deploy
@@ -29,6 +30,7 @@ on:
       - "scripts/audit_role_change_signals.py"
       - ".github/workflows/propwar-product-gate.yml"
       - ".github/workflows/live-streamlit-smoke.yml"
+      - ".github/workflows/role-research-operations.yml"
   workflow_dispatch:
 
 permissions:

@@ -261,7 +261,7 @@ def _league_actions(
                 league,
                 priority=priority,
                 action_type=WAIVER,
-                title=f"Add {candidate.player_name}",
+                title=f"Review waiver add: {candidate.player_name}",
                 action=(
                     f"Review {candidate.player_name} for "
                     f"{candidate.target_slot}."

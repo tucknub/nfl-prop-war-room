@@ -127,28 +127,38 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
         run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          python - <<'PY'
           from datetime import datetime, time, timezone
           import os
           from zoneinfo import ZoneInfo
 
+          def emit_run(value: bool) -> None:
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+                  print(f"run={'true' if value else 'false'}", file=handle)
+
           if os.environ.get("EVENT_NAME") != "schedule":
-              print("run=true")
+              emit_run(True)
+              print("Manual dispatch bypasses the Indiana schedule gate.")
               raise SystemExit(0)
 
           schedule = os.environ.get("EVENT_SCHEDULE", "").strip()
           try:
               scheduled_hour = int(schedule.split()[1])
           except (IndexError, ValueError):
-              print("run=false")
+              emit_run(False)
+              print(f"Unrecognized scheduled expression: {schedule!r}")
               raise SystemExit(0)
 
           zone = ZoneInfo("America/Indiana/Indianapolis")
           now_local = datetime.now(timezone.utc).astimezone(zone)
           target_local = datetime.combine(now_local.date(), time(9, 30), tzinfo=zone)
           expected_utc_hour = target_local.astimezone(timezone.utc).hour
-          print(f"run={'true' if scheduled_hour == expected_utc_hour else 'false'}")
-          print(f"Indiana target 09:30 uses {expected_utc_hour:02d}:30 UTC on {now_local.date()}")
+          should_run = scheduled_hour == expected_utc_hour
+          emit_run(should_run)
+          print(
+              f"Indiana target 09:30 uses {expected_utc_hour:02d}:30 UTC on "
+              f"{now_local.date()}; scheduled hour {scheduled_hour:02d}; run={should_run}."
+          )
           PY
 
   publish-current-season:

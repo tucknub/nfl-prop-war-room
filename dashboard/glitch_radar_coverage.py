@@ -4,9 +4,19 @@ from collections import Counter, defaultdict
 from typing import Any, Iterable
 
 try:
-    from glitch_radar_books import USER_BOOKS, canonical_book
+    from glitch_radar_books import (
+        PROVIDER_COVERED_USER_BOOKS,
+        PROVIDER_UNSUPPORTED_USER_BOOKS,
+        USER_BOOKS,
+        canonical_book,
+    )
 except ImportError:  # package import path used by pytest
-    from dashboard.glitch_radar_books import USER_BOOKS, canonical_book
+    from dashboard.glitch_radar_books import (
+        PROVIDER_COVERED_USER_BOOKS,
+        PROVIDER_UNSUPPORTED_USER_BOOKS,
+        USER_BOOKS,
+        canonical_book,
+    )
 
 
 def source_row_counts(rows: Iterable[dict[str, Any]]) -> dict[str, int]:
@@ -25,6 +35,12 @@ def actionable_coverage_summary(rows: Iterable[dict[str, Any]]) -> dict[str, Any
     user_counts = {book: int(counts.get(book, 0) or 0) for book in USER_BOOKS}
     visible = [book for book in USER_BOOKS if user_counts[book] > 0]
     missing = [book for book in USER_BOOKS if user_counts[book] <= 0]
+    provider_visible = [
+        book for book in PROVIDER_COVERED_USER_BOOKS if user_counts[book] > 0
+    ]
+    provider_missing = [
+        book for book in PROVIDER_COVERED_USER_BOOKS if user_counts[book] <= 0
+    ]
     user_total = sum(user_counts.values())
 
     dominant_book = None
@@ -34,9 +50,9 @@ def actionable_coverage_summary(rows: Iterable[dict[str, Any]]) -> dict[str, Any
         dominant_rows = user_counts[dominant_book]
     dominant_share = dominant_rows / user_total if user_total else 0.0
 
-    # With fewer than three of the configured books represented, a zero-signal result should
-    # not be described as a market-wide all-clear for the owner's five-book workflow.
-    limited = len(visible) < 3
+    # With fewer than three provider-covered owner books represented, a zero-signal
+    # result should not be described as a market-wide all-clear.
+    limited = len(provider_visible) < 3
 
     return {
         "source_counts": counts,
@@ -44,6 +60,11 @@ def actionable_coverage_summary(rows: Iterable[dict[str, Any]]) -> dict[str, Any
         "visible_user_books": visible,
         "missing_user_books": missing,
         "visible_user_book_count": len(visible),
+        "provider_user_book_count": len(PROVIDER_COVERED_USER_BOOKS),
+        "visible_provider_user_books": provider_visible,
+        "missing_provider_user_books": provider_missing,
+        "visible_provider_user_book_count": len(provider_visible),
+        "provider_unsupported_user_books": list(PROVIDER_UNSUPPORTED_USER_BOOKS),
         "user_book_total_rows": user_total,
         "dominant_user_book": dominant_book,
         "dominant_user_book_rows": dominant_rows,

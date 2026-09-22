@@ -13,7 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.margin import live_engine as live_engine_v1  # noqa: E402
 from src.margin import live_engine_v2 as live_engine  # noqa: E402
-from src.margin import state_store  # noqa: E402
+from src.margin import pdl_sync, state_store  # noqa: E402
 
 
 def route_checksum(route: list[dict]) -> list[tuple]:
@@ -123,10 +123,12 @@ def main() -> None:
     original_config_from_secrets = state_store.config_from_secrets
     original_owner_write_authorized = state_store.owner_write_authorized
     original_fetch_remote_state = state_store.fetch_remote_state
+    original_fetch_and_reconcile = pdl_sync.fetch_and_reconcile
     try:
         state_store.config_from_secrets = lambda _secrets: dict(private_config)
         state_store.owner_write_authorized = lambda _config: True
         state_store.fetch_remote_state = lambda _config: (copy.deepcopy(state), "ci-state-sha")
+        pdl_sync.fetch_and_reconcile = lambda stored: copy.deepcopy(stored)
 
         app = AppTest.from_file(str(page), default_timeout=45)
         app.run()
@@ -134,6 +136,7 @@ def main() -> None:
         state_store.config_from_secrets = original_config_from_secrets
         state_store.owner_write_authorized = original_owner_write_authorized
         state_store.fetch_remote_state = original_fetch_remote_state
+        pdl_sync.fetch_and_reconcile = original_fetch_and_reconcile
 
     if app.exception:
         raise AssertionError(f"PDL dashboard raised Streamlit exceptions: {[str(x.value) for x in app.exception]}")
@@ -141,16 +144,17 @@ def main() -> None:
     metrics = {str(m.label): str(m.value) for m in app.metric}
     assert metrics.get("RECOMMENDED") == str(pick["team"])
     assert metrics.get("Opponent") == str(pick["opponent"])
-    assert metrics.get("nflverse spread") == f"{float(pick['current_spread']):+.1f}"
+    assert metrics.get("Market line") == f"{pick['team']} -{abs(float(pick['current_spread'])):.1f}"
 
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in [
         "PDL War Room",
+        "Where you stand",
         "Current recommendation",
         "Weekly board",
         "Provisional remaining route",
         "My pool state",
-        "Pool field preview",
+        "PDL sync status",
         "Data quality",
     ]:
         assert required in body, f"Missing dashboard section: {required}"
@@ -183,7 +187,7 @@ def main() -> None:
     print("production_pdl_dashboard_private_state_render=PASS")
     print("production_pdl_private_state_fail_closed=PASS")
     print("production_pdl_dead_admin_key_removed=PASS")
-    print("production_pdl_pool_preview_render=PASS")
+    print("production_pdl_sync_status_render=PASS")
     print(f"current_pick={pick['team']} opponent={pick['opponent']} spread={pick['current_spread']:+.1f}")
 
 

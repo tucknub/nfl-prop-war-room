@@ -83,14 +83,26 @@ def test_role_confidence_is_labeled_as_sample_strength() -> None:
 def test_margin_estimates_are_labeled_as_models() -> None:
     margin = _read("dashboard/pages/07_PDL_War_Room.py")
 
-    assert 'metric("nflverse spread"' in margin
+    assert 'metric("Market line"' in margin
     assert 'metric("Model mean point differential"' in margin
     assert 'metric("Historical loss-rate est."' in margin
     assert "they are model estimates, not sportsbook probabilities" in margin
 
 
-def test_knockout_refuses_unvalidated_probability_and_bid_claims() -> None:
+def test_knockout_refuses_to_present_bid_or_survival_estimates_as_certainties() -> None:
     knockout = _read("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
 
-    assert "no fake survival probability or optimal bid" in knockout
-    assert "does not claim a weekly survival probability" in knockout
+    assert "Recommended bids and hard maxes are decision estimates" in knockout
+    assert "survival remains structural until live field projections are validated" in knockout
+
+
+def test_role_evidence_calls_confidence_sample_strength() -> None:
+    role_change = _read("dashboard/role_change.py")
+    assert "Sample strength is LOW" in role_change
+    assert "Confidence is LOW because the recent comparison sample is thin." not in role_change
+
+
+def test_margin_does_not_imply_calculation_time_is_line_change_time() -> None:
+    margin = _read("dashboard/pages/07_PDL_War_Room.py")
+    assert "does not expose a per-line change timestamp" in margin
+    assert "does not pretend the spread itself changed at the calculation time" in margin

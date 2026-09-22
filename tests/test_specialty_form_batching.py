@@ -6,18 +6,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_margin_field_preview_batches_multi_field_edits() -> None:
+def test_pdl_field_is_automatic_not_manual_preview() -> None:
     source = (
         ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
     ).read_text(encoding="utf-8")
 
-    assert 'with st.form("margin_pool_preview_form", clear_on_submit=False):' in source
-    assert 'validate_preview = st.form_submit_button(' in source
-    assert 'disabled=not bool(field_text.strip())' not in source
-    assert 'if validate_preview and not field_text.strip():' in source
+    assert 'section("PDL sync status"' in source
+    assert 'fetch_and_reconcile(stored_state)' in source
+    assert 'margin_pool_preview_form' not in source
+    assert 'Opponent field CSV' not in source
 
 
-def test_margin_authoritative_writes_require_confirmation_forms() -> None:
+def test_pdl_authoritative_pick_write_requires_confirmation() -> None:
     source = (
         ROOT / "dashboard" / "pages" / "07_PDL_War_Room.py"
     ).read_text(encoding="utf-8")
@@ -26,12 +26,9 @@ def test_margin_authoritative_writes_require_confirmation_forms() -> None:
     assert 'confirm_final_margin = st.checkbox(' in source
     assert 'complete_week = st.form_submit_button(' in source
     assert 'if complete_week and not confirm_final_margin:' in source
-    assert 'with st.form("margin_pool_preview_persist_form", clear_on_submit=False):' in source
-    assert 'confirm_pool_field = st.checkbox(' in source
-    assert 'save_validated_field = st.form_submit_button(' in source
-    assert 'if save_validated_field and not confirm_pool_field:' in source
-    assert 'preview_base_state = json.loads(st.session_state["margin_pool_preview_base_state"])' in source
-    assert '_calculate_snapshot.clear()' in source
+    assert 'acknowledge = st.checkbox(' in source
+    assert 'disabled=not (authorized and acknowledge)' in source
+    assert 'margin_pool_preview_persist_form' not in source
 
 
 def test_knockout_mutation_workflows_batch_widget_edits() -> None:

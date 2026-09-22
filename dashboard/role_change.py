@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Mapping
@@ -233,7 +233,7 @@ def build_role_change_signal(
 
     confidence = _confidence(last8_games, last4_games, last2_games)
     if confidence == "LOW":
-        evidence.append("Confidence is LOW because the recent comparison sample is thin.")
+        evidence.append("Sample strength is LOW because the recent comparison sample is thin.")
 
     return RoleChangeSignal(
         classification=classification,

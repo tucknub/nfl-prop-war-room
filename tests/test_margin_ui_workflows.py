@@ -172,21 +172,6 @@ def _metric_values(app: AppTest) -> dict[str, str]:
     return {str(metric.label): str(metric.value) for metric in app.metric}
 
 
-def _preview_field(app: AppTest) -> None:
-    _element_by_label(app.text_input, "Pool name").set_value("Official PDL")
-    _element_by_label(app.number_input, "Entrants (0 = infer from rows)").set_value(3)
-    _element_by_label(app.selectbox, "First-place tie rule").set_value("split")
-    _element_by_label(app.selectbox, "Picks before deadline").set_value("hidden")
-    _element_by_label(app.text_input, "Pick deadline").set_value("Sunday 12:55 PM ET")
-    _element_by_label(app.text_area, "Or paste the same CSV").set_value(
-        "id,name,cumulative_score,used_teams\n"
-        "opp-a,Opponent A,12,\n"
-        "opp-b,Opponent B,-4,\n"
-    )
-    _element_by_label(app.button, "Validate & preview field").click()
-    app.run()
-
-
 def test_week_completion_requires_confirmation_and_accepts_confirmed_zero(monkeypatch) -> None:
     state = _base_state()
     committed = state_store.commit_pick_state(state, _audit_for(state), "LAC")
@@ -220,74 +205,28 @@ def test_week_completion_requires_confirmation_and_accepts_confirmed_zero(monkey
     assert saved["current_decision"]["committed_pick"] is None
 
 
-def test_validated_preview_is_non_mutating_until_confirmed_and_then_becomes_authoritative(monkeypatch) -> None:
+def test_automatic_pdl_sync_status_is_read_only(monkeypatch) -> None:
     initial = _base_state()
     box = _install_private_state(monkeypatch, initial)
     app = AppTest.from_file(str(PAGE), default_timeout=20).run()
-    assert _metric_values(app)["RECOMMENDED"] == "LAC"
-
-    _preview_field(app)
 
     assert not app.exception
     assert box["writes"] == []
     assert box["state"] == initial
-    preview_metrics = _metric_values(app)
-    assert preview_metrics["RECOMMENDED"] == "LAC"
-    assert preview_metrics["Preview PICK"] == "JAX"
-    preview_calculations = sum(bool(item.get("opponents")) for item in box["calculation_states"])
-    assert preview_calculations == 1
-
-    _element_by_label(app.button, "Save validated field to PDL state").click()
-    app.run()
-    assert box["writes"] == []
-    assert any("Confirm the validated field" in str(item.value) for item in app.warning)
-
-    _element_by_label(
-        app.checkbox,
-        "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
-    ).set_value(True)
-    _element_by_label(app.button, "Save validated field to PDL state").click()
-    app.run()
-
-    assert not app.exception
-    assert len(box["writes"]) == 1
-    saved = box["state"]
-    assert saved["pool"] == {
-        "name": "Official PDL",
-        "size": 3,
-        "pick_deadline": "Sunday 12:55 PM ET",
-        "picks_visible_before_deadline": False,
-        "first_place_tie_rule": "split",
-        "payout_structure": "winner_take_all",
-    }
-    assert saved["opponents"] == [
-        {"id": "opp-a", "name": "Opponent A", "cumulative_score": 12.0, "used_teams": []},
-        {"id": "opp-b", "name": "Opponent B", "cumulative_score": -4.0, "used_teams": []},
-    ]
-    authoritative_metrics = _metric_values(app)
-    assert authoritative_metrics["RECOMMENDED"] == "JAX"
-    assert "Preview PICK" not in authoritative_metrics
-    authoritative_calculations = sum(bool(item.get("opponents")) for item in box["calculation_states"])
-    assert authoritative_calculations == 2
+    metrics = _metric_values(app)
+    assert metrics["RECOMMENDED"] == "LAC"
+    assert metrics["Active entrants"] == "0"
+    assert metrics["Opponents synced"] == "0"
+    body = "\n".join(str(item.value) for item in app.markdown)
+    assert "PDL sync status" in body
+    assert "Pool field preview" not in body
 
 
-def test_stale_authoritative_state_rejects_validated_preview_persistence(monkeypatch) -> None:
+def test_market_line_is_displayed_as_favorite_price(monkeypatch) -> None:
     box = _install_private_state(monkeypatch, _base_state())
     app = AppTest.from_file(str(PAGE), default_timeout=20).run()
-    _preview_field(app)
-    assert box["writes"] == []
-
-    box["stale_on_transition"] = True
-    box["stale_fetch_count"] = 0
-    _element_by_label(
-        app.checkbox,
-        "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
-    ).set_value(True)
-    _element_by_label(app.button, "Save validated field to PDL state").click()
-    app.run()
 
     assert not app.exception
+    metrics = _metric_values(app)
+    assert metrics["Market line"] == "LAC -10.5"
     assert box["writes"] == []
-    errors = "\n".join(str(item.value) for item in app.error)
-    assert "Authoritative private state changed" in errors
-    assert _metric_values(app)["Preview PICK"] == "JAX"

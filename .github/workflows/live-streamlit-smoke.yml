@@ -2,16 +2,21 @@ name: PropWar Live Streamlit Smoke
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["PropWar Product Gate"]
+    types: [completed]
+    branches: [streamlit-cloud-deploy]
 
 permissions:
   contents: read
 
 concurrency:
-  group: propwar-live-streamlit-smoke-manual
+  group: propwar-live-streamlit-smoke-${{ github.event.workflow_run.head_sha || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   live-smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -33,7 +38,21 @@ jobs:
         env:
           PROPWAR_LIVE_URL: https://propwar.streamlit.app
           PROPWAR_LIVE_QA_DIR: /tmp/propwar-live-qa
-        run: python scripts/validate_live_streamlit.py
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_run" ]; then
+            python scripts/validate_live_streamlit.py
+            exit $?
+          fi
+          for attempt in 1 2 3 4 5; do
+            if python scripts/validate_live_streamlit.py; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            echo "Deployment has not caught up to the validated branch yet; retrying."
+            sleep 60
+          done
 
       - name: Verify deployed PropWar mobile surfaces and controls
         env:
