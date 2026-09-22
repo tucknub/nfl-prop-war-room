@@ -157,6 +157,23 @@ championship_info = audit.get("championship") or {}
 used = set(str(x) for x in audit.get("used_teams", []))
 raw_board = pd.DataFrame(audit["board"]).copy()
 
+# League context from the synchronized PDL field.
+hero_score = float(state.get("cumulative_score", 0.0))
+opponents = list(state.get("opponents") or [])
+field_scores = [hero_score] + [float(row.get("cumulative_score", 0.0)) for row in opponents]
+leader_score = max(field_scores) if field_scores else hero_score
+hero_rank = 1 + sum(score > hero_score for score in field_scores)
+hero_ties = sum(score == hero_score for score in field_scores)
+weeks_left = max(0, 18 - int(state.get("completed_week", 0) or 0))
+field_size = len(field_scores)
+
+field_used_counts = {team: 0 for team in NFL_TEAMS}
+for entrant_used in [state.get("used_teams") or []] + [row.get("used_teams") or [] for row in opponents]:
+    for team in entrant_used:
+        canonical = str(team)
+        if canonical in field_used_counts:
+            field_used_counts[canonical] += 1
+
 champ_status = str(policy.get("championship_status", ""))
 override_applied = bool(policy.get("championship_override_applied", False))
 champ_readiness = championship_info.get("readiness") or {}
@@ -200,6 +217,16 @@ else:
         f"Gate result: {str(policy.get('championship_override_status', '')).replace('_', ' ').title()}."
     )
 
+section("Where you stand", "Current PDL position from the synchronized league ledger.")
+standing_cols = st.columns(5)
+standing_cols[0].metric("Rank", f"T-{hero_rank}" if hero_ties > 1 else str(hero_rank))
+standing_cols[1].metric("Your score", f"{hero_score:+.0f}")
+standing_cols[2].metric("Leader", f"{leader_score:+.0f}")
+standing_cols[3].metric("Gap to first", f"{leader_score - hero_score:.0f}")
+standing_cols[4].metric("Weeks left", weeks_left)
+if hero_ties > 1:
+    st.caption(f"{hero_ties} entrants are currently tied at {hero_score:+.0f}.")
+
 section("Current recommendation", "Refresh near the pool deadline, then record the team you actually submit to the league.")
 hero_top = st.columns(3)
 hero_top[0].metric("RECOMMENDED", str(pick["team"]))
@@ -224,8 +251,8 @@ if override_applied:
     )
 elif str(pick["team"]) == str(anchor["team"]):
     note(
-        f"Anchor retained: {pick['team']} is the largest current favorite and the engine finds no qualifying reason to deviate. "
-        f"Future opportunity cost is {pick['future_cost']:.2f} expected points."
+        f"Why {pick['team']}: it is the largest current favorite. Even after charging "
+        f"{pick['future_cost']:.2f} points for the value of saving it for later, it still produces the best remaining-season EV."
     )
 else:
     note(
@@ -235,9 +262,34 @@ else:
     )
 
 policy_cols = st.columns(3)
-policy_cols[0].metric("Anchor", str(anchor["team"]))
-policy_cols[1].metric("Future cost", f"{pick['future_cost']:.2f}")
-policy_cols[2].metric("Season EV Δ vs anchor", f"{pick['total_season_ev_delta_vs_anchor']:+.2f}")
+policy_cols[0].metric("Largest favorite", str(anchor["team"]))
+policy_cols[1].metric("Cost to use now", f"{pick['future_cost']:.2f}")
+policy_cols[2].metric("Remaining-season EV", f"{pick['total_season_ev']:.2f}")
+
+comparison_pool = raw_board[~raw_board.team.astype(str).isin(used)].copy()
+comparison_pool = comparison_pool[~comparison_pool.team.astype(str).eq(str(pick["team"]))]
+comparison_pool = comparison_pool.sort_values(["total_season_ev", "current_spread"], ascending=[False, False])
+if not comparison_pool.empty:
+    alt = comparison_pool.iloc[0]
+    season_ev_edge = float(pick["total_season_ev"]) - float(alt.total_season_ev)
+    current_line_edge = float(pick["current_spread"]) - float(alt.current_spread)
+    model_edge = float(pick["calibrated_margin"]) - float(alt.calibrated_margin)
+    pick_burned = int(field_used_counts.get(str(pick["team"]), 0))
+    alt_burned = int(field_used_counts.get(str(alt.team), 0))
+    section(f"Why {pick['team']} over {alt.team}", "The closest alternative after remaining-season opportunity cost.")
+    compare = pd.DataFrame([
+        {"Metric": "Market line", str(pick["team"]): _favorite_line(pick["team"], pick["current_spread"]), str(alt.team): _favorite_line(alt.team, alt.current_spread)},
+        {"Metric": "Model mean point differential", str(pick["team"]): _signed(pick["calibrated_margin"], 2), str(alt.team): _signed(alt.calibrated_margin, 2)},
+        {"Metric": "Future cost", str(pick["team"]): f"{float(pick['future_cost']):.2f}", str(alt.team): f"{float(alt.future_cost):.2f}"},
+        {"Metric": "Remaining-season EV", str(pick["team"]): f"{float(pick['total_season_ev']):.2f}", str(alt.team): f"{float(alt.total_season_ev):.2f}"},
+        {"Metric": "Entrants who already burned team", str(pick["team"]): f"{pick_burned}/{field_size}", str(alt.team): f"{alt_burned}/{field_size}"},
+    ])
+    st.dataframe(compare, hide_index=True, width="stretch")
+    note(
+        f"{pick['team']} has a {current_line_edge:+.1f}-point current-line edge and a {model_edge:+.2f}-point model-mean edge over {alt.team}. "
+        f"After future opportunity cost, {pick['team']} still leads by {season_ev_edge:+.2f} remaining-season EV points. "
+        f"Using {pick['team']} also preserves {alt.team}, which {alt_burned} of {field_size} entrants have already burned."
+    )
 
 section("This week's pick", "Record your actual pool selection here. This does not submit the pick to the external league site.")
 authorized = True

@@ -149,6 +149,7 @@ def main() -> None:
     body = "\n".join(str(x.value) for x in app.markdown)
     for required in [
         "PDL War Room",
+        "Where you stand",
         "Current recommendation",
         "Weekly board",
         "Provisional remaining route",
