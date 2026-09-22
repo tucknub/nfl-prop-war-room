@@ -611,6 +611,51 @@ class EspnFantasyClient:
                         ]
                 historical_lineups[completed_week] = week_lineups
 
+            transaction_rows: list[dict[str, Any]] = []
+            transaction_probe_error = ""
+            try:
+                for transaction_week in range(1, scoring_week + 1):
+                    for tx in league.transactions(scoring_period=transaction_week):
+                        items = []
+                        for item in list(getattr(tx, "items", []) or []):
+                            items.append({
+                                "type": str(getattr(item, "type", "") or ""),
+                                "player_id": int(getattr(item, "playerId", 0) or 0),
+                                "player": str(getattr(item, "player", "") or ""),
+                                "from_team_id": int(getattr(item, "from_team_id", 0) or 0),
+                                "to_team_id": int(getattr(item, "to_team_id", 0) or 0),
+                            })
+                        transaction_rows.append({
+                            "team_id": int(getattr(tx, "team_id", 0) or 0),
+                            "team": str(getattr(getattr(tx, "team", None), "team_name", "") or ""),
+                            "type": str(getattr(tx, "type", "") or ""),
+                            "status": str(getattr(tx, "status", "") or ""),
+                            "scoring_period": int(getattr(tx, "scoring_period", transaction_week) or transaction_week),
+                            "date": getattr(tx, "date", None),
+                            "bid_amount": getattr(tx, "bid_amount", None),
+                            "items": items,
+                        })
+            except Exception as exc:
+                transaction_probe_error = f"{type(exc).__name__}: {exc}"
+
+            activity_rows: list[dict[str, Any]] = []
+            activity_probe_error = ""
+            try:
+                for activity in league.recent_activity(size=500):
+                    for action in list(getattr(activity, "actions", []) or []):
+                        team, action_name, player, bid = action
+                        activity_rows.append({
+                            "date": getattr(activity, "date", None),
+                            "team_id": int(getattr(team, "team_id", 0) or 0),
+                            "team": str(getattr(team, "team_name", "") or ""),
+                            "action": str(action_name or ""),
+                            "player_id": int(getattr(player, "playerId", 0) or 0),
+                            "player": str(getattr(player, "name", player) or ""),
+                            "bid_amount": int(bid or 0),
+                        })
+            except Exception as exc:
+                activity_probe_error = f"{type(exc).__name__}: {exc}"
+
             week_scores: list[dict[str, Any]] = []
             detections: list[dict[str, Any]] = []
             eliminated_ids: set[int] = set()
@@ -673,6 +718,10 @@ class EspnFantasyClient:
                 "available_players": available_players,
                 "roster_player_metrics": roster_player_metrics,
                 "team_roster_status": team_roster_status,
+                "league_transactions": transaction_rows,
+                "league_activity": activity_rows,
+                "transaction_probe_error": transaction_probe_error,
+                "activity_probe_error": activity_probe_error,
                 "league_week_scores": week_scores,
                 "detected_elimination": detections[-1] if detections else None,
                 "detected_eliminations": detections,
