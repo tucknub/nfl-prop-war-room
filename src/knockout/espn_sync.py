@@ -296,16 +296,6 @@ def apply_espn_snapshot(
         if "team_roster_status" in snapshot
         else list(existing.get("team_roster_status") or [])
     )
-    league_transactions = (
-        [dict(row) for row in snapshot.get("league_transactions") or []]
-        if "league_transactions" in snapshot
-        else list(existing.get("league_transactions") or [])
-    )
-    league_activity = (
-        [dict(row) for row in snapshot.get("league_activity") or []]
-        if "league_activity" in snapshot
-        else list(existing.get("league_activity") or [])
-    )
     detected_elimination = (
         dict(snapshot.get("detected_elimination") or {})
         if "detected_elimination" in snapshot
@@ -328,10 +318,6 @@ def apply_espn_snapshot(
         "roster_player_metrics": roster_player_metrics,
         "league_faab": league_faab,
         "team_roster_status": team_roster_status,
-        "league_transactions": league_transactions,
-        "league_activity": league_activity,
-        "transaction_probe_error": str(snapshot.get("transaction_probe_error") or "").strip(),
-        "activity_probe_error": str(snapshot.get("activity_probe_error") or "").strip(),
         "league_week_scores": league_week_scores,
         "detected_elimination": detected_elimination,
         "detected_eliminations": detected_eliminations,
