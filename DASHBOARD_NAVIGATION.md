@@ -1,92 +1,59 @@
 # Dashboard Navigation
 
-The NFL Prop War Room dashboard is organized around a signal-first workflow. The app remains `HISTORICAL TEST ONLY` until readiness gates pass.
+This file describes the current PropWar navigation. `dashboard/app.py` is the source of truth if this document and the application ever disagree.
 
-## Main Signal Workflow
+## Owner workflow
 
-Use these first:
+The owner experience is intentionally narrow.
 
-1. Signal Command Center
-2. Slate Signal Board
-3. By-Game Matchup Board
-4. Receiving Signal Board
-5. Rushing Signal Board
-6. Passing Signal Board
-7. Player Signal Drilldown
-8. Blocked / Review Board
+### PropWar
 
-These pages focus on players, games, recent form, defense fit, game environment, role/injury/readiness, and explainability.
+1. **Today** - current actions that clear PropWar's trust and freshness rules.
+2. **Players** - player role usage, role movement, and supporting evidence.
+3. **Markets** - current sportsbook comparison, verification queues, arbs, middles, glitches, and +EV research.
+4. **Fantasy** - live read-only Sleeper team, lineup, waiver, matchup, trade, and league context.
 
-## Research / Audit Lab
+### More
 
-Use these to validate the signal system:
+- **Teams** - team-level role evidence.
+- **Reports** - packaged role reports.
+- **Games** - game-level supporting context.
+- **Advanced Research** - hidden advanced role-query workspace.
+- **Market Research** - hidden full-prop research workspace.
+- **PDL** - Point Differential League decision workspace.
+- **Knockout** - ESPN-backed elimination fantasy workspace.
+- **Methodology** - data definitions, calculations, and trust boundaries.
 
-- Signal Score Audit
-- Historical Signal Backtest
-- Signal Weight Tuning Lab
-- Champion vs Challenger Signal Preview
+## Public role-intelligence workflow
 
-These pages compare formulas, audit components, review historical behavior, and inspect challenger profiles. They do not promote challenger weights automatically.
-
-## Readiness / Data Admin
-
-Use these for safety and data quality:
-
-- Live Readiness
-- Live Data Intake
-- Current Roster / Team Mapping
-- Role / Depth Chart Mapping
-- Injury / Availability Mapping
-- Market Data Mapping
-- End-to-End Dry Run
-- Gate Status
-- Identity Warnings
-- Run Reports
-
-These pages explain why Final Readiness remains `NO-GO` and which data gates still need real non-template inputs.
-
-## Legacy Model Outputs
-
-Model output pages remain available for debugging and review, but they are secondary to the signal workflow. Use them when you need to inspect a specific market export or line ladder.
-
-## What To Open First
-
-Start at `Signal Command Center`, then move into the slate, game, family, and player drilldown pages. Treat admin and research pages as validation/support tools, not the main product surface.
-
-Odds and CLV are not the current product focus. The dashboard is a research signal command center until live readiness becomes `GO`.
-
-## Signal UX Polish
-
-The signal workflow uses a Kasper-style scan pattern:
-
-- Top KPI cards summarize the slate.
-- Top-player cards call out the best signals.
-- Tables use green-to-red heatmap cells for scores.
-- Tier/action/reliability badges make status easy to scan.
-- By-game summaries help compare both sides before drilling into player details.
-
-Color meaning:
-
-- Dark green = elite
-- Green = strong
-- Yellow = watch
-- Orange = review/risk
-- Red = blocked/weak
-- Gray = missing/unavailable
-
-## Dashboard Product Reset V1
-
-The visible Streamlit sidebar is now simplified to these product pages:
+Public users see the factual role-research surfaces only:
 
 - Home
-- Signal Command Center
-- By-Game Matchup Board
-- Position Signal Boards
-- Player Signal Drilldown
-- Blocked / Review
-- Research Lab
-- Admin / Readiness
+- Reports
+- Teams
+- Players
+- Games
+- Advanced Research
+- Methodology
 
-Archived debug pages were moved to `dashboard/archived_pages/`. They remain recoverable for maintenance and audits, but they are not shown as normal user pages.
+Owner-only sportsbook, fantasy, PDL, and Knockout workspaces are not public fallbacks.
 
-Research Lab contains validation/backtest/tuning/report views. Admin / Readiness contains safety, gate, identity, data-intake, current-map, and dry-run status views.
+## Trust rules
+
+- Current-season role evidence must pass the publication gates before it is treated as current.
+- Markets must distinguish a genuine zero-signal result from provider failure or insufficient coverage.
+- Full prop quotes must satisfy the current freshness contract before use.
+- Model outputs, baselines, signals, and FAAB estimates must remain labeled as estimates rather than facts.
+- Missing source, identity, freshness, or coverage should fail closed instead of creating an all-clear.
+
+See `docs/propwar/TRUST_CONTRACT.md` for the detailed product contract.
+
+## Legacy and hidden research
+
+Older Signal Command Center, Position Signal Board, historical-test model boards, and readiness experiments are legacy research. They are not the current product workflow and should not be restored to primary navigation without a new product decision.
+
+`dashboard/pages/90_Admin_Research.py` remains intentionally hidden. It preserves legacy experiments and validation artifacts only. It is not the source of truth for current RB, WR, or TE role status.
+
+## Product principle
+
+Do not add another primary tab simply because a research surface exists. Prefer feeding validated evidence into Today, Players, Markets, Fantasy, PDL, or Knockout. Keep advanced evidence under More or hidden until it earns a primary workflow role.

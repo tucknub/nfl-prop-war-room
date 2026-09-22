@@ -16,8 +16,8 @@ page_intro(
     "Private research artifacts, validation checkpoints, pipeline evidence, and retired experiments. This page is not part of the public role-usage workflow.",
 )
 st.warning(
-    "RB carry share and RB opportunity share remain internal shadow research. WR and TE detector families are retired. "
-    "No family completed the full validation protocol."
+    "This hidden page preserves legacy experiments, validation artifacts, and retired detector work only. "
+    "Current RB, WR, and TE role-usage status is governed by the live role pipeline and Trust Contract, not this page."
 )
 
 profile = canonical_quality_profile()
