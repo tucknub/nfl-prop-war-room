@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.margin import live_engine_v2 as margin_live  # noqa: E402
-from src.margin import state_store  # noqa: E402
+from src.margin import pdl_sync, state_store  # noqa: E402
 
 
 PAGE = ROOT / "dashboard" / "pages" / "07_Margin_War_Room.py"
@@ -155,6 +155,7 @@ def _install_private_state(monkeypatch, initial_state: dict[str, Any]) -> dict[s
     monkeypatch.setattr(state_store, "owner_write_authorized", lambda _config: True)
     monkeypatch.setattr(state_store, "fetch_remote_state", fetch_remote_state)
     monkeypatch.setattr(state_store, "write_remote_state", write_remote_state)
+    monkeypatch.setattr(pdl_sync, "fetch_and_reconcile", lambda state: copy.deepcopy(state))
     def run_margin(state, future_posted_mode="live"):
         box["calculation_states"].append(copy.deepcopy(state))
         return _audit_for(state)

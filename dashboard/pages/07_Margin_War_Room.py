@@ -20,7 +20,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import note, page_intro, section, source_footer  # noqa: E402
 from src.margin import live_engine_v2 as margin_live  # noqa: E402
-from src.margin import pool_state, state_store  # noqa: E402
+from src.margin import pdl_sync, pool_state, state_store  # noqa: E402
 
 
 NFL_TEAMS = [
@@ -119,9 +119,23 @@ if not state_store.owner_write_authorized(state_config):
     st.stop()
 try:
     with st.spinner("Loading private Margin state..."):
-        state, _state_sha = state_store.fetch_remote_state(state_config)
+        stored_state, _state_sha = state_store.fetch_remote_state(state_config)
 except Exception as exc:
     st.error("The private Margin state could not be loaded. No public fallback will be used.")
+    st.exception(exc)
+    st.stop()
+
+try:
+    with st.spinner("Synchronizing the official PDL ledger..."):
+        state = pdl_sync.fetch_and_reconcile(stored_state)
+        if not _same_state(state, stored_state):
+            sync_sha = state_store.write_remote_state(
+                state_config, state, expected_sha=_state_sha,
+                message=f"Sync Margin state from PDL through Week {state['completed_week']}",
+            )
+            _state_sha = sync_sha or _state_sha
+except Exception as exc:
+    st.error("PDL league state could not be synchronized. No stale team inventory will be used.")
     st.exception(exc)
     st.stop()
 
@@ -135,7 +149,7 @@ with refresh_col:
 with status_col:
     st.caption(
         f"State: Week {state['current_week']} · score {float(state.get('cumulative_score', 0.0)):+.0f} · "
-        f"{len(state.get('used_teams', []))} teams used · private authoritative state loaded"
+        f"{len(state.get('used_teams', []))} teams used · PDL synced for {state.get('pdl_sync', {}).get('entrant', 'Ricky T.')}"
     )
 
 try:
@@ -443,6 +457,11 @@ state_cols[1].metric("Cumulative score", f"{float(state.get('cumulative_score', 
 state_cols[2].metric("Teams used", len(used))
 state_cols[3].metric("Teams remaining", 32 - len(used))
 _render_inventory(used)
+pdl_meta = state.get("pdl_sync") or {}
+note(
+    f"League ledger: pdl.kingtuddy.com · {len(state.get('opponents', [])) + 1} active entrants · "
+    f"fingerprint {str(pdl_meta.get('data_fingerprint_sha256') or 'unavailable')[:12]}…"
+)
 
 history = pd.DataFrame(state.get("weekly_results", []))
 if not history.empty:
