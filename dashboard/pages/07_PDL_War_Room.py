@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import csv
-import io
 import json
 import sys
 from pathlib import Path
@@ -20,7 +18,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from research_ui import note, page_intro, section, source_footer  # noqa: E402
 from src.margin import live_engine_v2 as margin_live  # noqa: E402
-from src.margin import pdl_sync, pool_state, state_store  # noqa: E402
+from src.margin import pdl_sync, state_store  # noqa: E402
 
 
 NFL_TEAMS = [
@@ -44,6 +42,10 @@ def _signed(value: float, digits: int = 1) -> str:
     return f"{float(value):+.{digits}f}"
 
 
+def _favorite_line(team: object, value: object, digits: int = 1) -> str:
+    return f"{str(team)} -{abs(float(value)):.{digits}f}"
+
+
 def _friendly_source(value: str) -> str:
     return {
         "CURRENT_MARKET": "Current market",
@@ -62,24 +64,6 @@ def _render_inventory(used: set[str]) -> None:
                 status = "USED" if team in used else "available"
                 prefix = "✓" if team in used else "·"
                 st.markdown(f"**{prefix} {team}**  \n{status}")
-
-
-def _field_rows_from_csv_text(text: str) -> list[dict]:
-    reader = csv.DictReader(io.StringIO(text))
-    required = {"id", "name", "cumulative_score", "used_teams"}
-    headers = set(reader.fieldnames or [])
-    missing = sorted(required - headers)
-    if missing:
-        raise ValueError(f"field CSV missing columns: {missing}")
-    rows = list(reader)
-    if not rows:
-        raise ValueError("field CSV must include at least one opponent row")
-    return rows
-
-
-def _current_select_index(options: list[str], value: object) -> int:
-    text = str(value or "Unknown")
-    return options.index(text) if text in options else 0
 
 
 def _state_config() -> dict[str, str] | None:
@@ -108,6 +92,7 @@ def _persist_transition(config: dict[str, str], expected_state: dict, new_state:
 page_intro(
     "PDL War Room",
     "One-use NFL team allocation for the 2026 Point Differential League. Only the current week's recommendation is actionable; every future slot is provisional.",
+    show_data_status=False,
 )
 
 state_config = _state_config()
@@ -143,13 +128,14 @@ state_text = json.dumps(state, sort_keys=True)
 
 refresh_col, status_col = st.columns([1, 3])
 with refresh_col:
-    if st.button("Refresh nflverse spread snapshot", type="primary", width="stretch"):
+    if st.button(f"Refresh Week {state['current_week']} market snapshot", type="primary", width="stretch"):
         _calculate_snapshot.clear()
         st.rerun()
 with status_col:
     st.caption(
-        f"State: Week {state['current_week']} · score {float(state.get('cumulative_score', 0.0)):+.0f} · "
-        f"{len(state.get('used_teams', []))} teams used · PDL synced for {state.get('pdl_sync', {}).get('entrant', 'Ricky T.')}"
+        f"PDL through Week {state['completed_week']} · Week {state['current_week']} decision · "
+        f"score {float(state.get('cumulative_score', 0.0)):+.0f} · {len(state.get('used_teams', []))} teams used · "
+        f"synced for {state.get('pdl_sync', {}).get('entrant', 'Ricky T.')}"
     )
 
 try:
@@ -173,16 +159,24 @@ raw_board = pd.DataFrame(audit["board"]).copy()
 
 champ_status = str(policy.get("championship_status", ""))
 override_applied = bool(policy.get("championship_override_applied", False))
-if champ_status != "READY_FOR_SIMULATION":
-    if champ_status == "UNAVAILABLE_EARLY_SEASON_RESEARCH_GATE":
+champ_readiness = championship_info.get("readiness") or {}
+minimum_champ_week = int(policy.get("championship_minimum_supported_week", 10) or 10)
+if int(state.get("current_week", 0) or 0) < minimum_champ_week:
+    missing_settings = set(champ_readiness.get("missing") or [])
+    suffix = (
+        " First-place tie handling still needs to be confirmed before championship mode activates."
+        if "pool.first_place_tie_rule" in missing_settings else ""
+    )
+    note(
+        f"Championship simulation is intentionally inactive until Week {minimum_champ_week}. "
+        f"All {int((state.get('pool') or {}).get('size') or 0)} active entrants and "
+        f"{len(state.get('opponents') or [])} opponents are synced from PDL. "
+        f"The expected-points recommendation is authoritative.{suffix}"
+    )
+elif champ_status != "READY_FOR_SIMULATION":
+    if champ_status in {"UNAVAILABLE_POOL_STATE_MISSING", "UNAVAILABLE_POOL_STATE_INCOMPLETE"}:
         note(
-            f"Championship override is promoted but intentionally inactive before Week "
-            f"{policy.get('championship_minimum_supported_week', 10)}. The expected-points recommendation is authoritative."
-        )
-    elif champ_status in {"UNAVAILABLE_POOL_STATE_MISSING", "UNAVAILABLE_POOL_STATE_INCOMPLETE"}:
-        note(
-            "Championship override is promoted but inactive until the complete pool field is loaded: "
-            "pool size/tie rule plus every opponent's score and burned-team inventory. "
+            "Championship simulation is waiting on remaining league settings or field validation. "
             "The expected-points recommendation is authoritative."
         )
     else:
@@ -210,7 +204,7 @@ section("Current recommendation", "Refresh near the pool deadline, then record t
 hero_top = st.columns(3)
 hero_top[0].metric("RECOMMENDED", str(pick["team"]))
 hero_top[1].metric("Opponent", str(pick["opponent"]))
-hero_top[2].metric("nflverse spread", _signed(pick["current_spread"]))
+hero_top[2].metric("Market line", _favorite_line(pick["team"], pick["current_spread"]))
 hero_bottom = st.columns(3)
 hero_bottom[0].metric("Model mean point differential", _signed(pick["calibrated_margin"]))
 hero_bottom[1].metric("Historical loss-rate est.", _pct(pick["p_loss"]))
@@ -255,7 +249,7 @@ if committed_pick:
         commit_cols = st.columns(4)
         commit_cols[0].metric("COMMITTED", committed_pick)
         commit_cols[1].metric("Opponent", str(r.opponent))
-        commit_cols[2].metric("nflverse spread at refresh", _signed(r.current_spread))
+        commit_cols[2].metric("Market line at refresh", _favorite_line(committed_pick, r.current_spread))
         commit_cols[3].metric("Model mean point differential", _signed(r.calibrated_margin, 2))
     else:
         st.success(f"War Room pick committed: {committed_pick}")
@@ -310,7 +304,7 @@ if committed_pick:
             change_options,
             index=change_index,
             format_func=lambda t: f"{t} vs {available_rows[available_rows.team.eq(t)].iloc[0].opponent} "
-                                  f"({_signed(available_rows[available_rows.team.eq(t)].iloc[0].current_spread)})",
+                                  f"({_favorite_line(t, available_rows[available_rows.team.eq(t)].iloc[0].current_spread)})",
             key="margin_replace_team",
         )
         replace_pick = st.button(
@@ -345,7 +339,7 @@ else:
         index=default_index,
         format_func=lambda t: (
             f"{t} vs {available_rows[available_rows.team.eq(t)].iloc[0].opponent} · "
-            f"spread {_signed(available_rows[available_rows.team.eq(t)].iloc[0].current_spread)} · "
+            f"market line {_favorite_line(t, available_rows[available_rows.team.eq(t)].iloc[0].current_spread)} · "
             f"model mean {_signed(available_rows[available_rows.team.eq(t)].iloc[0].calibrated_margin, 2)}"
         ),
         key="margin_commit_team",
@@ -354,7 +348,7 @@ else:
     selection_cols = st.columns(4)
     selection_cols[0].metric("Selected", selected_team)
     selection_cols[1].metric("Opponent", str(selected_row.opponent))
-    selection_cols[2].metric("nflverse spread", _signed(selected_row.current_spread))
+    selection_cols[2].metric("Market line", _favorite_line(selected_team, selected_row.current_spread))
     selection_cols[3].metric("Model mean point differential", _signed(selected_row.calibrated_margin, 2))
 
     acknowledge = st.checkbox(
@@ -398,7 +392,7 @@ board_display = pd.DataFrame({
     "Status": board["status"],
     "Team": board["team"],
     "Opp": board["opponent"],
-    "nflverse spread": board["current_spread"],
+    "Market line": -board["current_spread"].abs(),
     "Model mean point differential": board["calibrated_margin"],
     "Hist loss est.": board["p_loss"] * 100.0,
     "Hist 20+ est.": board["p_win20"] * 100.0,
@@ -411,7 +405,7 @@ st.dataframe(
     hide_index=True,
     width="stretch",
     column_config={
-        "nflverse spread": st.column_config.NumberColumn(format="%+.1f"),
+        "Market line": st.column_config.NumberColumn(format="%+.1f"),
         "Model mean point differential": st.column_config.NumberColumn(format="%+.2f"),
         "Hist loss est.": st.column_config.NumberColumn(format="%.1f%%"),
         "Hist 20+ est.": st.column_config.NumberColumn(format="%.1f%%"),
@@ -424,7 +418,7 @@ st.dataframe(
 top_three = board.sort_values(["total_season_ev", "current_spread"], ascending=[False, False]).head(3)
 for rank, (_, row) in enumerate(top_three.iterrows(), start=1):
     st.markdown(
-        f"**{rank}. {row['team']} vs {row['opponent']}** — {row['current_spread']:+.1f} spread · "
+        f"**{rank}. {row['team']} vs {row['opponent']}** — {row['team']} -{abs(float(row['current_spread'])):.1f} market line · "
         f"{row['calibrated_margin']:+.2f} model mean · {_pct(row['p_loss'])} hist loss est. · {_pct(row['p_win20'])} hist 20+ est. · "
         f"{row['status']}"
     )
@@ -435,7 +429,7 @@ route_display = pd.DataFrame({
     "Week": route["week"].astype(int),
     "Team": route["team"],
     "Opp": route["opponent"],
-    "Value spread": route["raw_value_spread"],
+    "Favorite line": -route["raw_value_spread"].abs(),
     "Model mean point differential": route["calibrated_ev"],
     "Source": route["value_source"].map(_friendly_source),
 })
@@ -444,7 +438,7 @@ st.dataframe(
     hide_index=True,
     width="stretch",
     column_config={
-        "Value spread": st.column_config.NumberColumn(format="%+.2f"),
+        "Favorite line": st.column_config.NumberColumn(format="%+.2f"),
         "Model mean point differential": st.column_config.NumberColumn(format="%+.2f"),
     },
 )
@@ -470,186 +464,21 @@ if not history.empty:
 else:
     st.caption("No 2026 Point Differential League picks have been completed yet.")
 
-section(
-    "Pool field preview",
-    "Validate real standings and burned-team inventories, then preview the recommendation without changing authoritative private state.",
-)
-note(
-    "Preview only: this section does not replace the authoritative field until its validated snapshot is persisted. "
-    "Pick/result controls above write only to the private owner state.",
-    amber=True,
-)
-
+section("PDL sync status", "League state is synchronized automatically from pdl.kingtuddy.com.")
 pool = state.get("pool") or {}
-with st.form("margin_pool_preview_form", clear_on_submit=False):
-    meta_a, meta_b, meta_c = st.columns(3)
-    with meta_a:
-        preview_pool_name = st.text_input("Pool name", value=str(pool.get("name") or ""), key="margin_preview_pool_name")
-        preview_pool_size = st.number_input(
-            "Entrants (0 = infer from rows)",
-            min_value=0,
-            step=1,
-            value=int(pool.get("size") or 0),
-            key="margin_preview_pool_size",
-        )
-    with meta_b:
-        tie_options = ["Unknown", "split", "shared"]
-        preview_tie_rule = st.selectbox(
-            "First-place tie rule",
-            tie_options,
-            index=_current_select_index(tie_options, pool.get("first_place_tie_rule")),
-            key="margin_preview_tie_rule",
-        )
-        visibility_options = ["Unknown", "hidden", "visible"]
-        current_visibility = pool.get("picks_visible_before_deadline")
-        visibility_default = "visible" if current_visibility is True else "hidden" if current_visibility is False else "Unknown"
-        preview_visibility = st.selectbox(
-            "Picks before deadline",
-            visibility_options,
-            index=_current_select_index(visibility_options, visibility_default),
-            key="margin_preview_visibility",
-        )
-    with meta_c:
-        preview_deadline = st.text_input(
-            "Pick deadline",
-            value=str(pool.get("pick_deadline") or ""),
-            placeholder="e.g. Sunday 12:55 PM ET",
-            key="margin_preview_deadline",
-        )
-        st.text_input(
-            "Payout structure",
-            value=str(pool.get("payout_structure") or "winner_take_all"),
-            disabled=True,
-            key="margin_preview_payout",
-        )
-
-    uploaded_field = st.file_uploader(
-        "Opponent field CSV",
-        type=["csv"],
-        help="Required columns: id, name, cumulative_score, used_teams",
-        key="margin_preview_upload",
-    )
-    pasted_field = st.text_area(
-        "Or paste the same CSV",
-        height=120,
-        placeholder="id,name,cumulative_score,used_teams\nopp-1,Team A,42,KC|BUF",
-        key="margin_preview_paste",
-    )
-    field_text = uploaded_field.getvalue().decode("utf-8-sig") if uploaded_field is not None else pasted_field
-    validate_preview = st.form_submit_button("Validate & preview field")
-
-if validate_preview and not field_text.strip():
-    st.warning("Add or paste the opponent field CSV before validating.")
-elif validate_preview:
-    try:
-        raw_rows = _field_rows_from_csv_text(field_text)
-        opponents = pool_state.normalize_opponents(raw_rows, int(state.get("completed_week", 0) or 0))
-        visibility_value = True if preview_visibility == "visible" else False if preview_visibility == "hidden" else None
-        preview_state, readiness = pool_state.apply_pool_snapshot(
-            state,
-            opponents,
-            pool_name=preview_pool_name.strip() or None,
-            first_place_tie_rule=None if preview_tie_rule == "Unknown" else preview_tie_rule,
-            pick_deadline=preview_deadline.strip() or None,
-            picks_visible_before_deadline=visibility_value,
-            explicit_pool_size=None if int(preview_pool_size) == 0 else int(preview_pool_size),
-            payout_structure="winner_take_all",
-        )
-        st.session_state["margin_pool_preview_state"] = json.dumps(preview_state, sort_keys=True)
-        st.session_state["margin_pool_preview_base_state"] = state_text
-        st.success(
-            f"Field validated: {len(opponents) + 1} entrants. Championship readiness: {readiness['status']}."
-        )
-    except Exception as exc:
-        st.session_state.pop("margin_pool_preview_state", None)
-        st.session_state.pop("margin_pool_preview_base_state", None)
-        st.error(f"Field preview rejected: {exc}")
-
-preview_state_text = st.session_state.get("margin_pool_preview_state")
-if preview_state_text and st.session_state.get("margin_pool_preview_base_state") != state_text:
-    st.session_state.pop("margin_pool_preview_state", None)
-    st.session_state.pop("margin_pool_preview_base_state", None)
-    preview_state_text = None
-    st.warning("The authoritative state changed since this preview was built. Reload the field before using it.")
-
-if preview_state_text:
-    try:
-        preview_state = json.loads(preview_state_text)
-        preview_audit = _calculate_snapshot(preview_state_text)
-        preview_policy = preview_audit["policy"]
-        preview_pick = preview_audit["pick"]
-        preview_opponents = preview_state.get("opponents", [])
-
-        preview_metrics = st.columns(4)
-        preview_metrics[0].metric("Preview entrants", int((preview_state.get("pool") or {}).get("size") or 0))
-        preview_metrics[1].metric("Preview opponents", len(preview_opponents))
-        preview_metrics[2].metric("Championship status", str(preview_policy.get("championship_status", "")))
-        preview_metrics[3].metric("Preview PICK", str(preview_pick["team"]))
-
-        if bool(preview_policy.get("championship_override_applied", False)):
-            note(
-                f"Preview championship override: {preview_policy.get('expected_points_pick')} → {preview_pick['team']}. "
-                "This is not authoritative until the validated field snapshot is persisted."
-            )
-        elif str(preview_policy.get("championship_status", "")) == "READY_FOR_SIMULATION":
-            note(
-                f"Preview complete field evaluated and retained expected-points pick {preview_pick['team']}. "
-                "This is not authoritative until the snapshot is persisted."
-            )
-        else:
-            note(
-                f"Preview pick remains {preview_pick['team']}. Championship status: "
-                f"{str(preview_policy.get('championship_status', '')).replace('_', ' ').title()}."
-            )
-
-        if preview_opponents:
-            st.dataframe(pd.DataFrame(preview_opponents), hide_index=True, width="stretch")
-
-        pretty_preview_state = json.dumps(preview_state, indent=2) + "\n"
-        st.download_button(
-            "Download validated state JSON",
-            data=pretty_preview_state,
-            file_name="pdl_live_state_2026_validated_preview.json",
-            mime="application/json",
-            key="margin_preview_download",
-        )
-        with st.form("margin_pool_preview_persist_form", clear_on_submit=False):
-            confirm_pool_field = st.checkbox(
-                "I confirm the pool standings, scores, and burned-team inventories match the official PDL.",
-                key="margin_preview_persist_confirm",
-            )
-            save_validated_field = st.form_submit_button(
-                "Save validated field to PDL state",
-                type="primary",
-                disabled=not authorized,
-                width="stretch",
-            )
-
-        if save_validated_field and not confirm_pool_field:
-            st.warning("Confirm the validated field matches the official PDL before saving.")
-        elif save_validated_field:
-            try:
-                preview_base_state = json.loads(st.session_state["margin_pool_preview_base_state"])
-                commit_sha = _persist_transition(
-                    state_config,
-                    preview_base_state,
-                    preview_state,
-                    f"Save validated PDL field for Week {state['current_week']}",
-                )
-                _calculate_snapshot.clear()
-                st.session_state.pop("margin_pool_preview_state", None)
-                st.session_state.pop("margin_pool_preview_base_state", None)
-                st.success(f"Validated field saved to private PDL state ({commit_sha[:8]}).")
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Validated field was not saved: {exc}")
-
-        if st.button("Clear field preview", key="margin_preview_clear"):
-            st.session_state.pop("margin_pool_preview_state", None)
-            st.session_state.pop("margin_pool_preview_base_state", None)
-            st.rerun()
-    except Exception as exc:
-        st.error(f"Validated field could not produce a preview decision: {exc}")
+readiness = championship_info.get("readiness") or {}
+sync_cols = st.columns(4)
+sync_cols[0].metric("Active entrants", int(pool.get("size") or 0))
+sync_cols[1].metric("Opponents synced", len(state.get("opponents") or []))
+sync_cols[2].metric("Weeks graded", int(state.get("completed_week") or 0))
+sync_cols[3].metric("Championship starts", f"Week {int(readiness.get('minimum_supported_week') or 10)}")
+missing = list(readiness.get("missing") or [])
+if missing == ["pool.first_place_tie_rule"]:
+    st.caption("Only the first-place tie-handling rule remains to be confirmed before championship simulation becomes eligible in Week 10.")
+elif missing:
+    st.caption("Championship setup still needs: " + ", ".join(str(x) for x in missing))
+else:
+    st.caption("PDL field and championship settings are complete.")
 
 section("Data quality", "What the engine actually had available for this calculation.")
 quality_cols = st.columns(4)
@@ -658,9 +487,17 @@ quality_cols[1].metric("Current spreads", int(data_quality["current_week_posted_
 quality_cols[2].metric("Season games", int(data_quality["season_games"]))
 quality_cols[3].metric("Market HFA", f"{float(data_quality['fallback_hfa']):.2f}")
 with st.expander("Source mix and technical status"):
+    displayed_champ_status = (
+        f"INACTIVE_UNTIL_WEEK_{minimum_champ_week}"
+        if int(state.get("current_week", 0) or 0) < minimum_champ_week
+        else policy.get("championship_status")
+    )
     st.json({
         "market_snapshot": audit["snapshot_utc"],
-        "championship_status": policy.get("championship_status"),
+        "championship_status": displayed_champ_status,
+        "championship_readiness_missing": championship_info.get("readiness", {}).get("missing", []),
+        "pdl_active_entrants": int((state.get("pool") or {}).get("size") or 0),
+        "pdl_opponents_synced": len(state.get("opponents") or []),
         "championship_override_promoted": policy.get("championship_override_promoted"),
         "championship_override_applied": policy.get("championship_override_applied"),
         "championship_override_status": policy.get("championship_override_status"),
