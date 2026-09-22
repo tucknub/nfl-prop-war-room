@@ -231,6 +231,11 @@ def apply_espn_snapshot(
         if "league_faab" in snapshot
         else list(existing.get("league_faab") or [])
     )
+    team_roster_status = (
+        [dict(row) for row in snapshot.get("team_roster_status") or []]
+        if "team_roster_status" in snapshot
+        else list(existing.get("team_roster_status") or [])
+    )
     detected_elimination = (
         dict(snapshot.get("detected_elimination") or {})
         if "detected_elimination" in snapshot
@@ -256,6 +261,7 @@ def apply_espn_snapshot(
         "available_players": available_players,
         "roster_player_metrics": roster_player_metrics,
         "league_faab": league_faab,
+        "team_roster_status": team_roster_status,
         "league_week_scores": league_week_scores,
         "detected_elimination": detected_elimination,
         "detected_eliminations": detected_eliminations,

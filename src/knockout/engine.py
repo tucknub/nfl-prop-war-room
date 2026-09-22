@@ -162,8 +162,17 @@ def phase(state: dict[str, Any]) -> str:
     return "ENDGAME"
 
 
+def completed_elimination_count(state: dict[str, Any]) -> int:
+    total = max(1, int((state.get("league") or {}).get("teams", 18)))
+    ledger_count = len(state.get("eliminations") or [])
+    current_week = max(0, int(state.get("current_week") or 0))
+    implied_count = min(total - 1, max(0, current_week - 1))
+    return min(total - 1, max(ledger_count, implied_count))
+
+
 def active_team_count(state: dict[str, Any]) -> int:
-    return max(1, int((state.get("league") or {}).get("teams", 18)) - len(state.get("eliminations") or []))
+    total = max(1, int((state.get("league") or {}).get("teams", 18)))
+    return max(1, total - completed_elimination_count(state))
 
 
 def strategy_priorities(state: dict[str, Any]) -> list[str]:

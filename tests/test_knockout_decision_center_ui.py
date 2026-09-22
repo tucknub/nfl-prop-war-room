@@ -24,6 +24,8 @@ def test_knockout_page_is_decision_first() -> None:
     assert '"FAAB rank"' in war_room
     assert '"Hard max"' in war_room
     assert '"Drop"' in war_room
+    assert "completed_elimination_count" in war_room
+    assert "without inventing provenance" in war_room
 
 
 def test_knockout_released_roster_flow_is_private_and_fit_only() -> None:

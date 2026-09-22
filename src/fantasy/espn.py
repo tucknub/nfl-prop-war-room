@@ -571,6 +571,16 @@ class EspnFantasyClient:
                 if (row := _library_player_row(player, week=scoring_week)) is not None
             ]
 
+            team_roster_status = [
+                {
+                    "team_id": int(getattr(team, "team_id", 0) or 0),
+                    "team": str(getattr(team, "team_name", "") or "").strip(),
+                    "roster_count": len(list(getattr(team, "roster", []) or [])),
+                }
+                for team in teams
+                if int(getattr(team, "team_id", 0) or 0) > 0
+            ]
+
             roster_player_metrics: list[dict[str, Any]] = []
             for team in teams:
                 if int(getattr(team, "team_id", 0) or 0) != int(team_id):
@@ -662,6 +672,7 @@ class EspnFantasyClient:
             return {
                 "available_players": available_players,
                 "roster_player_metrics": roster_player_metrics,
+                "team_roster_status": team_roster_status,
                 "league_week_scores": week_scores,
                 "detected_elimination": detections[-1] if detections else None,
                 "detected_eliminations": detections,

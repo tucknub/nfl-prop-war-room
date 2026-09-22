@@ -107,7 +107,7 @@ def test_war_room_promotes_real_lineup_upgrades_and_builds_fallbacks() -> None:
 def test_faab_context_ignores_eliminated_team() -> None:
     context = waiver_advisor.faab_context(_state())
     assert context["available"] is True
-    assert context["team_count"] == 3
+    assert context["team_count"] == 16
     assert context["rank"] == 2
     assert context["median"] == 780.0
 
@@ -139,6 +139,10 @@ def test_espn_sync_persists_roster_metrics_and_full_league_faab() -> None:
         "roster": _roster(),
         "roster_player_metrics": _metrics(),
         "league_faab": [{"team_id": 7, "team": "Mine", "faab_remaining": 780}],
+        "team_roster_status": [
+            {"team_id": 7, "team": "Mine", "roster_count": 14},
+            {"team_id": 2, "team": "Chopped", "roster_count": 0},
+        ],
         "available_players": [],
     }
     state["league"]["espn_league_id"] = "60191612"
@@ -146,3 +150,4 @@ def test_espn_sync_persists_roster_metrics_and_full_league_faab() -> None:
     updated = apply_espn_snapshot(state, snapshot)
     assert len(updated["espn_connection"]["roster_player_metrics"]) == 14
     assert updated["espn_connection"]["league_faab"][0]["faab_remaining"] == 780
+    assert updated["espn_connection"]["team_roster_status"][1]["roster_count"] == 0

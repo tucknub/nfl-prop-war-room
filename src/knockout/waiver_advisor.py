@@ -362,9 +362,21 @@ def faab_context(state: Mapping[str, Any]) -> dict[str, Any]:
         for row in state.get("eliminations") or []
         if str(row.get("team") or "").strip()
     }
+    expected_active = engine.active_team_count(dict(state))
+    roster_status = [dict(row) for row in connection.get("team_roster_status") or []]
+    roster_active_ids = {
+        int(row.get("team_id") or 0)
+        for row in roster_status
+        if int(row.get("team_id") or 0) > 0 and int(row.get("roster_count") or 0) > 0
+    }
+
     active = [row for row in rows if _name_key(row.get("team")) not in eliminated]
+    if roster_active_ids and len(roster_active_ids) <= expected_active:
+        active = [row for row in active if int(row.get("team_id") or 0) in roster_active_ids]
     mine_id = int(connection.get("team_id") or 0)
     mine = next((row for row in active if int(row.get("team_id") or 0) == mine_id), None)
+    if mine is None:
+        mine = next((row for row in rows if int(row.get("team_id") or 0) == mine_id), None)
     balances = [
         int(row["faab_remaining"])
         for row in active
@@ -374,7 +386,7 @@ def faab_context(state: Mapping[str, Any]) -> dict[str, Any]:
         return {
             "available": False,
             "rank": None,
-            "team_count": len(active),
+            "team_count": expected_active,
             "median": None,
             "mine": int(state.get("faab_remaining") or 0),
         }
@@ -382,8 +394,8 @@ def faab_context(state: Mapping[str, Any]) -> dict[str, Any]:
     rank = 1 + sum(value > mine_balance for value in balances)
     return {
         "available": True,
-        "rank": rank,
-        "team_count": len(balances),
+        "rank": min(rank, expected_active),
+        "team_count": expected_active,
         "median": float(median(balances)),
         "mine": mine_balance,
     }

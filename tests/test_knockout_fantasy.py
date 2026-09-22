@@ -123,6 +123,14 @@ def test_survival_week_advances_and_shrinks_field() -> None:
     assert engine.active_team_count(updated) == 17
 
 
+def test_current_week_implies_completed_knockout_rounds_when_history_is_missing() -> None:
+    active = engine.record_draft_state(base_state(), roster())
+    active["current_week"] = 3
+    active["eliminations"] = []
+    assert engine.completed_elimination_count(active) == 2
+    assert engine.active_team_count(active) == 16
+
+
 def test_user_elimination_ends_state_without_advancing_week() -> None:
     active = engine.record_draft_state(base_state(), roster())
     updated = engine.record_week_state(

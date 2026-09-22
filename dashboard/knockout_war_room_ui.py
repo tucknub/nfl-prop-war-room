@@ -81,7 +81,21 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
     eliminated = _latest_elimination(state)
     released = _latest_release(state)
     if eliminated is None:
-        st.info("No elimination has been recorded yet.")
+        completed = engine.completed_elimination_count(state)
+        if completed > 0:
+            inactive = [
+                str(row.get("team") or "").strip()
+                for row in connection.get("team_roster_status") or []
+                if int(row.get("roster_count") or 0) == 0 and str(row.get("team") or "").strip()
+            ]
+            detail = f" Current ESPN roster state shows: {', '.join(inactive)}." if inactive else ""
+            st.info(
+                f"{completed} eliminations are complete based on the Week {int(state.get('current_week', 0))} league phase."
+                f"{detail} ESPN is not exposing enough historical scoring data to assign the exact chop order, "
+                "so PropWar ranks the current waiver pool without inventing provenance."
+            )
+        else:
+            st.info("No elimination has been recorded yet.")
     else:
         team = str(eliminated.get("team") or "Unknown team")
         week = int(eliminated.get("week", 0))
