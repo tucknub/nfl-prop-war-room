@@ -65,6 +65,19 @@ def validate_roster(
     return rows
 
 
+def validate_released_roster(
+    roster: Iterable[dict[str, Any]],
+    *,
+    minimum_size: int = 14,
+) -> list[dict[str, str]]:
+    rows = list(roster)
+    if len(rows) < int(minimum_size):
+        raise ValueError(
+            f"released roster must contain at least {int(minimum_size)} players; received {len(rows)}"
+        )
+    return validate_roster(rows, roster_size=len(rows))
+
+
 def validate_state(state: dict[str, Any]) -> dict[str, Any]:
     if str(state.get("schema_version")) != "knockout_live_state_v1":
         raise ValueError("unsupported Knockout state schema")
@@ -131,9 +144,9 @@ def validate_state(state: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"duplicate released roster for Week {release_week}")
         if (release_week, release_team.casefold()) not in elimination_keys:
             raise ValueError("released roster does not match a recorded elimination")
-        validate_roster(
+        validate_released_roster(
             released.get("players") or [],
-            roster_size=int(league.get("roster_size", 14)),
+            minimum_size=int(league.get("roster_size", 14)),
         )
         seen_release_weeks.add(release_week)
     return state

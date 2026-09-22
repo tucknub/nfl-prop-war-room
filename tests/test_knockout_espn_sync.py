@@ -234,3 +234,57 @@ def test_sync_backfills_all_completed_week_eliminations() -> None:
     assert len(updated["released_rosters"]) == 2
     assert engine.active_team_count(updated) == 16
     assert len(updated["espn_connection"]["detected_eliminations"]) == 2
+
+
+def test_sync_backfills_chops_from_espn_mass_drop_transactions() -> None:
+    snap = snapshot()
+    snap["current_week"] = 3
+    released = [dict(row) for row in snap["roster"]]
+    week_two_release = released + [
+        {"player": "Extra IR Player", "position": "WR", "nfl_team": "BUF"}
+    ]
+    snap["team_roster_status"] = [
+        {"team_id": 14, "team": "Natasha's Team", "roster_count": 0},
+        {"team_id": 12, "team": "Joseph's Team", "roster_count": 0},
+        {"team_id": 7, "team": "Ricky's Rowdy Team", "roster_count": 14},
+    ]
+    snap["league_transactions"] = [
+        {
+            "team": "Natasha's Team",
+            "type": "ROSTER",
+            "status": "EXECUTED",
+            "scoring_period": 2,
+            "items": [{"type": "DROP", **row} for row in released],
+        },
+        {
+            "team": "Joseph's Team",
+            "type": "ROSTER",
+            "status": "EXECUTED",
+            "scoring_period": 3,
+            "items": [{"type": "DROP", **row} for row in week_two_release],
+        },
+        {
+            "team": "Ricky's Rowdy Team",
+            "type": "ROSTER",
+            "status": "EXECUTED",
+            "scoring_period": 3,
+            "items": [{"type": "LINEUP", **released[0]}],
+        },
+    ]
+
+    updated = apply_espn_snapshot(
+        base_state(),
+        snap,
+        credential_envelope="encrypted-token",
+    )
+
+    assert [row["week"] for row in updated["eliminations"]] == [1, 2]
+    assert [row["team"] for row in updated["eliminations"]] == ["Natasha's Team", "Joseph's Team"]
+    assert len(updated["released_rosters"]) == 2
+    assert len(updated["released_rosters"][0]["players"]) == 14
+    assert len(updated["released_rosters"][1]["players"]) == 15
+    assert engine.active_team_count(updated) == 16
+    assert [row["team"] for row in updated["espn_connection"]["detected_eliminations"]] == [
+        "Natasha's Team",
+        "Joseph's Team",
+    ]

@@ -50,6 +50,58 @@ def _plain_available_players(snapshot: Mapping[str, Any]) -> list[dict[str, Any]
     return rows
 
 
+def _transaction_detected_eliminations(
+    state: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_week = int(snapshot.get("current_week") or 0)
+    expected = int((state.get("league") or {}).get("roster_size", 14))
+    zero_roster_teams = {
+        str(row.get("team") or "").strip().casefold()
+        for row in snapshot.get("team_roster_status") or []
+        if int(row.get("roster_count") or 0) == 0
+    }
+    mine = str(snapshot.get("team_name") or "").strip().casefold()
+    by_week: dict[int, list[dict[str, Any]]] = {}
+    for tx in snapshot.get("league_transactions") or []:
+        if str(tx.get("type") or "").upper() != "ROSTER":
+            continue
+        if str(tx.get("status") or "").upper() != "EXECUTED":
+            continue
+        period = int(tx.get("scoring_period") or 0)
+        week = period - 1
+        if week < 1 or week >= source_week:
+            continue
+        team = str(tx.get("team") or "").strip()
+        if not team or (zero_roster_teams and team.casefold() not in zero_roster_teams):
+            continue
+        items = [dict(item) for item in tx.get("items") or []]
+        drops = [item for item in items if str(item.get("type") or "").upper() == "DROP"]
+        if len(drops) < expected or len(drops) != len(items):
+            continue
+        players = [
+            {"player": str(item.get("player") or "").strip(),
+             "position": str(item.get("position") or "").strip(),
+             "nfl_team": str(item.get("nfl_team") or "").strip()}
+            for item in drops
+            if str(item.get("player") or "").strip()
+        ]
+        by_week.setdefault(week, []).append({
+            "week": week,
+            "team": team,
+            "players": players,
+            "user_score": None,
+            "user_eliminated": team.casefold() == mine,
+            "source": "ESPN_ROSTER_MASS_DROP",
+        })
+    detected: list[dict[str, Any]] = []
+    for week in sorted(by_week):
+        candidates = by_week[week]
+        if len(candidates) == 1:
+            detected.append(candidates[0])
+    return detected
+
+
 def _reconcile_detected_elimination(
     updated: dict[str, Any],
     snapshot: Mapping[str, Any],
@@ -100,8 +152,8 @@ def _reconcile_detected_elimination(
     ):
         players = list(detected.get("players") or [])
         expected = int((updated.get("league") or {}).get("roster_size", 14))
-        if len(players) == expected:
-            normalized = engine.validate_roster(players, roster_size=expected)
+        if len(players) >= expected:
+            normalized = engine.validate_released_roster(players, minimum_size=expected)
             updated.setdefault("released_rosters", []).append(
                 {
                     "week": week,
@@ -198,16 +250,24 @@ def apply_espn_snapshot(
         league["espn_team_id"] = int(snapshot.get("team_id") or 0)
     updated["league"] = league
 
-    detected_rows = snapshot.get("detected_eliminations")
-    if isinstance(detected_rows, list):
-        for detected in detected_rows:
-            if not isinstance(detected, Mapping):
-                continue
-            replay = dict(snapshot)
-            replay["detected_elimination"] = detected
-            _reconcile_detected_elimination(updated, replay)
-    else:
-        _reconcile_detected_elimination(updated, snapshot)
+    detected_rows: list[Mapping[str, Any]] = []
+    supplied = snapshot.get("detected_eliminations")
+    if isinstance(supplied, list):
+        detected_rows.extend(row for row in supplied if isinstance(row, Mapping))
+    elif isinstance(snapshot.get("detected_elimination"), Mapping):
+        detected_rows.append(snapshot["detected_elimination"])
+    detected_rows.extend(_transaction_detected_eliminations(updated, snapshot))
+    seen_detected: set[tuple[int, str]] = set()
+    combined_detected: list[dict[str, Any]] = []
+    for detected in sorted(detected_rows, key=lambda row: int(row.get("week") or 0)):
+        key = (int(detected.get("week") or 0), str(detected.get("team") or "").strip().casefold())
+        if key in seen_detected:
+            continue
+        seen_detected.add(key)
+        combined_detected.append(dict(detected))
+        replay = dict(snapshot)
+        replay["detected_elimination"] = detected
+        _reconcile_detected_elimination(updated, replay)
 
     existing = dict(updated.get("espn_connection") or {})
     envelope = credential_envelope or str(existing.get("credential_envelope") or "")
@@ -251,11 +311,7 @@ def apply_espn_snapshot(
         if "detected_elimination" in snapshot
         else dict(existing.get("detected_elimination") or {})
     )
-    detected_eliminations = (
-        [dict(row) for row in snapshot.get("detected_eliminations") or [] if isinstance(row, Mapping)]
-        if "detected_eliminations" in snapshot
-        else list(existing.get("detected_eliminations") or [])
-    )
+    detected_eliminations = combined_detected or list(existing.get("detected_eliminations") or [])
     connection = {
         "provider": "ESPN",
         "mode": "PRIVATE_COOKIE_READ_ONLY",

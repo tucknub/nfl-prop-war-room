@@ -581,6 +581,17 @@ class EspnFantasyClient:
                 if int(getattr(team, "team_id", 0) or 0) > 0
             ]
 
+            player_detail_by_id: dict[str, dict[str, Any]] = {
+                str(row.get("espn_player_id") or ""): row
+                for row in available_players
+                if str(row.get("espn_player_id") or "")
+            }
+            for team in teams:
+                for player in list(getattr(team, "roster", []) or []):
+                    row = _library_player_row(player, week=scoring_week)
+                    if row is not None and str(row.get("espn_player_id") or ""):
+                        player_detail_by_id[str(row["espn_player_id"])] = row
+
             roster_player_metrics: list[dict[str, Any]] = []
             for team in teams:
                 if int(getattr(team, "team_id", 0) or 0) != int(team_id):
@@ -618,10 +629,14 @@ class EspnFantasyClient:
                     for tx in league.transactions(scoring_period=transaction_week, types={"FREEAGENT", "WAIVER", "WAIVER_ERROR", "ROSTER", "FUTURE_ROSTER", "RETRO_ROSTER"}):
                         items = []
                         for item in list(getattr(tx, "items", []) or []):
+                            player_id = int(getattr(item, "playerId", 0) or 0)
+                            detail = player_detail_by_id.get(str(player_id), {})
                             items.append({
                                 "type": str(getattr(item, "type", "") or ""),
-                                "player_id": int(getattr(item, "playerId", 0) or 0),
-                                "player": str(getattr(item, "player", "") or ""),
+                                "player_id": player_id,
+                                "player": str(getattr(item, "player", "") or detail.get("player") or ""),
+                                "position": str(detail.get("position") or ""),
+                                "nfl_team": str(detail.get("nfl_team") or ""),
                                 "from_team_id": int(getattr(item, "from_team_id", 0) or 0),
                                 "to_team_id": int(getattr(item, "to_team_id", 0) or 0),
                             })
