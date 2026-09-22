@@ -615,7 +615,7 @@ class EspnFantasyClient:
             transaction_probe_error = ""
             try:
                 for transaction_week in range(1, scoring_week + 1):
-                    for tx in league.transactions(scoring_period=transaction_week):
+                    for tx in league.transactions(scoring_period=transaction_week, types={"FREEAGENT", "WAIVER", "WAIVER_ERROR", "ROSTER", "FUTURE_ROSTER", "RETRO_ROSTER"}):
                         items = []
                         for item in list(getattr(tx, "items", []) or []):
                             items.append({
