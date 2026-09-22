@@ -164,6 +164,36 @@ def _latest_release_names(state: Mapping[str, Any]) -> set[str]:
     return {_name_key(row.get("player")) for row in latest.get("players") or []}
 
 
+def _same_position_depth_upgrade(
+    candidate: Mapping[str, Any],
+    current_rows: Iterable[Mapping[str, Any]],
+) -> tuple[float | None, str | None]:
+    candidate_projection = _number(candidate.get("projected_points"))
+    position = engine.canonical_position(candidate.get("position"))
+    if candidate_projection is None or not position:
+        return None, None
+    comparable = [
+        row for row in current_rows
+        if engine.canonical_position(row.get("position")) == position
+        and _number(row.get("projected_points")) is not None
+    ]
+    if not comparable:
+        return None, None
+    weakest = min(comparable, key=lambda row: float(_number(row.get("projected_points")) or 0.0))
+    weakest_projection = float(_number(weakest.get("projected_points")) or 0.0)
+    return candidate_projection - weakest_projection, str(weakest.get("player") or "").strip() or None
+
+
+def _latest_market_row(state: Mapping[str, Any], player: str) -> dict[str, Any] | None:
+    rows = [
+        dict(row) for row in (state.get("espn_connection") or {}).get("waiver_market") or []
+        if _name_key(row.get("player")) == _name_key(player)
+    ]
+    if not rows:
+        return None
+    return max(rows, key=lambda row: int(row.get("scoring_period") or 0))
+
+
 def _phase_caps(state: Mapping[str, Any], decision: str) -> tuple[float, float]:
     current = engine.phase(dict(state))
     if current == "ENDGAME":
@@ -214,6 +244,7 @@ def _bid_amounts(
 
 def _decision(
     *,
+    position: str,
     status: str,
     lineup_delta: float,
     depth_delta: float | None,
@@ -223,16 +254,13 @@ def _decision(
         return "PASS"
     if lineup_delta >= 2.0:
         return "ADD"
+    if position in {"QB", "K", "DST"}:
+        return "VALUE" if lineup_delta >= 1.0 else "PASS"
     if lineup_delta >= 0.5:
         return "VALUE"
     if depth_delta is not None and depth_delta >= 4.0:
         return "VALUE"
-    if (
-        depth_delta is not None
-        and depth_delta >= 2.0
-        and percent_owned is not None
-        and percent_owned >= 97.0
-    ):
+    if depth_delta is not None and depth_delta >= 2.0 and (percent_owned or 0.0) >= 97.0:
         return "VALUE"
     return "PASS"
 
@@ -284,13 +312,9 @@ def _candidate_row(
 
     _, drop, after = best
     lineup_delta = float(after["total"]) - float(baseline["total"])
-    drop_projection = drop.get("projected_points")
-    depth_delta = (
-        float(candidate_projection) - float(drop_projection)
-        if candidate_projection is not None and drop_projection is not None
-        else None
-    )
+    depth_delta, depth_benchmark = _same_position_depth_upgrade(candidate, current_rows)
     decision = _decision(
+        position=str(candidate.get("position") or ""),
         status=str(candidate.get("injury_status") or ""),
         lineup_delta=lineup_delta,
         depth_delta=depth_delta,
@@ -303,6 +327,12 @@ def _candidate_row(
         depth_delta=depth_delta,
         percent_owned=candidate.get("percent_owned"),
     )
+    market = _latest_market_row(state, str(candidate.get("player") or ""))
+    market_floor = None
+    if market is not None and market.get("highest_other_bid") is not None:
+        market_floor = int(market["highest_other_bid"]) + 1
+        if decision != "PASS" and market_floor <= max_bid:
+            recommended_bid = max(recommended_bid, market_floor)
     target_assignment = next(
         (row for row in after["assignments"] if row["player"] == candidate["player"]),
         None,
@@ -317,7 +347,10 @@ def _candidate_row(
     )
 
     why: list[str] = []
-    if target_assignment is not None and lineup_delta >= 0.05:
+    status_label = str(candidate.get("injury_status") or "").strip().upper().replace("_", " ")
+    if status_label in _SERIOUS_STATUSES:
+        why.append(f"ESPN status {status_label}; preserve FAAB until the player is usable.")
+    elif target_assignment is not None and lineup_delta >= 0.05:
         replaced = [
             row
             for row in baseline["assignments"]
@@ -326,13 +359,24 @@ def _candidate_row(
         ]
         replacement = replaced[0]["player"] if replaced else "your current lineup"
         why.append(f"{target_slot} upgrade over {replacement}: {lineup_delta:+.1f} projected points.")
-    elif depth_delta is not None and depth_delta >= 0.5:
-        why.append(f"Depth upgrade over {drop['player']}: {depth_delta:+.1f} projected points.")
+    elif depth_delta is not None and depth_delta >= 0.5 and depth_benchmark:
+        why.append(f"{candidate['position']} depth upgrade over {depth_benchmark}: {depth_delta:+.1f} projected points.")
     else:
         why.append("Does not materially improve the current projected lineup.")
+    if market is not None:
+        winning = market.get("winning_bid")
+        other = market.get("highest_other_bid")
+        if winning is not None and other is not None:
+            why.append(f"Last waiver: ${int(winning)} won; highest other observed bid ${int(other)}.")
+        elif winning is not None:
+            why.append(f"Last waiver: ${int(winning)} won.")
+        elif other is not None:
+            why.append(f"Prior failed bids reached ${int(other)}.")
+        if market_floor is not None and market_floor > max_bid and decision != "PASS":
+            why.append(f"Previous clearing floor about ${market_floor} exceeds today's hard max; do not chase.")
     if _name_key(candidate["player"]) in release_names:
         why.append("Newly available from the latest eliminated roster.")
-    if decision != "PASS":
+    if decision != "PASS" and market is None:
         why.append(
             "Hard max protects future FAAB."
             if engine.phase(dict(state)) == "EARLY_SURVIVAL"
@@ -350,6 +394,9 @@ def _candidate_row(
         "drop_player": drop["player"] if decision != "PASS" else "—",
         "target_slot": target_slot if decision != "PASS" else "—",
         "confidence": confidence,
+        "last_winning_bid": market.get("winning_bid") if market is not None else None,
+        "highest_other_bid": market.get("highest_other_bid") if market is not None else None,
+        "market_floor": market_floor,
         "why": " ".join(why[:3]),
     }
 
@@ -403,33 +450,38 @@ def faab_context(state: Mapping[str, Any]) -> dict[str, Any]:
 
 def build_claim_plan(board: Mapping[str, Any], *, limit: int = 5) -> list[dict[str, Any]]:
     candidates = [
-        dict(row)
-        for row in board.get("candidates") or []
+        dict(row) for row in board.get("candidates") or []
         if row.get("decision") in {"ADD", "VALUE"}
     ]
-    leaders: dict[str, str] = {}
     group_counts: dict[str, int] = {}
     plan: list[dict[str, Any]] = []
+    plan_meta: list[tuple[str, str, str]] = []
     for row in candidates:
         group = str(row.get("target_slot") or row.get("position") or "OTHER")
         if group_counts.get(group, 0) >= 2:
             continue
-        leader = leaders.get(group)
-        condition = "Submit" if leader is None else f"Only if {leader} is lost"
-        if leader is None:
-            leaders[group] = str(row["player"])
+        drop = str(row.get("drop_player") or "—")
+        conflicts = [
+            player for prior_group, prior_drop, player in plan_meta
+            if prior_group == group or (drop != "—" and prior_drop == drop)
+        ]
+        if not conflicts:
+            condition = "Submit"
+        elif len(conflicts) == 1:
+            condition = f"Only if {conflicts[0]} is lost"
+        else:
+            condition = f"Only if {' and '.join(conflicts)} are lost"
         group_counts[group] = group_counts.get(group, 0) + 1
-        plan.append(
-            {
-                "priority": len(plan) + 1,
-                "player": row["player"],
-                "position": row["position"],
-                "bid": row["recommended_bid"],
-                "max_bid": row["max_bid"],
-                "drop": row["drop_player"],
-                "condition": condition,
-            }
-        )
+        plan.append({
+            "priority": len(plan) + 1,
+            "player": row["player"],
+            "position": row["position"],
+            "bid": row["recommended_bid"],
+            "max_bid": row["max_bid"],
+            "drop": drop,
+            "condition": condition,
+        })
+        plan_meta.append((group, drop, str(row["player"])))
         if len(plan) >= limit:
             break
     return plan

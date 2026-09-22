@@ -151,3 +151,67 @@ def test_espn_sync_persists_roster_metrics_and_full_league_faab() -> None:
     assert len(updated["espn_connection"]["roster_player_metrics"]) == 14
     assert updated["espn_connection"]["league_faab"][0]["faab_remaining"] == 780
     assert updated["espn_connection"]["team_roster_status"][1]["roster_count"] == 0
+
+
+def test_backup_qb_with_zero_lineup_gain_does_not_receive_faab_bid() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].append(
+        {
+            "player": "Backup QB Upgrade",
+            "position": "QB",
+            "nfl_team": "DAL",
+            "projected_points": 17.5,
+            "percent_owned": 99.0,
+            "injury_status": "ACTIVE",
+        }
+    )
+    board = waiver_advisor.build_waiver_war_room(state)
+    row = next(row for row in board["candidates"] if row["player"] == "Backup QB Upgrade")
+    assert row["lineup_delta"] == 0.0
+    assert row["decision"] == "PASS"
+    assert row["recommended_bid"] == 0
+    assert all(plan["player"] != "Backup QB Upgrade" for plan in board["claim_plan"])
+
+
+def test_small_dst_edge_is_pass_but_skill_position_depth_can_still_be_value() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].extend(
+        [
+            {
+                "player": "Slight DST",
+                "position": "DST",
+                "nfl_team": "DAL",
+                "projected_points": 7.6,
+                "percent_owned": 95.0,
+                "injury_status": "ACTIVE",
+            },
+            {
+                "player": "Depth TE",
+                "position": "TE",
+                "nfl_team": "NE",
+                "projected_points": 8.0,
+                "percent_owned": 99.0,
+                "injury_status": "ACTIVE",
+            },
+        ]
+    )
+    board = waiver_advisor.build_waiver_war_room(state)
+    by_name = {row["player"]: row for row in board["candidates"]}
+    assert by_name["Slight DST"]["decision"] == "PASS"
+    assert by_name["Slight DST"]["recommended_bid"] == 0
+    assert by_name["Depth TE"]["decision"] == "VALUE"
+    assert by_name["Depth TE"]["depth_delta"] == 3.0
+
+
+def test_claim_plan_chains_claims_that_share_the_same_drop() -> None:
+    board = {
+        "candidates": [
+            {"decision": "ADD", "player": "A", "position": "RB", "target_slot": "RB", "recommended_bid": 100, "max_bid": 130, "drop_player": "Bench X"},
+            {"decision": "VALUE", "player": "B", "position": "RB", "target_slot": "RB", "recommended_bid": 80, "max_bid": 100, "drop_player": "Bench X"},
+            {"decision": "VALUE", "player": "C", "position": "WR", "target_slot": "WR", "recommended_bid": 60, "max_bid": 80, "drop_player": "Bench X"},
+        ]
+    }
+    plan = waiver_advisor.build_claim_plan(board)
+    assert plan[0]["condition"] == "Submit"
+    assert plan[1]["condition"] == "Only if A is lost"
+    assert plan[2]["condition"] == "Only if A and B are lost"

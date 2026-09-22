@@ -102,6 +102,51 @@ def _transaction_detected_eliminations(
     return detected
 
 
+def _derive_waiver_market(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[int, str], dict[str, Any]] = {}
+    for tx in snapshot.get("league_transactions") or []:
+        if str(tx.get("type") or "").upper() != "WAIVER":
+            continue
+        period = int(tx.get("scoring_period") or 0)
+        status = str(tx.get("status") or "").upper()
+        team = str(tx.get("team") or "").strip()
+        bid = int(tx.get("bid_amount") or 0)
+        for item in tx.get("items") or []:
+            if str(item.get("type") or "").upper() != "ADD":
+                continue
+            player = str(item.get("player") or "").strip()
+            if not player or period <= 0:
+                continue
+            key = (period, player.casefold())
+            row = grouped.setdefault(key, {"player": player, "scoring_period": period, "attempts": []})
+            row["attempts"].append({"team": team, "bid": bid, "status": status})
+
+    results: list[dict[str, Any]] = []
+    for row in grouped.values():
+        attempts = list(row.pop("attempts"))
+        winners = [a for a in attempts if a["status"] == "EXECUTED"]
+        winner = max(winners, key=lambda a: int(a["bid"])) if winners else None
+        winner_team = str((winner or {}).get("team") or "").casefold()
+        other_bids = [
+            int(a["bid"]) for a in attempts
+            if int(a["bid"]) > 0
+            and str(a.get("team") or "").casefold() != winner_team
+            and str(a.get("status") or "").startswith("FAILED")
+        ]
+        positive_teams = {str(a.get("team") or "").casefold() for a in attempts if int(a["bid"]) > 0 and str(a.get("team") or "").strip()}
+        if winner is None and not other_bids:
+            continue
+        results.append({
+            **row,
+            "winning_bid": int(winner["bid"]) if winner is not None else None,
+            "winner": str(winner.get("team") or "") if winner is not None else "",
+            "highest_other_bid": max(other_bids) if other_bids else None,
+            "bidder_count": len(positive_teams),
+        })
+    results.sort(key=lambda r: (-int(r["scoring_period"]), str(r["player"]).casefold()))
+    return results[:100]
+
+
 def _reconcile_detected_elimination(
     updated: dict[str, Any],
     snapshot: Mapping[str, Any],
@@ -296,6 +341,11 @@ def apply_espn_snapshot(
         if "team_roster_status" in snapshot
         else list(existing.get("team_roster_status") or [])
     )
+    waiver_market = (
+        _derive_waiver_market(snapshot)
+        if "league_transactions" in snapshot
+        else list(existing.get("waiver_market") or [])
+    )
     detected_elimination = (
         dict(snapshot.get("detected_elimination") or {})
         if "detected_elimination" in snapshot
@@ -318,6 +368,7 @@ def apply_espn_snapshot(
         "roster_player_metrics": roster_player_metrics,
         "league_faab": league_faab,
         "team_roster_status": team_roster_status,
+        "waiver_market": waiver_market,
         "league_week_scores": league_week_scores,
         "detected_elimination": detected_elimination,
         "detected_eliminations": detected_eliminations,

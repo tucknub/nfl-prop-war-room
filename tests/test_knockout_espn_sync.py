@@ -288,3 +288,33 @@ def test_sync_backfills_chops_from_espn_mass_drop_transactions() -> None:
         "Natasha's Team",
         "Joseph's Team",
     ]
+
+
+def test_sync_derives_lean_waiver_market_without_persisting_raw_transactions() -> None:
+    snap = snapshot()
+    snap["current_week"] = 3
+    snap["league_transactions"] = [
+        {
+            "type": "WAIVER",
+            "status": "EXECUTED",
+            "scoring_period": 2,
+            "team": "Winner",
+            "bid_amount": 650,
+            "items": [{"type": "ADD", "player": "Star RB"}],
+        },
+        {
+            "type": "WAIVER",
+            "status": "FAILED_INVALIDPLAYERSOURCE",
+            "scoring_period": 2,
+            "team": "Runner Up",
+            "bid_amount": 177,
+            "items": [{"type": "ADD", "player": "Star RB"}],
+        },
+    ]
+    updated = apply_espn_snapshot(base_state(), snap, credential_envelope="encrypted-token")
+    market = updated["espn_connection"]["waiver_market"]
+    assert market[0]["player"] == "Star RB"
+    assert market[0]["winning_bid"] == 650
+    assert market[0]["highest_other_bid"] == 177
+    assert market[0]["bidder_count"] == 2
+    assert "league_transactions" not in updated["espn_connection"]
