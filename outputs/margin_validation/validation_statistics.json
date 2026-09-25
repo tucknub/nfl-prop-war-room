@@ -1,0 +1,69 @@
+{
+  "calibrated_expected_margin_delta": {
+    "bootstrap_95_mean": [
+      -0.3869693290444674,
+      4.345179193183548
+    ],
+    "losses": 7,
+    "mean": 1.9814953564472664,
+    "median": 0.9109938054490669,
+    "n": 17,
+    "one_sided_t_p": 0.06652177367197641,
+    "one_sided_wilcoxon_p": 0.087127685546875,
+    "ties": 0,
+    "wins": 10
+  },
+  "eventual_market_allocation_delta": {
+    "bootstrap_95_mean": [
+      -0.11764705882352941,
+      4.529411764705882
+    ],
+    "losses": 6,
+    "mean": 2.2058823529411766,
+    "median": 1.0,
+    "n": 17,
+    "one_sided_t_p": 0.04573843662838017,
+    "one_sided_wilcoxon_p": 0.05435213086663897,
+    "ties": 1,
+    "wins": 10
+  },
+  "interpretation": {
+    "note": "Structural allocation advantage is modest and uncertainty intervals touch zero.",
+    "performance_claim_allowed": false,
+    "status": "PROMISING_BUT_INCONCLUSIVE"
+  },
+  "realized_margin_delta": {
+    "bootstrap_95_mean": [
+      -8.058823529411764,
+      27.470588235294116
+    ],
+    "losses": 6,
+    "mean": 10.352941176470589,
+    "median": 23.0,
+    "n": 17,
+    "one_sided_t_p": 0.14405329122911217,
+    "one_sided_wilcoxon_p": 0.11234283447265625,
+    "ties": 0,
+    "wins": 11
+  },
+  "schema_version": "margin_validation_statistics_v1",
+  "seasons": [
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ]
+}

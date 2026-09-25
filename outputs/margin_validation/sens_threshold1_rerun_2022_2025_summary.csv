@@ -1,0 +1,5 @@
+season,window,half_life,ridge,cap,threshold,biggest_favorite,optimizer,perfect_foresight,optimizer_minus_biggest,optimizer_diff_weeks
+2022,32,8.0,3.0,3.0,1.0,137.0,137.0,436.0,0.0,0
+2023,32,8.0,3.0,3.0,1.0,202.0,201.0,483.0,-1.0,1
+2024,32,8.0,3.0,3.0,1.0,144.0,234.0,512.0,90.0,5
+2025,32,8.0,3.0,3.0,1.0,205.0,248.0,490.0,43.0,5

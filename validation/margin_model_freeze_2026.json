@@ -1,0 +1,40 @@
+{
+  "schema_version": "margin_model_freeze_v1",
+  "frozen_at_utc": "2026-09-25T17:03:36.0817724Z",
+  "prospective_start": {"season": 2026, "week": 4},
+  "base_git_commit": "30fec9a62181fb76ea145ebcad2606b2875336b5",
+  "authoritative_expected_points_policy": {
+    "weeks_1_to_3": "BIGGEST_FAVORITE",
+    "future_forecast_model_week4_plus": "RAW_LONG_SLOW_MARKET_POWER",
+    "window_periods": 32,
+    "half_life": 8.0,
+    "ridge": 3.0,
+    "current_spread_sacrifice_cap": 3.0,
+    "anchor_ev_threshold": 0.5,
+    "margin_sampler_bandwidth": 3.0
+  },
+  "shadow_policies": [
+    {"name": "threshold_0", "anchor_ev_threshold": 0.0, "authoritative": false},
+    {"name": "threshold_1", "anchor_ev_threshold": 1.0, "authoritative": false}
+  ],
+  "championship_layer": {
+    "tracked_separately": true,
+    "minimum_supported_week": 10,
+    "not_part_of_expected_points_validation": true
+  },
+  "retrospective_claim_status": "PROMISING_BUT_INCONCLUSIVE",
+  "public_performance_claim_allowed": false,
+  "notes": [
+    "Do not tune the authoritative policy using 2026 outcomes after this freeze.",
+    "Shadow policies are diagnostic only and must not replace the frozen policy midseason.",
+    "Historical nflverse spread_line is not a timestamped pick-deadline snapshot; both strategies used the same source.",
+    "The 2022 BUF-CIN canceled game is treated as no Week 17 game."
+  ],
+  "source_sha256": {
+    "src/margin/live_engine.py": "ee730f2ee9396ee8c419686a562aeb832691d278e2cd8e9922c6546acc5ceb7e",
+    "src/margin/live_engine_v2.py": "74722b6193ff7552bd1a33544d6123540ada99d228a8d7b468a80b9fdc2de0e0",
+    "src/margin/championship.py": "ed1db901fa75c72756bff326987b507cb2410bedea8d8a7ece369aab085f4dfd",
+    "src/margin/championship_override.py": "556478e0d191f461c3c110c36f8875aa4de0b0bc6c7db89cd34f25b9e9f62004",
+    "scripts/margin_walk_forward_validation.py": "32dd7527a2e64b689bfa860af7847e07da88a42428d58b98f79b79b1a0adee32"
+  }
+}

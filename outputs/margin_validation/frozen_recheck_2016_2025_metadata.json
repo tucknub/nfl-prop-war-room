@@ -1,0 +1,25 @@
+{
+  "label": "frozen_recheck",
+  "seasons": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "config": {
+    "window": 32,
+    "half_life": 8.0,
+    "ridge": 3.0,
+    "cap": 3.0,
+    "threshold": 0.5
+  },
+  "future_posted_mode": "current_week_only",
+  "weeks_1_to_3_policy": "biggest_favorite_default",
+  "calibration_cutoff": "strictly before target week"
+}

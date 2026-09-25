@@ -28,3 +28,7 @@ workers/fantasy-hq/.dev.vars*
 workers/fantasy-hq/.env*
 workers/fantasy-hq/.deploy-secrets.env
 workers/fantasy-hq/*secrets*.env
+
+# Margin prospective validation source snapshots may contain bulky source data.
+outputs/margin_prospective/source_snapshots/
+outputs/margin_prospective/_private*
