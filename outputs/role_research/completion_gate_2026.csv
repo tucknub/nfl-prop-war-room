@@ -32,7 +32,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,2,2026_02_SEA_ARI,ARI,SEA,True,True,True,47,67,True
 2026,2,2026_02_WAS_DAL,DAL,WAS,True,True,True,54,66,True
 2026,3,2026_03_ARI_SF,SF,ARI,False,False,False,0,0,False
-2026,3,2026_03_ATL_GB,GB,ATL,False,False,False,0,0,False
+2026,3,2026_03_ATL_GB,GB,ATL,True,True,True,62,66,True
 2026,3,2026_03_BAL_DAL,DAL,BAL,False,False,False,0,0,False
 2026,3,2026_03_CAR_CLE,CLE,CAR,False,False,False,0,0,False
 2026,3,2026_03_CIN_PIT,PIT,CIN,False,False,False,0,0,False
