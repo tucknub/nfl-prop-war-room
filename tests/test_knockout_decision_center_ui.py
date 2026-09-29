@@ -135,3 +135,11 @@ def test_knockout_stale_state_is_visible_and_gates_live_guidance() -> None:
     assert '"FAAB (last known)" if stale else "FAAB"' in war_room
     assert 'surv[0].metric("Roster risk", "Withheld")' in war_room
     assert 'surv[2].metric("Projected lineup", "Withheld")' in war_room
+
+
+def test_knockout_waiver_ui_exposes_role_outlook_and_conservative_unknown_caps() -> None:
+    war_room = _source("dashboard/knockout_war_room_ui.py")
+    assert '"Outlook": _outlook_label(row)' in war_room
+    assert "Role duration is unverified" in war_room
+    assert "FAAB is intentionally capped" in war_room
+    assert '"outlook": "Outlook"' in war_room

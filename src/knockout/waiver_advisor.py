@@ -18,6 +18,21 @@ _SERIOUS_STATUSES = {
     "NFI",
 }
 _SKILL_POSITIONS = {"RB", "WR", "TE"}
+_ROLE_LABELS = {
+    "ESTABLISHED": "Established",
+    "REST_OF_SEASON": "Rest of season",
+    "MULTI_WEEK": "Multi-week",
+    "SHORT_TERM": "Short-term",
+    "UNKNOWN": "Unverified",
+}
+_ROLE_BID_RULES = {
+    "ESTABLISHED": (1.20, None, None),
+    "REST_OF_SEASON": (1.15, 14.0, 20.0),
+    "MULTI_WEEK": (0.95, 8.0, 12.0),
+    "SHORT_TERM": (0.60, 4.0, 6.0),
+    "UNKNOWN": (0.75, 5.0, 7.0),
+}
+_POSITION_BID_MULTIPLIER = {"QB": 0.70, "TE": 0.90, "K": 0.35, "DST": 0.35}
 
 
 def _number(value: object) -> float | None:
@@ -31,6 +46,84 @@ def _number(value: object) -> float | None:
 
 def _name_key(value: object) -> str:
     return " ".join(str(value or "").strip().casefold().split())
+
+
+def _normalize_role_horizon(value: object) -> str:
+    raw = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "ROS": "REST_OF_SEASON",
+        "SEASON_LONG": "REST_OF_SEASON",
+        "FULL_SEASON": "REST_OF_SEASON",
+        "1_2_WEEKS": "SHORT_TERM",
+        "ONE_TWO_WEEKS": "SHORT_TERM",
+        "3_5_WEEKS": "MULTI_WEEK",
+        "THREE_FIVE_WEEKS": "MULTI_WEEK",
+        "CORE": "ESTABLISHED",
+    }
+    normalized = aliases.get(raw, raw)
+    return normalized if normalized in _ROLE_LABELS else "UNKNOWN"
+
+
+def _role_context_rows(state: Mapping[str, Any]) -> list[dict[str, Any]]:
+    raw = state.get("waiver_role_context") or []
+    if isinstance(raw, Mapping):
+        if raw.get("player"):
+            return [dict(raw)]
+        return [dict(value, player=key) if isinstance(value, Mapping) else {"player": key, "horizon": value} for key, value in raw.items()]
+    return [dict(row) for row in raw if isinstance(row, Mapping)]
+
+
+def _candidate_role_context(
+    state: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    player = str(candidate.get("player") or "").strip()
+    for row in _role_context_rows(state):
+        if _name_key(row.get("player")) != _name_key(player):
+            continue
+        horizon = _normalize_role_horizon(row.get("horizon"))
+        certainty = str(row.get("certainty") or "MEDIUM").strip().upper()
+        if certainty not in {"HIGH", "MEDIUM", "LOW"}:
+            certainty = "MEDIUM"
+        note = str(row.get("note") or "").strip()
+        return {
+            "horizon": horizon,
+            "label": _ROLE_LABELS[horizon],
+            "certainty": certainty,
+            "verified": bool(row.get("verified", True)),
+            "note": note or f"Verified role outlook: {_ROLE_LABELS[horizon].lower()}.",
+        }
+
+    owned = _number(candidate.get("percent_owned"))
+    if source == "CHOP" and owned is not None and owned >= 95.0:
+        return {
+            "horizon": "ESTABLISHED",
+            "label": _ROLE_LABELS["ESTABLISHED"],
+            "certainty": "MEDIUM",
+            "verified": False,
+            "note": "High-owned player released by the chop; no temporary-role discount is assumed.",
+        }
+    return {
+        "horizon": "UNKNOWN",
+        "label": _ROLE_LABELS["UNKNOWN"],
+        "certainty": "LOW",
+        "verified": False,
+        "note": "Role duration is unverified, so FAAB is capped conservatively.",
+    }
+
+
+def _survival_bid_context(state: Mapping[str, Any]) -> dict[str, Any]:
+    raw = state.get("survival_context") or {}
+    if not isinstance(raw, Mapping) or not bool(raw.get("verified")):
+        return {"level": "UNVERIFIED", "multiplier": 1.0, "cap_multiplier": 1.0}
+    level = str(raw.get("level") or "NORMAL").strip().upper()
+    if level == "CRITICAL":
+        return {"level": level, "multiplier": 1.30, "cap_multiplier": 2.0}
+    if level == "HIGH":
+        return {"level": level, "multiplier": 1.15, "cap_multiplier": 1.5}
+    return {"level": "NORMAL", "multiplier": 1.0, "cap_multiplier": 1.0}
 
 
 def _metric_map(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -207,29 +300,63 @@ def _bid_amounts(
     state: Mapping[str, Any],
     *,
     decision: str,
+    position: str,
     lineup_delta: float,
     depth_delta: float | None,
     percent_owned: float | None,
+    role_horizon: str = "UNKNOWN",
+    role_certainty: str = "LOW",
+    survival_urgency: str = "UNVERIFIED",
 ) -> tuple[int, int]:
     if decision == "PASS":
         return 0, 0
     league = state.get("league") or {}
     start = max(1, int(league.get("faab_start") or 1000))
     remaining = max(0, int(state.get("faab_remaining") or 0))
+    current_phase = engine.phase(dict(state))
     phase_multiplier = {
         "EARLY_SURVIVAL": 0.85,
         "MIDSEASON": 1.0,
         "ENDGAME": 1.18,
-    }.get(engine.phase(dict(state)), 1.0)
+    }.get(current_phase, 1.0)
+    phase_horizon_cap_multiplier = {
+        "EARLY_SURVIVAL": 1.0,
+        "MIDSEASON": 1.25,
+        "ENDGAME": 2.0,
+    }.get(current_phase, 1.0)
     owned_bonus = 0.0
     if percent_owned is not None:
-        owned_bonus = max(0.0, min(5.0, ((percent_owned - 80.0) / 20.0) * 5.0))
-    impact = max(0.0, lineup_delta) * 3.0
+        owned_bonus = max(0.0, min(2.5, ((percent_owned - 80.0) / 20.0) * 2.5))
+    impact = max(0.0, lineup_delta) * 1.7
     if lineup_delta < 0.5 and depth_delta is not None:
-        impact += min(10.0, max(0.0, depth_delta)) * 0.7
-    base_pct = (5.0 if decision == "ADD" else 2.0) + impact + owned_bonus
+        impact += min(10.0, max(0.0, depth_delta)) * 0.45
+    horizon = _normalize_role_horizon(role_horizon)
+    duration_bonus = 0.0
+    if lineup_delta < 0.5 and depth_delta is not None and depth_delta > 0:
+        duration_bonus = {
+            "ESTABLISHED": 1.0,
+            "REST_OF_SEASON": 1.5,
+            "MULTI_WEEK": 0.75,
+        }.get(horizon, 0.0)
+    base_pct = (3.0 if decision == "ADD" else 1.5) + impact + owned_bonus + duration_bonus
+
+    role_multiplier, role_target_cap, role_max_cap = _ROLE_BID_RULES[horizon]
+    position_multiplier = _POSITION_BID_MULTIPLIER.get(engine.canonical_position(position), 1.0)
+    certainty_multiplier = {"HIGH": 1.0, "MEDIUM": 0.90, "LOW": 0.75}.get(str(role_certainty or "").upper(), 0.75)
+    survival = _survival_bid_context(state)
+    if survival_urgency in {"HIGH", "CRITICAL", "NORMAL"}:
+        survival = {
+            "level": survival_urgency,
+            "multiplier": {"HIGH": 1.15, "CRITICAL": 1.30, "NORMAL": 1.0}[survival_urgency],
+            "cap_multiplier": {"HIGH": 1.5, "CRITICAL": 2.0, "NORMAL": 1.0}[survival_urgency],
+        }
+    raw_target_pct = base_pct * phase_multiplier * role_multiplier * certainty_multiplier * position_multiplier * float(survival["multiplier"])
     target_cap, max_cap = _phase_caps(state, decision)
-    target_pct = min(target_cap, max(1.0, base_pct * phase_multiplier))
+    if role_target_cap is not None:
+        target_cap = min(target_cap, role_target_cap * phase_horizon_cap_multiplier * float(survival["cap_multiplier"]))
+    if role_max_cap is not None:
+        max_cap = min(max_cap, role_max_cap * phase_horizon_cap_multiplier * float(survival["cap_multiplier"]))
+    target_pct = min(target_cap, max(1.0, raw_target_pct))
     max_pct = min(max_cap, max(target_pct, target_pct * 1.28))
 
     def dollars(pct: float, *, odd_nudge: bool = False) -> int:
@@ -249,6 +376,7 @@ def _decision(
     lineup_delta: float,
     depth_delta: float | None,
     percent_owned: float | None,
+    role_horizon: str = "UNKNOWN",
 ) -> str:
     if status.strip().upper().replace("_", " ") in _SERIOUS_STATUSES:
         return "PASS"
@@ -258,10 +386,18 @@ def _decision(
         return "VALUE" if lineup_delta >= 1.0 else "PASS"
     if lineup_delta >= 0.5:
         return "VALUE"
-    if depth_delta is not None and depth_delta >= 4.0:
-        return "VALUE"
-    if depth_delta is not None and depth_delta >= 2.0 and (percent_owned or 0.0) >= 97.0:
-        return "VALUE"
+    horizon = _normalize_role_horizon(role_horizon)
+    if horizon == "SHORT_TERM":
+        return "PASS"
+    if depth_delta is not None:
+        if horizon in {"ESTABLISHED", "REST_OF_SEASON"} and depth_delta >= 3.0:
+            return "VALUE"
+        if horizon == "MULTI_WEEK" and depth_delta >= 3.5:
+            return "VALUE"
+        if depth_delta >= 4.0:
+            return "VALUE"
+        if depth_delta >= 2.0 and (percent_owned or 0.0) >= 97.0:
+            return "VALUE"
     return "PASS"
 
 
@@ -274,6 +410,9 @@ def _candidate_row(
     projection_coverage: float,
 ) -> dict[str, Any]:
     candidate_projection = candidate.get("projected_points")
+    source = "CHOP" if _name_key(candidate["player"]) in release_names else "FA"
+    role_context = _candidate_role_context(state, candidate, source=source)
+    survival_context = _survival_bid_context(state)
     baseline_starters = baseline["starter_names"]
     best: tuple[tuple[float, int, float, float, str], dict[str, Any], dict[str, Any]] | None = None
 
@@ -299,7 +438,12 @@ def _candidate_row(
         return {
             **candidate,
             "decision": "PASS",
-            "source": "CHOP" if _name_key(candidate["player"]) in release_names else "FA",
+            "source": source,
+            "role_horizon": role_context["horizon"],
+            "role_label": role_context["label"],
+            "role_certainty": role_context["certainty"],
+            "role_note": role_context["note"],
+            "survival_urgency": survival_context["level"],
             "lineup_delta": 0.0,
             "depth_delta": None,
             "recommended_bid": 0,
@@ -320,13 +464,18 @@ def _candidate_row(
         lineup_delta=lineup_delta,
         depth_delta=depth_delta,
         percent_owned=candidate.get("percent_owned"),
+        role_horizon=role_context["horizon"],
     )
     recommended_bid, max_bid = _bid_amounts(
         state,
         decision=decision,
+        position=str(candidate.get("position") or ""),
         lineup_delta=lineup_delta,
         depth_delta=depth_delta,
         percent_owned=candidate.get("percent_owned"),
+        role_horizon=role_context["horizon"],
+        role_certainty=role_context["certainty"],
+        survival_urgency=survival_context["level"],
     )
     market = _latest_market_row(state, str(candidate.get("player") or ""))
     market_floor = None
@@ -364,12 +513,17 @@ def _candidate_row(
                 lineup_delta=alt_lineup_delta,
                 depth_delta=depth_delta,
                 percent_owned=candidate.get("percent_owned"),
+                role_horizon=role_context["horizon"],
             )
             if alt_decision not in {"ADD", "VALUE"}:
                 continue
             alt_bid, alt_max = _bid_amounts(
-                state, decision=alt_decision, lineup_delta=alt_lineup_delta,
-                depth_delta=depth_delta, percent_owned=candidate.get("percent_owned"),
+                state, decision=alt_decision, position=str(candidate.get("position") or ""),
+                lineup_delta=alt_lineup_delta, depth_delta=depth_delta,
+                percent_owned=candidate.get("percent_owned"),
+                role_horizon=role_context["horizon"],
+                role_certainty=role_context["certainty"],
+                survival_urgency=survival_context["level"],
             )
             if market_floor is not None and market_floor <= alt_max:
                 alt_bid = max(alt_bid, market_floor)
@@ -414,6 +568,8 @@ def _candidate_row(
         why.append(f"{candidate['position']} depth upgrade over {depth_benchmark}: {depth_delta:+.1f} projected points.")
     else:
         why.append("Does not materially improve the current projected lineup.")
+    if decision != "PASS":
+        why.append(str(role_context["note"]))
     if market is not None:
         winning = market.get("winning_bid")
         other = market.get("highest_other_bid")
@@ -437,7 +593,12 @@ def _candidate_row(
     return {
         **candidate,
         "decision": decision,
-        "source": "CHOP" if _name_key(candidate["player"]) in release_names else "FA",
+        "source": source,
+        "role_horizon": role_context["horizon"],
+        "role_label": role_context["label"],
+        "role_certainty": role_context["certainty"],
+        "role_note": role_context["note"],
+        "survival_urgency": survival_context["level"],
         "lineup_delta": round(lineup_delta, 2),
         "depth_delta": round(depth_delta, 2) if depth_delta is not None else None,
         "recommended_bid": recommended_bid,
@@ -505,6 +666,15 @@ def build_claim_plan(board: Mapping[str, Any], *, limit: int = 5) -> list[dict[s
         dict(row) for row in board.get("candidates") or []
         if row.get("decision") in {"ADD", "VALUE"}
     ]
+    candidates.sort(
+        key=lambda row: (
+            -(int(row.get("recommended_bid") or 0) + (5 if row.get("decision") == "ADD" else 0)),
+            -int(row.get("max_bid") or 0),
+            _DECISION_ORDER.get(str(row.get("decision")), 9),
+            -float(row.get("lineup_delta") or 0.0),
+            str(row.get("player") or "").casefold(),
+        )
+    )
     group_counts: dict[str, int] = {}
     group_drop: dict[str, str] = {}
     drop_claims: dict[str, list[str]] = {}
@@ -566,6 +736,7 @@ def build_claim_plan(board: Mapping[str, Any], *, limit: int = 5) -> list[dict[s
             "priority": len(plan) + 1,
             "player": row["player"],
             "position": row["position"],
+            "outlook": (row.get("role_label") or "Unverified") if row.get("role_horizon") == "UNKNOWN" else f"{row.get('role_label') or 'Unverified'} · {str(row.get('role_certainty') or '').title()}",
             "bid": int(option.get("recommended_bid") or row.get("recommended_bid") or 0),
             "max_bid": int(option.get("max_bid") or row.get("max_bid") or 0),
             "drop": drop,

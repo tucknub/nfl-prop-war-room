@@ -23,6 +23,14 @@ def _latest_release(state: Mapping[str, Any]) -> dict[str, Any] | None:
     return max(rows, key=lambda row: int(row.get("week", 0)))
 
 
+def _outlook_label(row: Mapping[str, Any]) -> str:
+    label = str(row.get("role_label") or "Unverified")
+    if label == "Unverified":
+        return label
+    certainty = str(row.get("role_certainty") or "").strip().title()
+    return f"{label} · {certainty}" if certainty else label
+
+
 def _candidate_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
     frame = pd.DataFrame(
         [
@@ -31,6 +39,7 @@ def _candidate_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
                 "Player": row["player"],
                 "Pos": row["position"],
                 "Source": row["source"],
+                "Outlook": _outlook_label(row),
                 "Lineup +": row.get("lineup_delta"),
                 "Bid": f"${int(row.get('recommended_bid') or 0)}",
                 "Hard max": f"${int(row.get('max_bid') or 0)}",
@@ -160,6 +169,12 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
             "Bid and hard-max figures are PropWar decision estimates, not claims about the exact winning bid. "
             "Best drop evaluates one move at a time; My Claim Plan resolves shared-drop conflicts across multiple claims."
         )
+        unverified = [row for row in actionable if row.get("role_horizon") == "UNKNOWN"]
+        if unverified:
+            st.info(
+                f"Role duration is unverified for {len(unverified)} actionable player(s). "
+                "Their FAAB is intentionally capped until the opportunity horizon is verified."
+            )
 
     section(
         "My Claim Plan",
@@ -173,6 +188,7 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
                 "priority": "Priority",
                 "player": "Player",
                 "position": "Pos",
+                "outlook": "Outlook",
                 "bid": "Bid",
                 "max_bid": "Hard max",
                 "drop": "Drop",

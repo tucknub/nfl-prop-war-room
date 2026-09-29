@@ -278,3 +278,120 @@ def test_war_room_refuses_player_advice_when_espn_state_is_stale() -> None:
     assert board["sync_freshness"]["status"] == "STALE"
     assert "stale" in board["reason"].lower()
     assert board["claim_plan"] == []
+
+
+def test_unverified_free_agent_role_is_capped_conservatively_early() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].append(
+        {
+            "player": "Temporary RB",
+            "position": "RB",
+            "nfl_team": "NYJ",
+            "projected_points": 13.7,
+            "percent_owned": 99.0,
+            "injury_status": "ACTIVE",
+        }
+    )
+    board = waiver_advisor.build_waiver_war_room(state)
+    row = next(row for row in board["candidates"] if row["player"] == "Temporary RB")
+    assert row["decision"] == "ADD"
+    assert row["role_horizon"] == "UNKNOWN"
+    assert row["role_label"] == "Unverified"
+    assert row["recommended_bid"] <= 51
+    assert row["max_bid"] <= 70
+
+
+def test_verified_rest_of_season_role_is_worth_more_than_short_term_role() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].extend(
+        [
+            {"player": "Ollie Gordon II", "position": "RB", "nfl_team": "MIA", "projected_points": 13.7, "percent_owned": 99.0, "injury_status": "ACTIVE"},
+            {"player": "Braelon Allen", "position": "RB", "nfl_team": "NYJ", "projected_points": 13.7, "percent_owned": 99.0, "injury_status": "ACTIVE"},
+        ]
+    )
+    state["waiver_role_context"] = [
+        {"player": "Ollie Gordon II", "horizon": "REST_OF_SEASON", "certainty": "HIGH", "verified": True},
+        {"player": "Braelon Allen", "horizon": "SHORT_TERM", "certainty": "HIGH", "verified": True},
+    ]
+    board = waiver_advisor.build_waiver_war_room(state)
+    by_name = {row["player"]: row for row in board["candidates"]}
+    gordon = by_name["Ollie Gordon II"]
+    allen = by_name["Braelon Allen"]
+    assert gordon["lineup_delta"] == allen["lineup_delta"]
+    assert gordon["role_label"] == "Rest of season"
+    assert allen["role_label"] == "Short-term"
+    assert gordon["recommended_bid"] > allen["recommended_bid"]
+    assert gordon["max_bid"] > allen["max_bid"]
+    assert allen["max_bid"] <= 60
+
+
+def test_established_chop_star_is_not_treated_like_unknown_free_agent() -> None:
+    board = waiver_advisor.build_waiver_war_room(_state())
+    row = next(row for row in board["candidates"] if row["player"] == "Star RB")
+    assert row["source"] == "CHOP"
+    assert row["role_horizon"] == "ESTABLISHED"
+    assert row["recommended_bid"] > 70
+    assert row["max_bid"] > 70
+
+
+def test_verified_critical_survival_can_raise_short_term_cap() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].append(
+        {"player": "Emergency RB", "position": "RB", "nfl_team": "NYJ", "projected_points": 13.7, "percent_owned": 99.0, "injury_status": "ACTIVE"}
+    )
+    state["waiver_role_context"] = [
+        {"player": "Emergency RB", "horizon": "SHORT_TERM", "certainty": "HIGH", "verified": True}
+    ]
+    state["survival_context"] = {"verified": True, "level": "CRITICAL"}
+    board = waiver_advisor.build_waiver_war_room(state)
+    row = next(row for row in board["candidates"] if row["player"] == "Emergency RB")
+    assert row["survival_urgency"] == "CRITICAL"
+    assert row["max_bid"] > 60
+
+
+def test_role_certainty_discounts_rest_of_season_bid() -> None:
+    state = _state()
+    high = waiver_advisor._bid_amounts(
+        state, decision="ADD", position="RB", lineup_delta=3.7, depth_delta=None,
+        percent_owned=99.0, role_horizon="REST_OF_SEASON", role_certainty="HIGH"
+    )
+    medium = waiver_advisor._bid_amounts(
+        state, decision="ADD", position="RB", lineup_delta=3.7, depth_delta=None,
+        percent_owned=99.0, role_horizon="REST_OF_SEASON", role_certainty="MEDIUM"
+    )
+    assert medium[0] < high[0]
+    assert medium[1] < high[1]
+
+
+def test_rest_of_season_depth_value_can_clear_when_short_term_stash_does_not() -> None:
+    state = _state()
+    state["espn_connection"]["available_players"].extend(
+        [
+            {"player": "Long Horizon RB", "position": "RB", "nfl_team": "MIA", "projected_points": 8.2, "percent_owned": 20.0, "injury_status": "ACTIVE"},
+            {"player": "Short Horizon RB", "position": "RB", "nfl_team": "NYJ", "projected_points": 8.2, "percent_owned": 20.0, "injury_status": "ACTIVE"},
+        ]
+    )
+    state["waiver_role_context"] = [
+        {"player": "Long Horizon RB", "horizon": "REST_OF_SEASON", "certainty": "MEDIUM", "verified": True},
+        {"player": "Short Horizon RB", "horizon": "SHORT_TERM", "certainty": "MEDIUM", "verified": True},
+    ]
+    board = waiver_advisor.build_waiver_war_room(state)
+    by_name = {row["player"]: row for row in board["candidates"]}
+    assert by_name["Long Horizon RB"]["lineup_delta"] == 0.0
+    assert by_name["Long Horizon RB"]["decision"] == "VALUE"
+    assert by_name["Long Horizon RB"]["recommended_bid"] > 0
+    assert by_name["Short Horizon RB"]["lineup_delta"] == 0.0
+    assert by_name["Short Horizon RB"]["decision"] == "PASS"
+    assert by_name["Short Horizon RB"]["recommended_bid"] == 0
+
+
+def test_claim_plan_balances_immediate_add_bonus_with_longer_term_value() -> None:
+    board = {
+        "candidates": [
+            {"decision": "ADD", "player": "Braelon Allen", "position": "RB", "target_slot": "RB", "recommended_bid": 36, "max_bid": 44, "drop_player": "Bench A"},
+            {"decision": "VALUE", "player": "Ollie Gordon II", "position": "RB", "target_slot": "RB", "recommended_bid": 42, "max_bid": 53, "drop_player": "Bench B"},
+        ]
+    }
+    plan = waiver_advisor.build_claim_plan(board)
+    assert plan[0]["player"] == "Ollie Gordon II"
+    assert all(row["player"] != "Braelon Allen" for row in plan)
