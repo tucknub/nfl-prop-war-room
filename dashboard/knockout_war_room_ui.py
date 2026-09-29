@@ -34,7 +34,7 @@ def _candidate_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
                 "Lineup +": row.get("lineup_delta"),
                 "Bid": f"${int(row.get('recommended_bid') or 0)}",
                 "Hard max": f"${int(row.get('max_bid') or 0)}",
-                "Drop": row.get("drop_player") or "—",
+                "Best drop": row.get("drop_player") or "—",
                 "Why": row.get("why") or "",
             }
             for row in rows
@@ -50,6 +50,8 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
     board = waiver_advisor.build_waiver_war_room(state)
     faab = board["faab_context"]
     connection = state.get("espn_connection") or {}
+    freshness = decision["sync_freshness"]
+    stale = bool(freshness["is_stale"])
 
     section(
         "This Week",
@@ -58,12 +60,18 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
     cols = st.columns(4)
     cols[0].metric("Week", int(state.get("current_week", 0)))
     cols[1].metric("Teams alive", decision["teams_alive"])
-    cols[2].metric("FAAB", f"${int(state.get('faab_remaining', 0))}")
+    cols[2].metric("FAAB (last known)" if stale else "FAAB", f"${int(state.get('faab_remaining', 0))}")
     cols[3].metric(
-        "FAAB rank",
+        "FAAB rank (last known)" if stale else "FAAB rank",
         f"#{faab['rank']} of {faab['team_count']}" if faab["available"] else "Not synced",
     )
-    if faab["available"]:
+    if stale:
+        median_text = f" Last known active-team median FAAB: ${faab['median']:.0f}." if faab["available"] else ""
+        st.caption(
+            f"PropWar action: {decision['next_action']}.{median_text} "
+            "Current roster-risk judgment is withheld until ESPN refreshes."
+        )
+    elif faab["available"]:
         st.caption(
             f"Active-team median FAAB: ${faab['median']:.0f}. "
             f"PropWar action: {decision['next_action']} · roster risk {decision['roster_risk']['level']}."
@@ -109,9 +117,14 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
                 for row in connection.get("available_players") or []
             }
             still_available = len(release_names & available_names)
+            availability_text = (
+                "still available in the last known ESPN pool"
+                if stale
+                else "still available in the synced ESPN pool"
+            )
             st.success(
                 f"Week {week}: {team} eliminated · {len(release_names)} players released · "
-                f"{still_available} still available in the synced ESPN pool."
+                f"{still_available} {availability_text}."
             )
         else:
             st.warning(
@@ -144,12 +157,13 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
                 )
         st.caption(
             f"Current-lineup projection coverage: {board['projection_coverage']:.0%}. "
-            "Bid and hard-max figures are PropWar decision estimates, not claims about the exact winning bid."
+            "Bid and hard-max figures are PropWar decision estimates, not claims about the exact winning bid. "
+            "Best drop evaluates one move at a time; My Claim Plan resolves shared-drop conflicts across multiple claims."
         )
 
     section(
         "My Claim Plan",
-        "Ordered claims with same-slot fallbacks, so losing the first target does not leave the waiver cycle unfinished.",
+        "Independent upgrades get separate legal drops when possible. True alternatives share a drop and become ordered fallbacks.",
     )
     if not board["claim_plan"]:
         st.caption("No claim plan yet. PropWar currently prefers holding FAAB or needs a fresher ESPN sync.")
@@ -175,14 +189,23 @@ def render_knockout_war_room(state: dict[str, Any]) -> dict[str, Any]:
     )
     risk = decision["roster_risk"]
     surv = st.columns(3)
-    surv[0].metric("Roster risk", risk["level"])
     current_score = connection.get("source_current_score")
-    surv[1].metric("Current score", "Not started" if current_score is None else f"{float(current_score):.1f}")
-    surv[2].metric(
-        "Projected lineup",
-        f"{board['baseline_lineup_projection']:.1f}" if board.get("enabled") else "Not ready",
-    )
-    st.caption(risk["reason"])
+    if stale:
+        surv[0].metric("Roster risk", "Withheld")
+        surv[1].metric(
+            "Last known score",
+            "Not started" if current_score is None else f"{float(current_score):.1f}",
+        )
+        surv[2].metric("Projected lineup", "Withheld")
+        st.caption("Refresh ESPN before using current survival risk or projected-lineup guidance.")
+    else:
+        surv[0].metric("Roster risk", risk["level"])
+        surv[1].metric("Current score", "Not started" if current_score is None else f"{float(current_score):.1f}")
+        surv[2].metric(
+            "Projected lineup",
+            f"{board['baseline_lineup_projection']:.1f}" if board.get("enabled") else "Not ready",
+        )
+        st.caption(risk["reason"])
     return board
 
 

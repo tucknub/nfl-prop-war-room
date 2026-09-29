@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
 
@@ -12,6 +13,29 @@ FIT_PRIORITY = {"URGENT": 0, "HIGH": 1, "MEDIUM": 2, "DEPTH": 3, "LOW": 4}
 
 def canonical_position(value: object) -> str:
     return str(value or "").strip().upper().replace("D/ST", "DST").replace("DEF", "DST")
+
+
+def espn_sync_freshness(
+    state: dict[str, Any],
+    *,
+    fresh_seconds: int = 900,
+    stale_seconds: int = 3600,
+) -> dict[str, Any]:
+    connection = state.get("espn_connection") or {}
+    if not connection:
+        return {"status": "NOT_CONNECTED", "age_seconds": None, "is_stale": False, "last_synced_at_utc": None}
+    raw = str(connection.get("last_synced_at_utc") or "").strip()
+    if not raw:
+        return {"status": "STALE", "age_seconds": None, "is_stale": True, "last_synced_at_utc": None}
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return {"status": "STALE", "age_seconds": None, "is_stale": True, "last_synced_at_utc": raw}
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    age = max(0.0, (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds())
+    status = "FRESH" if age <= fresh_seconds else "AGING" if age <= stale_seconds else "STALE"
+    return {"status": status, "age_seconds": age, "is_stale": status == "STALE", "last_synced_at_utc": raw}
 
 
 def _lineup_errors(roster: Iterable[dict[str, Any]]) -> list[str]:
@@ -359,6 +383,7 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
     risk = structural_roster_risk(state)
     faab = faab_posture(state)
     readiness = draft_readiness(state)
+    freshness = espn_sync_freshness(state)
     alive = active_team_count(state)
 
     if current_phase == "AWAITING_ESPN":
@@ -373,6 +398,9 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
     elif current_phase == "CHAMPION":
         next_action = "SEASON COMPLETE"
         why = "The state is marked champion."
+    elif freshness["is_stale"]:
+        next_action = "RESYNC ESPN"
+        why = "Current ESPN state is stale. Refresh the league before trusting lineup, waiver, FAAB, or survival recommendations."
     elif not readiness["ready"]:
         next_action = "FIX STARTER COVERAGE"
         why = "; ".join(readiness["lineup_errors"]) or "The current roster cannot fill every required starter slot."
@@ -400,6 +428,7 @@ def knockout_decision_summary(state: dict[str, Any]) -> dict[str, Any]:
         "teams_alive": alive,
         "roster_risk": risk,
         "faab": faab,
+        "sync_freshness": freshness,
         "next_action": next_action,
         "why": why,
     }

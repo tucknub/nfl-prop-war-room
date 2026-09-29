@@ -318,3 +318,34 @@ def test_sync_derives_lean_waiver_market_without_persisting_raw_transactions() -
     assert market[0]["highest_other_bid"] == 177
     assert market[0]["bidder_count"] == 2
     assert "league_transactions" not in updated["espn_connection"]
+
+
+def test_espn_sync_accepts_fourteen_players_plus_legitimate_ir() -> None:
+    snap = snapshot()
+    snap["roster"].append({
+        "player": "IR Player", "position": "RB", "nfl_team": "IND",
+        "lineup_role": "IR", "lineup_slot_id": 21, "injury_status": "OUT",
+    })
+    updated = apply_espn_snapshot(base_state(), snap, credential_envelope="encrypted-token")
+    assert len(updated["roster"]) == 14
+    details = updated["espn_connection"]["roster_details"]
+    assert len(details) == 15
+    assert details[-1]["player"] == "IR Player"
+    assert details[-1]["lineup_role"] == "IR"
+
+
+def test_espn_sync_rejects_unexpected_extra_roster_entry_with_identity() -> None:
+    snap = snapshot()
+    snap["roster"].append({
+        "player": "Unexpected Bench Player", "position": "WR", "nfl_team": "CHI",
+        "lineup_role": "Bench", "lineup_slot_id": 20, "injury_status": "ACTIVE",
+    })
+    try:
+        apply_espn_snapshot(base_state(), snap, credential_envelope="encrypted-token")
+    except ValueError as exc:
+        message = str(exc)
+        assert "Unexpected Bench Player" in message
+        assert "lineupSlotId 20" in message
+        assert "authoritative ledger" in message
+    else:
+        raise AssertionError("unexpected non-IR roster entry must be rejected")

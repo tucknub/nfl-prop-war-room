@@ -135,6 +135,22 @@ def _fetch_espn_snapshot(
         )
 
 
+def _resync_connected_espn(state: dict, config: dict[str, str], connection: dict, secret: str) -> None:
+    if not secret:
+        raise RuntimeError("Secure ESPN credential encryption is unavailable.")
+    league = state.get("league") or {}
+    credentials = open_credentials(str(connection.get("credential_envelope") or ""), secret)
+    snapshot = _fetch_espn_snapshot(
+        credentials,
+        str(connection.get("league_id") or ""),
+        season=int(state["season"]),
+        team_id=int(connection.get("team_id") or league.get("espn_team_id") or 0),
+        league_name=str(connection.get("league_name") or league.get("name") or "Elwood TKO"),
+    )
+    updated = espn_sync.apply_espn_snapshot(state, snapshot)
+    _persist_transition(config, state, updated, f"Resync ESPN Knockout league {connection.get('league_id')}")
+
+
 page_intro(
     "Knockout Fantasy War Room",
     "Separate 18-team fantasy elimination league. Lowest weekly score is eliminated; eliminated rosters return to waivers. Trades are not allowed.",
@@ -208,6 +224,24 @@ st.caption(
     f"{active_teams} teams alive · ${int(state.get('faab_remaining', 0))} FAAB · private authoritative state loaded"
 )
 
+freshness = engine.espn_sync_freshness(state)
+if freshness["is_stale"] and espn_connection:
+    age = freshness.get("age_seconds")
+    age_text = "unknown age" if age is None else f"{int(age // 60)} minutes old"
+    st.error(f"WEEK {int(state.get('current_week', 0))} DATA STALE")
+    st.caption(
+        f"Last successful ESPN state is {age_text}. Current waiver, FAAB, lineup, and survival recommendations are disabled until ESPN refreshes."
+    )
+    if st.button("Resync ESPN now", type="primary", width="stretch", disabled=not bool(espn_secret), key="knockout_top_resync"):
+        try:
+            with st.spinner("Refreshing ESPN league state..."):
+                _resync_connected_espn(state, config, espn_connection, espn_secret)
+            st.session_state.pop("knockout_espn_auto_sync_error", None)
+            st.rerun()
+        except Exception as exc:
+            st.session_state["knockout_espn_auto_sync_error"] = str(exc)
+            st.error(f"ESPN resync failed: {exc}")
+
 war_room = render_knockout_war_room(state)
 
 section(
@@ -247,38 +281,13 @@ if espn_connection:
 
     if resync_espn:
         try:
-            if not espn_secret:
-                raise RuntimeError("Secure ESPN credential encryption is unavailable.")
-            credentials = open_credentials(
-                str(espn_connection.get("credential_envelope") or ""),
-                espn_secret,
-            )
             with st.spinner("Syncing ESPN roster and league state..."):
-                snapshot = _fetch_espn_snapshot(
-                    credentials,
-                    str(espn_connection.get("league_id") or ""),
-                    season=int(state["season"]),
-                    team_id=int(
-                        espn_connection.get("team_id")
-                        or league.get("espn_team_id")
-                        or 0
-                    ),
-                    league_name=str(
-                        espn_connection.get("league_name")
-                        or league.get("name")
-                        or "Elwood TKO"
-                    ),
-                )
-                updated = espn_sync.apply_espn_snapshot(state, snapshot)
-                _persist_transition(
-                    config,
-                    state,
-                    updated,
-                    f"Resync ESPN Knockout league {espn_connection.get('league_id')}",
-                )
+                _resync_connected_espn(state, config, espn_connection, espn_secret)
+            st.session_state.pop("knockout_espn_auto_sync_error", None)
             st.success("ESPN sync complete.")
             st.rerun()
         except Exception as exc:
+            st.session_state["knockout_espn_auto_sync_error"] = str(exc)
             st.error("ESPN resync failed. PropWar kept the last good Knockout state.")
             st.error(f"Reason: {exc}")
 

@@ -124,3 +124,14 @@ def test_knockout_renders_espn_lineup_slots_and_static_rules() -> None:
     assert '"Slot": role' in source
     assert 'st.table(roster_table[["Slot", "Player", "Pos", "NFL", "Status"]])' in source
     assert "st.table(rules)" in source
+
+
+def test_knockout_stale_state_is_visible_and_gates_live_guidance() -> None:
+    source = _source("dashboard/pages/08_Knockout_Fantasy_War_Room.py")
+    war_room = _source("dashboard/knockout_war_room_ui.py")
+    assert "DATA STALE" in source
+    assert '"Resync ESPN now"' in source
+    assert "Current waiver, FAAB, lineup, and survival recommendations are disabled" in source
+    assert '"FAAB (last known)" if stale else "FAAB"' in war_room
+    assert 'surv[0].metric("Roster risk", "Withheld")' in war_room
+    assert 'surv[2].metric("Projected lineup", "Withheld")' in war_room

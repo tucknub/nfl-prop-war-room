@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from src.knockout import waiver_advisor
 from src.knockout.espn_sync import apply_espn_snapshot
 
@@ -63,6 +65,7 @@ def _state() -> dict:
         "espn_connection": {
             "provider": "ESPN",
             "team_id": 7,
+            "last_synced_at_utc": datetime.now(timezone.utc).isoformat(),
             "roster_details": roster,
             "roster_player_metrics": _metrics(),
             "available_players": [
@@ -215,3 +218,63 @@ def test_claim_plan_chains_claims_that_share_the_same_drop() -> None:
     assert plan[0]["condition"] == "Submit"
     assert plan[1]["condition"] == "Only if A is lost"
     assert plan[2]["condition"] == "Only if A and B are lost"
+
+
+def test_claim_plan_uses_alternate_drops_for_independent_upgrade_paths() -> None:
+    board = {
+        "candidates": [
+            {
+                "decision": "ADD", "player": "Puka", "position": "WR", "target_slot": "WR",
+                "recommended_bid": 300, "max_bid": 380, "drop_player": "Tyler",
+                "drop_options": [
+                    {"drop_player": "Tyler", "decision": "ADD", "recommended_bid": 300, "max_bid": 380},
+                    {"drop_player": "Bench WR", "decision": "ADD", "recommended_bid": 290, "max_bid": 370},
+                ],
+            },
+            {
+                "decision": "ADD", "player": "Chase", "position": "RB", "target_slot": "RB",
+                "recommended_bid": 240, "max_bid": 305, "drop_player": "Tyler",
+                "drop_options": [
+                    {"drop_player": "Tyler", "decision": "ADD", "recommended_bid": 240, "max_bid": 305},
+                    {"drop_player": "Kaelon", "decision": "ADD", "recommended_bid": 225, "max_bid": 290},
+                ],
+            },
+            {
+                "decision": "VALUE", "player": "Ladd", "position": "WR", "target_slot": "WR",
+                "recommended_bid": 80, "max_bid": 100, "drop_player": "Tyler",
+                "drop_options": [
+                    {"drop_player": "Tyler", "decision": "VALUE", "recommended_bid": 80, "max_bid": 100},
+                ],
+            },
+            {
+                "decision": "VALUE", "player": "Braelon", "position": "RB", "target_slot": "RB",
+                "recommended_bid": 110, "max_bid": 140, "drop_player": "Tyler",
+                "drop_options": [
+                    {"drop_player": "Kaelon", "decision": "VALUE", "recommended_bid": 95, "max_bid": 125},
+                    {"drop_player": "Tyler", "decision": "VALUE", "recommended_bid": 110, "max_bid": 140},
+                ],
+            },
+        ]
+    }
+    plan = waiver_advisor.build_claim_plan(board)
+    by_player = {row["player"]: row for row in plan}
+    assert by_player["Puka"]["drop"] == "Tyler"
+    assert by_player["Puka"]["condition"] == "Submit"
+    assert by_player["Chase"]["drop"] == "Kaelon"
+    assert by_player["Chase"]["condition"] == "Submit"
+    assert by_player["Ladd"]["drop"] == "Tyler"
+    assert by_player["Ladd"]["condition"] == "Only if Puka is lost"
+    assert by_player["Braelon"]["drop"] == "Kaelon"
+    assert by_player["Braelon"]["condition"] == "Only if Chase is lost"
+
+
+def test_war_room_refuses_player_advice_when_espn_state_is_stale() -> None:
+    state = _state()
+    state["espn_connection"]["last_synced_at_utc"] = (
+        datetime.now(timezone.utc) - timedelta(hours=2)
+    ).isoformat()
+    board = waiver_advisor.build_waiver_war_room(state)
+    assert board["enabled"] is False
+    assert board["sync_freshness"]["status"] == "STALE"
+    assert "stale" in board["reason"].lower()
+    assert board["claim_plan"] == []

@@ -306,6 +306,7 @@ def _candidate_row(
             "max_bid": 0,
             "drop_player": "—",
             "target_slot": "—",
+            "drop_options": [],
             "confidence": "LOW",
             "why": "No legal add/drop keeps the required lineup startable.",
         }
@@ -345,6 +346,56 @@ def _candidate_row(
         if projection_coverage >= 0.65 and candidate_projection is not None
         else "LOW"
     )
+
+    ranked_drop_options: list[tuple[tuple[float, int, float, float, str], dict[str, Any]]] = []
+    if decision != "PASS":
+        for alt_drop in current_rows:
+            alt_rows = [row for row in current_rows if row["player"] != alt_drop["player"]]
+            alt_rows.append(candidate)
+            alt_after = _optimize_lineup(alt_rows)
+            if alt_after is None:
+                continue
+            alt_lineup_delta = float(alt_after["total"]) - float(baseline["total"])
+            if alt_lineup_delta < -0.05:
+                continue
+            alt_decision = _decision(
+                position=str(candidate.get("position") or ""),
+                status=str(candidate.get("injury_status") or ""),
+                lineup_delta=alt_lineup_delta,
+                depth_delta=depth_delta,
+                percent_owned=candidate.get("percent_owned"),
+            )
+            if alt_decision not in {"ADD", "VALUE"}:
+                continue
+            alt_bid, alt_max = _bid_amounts(
+                state, decision=alt_decision, lineup_delta=alt_lineup_delta,
+                depth_delta=depth_delta, percent_owned=candidate.get("percent_owned"),
+            )
+            if market_floor is not None and market_floor <= alt_max:
+                alt_bid = max(alt_bid, market_floor)
+            alt_assignment = next(
+                (item for item in alt_after["assignments"] if item["player"] == candidate["player"]), None
+            )
+            alt_slot = str((alt_assignment or {}).get("slot") or candidate["position"])
+            alt_owned = alt_drop.get("percent_owned")
+            alt_projection = alt_drop.get("projected_points")
+            rank_key = (
+                float(alt_after["total"]),
+                1 if alt_drop["player"] not in baseline_starters else 0,
+                -(alt_owned if alt_owned is not None else 0.0),
+                -(alt_projection if alt_projection is not None else 0.0),
+                alt_drop["player"].casefold(),
+            )
+            ranked_drop_options.append((rank_key, {
+                "drop_player": alt_drop["player"],
+                "decision": alt_decision,
+                "lineup_delta": round(alt_lineup_delta, 2),
+                "target_slot": alt_slot,
+                "recommended_bid": alt_bid,
+                "max_bid": alt_max,
+            }))
+    ranked_drop_options.sort(key=lambda item: item[0], reverse=True)
+    drop_options = [option for _, option in ranked_drop_options]
 
     why: list[str] = []
     status_label = str(candidate.get("injury_status") or "").strip().upper().replace("_", " ")
@@ -393,6 +444,7 @@ def _candidate_row(
         "max_bid": max_bid,
         "drop_player": drop["player"] if decision != "PASS" else "—",
         "target_slot": target_slot if decision != "PASS" else "—",
+        "drop_options": drop_options,
         "confidence": confidence,
         "last_winning_bid": market.get("winning_bid") if market is not None else None,
         "highest_other_bid": market.get("highest_other_bid") if market is not None else None,
@@ -454,34 +506,73 @@ def build_claim_plan(board: Mapping[str, Any], *, limit: int = 5) -> list[dict[s
         if row.get("decision") in {"ADD", "VALUE"}
     ]
     group_counts: dict[str, int] = {}
+    group_drop: dict[str, str] = {}
+    drop_claims: dict[str, list[str]] = {}
     plan: list[dict[str, Any]] = []
-    plan_meta: list[tuple[str, str, str]] = []
+
+    def option_rows(row: Mapping[str, Any]) -> list[dict[str, Any]]:
+        options = [
+            dict(option) for option in row.get("drop_options") or []
+            if option.get("decision") in {"ADD", "VALUE"}
+            and str(option.get("drop_player") or "—") != "—"
+        ]
+        if options:
+            return options
+        drop = str(row.get("drop_player") or "—")
+        return [{
+            "drop_player": drop,
+            "decision": row.get("decision"),
+            "recommended_bid": row.get("recommended_bid"),
+            "max_bid": row.get("max_bid"),
+        }] if drop != "—" else []
+
+    def condition_text(blockers: list[str]) -> str:
+        blockers = list(dict.fromkeys(player for player in blockers if player))
+        if not blockers:
+            return "Submit"
+        if len(blockers) == 1:
+            return f"Only if {blockers[0]} is lost"
+        return f"Only if {' and '.join(blockers)} are lost"
+
     for row in candidates:
         group = str(row.get("target_slot") or row.get("position") or "OTHER")
         if group_counts.get(group, 0) >= 2:
             continue
-        drop = str(row.get("drop_player") or "—")
-        conflicts = [
-            player for prior_group, prior_drop, player in plan_meta
-            if prior_group == group or (drop != "—" and prior_drop == drop)
-        ]
-        if not conflicts:
-            condition = "Submit"
-        elif len(conflicts) == 1:
-            condition = f"Only if {conflicts[0]} is lost"
+        options = option_rows(row)
+        if not options:
+            continue
+
+        if group in group_drop:
+            assigned = group_drop[group]
+            option = next(
+                (item for item in options if str(item.get("drop_player") or "").casefold() == assigned.casefold()),
+                None,
+            )
+            if option is None:
+                continue
         else:
-            condition = f"Only if {' and '.join(conflicts)} are lost"
-        group_counts[group] = group_counts.get(group, 0) + 1
+            option = next(
+                (item for item in options if str(item.get("drop_player") or "").casefold() not in drop_claims),
+                None,
+            ) or options[0]
+            assigned = str(option.get("drop_player") or "—")
+            group_drop[group] = assigned
+
+        drop = str(option.get("drop_player") or assigned)
+        drop_key = drop.casefold()
+        blockers = list(drop_claims.get(drop_key, []))
+
         plan.append({
             "priority": len(plan) + 1,
             "player": row["player"],
             "position": row["position"],
-            "bid": row["recommended_bid"],
-            "max_bid": row["max_bid"],
+            "bid": int(option.get("recommended_bid") or row.get("recommended_bid") or 0),
+            "max_bid": int(option.get("max_bid") or row.get("max_bid") or 0),
             "drop": drop,
-            "condition": condition,
+            "condition": condition_text(blockers),
         })
-        plan_meta.append((group, drop, str(row["player"])))
+        drop_claims.setdefault(drop_key, []).append(str(row["player"]))
+        group_counts[group] = group_counts.get(group, 0) + 1
         if len(plan) >= limit:
             break
     return plan
@@ -493,7 +584,18 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
     baseline = _optimize_lineup(current_rows)
     projected_count = sum(row.get("projected_points") is not None for row in current_rows)
     projection_coverage = projected_count / len(current_rows) if current_rows else 0.0
+    freshness = engine.espn_sync_freshness(dict(state))
 
+    if freshness["is_stale"]:
+        return {
+            "enabled": False,
+            "reason": "ESPN data is stale. Resync ESPN before using player-level waiver advice.",
+            "projection_coverage": projection_coverage,
+            "sync_freshness": freshness,
+            "candidates": [],
+            "claim_plan": [],
+            "faab_context": faab_context(state),
+        }
     if not current_rows or not available:
         return {
             "enabled": False,
@@ -548,6 +650,7 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
         "enabled": True,
         "reason": "",
         "projection_coverage": projection_coverage,
+        "sync_freshness": freshness,
         "baseline_lineup_projection": round(float(baseline["total"]), 2),
         "candidates": ranked,
         "faab_context": faab_context(state),
