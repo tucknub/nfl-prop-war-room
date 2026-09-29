@@ -428,12 +428,24 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
     baseline = _optimize_lineup(current_rows)
     projected_count = sum(row.get("projected_points") is not None for row in current_rows)
     projection_coverage = projected_count / len(current_rows) if current_rows else 0.0
+    freshness = engine.espn_sync_freshness(dict(state))
 
+    if freshness["is_stale"]:
+        return {
+            "enabled": False,
+            "reason": "ESPN data is stale. Resync ESPN before using player-level waiver advice.",
+            "projection_coverage": projection_coverage,
+            "sync_freshness": freshness,
+            "candidates": [],
+            "claim_plan": [],
+            "faab_context": faab_context(state),
+        }
     if not current_rows or not available:
         return {
             "enabled": False,
             "reason": "ESPN roster or waiver-pool data is unavailable.",
             "projection_coverage": projection_coverage,
+            "sync_freshness": freshness,
             "candidates": [],
             "claim_plan": [],
             "faab_context": faab_context(state),
@@ -443,6 +455,7 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
             "enabled": False,
             "reason": "The synced roster cannot fill the required Knockout starting lineup.",
             "projection_coverage": projection_coverage,
+            "sync_freshness": freshness,
             "candidates": [],
             "claim_plan": [],
             "faab_context": faab_context(state),
@@ -452,6 +465,7 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
             "enabled": False,
             "reason": "Resync ESPN to load enough current roster projections for player-level waiver advice.",
             "projection_coverage": projection_coverage,
+            "sync_freshness": freshness,
             "candidates": [],
             "claim_plan": [],
             "faab_context": faab_context(state),
@@ -483,6 +497,7 @@ def build_waiver_war_room(state: Mapping[str, Any], *, limit: int = 20) -> dict[
         "enabled": True,
         "reason": "",
         "projection_coverage": projection_coverage,
+        "sync_freshness": freshness,
         "baseline_lineup_projection": round(float(baseline["total"]), 2),
         "candidates": ranked,
         "faab_context": faab_context(state),

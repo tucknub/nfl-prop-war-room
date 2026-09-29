@@ -17,6 +17,11 @@ def _lineup_slot_id(value: object) -> int:
     return int(value)
 
 
+def _is_ir_entry(row: Mapping[str, Any]) -> bool:
+    role = str(row.get("lineup_role") or "").strip().casefold()
+    return _lineup_slot_id(row.get("lineup_slot_id")) == 21 or role in {"ir", "injured reserve"}
+
+
 def _plain_roster(snapshot: Mapping[str, Any]) -> list[dict[str, str]]:
     return [
         {
@@ -26,6 +31,36 @@ def _plain_roster(snapshot: Mapping[str, Any]) -> list[dict[str, str]]:
         }
         for row in snapshot.get("roster") or []
     ]
+
+
+def _validated_knockout_roster(
+    snapshot: Mapping[str, Any],
+    *,
+    expected_roster: int,
+) -> list[dict[str, str]]:
+    raw_rows = [row for row in snapshot.get("roster") or [] if isinstance(row, Mapping)]
+    standard_rows = [row for row in raw_rows if not _is_ir_entry(row)]
+    if len(standard_rows) != expected_roster:
+        if len(standard_rows) > expected_roster:
+            extras = standard_rows[expected_roster:]
+            extra_text = ", ".join(
+                f"{str(row.get('player') or 'unknown').strip()} "
+                f"({str(row.get('lineup_role') or 'unknown slot').strip()}, lineupSlotId {_lineup_slot_id(row.get('lineup_slot_id'))})"
+                for row in extras
+            )
+            raise ValueError(
+                f"ESPN returned {len(standard_rows)} non-IR roster entries; Knockout expects {expected_roster}. "
+                f"Unexpected roster entry: {extra_text}. Sync stopped to protect the authoritative ledger."
+            )
+        raise ValueError(
+            f"ESPN returned {len(standard_rows)} non-IR roster entries; Knockout expects {expected_roster}. "
+            "Sync stopped to protect the authoritative ledger."
+        )
+    return engine.validate_roster(
+        _plain_roster({"roster": standard_rows}),
+        roster_size=expected_roster,
+        require_startable=True,
+    )
 
 
 def _plain_available_players(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -160,11 +195,7 @@ def validate_snapshot_for_knockout(
         )
 
     expected_roster = int(league.get("roster_size") or 14)
-    return engine.validate_roster(
-        _plain_roster(snapshot),
-        roster_size=expected_roster,
-        require_startable=True,
-    )
+    return _validated_knockout_roster(snapshot, expected_roster=expected_roster)
 
 
 def apply_espn_snapshot(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from src.knockout import waiver_advisor
 from src.knockout.espn_sync import apply_espn_snapshot
 
@@ -63,6 +65,7 @@ def _state() -> dict:
         "espn_connection": {
             "provider": "ESPN",
             "team_id": 7,
+            "last_synced_at_utc": datetime.now(timezone.utc).isoformat(),
             "roster_details": roster,
             "roster_player_metrics": _metrics(),
             "available_players": [
@@ -118,6 +121,20 @@ def test_war_room_refuses_player_advice_when_roster_projection_coverage_is_too_l
     board = waiver_advisor.build_waiver_war_room(state)
     assert board["enabled"] is False
     assert "Resync ESPN" in board["reason"]
+
+
+def test_war_room_refuses_player_advice_when_espn_state_is_stale() -> None:
+    state = _state()
+    state["espn_connection"]["last_synced_at_utc"] = (
+        datetime.now(timezone.utc) - timedelta(hours=2)
+    ).isoformat()
+
+    board = waiver_advisor.build_waiver_war_room(state)
+
+    assert board["enabled"] is False
+    assert board["sync_freshness"]["status"] == "STALE"
+    assert "stale" in board["reason"].lower()
+    assert board["claim_plan"] == []
 
 
 def test_espn_sync_persists_roster_metrics_and_full_league_faab() -> None:
