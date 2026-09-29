@@ -395,3 +395,18 @@ def test_claim_plan_balances_immediate_add_bonus_with_longer_term_value() -> Non
     plan = waiver_advisor.build_claim_plan(board)
     assert plan[0]["player"] == "Ollie Gordon II"
     assert all(row["player"] != "Braelon Allen" for row in plan)
+
+
+def test_expired_role_context_falls_back_to_unverified() -> None:
+    state = _state()
+    state["current_week"] = 5
+    state["espn_connection"]["available_players"].append(
+        {"player": "Temporary RB", "position": "RB", "nfl_team": "NYJ", "projected_points": 13.7, "percent_owned": 20.0, "injury_status": "ACTIVE"}
+    )
+    state["waiver_role_context"] = [
+        {"player": "Temporary RB", "horizon": "SHORT_TERM", "certainty": "HIGH", "verified": True, "valid_through_week": 4}
+    ]
+    board = waiver_advisor.build_waiver_war_room(state)
+    row = next(row for row in board["candidates"] if row["player"] == "Temporary RB")
+    assert row["role_horizon"] == "UNKNOWN"
+    assert row["role_label"] == "Unverified"

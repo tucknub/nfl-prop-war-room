@@ -80,8 +80,12 @@ def _candidate_role_context(
     source: str,
 ) -> dict[str, Any]:
     player = str(candidate.get("player") or "").strip()
+    current_week = int(state.get("current_week") or 0)
     for row in _role_context_rows(state):
         if _name_key(row.get("player")) != _name_key(player):
+            continue
+        valid_through_week = row.get("valid_through_week")
+        if valid_through_week is not None and current_week > int(valid_through_week):
             continue
         horizon = _normalize_role_horizon(row.get("horizon"))
         certainty = str(row.get("certainty") or "MEDIUM").strip().upper()
