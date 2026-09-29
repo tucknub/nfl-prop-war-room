@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 from urllib.parse import urlencode
 
@@ -26,7 +25,6 @@ try:
         FANTASY,
         HIGH,
         LOW,
-        MARGIN,
         MARKET,
         MEDIUM,
         ROLE,
@@ -61,7 +59,6 @@ except ImportError:
         FANTASY,
         HIGH,
         LOW,
-        MARGIN,
         MARKET,
         MEDIUM,
         ROLE,
@@ -86,8 +83,6 @@ except ImportError:
 from src.fantasy.action_feed import build_weekly_action_feed
 from src.fantasy.sleeper import SleeperClient
 from src.fantasy.weekly_context import fetch_league_weekly_contexts
-from src.margin import live_engine_v2 as margin_live
-from src.margin import state_store
 
 
 def _mapping(value) -> dict:
@@ -380,20 +375,6 @@ def _today_role_actions(
     return tuple(actions)
 
 
-@st.cache_data(ttl=300, show_spinner=False)
-def _today_margin_state(_config: dict) -> dict:
-    state, _ = state_store.fetch_remote_state(_config)
-    return state
-
-
-@st.cache_data(ttl=300, show_spinner=False)
-def _today_margin_audit(state_text: str) -> dict:
-    return margin_live.run(
-        json.loads(state_text),
-        future_posted_mode="live",
-    )
-
-
 def _event_time_for_market_row(snapshot: dict, row: dict) -> object:
     direct = row.get("commence_time")
     if direct:
@@ -652,105 +633,6 @@ def _fantasy_actions(
     return tuple(actions), errors
 
 
-def _margin_missing_field_inputs(state: dict) -> tuple[str, ...]:
-    pool = state.get("pool") or {}
-    missing: list[str] = []
-    if not pool.get("size"):
-        missing.append("pool size")
-    if not pool.get("pick_deadline"):
-        missing.append("pick deadline")
-    if pool.get("picks_visible_before_deadline") is None:
-        missing.append("pick visibility")
-    if not pool.get("first_place_tie_rule"):
-        missing.append("tie rule")
-    if not (state.get("opponents") or []):
-        missing.append("opponent field")
-    return tuple(missing)
-
-
-def _margin_action() -> TodayAction | None:
-    try:
-        secrets = _mapping(st.secrets)
-        config = state_store.config_from_secrets(secrets)
-    except Exception:
-        config = None
-    if config is None or not state_store.owner_write_authorized(config):
-        return None
-
-    state = _today_margin_state(config)
-    if bool(state.get("season_complete")):
-        return None
-
-    state_text = json.dumps(state, sort_keys=True)
-    audit = _today_margin_audit(state_text)
-    pick = audit["pick"]
-    decision = state.get("current_decision") or {}
-    committed = (
-        str(decision.get("committed_pick") or "")
-        if str(decision.get("status") or "") == "COMMITTED"
-        else ""
-    )
-    recommendation = str(pick["team"])
-    week = int(state["current_week"])
-    missing_field_inputs = _margin_missing_field_inputs(state)
-    field_ready = not missing_field_inputs
-    confidence = "FULL FIELD" if field_ready else "PARTIAL FIELD"
-
-    if committed and committed != recommendation:
-        priority = HIGH
-        action = f"REVIEW {committed} → {recommendation}"
-        why_prefix = (
-            f"Your recorded pick is {committed}, but the refreshed engine "
-            f"currently prefers {recommendation}."
-        )
-        score = 395.0
-    elif committed:
-        priority = MEDIUM
-        action = f"HOLD / REVIEW {recommendation}"
-        why_prefix = (
-            f"Your recorded pick {committed} still matches the current engine."
-        )
-        score = 285.0
-    else:
-        priority = HIGH if field_ready else MEDIUM
-        action = f"PICK {recommendation}"
-        why_prefix = (
-            f"No team is recorded yet for Week {week}; the engine currently "
-            f"recommends {recommendation}."
-        )
-        score = 370.0
-
-    return TodayAction(
-        category=MARGIN,
-        priority=priority,
-        title=(
-            f"Week {week} · {recommendation} vs {pick['opponent']}"
-        ),
-        action=action,
-        why=(
-            f"{why_prefix} nflverse spread {float(pick['current_spread']):+.1f} · "
-            f"model mean point differential {float(pick['calibrated_margin']):+.2f} · "
-            f"historical loss-rate est. {float(pick['p_loss']) * 100:.1f}% · "
-            f"historical 20+ est. {float(pick['p_win20']) * 100:.1f}%."
-            + (
-                " Provisional pool context — still missing "
-                + ", ".join(missing_field_inputs)
-                + "."
-                if missing_field_inputs
-                else ""
-            )
-        ),
-        confidence=confidence,
-        freshness=(
-            "nflverse + PDL model · "
-            + local_start_label(audit.get("snapshot_utc"))
-        ),
-        href="/pdl",
-        score=score,
-        source="PDL War Room",
-    )
-
-
 def _live_context() -> tuple[str, int, str]:
     try:
         state = _today_nfl_state()
@@ -805,7 +687,7 @@ def render_propwar_today_if_owner() -> None:
     st.markdown("## What Should I Do?")
     st.caption(
         "The few current actions PropWar believes deserve attention across "
-        "fantasy, validated role changes, and PDL. Every card shows what deserves review, "
+        "fantasy and validated role changes. Every card shows what deserves review, "
         "why it surfaced, evidence strength, freshness, and the source evidence."
     )
 
@@ -850,13 +732,6 @@ def render_propwar_today_if_owner() -> None:
                 errors.append(f"Role Change Detector: {role_reason}")
         except Exception as exc:
             errors.append(f"Role Change Detector: {exc}")
-
-    try:
-        margin = _margin_action()
-        if margin is not None:
-            actions.append(margin)
-    except Exception as exc:
-        errors.append(f"PDL War Room: {exc}")
 
     ranked = rank_today_actions(actions, limit=6)
 

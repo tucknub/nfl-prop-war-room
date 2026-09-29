@@ -23,7 +23,6 @@ OWNER_ONLY_HEADINGS = {
     "glitch-radar": ("Markets",),
     "fantasy-hq": ("Fantasy HQ",),
     "deep-prop-radar": ("Market Research",),
-    "pdl": ("PDL War Room",),
     "knockout": ("Knockout Fantasy War Room",),
 }
 
