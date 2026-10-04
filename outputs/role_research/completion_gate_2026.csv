@@ -53,7 +53,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,4,2026_04_DEN_SF,SF,DEN,False,False,False,0,0,False
 2026,4,2026_04_DET_CAR,CAR,DET,False,False,False,0,0,False
 2026,4,2026_04_GB_TB,TB,GB,False,False,False,0,0,False
-2026,4,2026_04_IND_WAS,WAS,IND,False,False,False,0,0,False
+2026,4,2026_04_IND_WAS,WAS,IND,True,False,False,0,0,False
 2026,4,2026_04_JAX_CIN,CIN,JAX,False,False,False,0,0,False
 2026,4,2026_04_KC_LV,LV,KC,False,False,False,0,0,False
 2026,4,2026_04_LAC_SEA,SEA,LAC,False,False,False,0,0,False
