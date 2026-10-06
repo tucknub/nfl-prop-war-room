@@ -48,7 +48,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,3,2026_03_SEA_WAS,WAS,SEA,True,True,True,65,64,True
 2026,3,2026_03_TEN_NYG,NYG,TEN,True,True,True,58,57,True
 2026,4,2026_04_ARI_NYG,NYG,ARI,True,True,True,61,63,True
-2026,4,2026_04_ATL_NO,NO,ATL,False,False,False,0,0,False
+2026,4,2026_04_ATL_NO,NO,ATL,True,True,True,69,56,True
 2026,4,2026_04_DAL_HOU,HOU,DAL,True,True,True,52,73,True
 2026,4,2026_04_DEN_SF,SF,DEN,True,True,True,65,64,True
 2026,4,2026_04_DET_CAR,CAR,DET,True,True,True,72,68,True

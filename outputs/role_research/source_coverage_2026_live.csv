@@ -1,2 +1,2 @@
 season,through_week,completed_games,canonical_rows,opportunity_events,snap_game_teams,expected_game_teams,unresolved_event_rows,unresolved_snap_rows,report_snap_rows,unresolved_report_snap_rows,opportunity_identity_coverage,snap_identity_coverage,report_snap_identity_coverage,opportunity_to_snap_coverage,partial_game_evidence_mode
-2026,3,48,1333,5439,96,96,0,36,1053,0,1.0,0.9798206278026906,1.0,1.0,manual_overrides_only
+2026,4,64,1777,7298,128,128,0,48,1402,0,1.0,0.9797040169133192,1.0,0.9991922455573505,manual_overrides_only
