@@ -326,10 +326,12 @@ def test_fantasy_hq_page_contains_current_yahoo_access_and_attribution():
         / "11_Fantasy_HQ.py"
     ).read_text(encoding="utf-8")
 
-    assert "Apply for Yahoo Fantasy API" in page
-    assert "https://sports.yahoo.com/developer/access/" in page
+    assert "Yahoo API approval is complete" in page
+    assert "Credential check:" in page
     assert "YAHOO_CLIENT_ID" in page
     assert "YAHOO_CLIENT_SECRET" in page
+    assert 'st.secrets.get("yahoo", {})' in page
+    assert 'st.secrets.get("auth", {})' in page
     assert "Connect Yahoo" in page
     assert "Fantasy data provided by Yahoo Fantasy" in page
     assert "Yahoo password" in page
