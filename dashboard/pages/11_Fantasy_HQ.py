@@ -324,7 +324,44 @@ def _secret_default(name: str) -> str:
         value = st.secrets.get(name, "")
     except Exception:
         value = ""
-    return str(value or "").strip()
+    cleaned = str(value or "").strip()
+    if cleaned:
+        return cleaned
+
+    aliases = {
+        "YAHOO_CLIENT_ID": ("client_id", "CLIENT_ID", "yahoo_client_id"),
+        "YAHOO_CLIENT_SECRET": (
+            "client_secret",
+            "CLIENT_SECRET",
+            "consumer_secret",
+            "YAHOO_CONSUMER_SECRET",
+        ),
+        "YAHOO_REDIRECT_URI": ("redirect_uri", "REDIRECT_URI"),
+    }
+    try:
+        yahoo = st.secrets.get("yahoo", {})
+    except Exception:
+        yahoo = {}
+    if hasattr(yahoo, "get"):
+        for alias in (name, *aliases.get(name, ())):
+            candidate = str(yahoo.get(alias, "") or "").strip()
+            if candidate:
+                return candidate
+
+    # A common Streamlit TOML mistake is appending Yahoo keys after [auth],
+    # which makes otherwise-valid keys members of that section. Accept only
+    # the explicit Yahoo names there so Google auth credentials cannot leak
+    # into the Yahoo OAuth configuration.
+    try:
+        auth = st.secrets.get("auth", {})
+    except Exception:
+        auth = {}
+    if hasattr(auth, "get"):
+        candidate = str(auth.get(name, "") or "").strip()
+        if candidate:
+            return candidate
+
+    return ""
 
 
 def _yahoo_config() -> YahooOAuthConfig | None:
@@ -4246,23 +4283,22 @@ def _render_yahoo(
     access_token: str | None,
 ) -> None:
     if config is None:
+        client_id_found = bool(_secret_default("YAHOO_CLIENT_ID"))
+        client_secret_found = bool(_secret_default("YAHOO_CLIENT_SECRET"))
         st.warning(
-            "Yahoo Fantasy API access has not been configured for PropWar yet."
+            "Yahoo API approval is complete, but PropWar cannot read both "
+            "Yahoo credentials from Streamlit Secrets yet."
         )
-        st.markdown("**One-time Yahoo access setup**")
+        st.caption(
+            "Credential check: "
+            f"Client ID {'found' if client_id_found else 'missing'} · "
+            f"Consumer Secret {'found' if client_secret_found else 'missing'}"
+        )
+        st.markdown("**Streamlit configuration needed**")
         st.markdown(
-            "1. Apply for Yahoo Fantasy Sports API access. Yahoo currently "
-            "reviews applications before granting access.\n"
-            "2. Use PropWar / Fantasy HQ as the product and request read-only "
-            "Fantasy Football data for personal fantasy-league management.\n"
-            f"3. After approval, set the OAuth callback URL to "
-            f"{DEFAULT_YAHOO_REDIRECT_URI}.\n"
-            "4. Add YAHOO_CLIENT_ID and YAHOO_CLIENT_SECRET to the "
-            "PropWar Streamlit secrets."
-        )
-        st.link_button(
-            "Apply for Yahoo Fantasy API",
-            "https://sports.yahoo.com/developer/access/",
+            "In Streamlit Community Cloud → PropWar → Settings → Secrets, "
+            "make sure YAHOO_CLIENT_ID and YAHOO_CLIENT_SECRET are saved. "
+            f"The Yahoo callback should be {DEFAULT_YAHOO_REDIRECT_URI}."
         )
         return
 
@@ -4448,9 +4484,11 @@ with st.expander(
 ):
     if yahoo_access_token:
         st.success("Yahoo connected.")
-        st.caption("Optional provider · not part of the core Fantasy workflow.")
+        st.caption("Yahoo Fantasy data is connected read-only.")
+    elif yahoo_config:
+        st.info("Yahoo Fantasy is ready for authorization.")
     else:
-        st.info("Yahoo is optional and not required for Fantasy.")
+        st.info("Yahoo Fantasy credentials still need to be detected.")
     _render_yahoo(yahoo_config, yahoo_access_token)
 
 st.caption(
