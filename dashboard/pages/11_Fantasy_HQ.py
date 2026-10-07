@@ -4439,7 +4439,13 @@ except Exception as exc:
 _render_sleeper()
 
 st.divider()
-with st.expander("Optional Yahoo · parked", expanded=False):
+yahoo_expander_label = (
+    "Yahoo Fantasy · connected" if yahoo_access_token else "Yahoo Fantasy"
+)
+with st.expander(
+    yahoo_expander_label,
+    expanded=bool(yahoo_config and not yahoo_access_token),
+):
     if yahoo_access_token:
         st.success("Yahoo connected.")
         st.caption("Optional provider · not part of the core Fantasy workflow.")
