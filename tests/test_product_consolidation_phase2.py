@@ -80,7 +80,8 @@ def test_yahoo_is_secondary_not_a_primary_provider_tab() -> None:
 
     assert 'page_intro(\n    "Fantasy",' in source
     assert "_render_sleeper()" in source
-    assert 'st.expander("Optional Yahoo · parked", expanded=False)' in source
+    assert '"Yahoo Fantasy · connected" if yahoo_access_token else "Yahoo Fantasy"' in source
+    assert "Optional Yahoo · parked" not in source
     assert 'st.tabs(["Sleeper leagues", "Yahoo leagues"])' not in source
 
 
