@@ -77,7 +77,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,5,2026_05_NYG_WAS,WAS,NYG,False,False,False,0,0,False
 2026,5,2026_05_PHI_JAX,JAX,PHI,False,False,False,0,0,False
 2026,5,2026_05_SF_SEA,SEA,SF,False,False,False,0,0,False
-2026,5,2026_05_TB_DAL,DAL,TB,False,False,False,0,0,False
+2026,5,2026_05_TB_DAL,DAL,TB,True,True,True,55,65,True
 2026,6,2026_06_ARI_LA,LA,ARI,False,False,False,0,0,False
 2026,6,2026_06_BAL_CLE,CLE,BAL,False,False,False,0,0,False
 2026,6,2026_06_BUF_LV,LV,BUF,False,False,False,0,0,False
