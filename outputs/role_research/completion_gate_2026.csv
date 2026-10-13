@@ -64,7 +64,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,4,2026_04_PIT_CLE,CLE,PIT,True,True,True,62,64,True
 2026,4,2026_04_TEN_BAL,BAL,TEN,True,True,True,61,58,True
 2026,5,2026_05_BAL_ATL,ATL,BAL,True,True,True,64,71,True
-2026,5,2026_05_BUF_LA,LA,BUF,False,False,False,0,0,False
+2026,5,2026_05_BUF_LA,LA,BUF,True,True,True,78,57,True
 2026,5,2026_05_CHI_GB,GB,CHI,True,True,True,59,68,True
 2026,5,2026_05_CIN_MIA,MIA,CIN,True,True,True,63,63,True
 2026,5,2026_05_CLE_NYJ,NYJ,CLE,True,True,True,66,63,True
