@@ -1,6 +1,6 @@
 source,rows,weeks,latest_week,cache_hit,cache_path,cache_mtime_utc,fetched_at_utc,nflreadpy_version,error
-pbp,13842,"1,2,3,4,5",5,False,pbp_2026.csv.gz,2026-10-15T17:52:00Z,2026-10-15T17:51:59Z,0.1.5,
-player_stats,5506,"1,2,3,4,5",5,False,player_stats_2026.csv.gz,2026-10-15T17:52:00Z,2026-10-15T17:52:00Z,0.1.5,
-rosters_weekly,15326,"1,2,3,4,5,6",6,False,rosters_weekly_2026.csv.gz,2026-10-15T17:52:00Z,2026-10-15T17:52:00Z,0.1.5,
-schedules,272,"1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",18,False,schedules_2026.csv.gz,2026-10-15T17:52:00Z,2026-10-15T17:52:00Z,0.1.5,
-snap_counts,7370,"1,2,3,4,5",5,False,snap_counts_2026.csv.gz,2026-10-15T17:52:01Z,2026-10-15T17:52:00Z,0.1.5,
+pbp,14031,"1,2,3,4,5,6",6,False,pbp_2026.csv.gz,2026-10-16T17:38:18Z,2026-10-16T17:38:17Z,0.1.5,
+player_stats,5575,"1,2,3,4,5,6",6,False,player_stats_2026.csv.gz,2026-10-16T17:38:18Z,2026-10-16T17:38:18Z,0.1.5,
+rosters_weekly,15327,"1,2,3,4,5,6",6,False,rosters_weekly_2026.csv.gz,2026-10-16T17:38:18Z,2026-10-16T17:38:18Z,0.1.5,
+schedules,272,"1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",18,False,schedules_2026.csv.gz,2026-10-16T17:38:18Z,2026-10-16T17:38:18Z,0.1.5,
+snap_counts,7463,"1,2,3,4,5,6",6,False,snap_counts_2026.csv.gz,2026-10-16T17:38:18Z,2026-10-16T17:38:18Z,0.1.5,
