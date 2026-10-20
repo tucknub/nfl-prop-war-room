@@ -91,7 +91,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,6,2026_06_PIT_TB,TB,PIT,True,True,True,73,76,True
 2026,6,2026_06_SEA_DEN,DEN,SEA,True,True,True,57,82,True
 2026,6,2026_06_TEN_IND,IND,TEN,True,True,True,78,45,True
-2026,6,2026_06_WAS_SF,SF,WAS,False,False,False,0,0,False
+2026,6,2026_06_WAS_SF,SF,WAS,True,True,True,60,61,True
 2026,7,2026_07_CIN_BAL,BAL,CIN,False,False,False,0,0,False
 2026,7,2026_07_CLE_TEN,TEN,CLE,False,False,False,0,0,False
 2026,7,2026_07_DAL_PHI,PHI,DAL,False,False,False,0,0,False
