@@ -97,7 +97,7 @@
     "2026_06_TEN_IND",
     "2026_06_WAS_SF"
   ],
-  "generated_at_utc": "2026-10-21T18:12:42Z",
+  "generated_at_utc": "2026-10-22T18:08:17Z",
   "canonical_rows": 2564,
   "situational_rows": 20269,
   "production_rows": 1789,
@@ -113,11 +113,11 @@
     "Only consecutive fully completed regular-season weeks are admitted."
   ],
   "output_hashes": {
-    "canonical_sha256": "99ab47b84344049ec131d15551a6c6da16792c52061143e78cf70533b4c30482",
-    "situational_sha256": "59bdf2b59dccbb5db78bdf5e5a04982e7611f4cdaab8ecfee329c3713c4fc17a",
-    "production_sha256": "8b826f6f532274def7528d8a8b7736490077d0448247cbdc98c8357275666223",
-    "events_sha256": "91ad17dd26944902285fb05d56a23782abdb96c436e97eb38317df1f6d285ecf",
-    "partial_sha256": "a3e026474f711e322c8022196df1d070b187d204a36f2451e7404509170dff7b",
+    "canonical_sha256": "88e2443711a64b9647c02b60c038e2181199c7bfac0fd042853f1f67b7707d24",
+    "situational_sha256": "d363a24805744ef40712a73308957bb4c9d74f139a9ae0f704efee5f08380f6b",
+    "production_sha256": "f657dc43f8d31b2de846578db31826d05d9cfb4b5082a28681ef449fa1ed8b57",
+    "events_sha256": "2262029b3db8948cc820d1e05bf36a46787e7d1696fa548600e5e505d863d6ee",
+    "partial_sha256": "44eef6081e74b77c769ece6a13f1e5dc859f1990495bd1892133612a526b7f11",
     "join_sha256": "dd52cd1183f0dd384bb9cbe04700b1a2f8522bfa7aa3bd663bbca162ec8e8366",
     "source_sha256": "5d2050d796d2d77b892d841b2c74241a6e6167ca61991c0ff43baf266a163b1f"
   }
