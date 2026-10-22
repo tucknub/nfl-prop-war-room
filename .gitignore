@@ -28,3 +28,25 @@ workers/fantasy-hq/.dev.vars*
 workers/fantasy-hq/.env*
 workers/fantasy-hq/.deploy-secrets.env
 workers/fantasy-hq/*secrets*.env
+
+# Security: never commit local secrets, credentials or private state
+.env.*
+!.env.example
+!.env.sample
+.dev.vars
+.dev.vars.*
+.streamlit/secrets.toml
+.streamlit/secrets.*.toml
+!.streamlit/secrets.example.toml
+*.pem
+*.p12
+*.pfx
+*.key
+id_rsa
+id_ed25519
+*service-account*.json
+*credentials*.json
+*.sqlite
+*.sqlite3
+.wrangler/
+.vercel/
