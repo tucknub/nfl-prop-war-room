@@ -101,7 +101,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,7,2026_07_KC_SEA,SEA,KC,False,False,False,0,0,False
 2026,7,2026_07_LA_LV,LV,LA,False,False,False,0,0,False
 2026,7,2026_07_MIA_NYJ,NYJ,MIA,False,False,False,0,0,False
-2026,7,2026_07_NE_CHI,CHI,NE,False,False,False,0,0,False
+2026,7,2026_07_NE_CHI,CHI,NE,True,True,True,66,50,True
 2026,7,2026_07_NYG_HOU,HOU,NYG,False,False,False,0,0,False
 2026,7,2026_07_PIT_NO,NO,PIT,False,False,False,0,0,False
 2026,7,2026_07_SF_ATL,ATL,SF,False,False,False,0,0,False
