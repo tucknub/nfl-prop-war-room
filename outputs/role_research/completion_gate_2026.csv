@@ -94,7 +94,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,6,2026_06_WAS_SF,SF,WAS,True,True,True,60,61,True
 2026,7,2026_07_CIN_BAL,BAL,CIN,True,True,True,65,51,True
 2026,7,2026_07_CLE_TEN,TEN,CLE,True,True,True,62,66,True
-2026,7,2026_07_DAL_PHI,PHI,DAL,False,False,False,0,0,False
+2026,7,2026_07_DAL_PHI,PHI,DAL,True,True,True,62,64,True
 2026,7,2026_07_DEN_ARI,ARI,DEN,True,True,True,75,55,True
 2026,7,2026_07_GB_DET,DET,GB,True,True,True,65,65,True
 2026,7,2026_07_IND_MIN,MIN,IND,True,True,True,56,59,True

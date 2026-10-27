@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "published_through_week": 6,
+  "published_through_week": 7,
   "completed_game_ids": [
     "2026_01_ARI_LAC",
     "2026_01_ATL_PIT",
@@ -95,14 +95,28 @@
     "2026_06_PIT_TB",
     "2026_06_SEA_DEN",
     "2026_06_TEN_IND",
-    "2026_06_WAS_SF"
+    "2026_06_WAS_SF",
+    "2026_07_CIN_BAL",
+    "2026_07_CLE_TEN",
+    "2026_07_DAL_PHI",
+    "2026_07_DEN_ARI",
+    "2026_07_GB_DET",
+    "2026_07_IND_MIN",
+    "2026_07_KC_SEA",
+    "2026_07_LA_LV",
+    "2026_07_MIA_NYJ",
+    "2026_07_NE_CHI",
+    "2026_07_NYG_HOU",
+    "2026_07_PIT_NO",
+    "2026_07_SF_ATL",
+    "2026_07_TB_CAR"
   ],
-  "generated_at_utc": "2026-10-26T19:30:40Z",
-  "canonical_rows": 2564,
-  "situational_rows": 20269,
-  "production_rows": 1789,
-  "opportunity_event_rows": 10716,
-  "quality_pass_rows": 2564,
+  "generated_at_utc": "2026-10-27T18:52:48Z",
+  "canonical_rows": 2946,
+  "situational_rows": 23355,
+  "production_rows": 2055,
+  "opportunity_event_rows": 12318,
+  "quality_pass_rows": 2946,
   "confirmed_partial_rows": 0,
   "suspected_partial_rows": 0,
   "limitations": [
@@ -113,12 +127,12 @@
     "Only consecutive fully completed regular-season weeks are admitted."
   ],
   "output_hashes": {
-    "canonical_sha256": "88e2443711a64b9647c02b60c038e2181199c7bfac0fd042853f1f67b7707d24",
-    "situational_sha256": "d363a24805744ef40712a73308957bb4c9d74f139a9ae0f704efee5f08380f6b",
-    "production_sha256": "f657dc43f8d31b2de846578db31826d05d9cfb4b5082a28681ef449fa1ed8b57",
-    "events_sha256": "2262029b3db8948cc820d1e05bf36a46787e7d1696fa548600e5e505d863d6ee",
-    "partial_sha256": "44eef6081e74b77c769ece6a13f1e5dc859f1990495bd1892133612a526b7f11",
-    "join_sha256": "dd52cd1183f0dd384bb9cbe04700b1a2f8522bfa7aa3bd663bbca162ec8e8366",
-    "source_sha256": "5d2050d796d2d77b892d841b2c74241a6e6167ca61991c0ff43baf266a163b1f"
+    "canonical_sha256": "8c24bdc850688149088b44f1478c69f44f4a1a805e5f6f3cf617803768b9096a",
+    "situational_sha256": "fc0ff171c5042a7117223b1b56dfbdf4e0be2f12085a953f84cf43984a6f9001",
+    "production_sha256": "5eab6cb3b9d4eb049841c15391a1c816bb2dbd0f1a647ea21a31c9c5e24d450b",
+    "events_sha256": "fe0ea2a5e0ff4f00e4285265deab8fc6ed185400b3314901ae85fccbccabfc58",
+    "partial_sha256": "b10a4c9d75e10b07fe4954e086f32e419abcbef316ba4029aabd2e8632a29726",
+    "join_sha256": "2842c72a47fbe226515f9b4b750c4461e7f8c642178aeed17f5c38444133c813",
+    "source_sha256": "4284831d779c20bab8ab361a0e4cc79874cc6dc6e361d1509f41cfd522dc7952"
   }
 }
