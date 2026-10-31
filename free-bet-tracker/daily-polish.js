@@ -196,7 +196,45 @@
       if(!promo||!promo.partialBalance)return;
       const current=Math.max(0,Number(promo.value||0));
       if(!current)return;
-      const entered=window.prompt('How much of the     if(!id)return;
+      const entered=window.prompt('How much of the $'+current.toFixed(2)+' '+promo.book+' bonus balance did you use?','');
+      if(entered===null)return;
+      const amount=Number(String(entered).replace(/[$,\s]/g,''));
+      if(!Number.isFinite(amount)||amount<=0||amount>current){
+        window.alert('Enter an amount greater than $0 and no more than $'+current.toFixed(2)+'.');
+        return;
+      }
+      const before=current;
+      const remaining=Math.max(0,Math.round((current-amount)*100)/100);
+      const balances=readBalances();
+      balances[id]=remaining;
+      writeBalances(balances);
+      if(remaining<=0){markUsed(id);return}
+      promo.originalValue=Number.isFinite(Number(promo.originalValue))?Number(promo.originalValue):before;
+      promo.value=remaining;
+      if(typeof render==='function')render();
+      showPartialUndo(id,promo,before,remaining);
+    }catch{}
+  }
+  function showPartialUndo(id,promo,before,after){
+    document.querySelector('.usedToast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='usedToast';
+    toast.innerHTML='<div class="usedToastText">Balance updated · $'+after.toFixed(2)+' remaining</div><button type="button" class="usedUndo">Undo</button>';
+    document.body.appendChild(toast);
+    const timer=setTimeout(()=>toast.remove(),10000);
+    toast.querySelector('.usedUndo').onclick=()=>{
+      clearTimeout(timer);
+      const balances=readBalances();
+      balances[id]=before;
+      writeBalances(balances);
+      if(promo)promo.value=before;
+      toast.remove();
+      try{if(typeof render==='function')render()}catch{}
+    };
+  }
+
+  function markUsed(id){
+    if(!id)return;
     let removed=null;
     try{
       if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
@@ -230,167 +268,6 @@
     if(typeof render==='function'){
       const baseRender=render;
       render=function(){pruneUsed();applyBalanceOverrides();baseRender();addUsedButtons()};
-    }
-  }catch{}
-
-  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
-  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
-  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
-  setTimeout(loadBridgeConfig,350);
-  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
-})();
-+current.toFixed(2)+' '+promo.book+' bonus balance did you use?','');
-      if(entered===null)return;
-      const amount=Number(String(entered).replace(/[$,\s]/g,''));
-      if(!Number.isFinite(amount)||amount<=0||amount>current){
-        window.alert('Enter an amount greater than $0 and no more than     if(!id)return;
-    let removed=null;
-    try{
-      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
-      const used=readUsed();used.add(id);writeUsed(used);
-      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
-      if(typeof render==='function')render();
-      syncUsedToSheet(id,true);
-      showUndo(id,removed);
-    }catch{}
-  }
-  function showUndo(id,promo){
-    document.querySelector('.usedToast')?.remove();
-    const toast=document.createElement('div');
-    toast.className='usedToast';
-    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
-    document.body.appendChild(toast);
-    const timer=setTimeout(()=>toast.remove(),10000);
-    toast.querySelector('.usedUndo').onclick=()=>{
-      clearTimeout(timer);
-      const used=readUsed();used.delete(id);writeUsed(used);
-      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
-      syncUsedToSheet(id,false);
-      toast.remove();
-      try{if(typeof render==='function')render()}catch{}
-    };
-  }
-
-  try{
-    if(typeof render==='function'){
-      const baseRender=render;
-      render=function(){pruneUsed();baseRender();addUsedButtons()};
-    }
-  }catch{}
-
-  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
-  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
-  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
-  setTimeout(loadBridgeConfig,350);
-  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
-})();
-+current.toFixed(2)+'.');
-        return;
-      }
-      const before=current;
-      const remaining=Math.max(0,Math.round((current-amount)*100)/100);
-      const balances=readBalances();
-      balances[id]=remaining;
-      writeBalances(balances);
-      if(remaining<=0){markUsed(id);return}
-      promo.originalValue=Number.isFinite(Number(promo.originalValue))?Number(promo.originalValue):before;
-      promo.value=remaining;
-      if(typeof render==='function')render();
-      showPartialUndo(id,promo,before,remaining);
-    }catch{}
-  }
-  function showPartialUndo(id,promo,before,after){
-    document.querySelector('.usedToast')?.remove();
-    const toast=document.createElement('div');
-    toast.className='usedToast';
-    toast.innerHTML='<div class="usedToastText">Balance updated ·     if(!id)return;
-    let removed=null;
-    try{
-      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
-      const used=readUsed();used.add(id);writeUsed(used);
-      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
-      if(typeof render==='function')render();
-      syncUsedToSheet(id,true);
-      showUndo(id,removed);
-    }catch{}
-  }
-  function showUndo(id,promo){
-    document.querySelector('.usedToast')?.remove();
-    const toast=document.createElement('div');
-    toast.className='usedToast';
-    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
-    document.body.appendChild(toast);
-    const timer=setTimeout(()=>toast.remove(),10000);
-    toast.querySelector('.usedUndo').onclick=()=>{
-      clearTimeout(timer);
-      const used=readUsed();used.delete(id);writeUsed(used);
-      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
-      syncUsedToSheet(id,false);
-      toast.remove();
-      try{if(typeof render==='function')render()}catch{}
-    };
-  }
-
-  try{
-    if(typeof render==='function'){
-      const baseRender=render;
-      render=function(){pruneUsed();baseRender();addUsedButtons()};
-    }
-  }catch{}
-
-  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
-  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
-  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
-  setTimeout(loadBridgeConfig,350);
-  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
-})();
-+after.toFixed(2)+' remaining</div><button type="button" class="usedUndo">Undo</button>';
-    document.body.appendChild(toast);
-    const timer=setTimeout(()=>toast.remove(),10000);
-    toast.querySelector('.usedUndo').onclick=()=>{
-      clearTimeout(timer);
-      const balances=readBalances();
-      balances[id]=before;
-      writeBalances(balances);
-      if(promo)promo.value=before;
-      toast.remove();
-      try{if(typeof render==='function')render()}catch{}
-    };
-  }
-
-  function markUsed(id){
-    if(!id)return;
-    let removed=null;
-    try{
-      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
-      const used=readUsed();used.add(id);writeUsed(used);
-      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
-      if(typeof render==='function')render();
-      syncUsedToSheet(id,true);
-      showUndo(id,removed);
-    }catch{}
-  }
-  function showUndo(id,promo){
-    document.querySelector('.usedToast')?.remove();
-    const toast=document.createElement('div');
-    toast.className='usedToast';
-    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
-    document.body.appendChild(toast);
-    const timer=setTimeout(()=>toast.remove(),10000);
-    toast.querySelector('.usedUndo').onclick=()=>{
-      clearTimeout(timer);
-      const used=readUsed();used.delete(id);writeUsed(used);
-      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
-      syncUsedToSheet(id,false);
-      toast.remove();
-      try{if(typeof render==='function')render()}catch{}
-    };
-  }
-
-  try{
-    if(typeof render==='function'){
-      const baseRender=render;
-      render=function(){pruneUsed();baseRender();addUsedButtons()};
     }
   }catch{}
 
