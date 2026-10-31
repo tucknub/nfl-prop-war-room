@@ -1,5 +1,6 @@
 (()=>{
   const USED_KEY='free-bet-tracker-used-v1';
+  const BALANCE_KEY='free-bet-tracker-balance-v1';
   const BRIDGE_CONFIG_URL='https://raw.githubusercontent.com/tucknub/nfl-prop-war-room/streamlit-cloud-deploy/free-bet-tracker/bridge-config.json';
   let bridgeUrl='';
 
@@ -23,11 +24,14 @@
       .usedButton{appearance:none;border:1px solid rgba(114,226,156,.28);background:linear-gradient(145deg,rgba(114,226,156,.14),rgba(142,99,255,.08));color:#baf2ce;border-radius:11px;padding:9px 12px;font:inherit;font-size:11px;font-weight:900;letter-spacing:.02em;cursor:pointer;box-shadow:inset 0 0 14px rgba(114,226,156,.04)}
       .usedButton:hover{border-color:rgba(114,226,156,.48);background:linear-gradient(145deg,rgba(114,226,156,.2),rgba(142,99,255,.1))}
       .usedButton:active{transform:scale(.98)}
+      .usedAction.partial{gap:8px;justify-content:space-between}
+      .partialButton{appearance:none;border:1px solid rgba(181,140,255,.28);background:linear-gradient(145deg,rgba(142,99,255,.18),rgba(255,255,255,.05));color:#e8dcff;border-radius:11px;padding:9px 12px;font:inherit;font-size:11px;font-weight:900;letter-spacing:.02em;cursor:pointer;flex:1}
+      .partialButton:active{transform:scale(.98)}
       .usedToast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:100;width:min(420px,calc(100% - 28px));display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:15px;background:rgba(18,13,25,.97);border:1px solid rgba(181,140,255,.24);box-shadow:0 18px 48px rgba(0,0,0,.48),0 0 22px rgba(142,99,255,.12);backdrop-filter:blur(16px);color:#f7f4ff}
       .usedToastText{min-width:0;flex:1;font-size:11px;font-weight:800;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .usedUndo{appearance:none;border:1px solid rgba(181,140,255,.22);background:rgba(142,99,255,.14);color:#d9c8ff;border-radius:9px;padding:7px 10px;font:inherit;font-size:10px;font-weight:950;cursor:pointer}
 
-      @media(max-width:759px){.usedAction{justify-content:stretch}.usedButton{width:100%;padding:11px 12px;font-size:12px}}
+      @media(max-width:759px){.usedAction{justify-content:stretch}.usedAction.partial{display:grid;grid-template-columns:1fr 1fr}.usedButton,.partialButton{width:100%;padding:11px 12px;font-size:12px}}
       @media(min-width:760px){
         .app{max-width:880px!important;padding-left:24px!important;padding-right:24px!important;padding-bottom:52px!important}
         .hero{padding:24px 24px 22px!important;border-radius:30px!important}
@@ -68,6 +72,31 @@
     try{return new Set(JSON.parse(localStorage.getItem(USED_KEY)||'[]').map(String))}catch{return new Set()}
   }
   function writeUsed(set){try{localStorage.setItem(USED_KEY,JSON.stringify([...set]))}catch{}}
+  function readBalances(){
+    try{
+      const v=JSON.parse(localStorage.getItem(BALANCE_KEY)||'{}');
+      return v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+    }catch{return {}}
+  }
+  function writeBalances(v){try{localStorage.setItem(BALANCE_KEY,JSON.stringify(v||{}))}catch{}}
+  function applyBalanceOverrides(){
+    try{
+      if(typeof promos==='undefined'||!Array.isArray(promos))return false;
+      const balances=readBalances();
+      let changed=false;
+      promos=promos.map(p=>{
+        if(!p||!p.partialBalance||!p.id)return p;
+        const saved=Number(balances[String(p.id)]);
+        if(!Number.isFinite(saved))return p;
+        const original=Number.isFinite(Number(p.originalValue))?Number(p.originalValue):Number(p.value||0);
+        const remaining=Math.max(0,Math.min(original,saved));
+        if(remaining===Number(p.value))return p;
+        changed=true;
+        return {...p,originalValue:original,value:remaining};
+      });
+      return changed;
+    }catch{return false}
+  }
 
   async function loadBridgeConfig(){
     try{
@@ -136,16 +165,199 @@
         if(card.querySelector('.usedAction'))return;
         const details=card.querySelector('.details');
         if(!details)return;
+        const id=String(card.dataset.id||'');
+        const promo=(typeof promos!=='undefined'&&Array.isArray(promos))?promos.find(p=>String(p.id||'')===id):null;
         const row=document.createElement('div');
-        row.className='usedAction';
-        row.innerHTML='<button type="button" class="usedButton">✓ Mark Used</button>';
-        row.querySelector('button').addEventListener('click',e=>{
-          e.preventDefault();e.stopPropagation();markUsed(String(card.dataset.id||''));
-        });
+        if(promo&&promo.partialBalance){
+          row.className='usedAction partial';
+          row.innerHTML='<button type="button" class="partialButton">Use Part of Balance</button><button type="button" class="usedButton">Mark All Used</button>';
+          row.querySelector('.partialButton').addEventListener('click',e=>{
+            e.preventDefault();e.stopPropagation();usePartial(id);
+          });
+          row.querySelector('.usedButton').addEventListener('click',e=>{
+            e.preventDefault();e.stopPropagation();markUsed(id);
+          });
+        }else{
+          row.className='usedAction';
+          row.innerHTML='<button type="button" class="usedButton">✓ Mark Used</button>';
+          row.querySelector('button').addEventListener('click',e=>{
+            e.preventDefault();e.stopPropagation();markUsed(id);
+          });
+        }
         details.appendChild(row);
       });
     }catch{}
   }
+  function usePartial(id){
+    if(!id)return;
+    try{
+      if(typeof promos==='undefined'||!Array.isArray(promos))return;
+      const promo=promos.find(p=>String(p.id||'')===id);
+      if(!promo||!promo.partialBalance)return;
+      const current=Math.max(0,Number(promo.value||0));
+      if(!current)return;
+      const entered=window.prompt('How much of the     if(!id)return;
+    let removed=null;
+    try{
+      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
+      const used=readUsed();used.add(id);writeUsed(used);
+      const balances=readBalances();if(Object.prototype.hasOwnProperty.call(balances,id)){delete balances[id];writeBalances(balances)}
+      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
+      if(typeof render==='function')render();
+      syncUsedToSheet(id,true);
+      showUndo(id,removed);
+    }catch{}
+  }
+  function showUndo(id,promo){
+    document.querySelector('.usedToast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='usedToast';
+    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
+    document.body.appendChild(toast);
+    const timer=setTimeout(()=>toast.remove(),10000);
+    toast.querySelector('.usedUndo').onclick=()=>{
+      clearTimeout(timer);
+      const used=readUsed();used.delete(id);writeUsed(used);
+      if(promo&&promo.partialBalance){const balances=readBalances();delete balances[id];writeBalances(balances)}
+      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
+      syncUsedToSheet(id,false);
+      toast.remove();
+      try{if(typeof render==='function')render()}catch{}
+    };
+  }
+
+  try{
+    if(typeof render==='function'){
+      const baseRender=render;
+      render=function(){pruneUsed();applyBalanceOverrides();baseRender();addUsedButtons()};
+    }
+  }catch{}
+
+  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
+  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
+  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
+  setTimeout(loadBridgeConfig,350);
+  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
+})();
++current.toFixed(2)+' '+promo.book+' bonus balance did you use?','');
+      if(entered===null)return;
+      const amount=Number(String(entered).replace(/[$,\s]/g,''));
+      if(!Number.isFinite(amount)||amount<=0||amount>current){
+        window.alert('Enter an amount greater than $0 and no more than     if(!id)return;
+    let removed=null;
+    try{
+      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
+      const used=readUsed();used.add(id);writeUsed(used);
+      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
+      if(typeof render==='function')render();
+      syncUsedToSheet(id,true);
+      showUndo(id,removed);
+    }catch{}
+  }
+  function showUndo(id,promo){
+    document.querySelector('.usedToast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='usedToast';
+    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
+    document.body.appendChild(toast);
+    const timer=setTimeout(()=>toast.remove(),10000);
+    toast.querySelector('.usedUndo').onclick=()=>{
+      clearTimeout(timer);
+      const used=readUsed();used.delete(id);writeUsed(used);
+      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
+      syncUsedToSheet(id,false);
+      toast.remove();
+      try{if(typeof render==='function')render()}catch{}
+    };
+  }
+
+  try{
+    if(typeof render==='function'){
+      const baseRender=render;
+      render=function(){pruneUsed();baseRender();addUsedButtons()};
+    }
+  }catch{}
+
+  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
+  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
+  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
+  setTimeout(loadBridgeConfig,350);
+  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
+})();
++current.toFixed(2)+'.');
+        return;
+      }
+      const before=current;
+      const remaining=Math.max(0,Math.round((current-amount)*100)/100);
+      const balances=readBalances();
+      balances[id]=remaining;
+      writeBalances(balances);
+      if(remaining<=0){markUsed(id);return}
+      promo.originalValue=Number.isFinite(Number(promo.originalValue))?Number(promo.originalValue):before;
+      promo.value=remaining;
+      if(typeof render==='function')render();
+      showPartialUndo(id,promo,before,remaining);
+    }catch{}
+  }
+  function showPartialUndo(id,promo,before,after){
+    document.querySelector('.usedToast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='usedToast';
+    toast.innerHTML='<div class="usedToastText">Balance updated ·     if(!id)return;
+    let removed=null;
+    try{
+      if(typeof promos!=='undefined'&&Array.isArray(promos))removed=promos.find(p=>String(p.id)===id)||null;
+      const used=readUsed();used.add(id);writeUsed(used);
+      if(typeof promos!=='undefined'&&Array.isArray(promos))promos=promos.filter(p=>String(p.id)!==id);
+      if(typeof render==='function')render();
+      syncUsedToSheet(id,true);
+      showUndo(id,removed);
+    }catch{}
+  }
+  function showUndo(id,promo){
+    document.querySelector('.usedToast')?.remove();
+    const toast=document.createElement('div');
+    toast.className='usedToast';
+    toast.innerHTML='<div class="usedToastText">Marked used'+(promo&&promo.promo?' · '+String(promo.promo):'')+'</div><button type="button" class="usedUndo">Undo</button>';
+    document.body.appendChild(toast);
+    const timer=setTimeout(()=>toast.remove(),10000);
+    toast.querySelector('.usedUndo').onclick=()=>{
+      clearTimeout(timer);
+      const used=readUsed();used.delete(id);writeUsed(used);
+      try{if(promo&&typeof promos!=='undefined'&&Array.isArray(promos)&&!promos.some(p=>String(p.id)===id))promos.push(promo)}catch{}
+      syncUsedToSheet(id,false);
+      toast.remove();
+      try{if(typeof render==='function')render()}catch{}
+    };
+  }
+
+  try{
+    if(typeof render==='function'){
+      const baseRender=render;
+      render=function(){pruneUsed();baseRender();addUsedButtons()};
+    }
+  }catch{}
+
+  window.addEventListener('storage',()=>{try{pruneUsed();if(typeof render==='function')render()}catch{}});
+  window.addEventListener('focus',()=>{if(bridgeUrl)syncUsedFromSheet(true)});
+  setTimeout(()=>{try{pruneUsed();if(typeof render==='function')render();else addUsedButtons()}catch{}},150);
+  setTimeout(loadBridgeConfig,350);
+  setInterval(()=>{if(bridgeUrl)syncUsedFromSheet(true)},60000);
+})();
++after.toFixed(2)+' remaining</div><button type="button" class="usedUndo">Undo</button>';
+    document.body.appendChild(toast);
+    const timer=setTimeout(()=>toast.remove(),10000);
+    toast.querySelector('.usedUndo').onclick=()=>{
+      clearTimeout(timer);
+      const balances=readBalances();
+      balances[id]=before;
+      writeBalances(balances);
+      if(promo)promo.value=before;
+      toast.remove();
+      try{if(typeof render==='function')render()}catch{}
+    };
+  }
+
   function markUsed(id){
     if(!id)return;
     let removed=null;
