@@ -1,23 +1,195 @@
 {
   "updatedAt": "2026-10-31T07:30:00-04:00",
   "promos": [
-    {"id":"dk-20261105-fb01","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 1 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb02","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 2 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb03","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 3 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb04","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 4 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb05","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 5 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb06","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 6 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb07","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 7 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb08","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 8 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb09","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 9 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb10","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 10 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb11","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 11 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb12","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 12 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb13","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 13 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb14","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 14 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb15","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 15 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"dk-20261105-fb16","book":"DraftKings","value":50,"expires":"2026-11-05T11:04:00-05:00","promo":"$50 Free Bet 16 of 16","kind":"bonus","estimated":false,"notes":"DraftKings $50 free bet."},
-    {"id":"czr-20261101-fb50","book":"Caesars","value":50,"expires":"2026-11-01T18:36:00-05:00","promo":"$50 Free Bet","kind":"bonus","estimated":false,"notes":"Caesars $50 free bet."},
-    {"id":"czr-20261108-fb50","book":"Caesars","value":50,"expires":"2026-11-08T15:20:00-05:00","promo":"$50 Free Bet","kind":"bonus","estimated":false,"notes":"Caesars $50 free bet."}
+    {
+      "id": "dk-20261105-fb01",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 1 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb02",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 2 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb03",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 3 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb04",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 4 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb05",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 5 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb06",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 6 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb07",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 7 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb08",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 8 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb09",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 9 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb10",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 10 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb11",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 11 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb12",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 12 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb13",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 13 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb14",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 14 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb15",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 15 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "dk-20261105-fb16",
+      "book": "DraftKings",
+      "value": 50,
+      "expires": "2026-11-05T11:04:00-05:00",
+      "promo": "$50 Free Bet 16 of 16",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "DraftKings $50 free bet."
+    },
+    {
+      "id": "czr-20261101-fb50",
+      "book": "Caesars",
+      "value": 50,
+      "expires": "2026-11-01T18:36:00-05:00",
+      "promo": "$50 Free Bet",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "Caesars $50 free bet."
+    },
+    {
+      "id": "czr-20261108-fb50",
+      "book": "Caesars",
+      "value": 50,
+      "expires": "2026-11-08T15:20:00-05:00",
+      "promo": "$50 Free Bet",
+      "kind": "bonus",
+      "estimated": false,
+      "notes": "Caesars $50 free bet."
+    },
+    {
+      "id": "b365-20261102-bonus58",
+      "book": "bet365",
+      "value": 58,
+      "expires": "2026-11-02T07:30:00-05:00",
+      "promo": "$58 Bonus Funds",
+      "kind": "bonus",
+      "estimated": true,
+      "notes": "$58 bet365 bonus-funds balance. Can be used in partial amounts. Expiration estimated from 'expires in 2 days' reported Oct 31, 2026 around 7:30 AM ET."
+    }
   ]
 }
