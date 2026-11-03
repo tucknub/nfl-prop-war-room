@@ -110,7 +110,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,8,2026_08_ATL_TB,TB,ATL,True,True,True,60,51,True
 2026,8,2026_08_BAL_BUF,BUF,BAL,True,True,True,76,48,True
 2026,8,2026_08_CAR_GB,GB,CAR,True,True,True,67,70,True
-2026,8,2026_08_CHI_SEA,SEA,CHI,False,False,False,0,0,False
+2026,8,2026_08_CHI_SEA,SEA,CHI,True,True,True,56,70,True
 2026,8,2026_08_CLE_PIT,PIT,CLE,True,True,True,59,64,True
 2026,8,2026_08_IND_JAX,JAX,IND,True,True,True,53,59,True
 2026,8,2026_08_KC_DEN,DEN,KC,True,True,True,56,67,True
