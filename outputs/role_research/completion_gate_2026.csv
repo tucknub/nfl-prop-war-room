@@ -129,7 +129,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,9,2026_09_DET_MIA,MIA,DET,False,False,False,0,0,False
 2026,9,2026_09_GB_NE,NE,GB,False,False,False,0,0,False
 2026,9,2026_09_HOU_LAC,LAC,HOU,False,False,False,0,0,False
-2026,9,2026_09_JAX_BAL,BAL,JAX,False,False,False,0,0,False
+2026,9,2026_09_JAX_BAL,BAL,JAX,True,True,True,52,56,True
 2026,9,2026_09_LA_WAS,WAS,LA,False,False,False,0,0,False
 2026,9,2026_09_LV_SF,SF,LV,False,False,False,0,0,False
 2026,9,2026_09_NYG_PHI,PHI,NYG,False,False,False,0,0,False
