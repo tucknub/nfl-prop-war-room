@@ -122,7 +122,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,8,2026_08_TEN_CIN,CIN,TEN,True,True,True,70,70,True
 2026,9,2026_09_ARI_SEA,SEA,ARI,False,False,False,0,0,False
 2026,9,2026_09_BUF_MIN,MIN,BUF,False,False,False,0,0,False
-2026,9,2026_09_CIN_ATL,ATL,CIN,False,False,False,0,0,False
+2026,9,2026_09_CIN_ATL,ATL,CIN,True,False,False,0,0,False
 2026,9,2026_09_CLE_NO,NO,CLE,False,False,False,0,0,False
 2026,9,2026_09_DAL_IND,IND,DAL,False,False,False,0,0,False
 2026,9,2026_09_DEN_CAR,CAR,DEN,False,False,False,0,0,False

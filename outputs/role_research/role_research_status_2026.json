@@ -2,7 +2,7 @@
   "schema_version": 1,
   "season": 2026,
   "status": "PUBLISHED",
-  "generated_at_utc": "2026-11-07T18:57:16Z",
+  "generated_at_utc": "2026-11-08T18:56:21Z",
   "published_through_week": 8,
   "completed_games": 121,
   "message": "Published through Week 8 after all completed-week gates passed.",
@@ -14,8 +14,8 @@
       "latest_week": 9,
       "cache_hit": false,
       "cache_path": "pbp_2026.csv.gz",
-      "cache_mtime_utc": "2026-11-07T18:57:18Z",
-      "fetched_at_utc": "2026-11-07T18:57:17Z",
+      "cache_mtime_utc": "2026-11-08T18:56:23Z",
+      "fetched_at_utc": "2026-11-08T18:56:22Z",
       "nflreadpy_version": "0.1.5",
       "error": ""
     },
@@ -26,8 +26,8 @@
       "latest_week": 9,
       "cache_hit": false,
       "cache_path": "player_stats_2026.csv.gz",
-      "cache_mtime_utc": "2026-11-07T18:57:18Z",
-      "fetched_at_utc": "2026-11-07T18:57:18Z",
+      "cache_mtime_utc": "2026-11-08T18:56:23Z",
+      "fetched_at_utc": "2026-11-08T18:56:23Z",
       "nflreadpy_version": "0.1.5",
       "error": ""
     },
@@ -38,8 +38,8 @@
       "latest_week": 9,
       "cache_hit": false,
       "cache_path": "rosters_weekly_2026.csv.gz",
-      "cache_mtime_utc": "2026-11-07T18:57:18Z",
-      "fetched_at_utc": "2026-11-07T18:57:18Z",
+      "cache_mtime_utc": "2026-11-08T18:56:23Z",
+      "fetched_at_utc": "2026-11-08T18:56:23Z",
       "nflreadpy_version": "0.1.5",
       "error": ""
     },
@@ -50,8 +50,8 @@
       "latest_week": 18,
       "cache_hit": false,
       "cache_path": "schedules_2026.csv.gz",
-      "cache_mtime_utc": "2026-11-07T18:57:18Z",
-      "fetched_at_utc": "2026-11-07T18:57:18Z",
+      "cache_mtime_utc": "2026-11-08T18:56:23Z",
+      "fetched_at_utc": "2026-11-08T18:56:23Z",
       "nflreadpy_version": "0.1.5",
       "error": ""
     },
@@ -62,8 +62,8 @@
       "latest_week": 9,
       "cache_hit": false,
       "cache_path": "snap_counts_2026.csv.gz",
-      "cache_mtime_utc": "2026-11-07T18:57:18Z",
-      "fetched_at_utc": "2026-11-07T18:57:18Z",
+      "cache_mtime_utc": "2026-11-08T18:56:23Z",
+      "fetched_at_utc": "2026-11-08T18:56:23Z",
       "nflreadpy_version": "0.1.5",
       "error": ""
     }
@@ -99,7 +99,7 @@
     17,
     18
   ],
-  "staging_run_id": "2026-8-1364851b2b",
+  "staging_run_id": "2026-8-8b279429a8",
   "staging_files": [
     "canonical_role_2026_live.csv.gz",
     "game_player_usage_2026_live.csv.gz",
