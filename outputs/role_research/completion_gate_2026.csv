@@ -121,7 +121,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,8,2026_08_PHI_WAS,WAS,PHI,True,True,True,57,68,True
 2026,8,2026_08_TEN_CIN,CIN,TEN,True,True,True,70,70,True
 2026,9,2026_09_ARI_SEA,SEA,ARI,True,True,True,61,51,True
-2026,9,2026_09_BUF_MIN,MIN,BUF,False,False,False,0,0,False
+2026,9,2026_09_BUF_MIN,MIN,BUF,True,True,True,45,79,True
 2026,9,2026_09_CIN_ATL,ATL,CIN,True,True,True,55,55,True
 2026,9,2026_09_CLE_NO,NO,CLE,True,True,True,71,70,True
 2026,9,2026_09_DAL_IND,IND,DAL,True,True,True,59,71,True

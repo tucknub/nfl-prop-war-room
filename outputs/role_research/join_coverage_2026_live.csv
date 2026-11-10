@@ -1,5 +1,5 @@
 season,join,rows,matched_rows,coverage_rate
-2026,opportunity_to_identity,13923,13923,1.0
-2026,snap_to_identity_all_offense,4453,4365,0.9802380417695935
-2026,snap_to_identity_report_positions,2638,2638,1.0
-2026,opportunity_to_snap_spine,2306,2305,0.9995663486556808
+2026,opportunity_to_identity,15607,15607,1.0
+2026,snap_to_identity_all_offense,5017,4917,0.9800677695834163
+2026,snap_to_identity_report_positions,2966,2966,1.0
+2026,opportunity_to_snap_spine,2591,2590,0.9996140486298727
