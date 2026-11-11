@@ -140,7 +140,7 @@
     "2026_09_NYJ_KC",
     "2026_09_TB_CHI"
   ],
-  "generated_at_utc": "2026-11-10T20:56:35Z",
+  "generated_at_utc": "2026-11-11T21:29:23Z",
   "canonical_rows": 3741,
   "situational_rows": 29491,
   "production_rows": 2591,
@@ -158,7 +158,7 @@
   "output_hashes": {
     "canonical_sha256": "0e54478c32efdd7868c0f4779f71e5ea7a8b599cc83e9ebe5f3d066fc1ecd211",
     "situational_sha256": "dd2548a7cda0725cbdc905ee13fa1d48c2bc246c53796b85a97ffd8b7e81a43f",
-    "production_sha256": "4c027b725808c6522b54b7b3b8571b136aa22360d10e088cdb33b3dd583f3f24",
+    "production_sha256": "b5ab0f1a9c4b050c37e63a346aa96b50c81207a832f80f88a2758a117323c33f",
     "events_sha256": "7018279905b065b9e74e67412c6727b22fc5d4302da5039b458f0e4fd7661b85",
     "partial_sha256": "3451672866f4ead55c90a4444cfeecc72a794851bdfdb8b194ad219fd3049c6c",
     "join_sha256": "16f296efd8e9cf17eed2ecc84506a588ff081a539229abd7b44c5a13356c69a5",
