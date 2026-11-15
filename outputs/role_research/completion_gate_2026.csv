@@ -144,7 +144,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,10,2026_10_LA_ARI,ARI,LA,False,False,False,0,0,False
 2026,10,2026_10_MIA_IND,IND,MIA,False,False,False,0,0,False
 2026,10,2026_10_MIN_GB,GB,MIN,False,False,False,0,0,False
-2026,10,2026_10_NE_DET,DET,NE,False,False,False,0,0,False
+2026,10,2026_10_NE_DET,DET,NE,True,False,False,0,0,False
 2026,10,2026_10_PIT_CIN,CIN,PIT,False,False,False,0,0,False
 2026,10,2026_10_SEA_LV,LV,SEA,False,False,False,0,0,False
 2026,10,2026_10_SF_DAL,DAL,SF,False,False,False,0,0,False
