@@ -1,12 +1,12 @@
 {
   "status": "PASS",
   "season": 2026,
-  "published_through_week": 9,
+  "published_through_week": 10,
   "checks": [
     {
       "check": "canonical_not_empty",
       "passed": true,
-      "observed": 3741,
+      "observed": 4134,
       "expected": "> 0"
     },
     {
@@ -93,19 +93,19 @@
     {
       "check": "all_offense_snap_identity_coverage",
       "passed": true,
-      "observed": 0.9800677695834163,
+      "observed": 0.9798125450612833,
       "expected": ">= 0.95 diagnostic floor"
     },
     {
       "check": "report_snap_identity_coverage",
       "passed": true,
-      "observed": 1.0,
+      "observed": 0.9996950289722476,
       "expected": ">= 0.99"
     },
     {
       "check": "opportunity_to_snap_coverage",
       "passed": true,
-      "observed": 0.9996140486298727,
+      "observed": 0.9993016759776536,
       "expected": ">= 0.995"
     }
   ]

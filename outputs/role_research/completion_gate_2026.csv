@@ -140,7 +140,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,10,2026_10_HOU_CLE,CLE,HOU,True,True,True,67,63,True
 2026,10,2026_10_JAX_TEN,TEN,JAX,True,True,True,57,72,True
 2026,10,2026_10_KC_ATL,ATL,KC,True,True,True,65,63,True
-2026,10,2026_10_LAC_BAL,BAL,LAC,False,False,False,0,0,False
+2026,10,2026_10_LAC_BAL,BAL,LAC,True,True,True,66,54,True
 2026,10,2026_10_LA_ARI,ARI,LA,True,True,True,34,74,True
 2026,10,2026_10_MIA_IND,IND,MIA,True,True,True,56,62,True
 2026,10,2026_10_MIN_GB,GB,MIN,True,True,True,53,65,True
