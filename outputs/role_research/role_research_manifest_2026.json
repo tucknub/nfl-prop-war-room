@@ -154,11 +154,11 @@
     "2026_10_SF_DAL",
     "2026_10_WAS_NYG"
   ],
-  "generated_at_utc": "2026-11-17T22:31:11Z",
+  "generated_at_utc": "2026-11-18T22:11:49Z",
   "canonical_rows": 4134,
   "situational_rows": 32506,
   "production_rows": 2864,
-  "opportunity_event_rows": 17204,
+  "opportunity_event_rows": 17205,
   "quality_pass_rows": 4134,
   "confirmed_partial_rows": 0,
   "suspected_partial_rows": 0,
@@ -170,12 +170,12 @@
     "Only consecutive fully completed regular-season weeks are admitted."
   ],
   "output_hashes": {
-    "canonical_sha256": "eb25699ef9a00e2754b061bd7ee6c71e418fe8de289ab6b31a83de674747a245",
-    "situational_sha256": "26539b45d4ced10ec5edc2991e2b7eb0148f007abf27f50cb64a959e50e08d33",
-    "production_sha256": "9798388fc223acc8d3c38cc40501972d981d908b3b2cdebed8b66006baa8cec0",
-    "events_sha256": "8fcf73d920f317330c91b04a050def52e64a7cf3837eb1485309beaafbbed667",
+    "canonical_sha256": "e02eecf7d77a261ae5610ad1ccd31464662d8724e4ada0e609df7570b586bb36",
+    "situational_sha256": "910d5f5dcd890d51d8c5c3669ab4194b0c4e0a1c8d8e82560dbfa55847070289",
+    "production_sha256": "ef9132d9512e5a56aae54ffcc44cd72295b0e095afb9e7a812a0b9906febe514",
+    "events_sha256": "41a915c94bb0d2db62d214128f8904d466687f4c2a45ffa096f583192ebbedd3",
     "partial_sha256": "8abc9fc7fb7a4bf22100bb9f088e3556bf5bbeca2bdfc5b1382cd29eda29f664",
-    "join_sha256": "b3437a9a43d7cd19d24851c4d37ff5520cce35efb028ddfb45d42043b14e21ff",
-    "source_sha256": "356e60964a94cf1f2a33aca8bdce6f89167de716572cbd463e91ed24719a29e6"
+    "join_sha256": "80d4fe97197fe22960aa2de3c96874bba602b10010fb4cb281824979b19c3029",
+    "source_sha256": "ee01153b13d1c559937a2f686a7483b1cdae44907dfffb3f4e39166790b4f447"
   }
 }
