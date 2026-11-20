@@ -152,7 +152,7 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,11,2026_11_ARI_KC,KC,ARI,False,False,False,0,0,False
 2026,11,2026_11_BAL_CAR,CAR,BAL,False,False,False,0,0,False
 2026,11,2026_11_CIN_WAS,WAS,CIN,False,False,False,0,0,False
-2026,11,2026_11_IND_HOU,HOU,IND,False,False,False,0,0,False
+2026,11,2026_11_IND_HOU,HOU,IND,True,True,True,65,48,True
 2026,11,2026_11_JAX_NYG,NYG,JAX,False,False,False,0,0,False
 2026,11,2026_11_LV_DEN,DEN,LV,False,False,False,0,0,False
 2026,11,2026_11_MIA_BUF,BUF,MIA,False,False,False,0,0,False
