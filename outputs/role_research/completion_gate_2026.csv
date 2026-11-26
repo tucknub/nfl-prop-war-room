@@ -165,9 +165,9 @@ season,week,game_id,home_team,away_team,schedule_final,pbp_present,fourth_quarte
 2026,12,2026_12_ATL_MIN,MIN,ATL,False,False,False,0,0,False
 2026,12,2026_12_BAL_HOU,HOU,BAL,False,False,False,0,0,False
 2026,12,2026_12_CAR_TB,TB,CAR,False,False,False,0,0,False
-2026,12,2026_12_CHI_DET,DET,CHI,False,False,False,0,0,False
+2026,12,2026_12_CHI_DET,DET,CHI,True,True,True,68,72,True
 2026,12,2026_12_DEN_PIT,PIT,DEN,False,False,False,0,0,False
-2026,12,2026_12_GB_LA,LA,GB,False,False,False,0,0,False
+2026,12,2026_12_GB_LA,LA,GB,True,True,True,70,44,True
 2026,12,2026_12_KC_BUF,BUF,KC,False,False,False,0,0,False
 2026,12,2026_12_LV_CLE,CLE,LV,False,False,False,0,0,False
 2026,12,2026_12_NE_LAC,LAC,NE,False,False,False,0,0,False
